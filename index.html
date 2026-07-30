@@ -96,7 +96,8 @@
       <li>Klikk på bokmerket <strong>🎁 Hent kommentarer</strong>.</li>
       <li>La fanen stå i fred. Den scroller seg selv gjennom kommentarene, og en liten
           boks nede til høyre teller opp underveis.</li>
-      <li>Når den er ferdig, trykk <strong>Kopier</strong> i boksen.</li>
+      <li>Når den er ferdig, trykk <strong>Åpne trekningen</strong> i boksen. Deltagerne
+          følger med over hit av seg selv.</li>
     </ol>
     <div class="note warn">
       Er du på en <code>/reel/</code>-lenke, sender bokmerket deg først til den vanlige
@@ -104,10 +105,20 @@
       Grunnen er at reel-visningen ikke etterlaster kommentarer.
     </div>
 
-    <h2>3. Lim inn her</h2>
-    <textarea id="paste" rows="4" placeholder="Lim inn det du kopierte fra Instagram"></textarea>
+    <h2>3. Trekk vinner</h2>
+    <p style="color:#555;font-size:14px;margin:0 0 10px">
+      Deltagerne dukker opp her av seg selv når du trykker «Åpne trekningen» på Instagram.
+      Du trenger ikke gjøre noe i feltet under — det er kun for spesielle tilfeller.
+    </p>
+    <details style="font-size:13px;color:#555">
+      <summary style="cursor:pointer;font-weight:600">Avansert: lim inn deltagerliste manuelt</summary>
+      <textarea id="paste" rows="4" placeholder='[{"username":"ola.nordmann","text":"🔥"}, ...]'
+                style="margin-top:8px"></textarea>
+      <div class="row">
+        <button class="primary" id="addBtn">Legg til deltagere</button>
+      </div>
+    </details>
     <div class="row">
-      <button class="primary" id="addBtn">Legg til deltagere</button>
       <button class="secondary hidden" id="resetBtn">Nullstill alt</button>
     </div>
     <div class="error hidden" id="pasteError"></div>
@@ -143,6 +154,10 @@
    Alt her er vanlig JavaScript — ingen server, ingen utvidelse.
    --------------------------------------------------------------- */
 function igTrekningBookmarklet() {
+  // Adressen til trekningssiden settes inn når bokmerket bygges, så bokmerket
+  // alltid peker tilbake dit det ble laget fra.
+  var APP_URL = '__APP_URL__';
+
   if (window.__igTrekningKjorer) { alert('Henting pågår allerede i denne fanen.'); return; }
 
   var kode = location.pathname.match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
@@ -164,7 +179,7 @@ function igTrekningBookmarklet() {
   boks.innerHTML = '<div id="igt-tall" style="font-size:22px;font-weight:800">0 deltagere</div>' +
     '<div id="igt-stat" style="opacity:.6;margin-top:2px;font-size:11px">starter …</div>' +
     '<div style="margin-top:10px;display:flex;gap:6px">' +
-    '<button id="igt-kopier" style="flex:1;padding:8px;border:0;border-radius:8px;background:#5b5bf6;color:#fff;font-weight:700;cursor:pointer">Kopier</button>' +
+    '<button id="igt-apne" style="flex:1;padding:8px;border:0;border-radius:8px;background:#5b5bf6;color:#fff;font-weight:700;cursor:pointer">Åpne trekningen</button>' +
     '<button id="igt-stopp" style="padding:8px 10px;border:0;border-radius:8px;background:#444;color:#fff;cursor:pointer">Stopp</button>' +
     '</div>';
   document.body.appendChild(boks);
@@ -231,25 +246,19 @@ function igTrekningBookmarklet() {
   function avslutt(hvorfor) {
     stoppet = true;
     tegn();
-    stat.textContent = hvorfor + ' Trykk Kopier.';
+    stat.textContent = hvorfor + ' Trykk «Åpne trekningen».';
   }
 
   boks.querySelector('#igt-stopp').onclick = function () { avslutt('Stoppet.'); };
-  boks.querySelector('#igt-kopier').onclick = function () {
-    var data = [];
-    funnet.forEach(function (t, u) { data.push({ username: u, text: t }); });
-    var json = JSON.stringify(data);
-    navigator.clipboard.writeText(json).then(function () {
-      stat.textContent = 'Kopiert ' + data.length + ' deltagere. Lim inn i IG Trekning.';
-    }, function () {
-      // Faller tilbake til manuell kopiering hvis utklippstavlen er sperret
-      var ta = document.createElement('textarea');
-      ta.value = json;
-      ta.style.cssText = 'width:100%;height:70px;margin-top:8px;font-size:10px';
-      boks.appendChild(ta);
-      ta.select();
-      stat.textContent = 'Merk teksten under og kopier med Ctrl+C.';
-    });
+
+  // Sender deltagerne videre i adresselinjen, så slipper man kopier og lim.
+  // Kun brukernavnene — tar man med kommentartekstene blir adressen for lang
+  // for Firefox og Safari.
+  boks.querySelector('#igt-apne').onclick = function () {
+    var navn = [];
+    funnet.forEach(function (tekst, bruker) { navn.push(bruker); });
+    if (!navn.length) { alert('Fant ingen deltagere ennå.'); return; }
+    window.open(APP_URL + '#u=' + encodeURIComponent(navn.join(',')), '_blank');
   };
 
   tegn();
@@ -258,8 +267,11 @@ function igTrekningBookmarklet() {
 
 // Bygger javascript:-lenken ut fra funksjonen over, så koden bare finnes ett sted.
 // Nettleseren avkoder javascript:-URL-er før de kjøres, derfor er encodeURIComponent trygt.
+// Adressen til denne siden settes inn, slik at bokmerket finner veien tilbake hit.
 document.getElementById('bookmarklet').href =
-  'javascript:(' + encodeURIComponent(igTrekningBookmarklet.toString()) + ')();';
+  'javascript:(' +
+  encodeURIComponent(igTrekningBookmarklet.toString().replace('__APP_URL__', location.href.split('#')[0])) +
+  ')();';
 
 /* ---------------------------------------------------------------
    Selve trekningen
@@ -323,8 +335,10 @@ function tegnAlt() {
     var ute = ekskludert.has(normaliser(d.username));
     var li = document.createElement('li');
     if (ute) li.className = 'excluded';
-    var n = d.tekster.length;
-    li.innerHTML = '<span>@' + d.username + ' <em>(' + n + ' kommentar' + (n === 1 ? '' : 'er') + ')</em></span>';
+    // Uten kommentartekster ville tellingen vist «1 kommentar» for alle, som er misvisende.
+    var n = d.tekster.filter(function (t) { return t; }).length;
+    li.innerHTML = '<span>@' + d.username +
+      (n ? ' <em>(' + n + ' kommentar' + (n === 1 ? '' : 'er') + ')</em>' : '') + '</span>';
     var b = document.createElement('button');
     b.className = 'link-btn';
     b.textContent = ute ? 'Inkluder' : 'Ekskluder';
@@ -359,9 +373,11 @@ function tegnVinner(spinner, navn) {
   }
   // Uten spinner styres visningen av om det finnes en vinner — ikke av argumentet.
   if (!vinner) { kort.innerHTML = ''; return; }
+  // Kommer deltagerne fra bokmerket, finnes ingen kommentartekst å vise.
+  var tekst = (vinner.tekster.find(function (t) { return t; }) || '');
   kort.innerHTML = '<div class="winner-card"><div class="winner-label">🎉 Vinner</div>' +
     '<div class="winner-name">@' + vinner.username + '</div>' +
-    '<div class="winner-comment">"' + (vinner.tekster[0] || '').replace(/</g, '&lt;') + '"</div>' +
+    (tekst ? '<div class="winner-comment">"' + tekst.replace(/</g, '&lt;') + '"</div>' : '') +
     '<a class="profile-link" target="_blank" rel="noreferrer" href="https://instagram.com/' + vinner.username + '">' +
     'Åpne profil og sjekk «Følger deg» →</a>' +
     '<div class="row"><button class="confirm-btn" id="okBtn">✅ Følger — bekreft vinner</button>' +
@@ -429,6 +445,27 @@ $('excludeBtn').onclick = function () {
 };
 $('excludeInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('excludeBtn').click(); });
 $('drawBtn').onclick = trekk;
+
+// Kom vi hit fra bokmerket, ligger deltagerne i adressen etter #u=
+(function fraBokmerket() {
+  var m = location.hash.match(/^#u=(.*)$/);
+  if (!m) return;
+  var navn = decodeURIComponent(m[1]).split(',').filter(Boolean);
+  if (!navn.length) return;
+
+  var kart = new Map();
+  kommentarer.concat(navn.map(function (u) { return { username: u, text: '' }; }))
+    .forEach(function (k) { kart.set(k.username + '::' + k.text, k); });
+  kommentarer = Array.from(kart.values());
+  lagre();
+
+  // Fjern dataene fra adresselinjen så den ikke blir stående uleselig lang
+  history.replaceState(null, '', location.pathname + location.search);
+
+  var ok = $('pasteOk');
+  ok.textContent = 'Hentet ' + navn.length + ' deltagere fra Instagram.';
+  ok.classList.remove('hidden');
+})();
 
 tegnAlt();
 </script>
