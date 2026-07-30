@@ -1,12 +1,436 @@
-<!doctype html>
-<html lang="no">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IG Trekning</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IG Trekning — trekk vinner blant Instagram-kommentarer</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(circle at top left, #4f5bd5, #962fbf 35%, #d62976 60%, #fa7e1e 80%, #feda75 100%);
+    min-height: 100vh;
+  }
+  .app { max-width: 640px; margin: 0 auto; padding: 24px 16px 60px; }
+  header { text-align: center; color: #fff; margin-bottom: 20px; }
+  header h1 { margin: 0 0 6px; font-size: 28px; }
+  header p { margin: 0; opacity: .9; font-size: 14px; }
+  .panel { background: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+  h2 { margin-top: 0; font-size: 19px; }
+  ol.steps { padding-left: 20px; line-height: 1.85; color: #333; margin: 12px 0; }
+  ol.steps li { margin-bottom: 4px; }
+  .bookmarklet-box { text-align: center; background: #f7f7fb; border-radius: 14px; padding: 20px; margin: 16px 0; }
+  .bookmarklet-btn {
+    display: inline-block; padding: 14px 22px; color: #fff; text-decoration: none;
+    background: linear-gradient(45deg, #4f5bd5, #962fbf, #d62976, #fa7e1e);
+    border-radius: 12px; font-weight: 700; cursor: grab; user-select: none;
+  }
+  .hint { font-size: 13px; color: #777; margin: 10px 0 0; }
+  .note { margin-top: 16px; background: #eef6ff; border-left: 4px solid #4f5bd5; padding: 10px 14px; font-size: 13px; color: #345; border-radius: 6px; }
+  .warn { background: #fff8ec; border-left-color: #e6a100; color: #6b4e05; }
+  textarea {
+    width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 10px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; resize: vertical;
+  }
+  input[type=text] { padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; font-family: inherit; }
+  button { font-family: inherit; border: none; border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .primary { background: #5b5bf6; color: #fff; }
+  .secondary { background: #eee; color: #333; }
+  .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .summary { margin-top: 18px; font-size: 15px; color: #333; }
+  .exclude-row { display: flex; gap: 8px; margin-top: 12px; }
+  .exclude-row input { flex: 1; }
+  details.participants { margin-top: 14px; font-size: 13px; }
+  details.participants summary { cursor: pointer; font-weight: 600; }
+  details.participants ul { list-style: none; padding: 0; max-height: 240px; overflow-y: auto; margin: 8px 0 0; }
+  details.participants li { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
+  details.participants li.excluded { opacity: .4; text-decoration: line-through; }
+  .link-btn { background: none; color: #5b5bf6; font-size: 12px; padding: 2px 4px; }
+  .draw-btn {
+    display: block; width: 100%; margin-top: 20px; padding: 16px; font-size: 18px; font-weight: 800;
+    border-radius: 14px; color: #fff;
+    background: linear-gradient(45deg, #4f5bd5, #962fbf, #d62976, #fa7e1e);
+  }
+  .winner-card { margin-top: 20px; padding: 24px; border-radius: 16px; background: #111; color: #fff; text-align: center; }
+  .winner-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: .7; margin-bottom: 8px; }
+  .winner-name { font-size: 26px; font-weight: 800; word-break: break-all; }
+  .winner-comment { margin-top: 10px; font-style: italic; opacity: .85; font-size: 14px; }
+  .profile-link { display: inline-block; margin-top: 12px; color: #8ab4ff; font-size: 13px; }
+  .winner-card .row { justify-content: center; margin-top: 16px; }
+  .confirm-btn { background: #2ecc71; color: #fff; }
+  .reject-btn { background: #e74c3c; color: #fff; }
+  .confirmed h3 { font-size: 16px; }
+  .confirmed ol { padding-left: 20px; line-height: 1.7; }
+  .error { color: #c0392b; font-size: 13px; margin-top: 8px; }
+  .ok { color: #2d7d46; background: #eafaf0; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
+  .hidden { display: none; }
+  code { background: #f2f2f7; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>📸 IG Trekning</h1>
+    <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg</p>
+  </header>
+
+  <div class="panel">
+    <h2>1. Legg knappen i bokmerkelinjen</h2>
+    <p style="color:#555;font-size:14px;margin:0">
+      Dra den fargede knappen opp til bokmerkelinjen i nettleseren. Dette gjør du bare én gang.
+      Ser du ingen bokmerkelinje, trykk <code>Ctrl+Shift+B</code> (Windows) eller
+      <code>Cmd+Shift+B</code> (Mac).
+    </p>
+
+    <div class="bookmarklet-box">
+      <a class="bookmarklet-btn" id="bookmarklet" href="#">🎁 Hent kommentarer</a>
+      <p class="hint">Dra meg opp til bokmerkelinjen ↑</p>
+    </div>
+
+    <h2>2. Kjør den på innlegget</h2>
+    <ol class="steps">
+      <li>Åpne Instagram i samme nettleser og logg inn som vanlig.</li>
+      <li>Gå til innlegget du vil trekke blant.</li>
+      <li>Klikk på bokmerket <strong>🎁 Hent kommentarer</strong>.</li>
+      <li>La fanen stå i fred. Den scroller seg selv gjennom kommentarene, og en liten
+          boks nede til høyre teller opp underveis.</li>
+      <li>Når den er ferdig, trykk <strong>Kopier</strong> i boksen.</li>
+    </ol>
+    <div class="note warn">
+      Er du på en <code>/reel/</code>-lenke, sender bokmerket deg først til den vanlige
+      innleggssiden. Da må du klikke på bokmerket én gang til når siden har lastet.
+      Grunnen er at reel-visningen ikke etterlaster kommentarer.
+    </div>
+
+    <h2>3. Lim inn her</h2>
+    <textarea id="paste" rows="4" placeholder="Lim inn det du kopierte fra Instagram"></textarea>
+    <div class="row">
+      <button class="primary" id="addBtn">Legg til deltagere</button>
+      <button class="secondary hidden" id="resetBtn">Nullstill alt</button>
+    </div>
+    <div class="error hidden" id="pasteError"></div>
+    <div class="ok hidden" id="pasteOk"></div>
+
+    <div id="drawArea" class="hidden">
+      <div class="summary" id="summary"></div>
+
+      <div class="exclude-row">
+        <input type="text" id="excludeInput" placeholder="Ekskluder brukernavn (f.eks. kontoen selv)" />
+        <button class="secondary" id="excludeBtn">Ekskluder</button>
+      </div>
+
+      <details class="participants">
+        <summary id="participantsSummary">Vis alle deltagere</summary>
+        <ul id="participantsList"></ul>
+      </details>
+
+      <button class="draw-btn" id="drawBtn">🎲 Trekk vinner</button>
+
+      <div id="winnerCard"></div>
+      <div class="confirmed hidden" id="confirmed">
+        <h3>Bekreftede vinnere</h3>
+        <ol id="confirmedList"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   Bokmerket. Kjøres inne på instagram.com når man klikker på det.
+   Alt her er vanlig JavaScript — ingen server, ingen utvidelse.
+   --------------------------------------------------------------- */
+function igTrekningBookmarklet() {
+  if (window.__igTrekningKjorer) { alert('Henting pågår allerede i denne fanen.'); return; }
+
+  var kode = location.pathname.match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+  if (!kode) { alert('Åpne et Instagram-innlegg først, og klikk så på bokmerket.'); return; }
+
+  // Reel-visningen etterlaster ikke kommentarer. /p/-siden gjør det.
+  if (location.pathname.indexOf('/p/') !== 0) {
+    alert('Sender deg til den vanlige innleggssiden.\n\nKlikk på bokmerket én gang til når siden har lastet.');
+    location.href = 'https://www.instagram.com/p/' + kode[1] + '/';
+    return;
+  }
+
+  window.__igTrekningKjorer = true;
+
+  var boks = document.createElement('div');
+  boks.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111;color:#fff;' +
+    'padding:14px 16px;border-radius:12px;font:13px -apple-system,Segoe UI,Roboto,sans-serif;' +
+    'box-shadow:0 8px 30px rgba(0,0,0,.4);min-width:230px';
+  boks.innerHTML = '<div id="igt-tall" style="font-size:22px;font-weight:800">0 deltagere</div>' +
+    '<div id="igt-stat" style="opacity:.6;margin-top:2px;font-size:11px">starter …</div>' +
+    '<div style="margin-top:10px;display:flex;gap:6px">' +
+    '<button id="igt-kopier" style="flex:1;padding:8px;border:0;border-radius:8px;background:#5b5bf6;color:#fff;font-weight:700;cursor:pointer">Kopier</button>' +
+    '<button id="igt-stopp" style="padding:8px 10px;border:0;border-radius:8px;background:#444;color:#fff;cursor:pointer">Stopp</button>' +
+    '</div>';
+  document.body.appendChild(boks);
+
+  var funnet = new Map(), runder = 0, stille = 0, stoppet = false;
+  var tall = boks.querySelector('#igt-tall'), stat = boks.querySelector('#igt-stat');
+
+  var PROFIL = /^\/([A-Za-z0-9._]{2,30})\/$/;
+
+  function hentFraSiden() {
+    var rader = new Set();
+    var tider = document.querySelectorAll('time');
+    for (var i = 0; i < tider.length; i++) {
+      var el = tider[i];
+      for (var d = 0; d < 8 && el; d++) {
+        el = el.parentElement;
+        if (!el) break;
+        var a = el.querySelector('a[href^="/"]');
+        if (a && PROFIL.test(a.getAttribute('href') || '')) { rader.add(el); break; }
+      }
+    }
+    var ut = [];
+    rader.forEach(function (rad) {
+      var a = rad.querySelector('a[href^="/"]');
+      // Kun FØRSTE lenke — ellers får @-omtaler inne i teksten lodd de ikke skal ha.
+      var m = (a && a.getAttribute('href') || '').match(PROFIL);
+      if (!m) return;
+      var bruker = m[1];
+      var tekst = (rad.innerText || '').replace(/\s+/g, ' ').trim();
+      tekst = tekst.replace(new RegExp('^' + bruker + '\\s*'), '');
+      tekst = tekst.replace(/^(Redigert\s*•\s*)?\d+\s*(s|min|t|d|u|w|h|m)\s+/i, '');
+      tekst = tekst.replace(/\s*(Se oversettelse|Svar|Liker|\d+ likerklikk|Se alle \d+ svar).*$/i, '');
+      ut.push({ username: bruker, text: tekst.trim() });
+    });
+    return ut;
+  }
+
+  function tegn() {
+    tall.textContent = funnet.size + ' deltagere';
+    stat.textContent = stoppet
+      ? 'ferdig · ' + runder + ' runder'
+      : runder + ' runder · leter etter flere …';
+  }
+
+  function steg() {
+    if (stoppet) return;
+    // Instagram laster flere kommentarer når spinneren nederst kommer til syne.
+    var sp = document.querySelectorAll('svg[aria-label="Laster inn …"],svg[aria-label="Laster inn…"],svg[aria-label="Loading..."]');
+    var siste = sp[sp.length - 1];
+    if (siste) siste.scrollIntoView({ block: 'center' });
+    else window.scrollTo(0, document.body.scrollHeight);
+    runder++;
+
+    setTimeout(function () {
+      var for_ = funnet.size;
+      hentFraSiden().forEach(function (k) { if (!funnet.has(k.username)) funnet.set(k.username, k.text); });
+      stille = funnet.size > for_ ? 0 : stille + 1;
+      tegn();
+      if (stille >= 20) { avslutt('Ingen nye på 18 sekunder.'); return; }
+      steg();
+    }, 900);
+  }
+
+  function avslutt(hvorfor) {
+    stoppet = true;
+    tegn();
+    stat.textContent = hvorfor + ' Trykk Kopier.';
+  }
+
+  boks.querySelector('#igt-stopp').onclick = function () { avslutt('Stoppet.'); };
+  boks.querySelector('#igt-kopier').onclick = function () {
+    var data = [];
+    funnet.forEach(function (t, u) { data.push({ username: u, text: t }); });
+    var json = JSON.stringify(data);
+    navigator.clipboard.writeText(json).then(function () {
+      stat.textContent = 'Kopiert ' + data.length + ' deltagere. Lim inn i IG Trekning.';
+    }, function () {
+      // Faller tilbake til manuell kopiering hvis utklippstavlen er sperret
+      var ta = document.createElement('textarea');
+      ta.value = json;
+      ta.style.cssText = 'width:100%;height:70px;margin-top:8px;font-size:10px';
+      boks.appendChild(ta);
+      ta.select();
+      stat.textContent = 'Merk teksten under og kopier med Ctrl+C.';
+    });
+  };
+
+  tegn();
+  steg();
+}
+
+// Bygger javascript:-lenken ut fra funksjonen over, så koden bare finnes ett sted.
+// Nettleseren avkoder javascript:-URL-er før de kjøres, derfor er encodeURIComponent trygt.
+document.getElementById('bookmarklet').href =
+  'javascript:(' + encodeURIComponent(igTrekningBookmarklet.toString()) + ')();';
+
+/* ---------------------------------------------------------------
+   Selve trekningen
+   --------------------------------------------------------------- */
+var LAGER = 'ig-trekning-deltagere', LAGER_EKS = 'ig-trekning-ekskludert';
+
+function les(nokkel, standard) {
+  try { var r = localStorage.getItem(nokkel); return r ? JSON.parse(r) : standard; }
+  catch (e) { return standard; }
+}
+
+var kommentarer = les(LAGER, []);
+var ekskludert = new Set(les(LAGER_EKS, []));
+var bekreftede = [];
+var vinner = null;
+
+function normaliser(u) { return String(u).trim().toLowerCase().replace(/^@/, ''); }
+
+function lagre() {
+  localStorage.setItem(LAGER, JSON.stringify(kommentarer));
+  localStorage.setItem(LAGER_EKS, JSON.stringify(Array.from(ekskludert)));
+}
+
+// Én unik bruker = ett lodd, uansett hvor mange kommentarer de har skrevet.
+function deltagere() {
+  var kart = new Map();
+  kommentarer.forEach(function (k) {
+    var n = normaliser(k.username);
+    if (!kart.has(n)) kart.set(n, { username: String(k.username).replace(/^@/, ''), tekster: [] });
+    kart.get(n).tekster.push(k.text);
+  });
+  return Array.from(kart.values()).sort(function (a, b) { return a.username.localeCompare(b.username); });
+}
+
+function kvalifiserte() {
+  return deltagere().filter(function (d) { return !ekskludert.has(normaliser(d.username)); });
+}
+
+function tilfeldig(maks) {
+  var a = new Uint32Array(1);
+  crypto.getRandomValues(a);
+  return a[0] % maks;
+}
+
+var $ = function (id) { return document.getElementById(id); };
+
+function tegnAlt() {
+  var alle = deltagere(), ok = kvalifiserte();
+  $('drawArea').classList.toggle('hidden', alle.length === 0);
+  $('resetBtn').classList.toggle('hidden', alle.length === 0);
+  if (alle.length === 0) return;
+
+  $('summary').innerHTML = '<strong>' + alle.length + '</strong> unike deltagere = <strong>' +
+    alle.length + '</strong> lodd totalt' +
+    (ekskludert.size ? ' · <strong>' + ok.length + '</strong> kvalifisert etter eksklusjon' : '');
+
+  $('participantsSummary').textContent = 'Vis alle deltagere (' + alle.length + ')';
+  var ul = $('participantsList');
+  ul.innerHTML = '';
+  alle.forEach(function (d) {
+    var ute = ekskludert.has(normaliser(d.username));
+    var li = document.createElement('li');
+    if (ute) li.className = 'excluded';
+    var n = d.tekster.length;
+    li.innerHTML = '<span>@' + d.username + ' <em>(' + n + ' kommentar' + (n === 1 ? '' : 'er') + ')</em></span>';
+    var b = document.createElement('button');
+    b.className = 'link-btn';
+    b.textContent = ute ? 'Inkluder' : 'Ekskluder';
+    b.onclick = function () { vekslExkluder(d.username); };
+    li.appendChild(b);
+    ul.appendChild(li);
+  });
+
+  $('drawBtn').textContent = bekreftede.length ? '🎲 Trekk neste' : '🎲 Trekk vinner';
+  $('drawBtn').disabled = ok.length === 0;
+  tegnBekreftede();
+}
+
+function vekslExkluder(brukernavn) {
+  var n = normaliser(brukernavn);
+  if (ekskludert.has(n)) ekskludert.delete(n); else ekskludert.add(n);
+  lagre();
+  tegnAlt();
+}
+
+function tegnBekreftede() {
+  $('confirmed').classList.toggle('hidden', bekreftede.length === 0);
+  $('confirmedList').innerHTML = bekreftede.map(function (v) { return '<li>@' + v.username + '</li>'; }).join('');
+}
+
+function tegnVinner(spinner, navn) {
+  var kort = $('winnerCard');
+  if (spinner) {
+    kort.innerHTML = '<div class="winner-card"><div class="winner-label">Trekker …</div>' +
+      '<div class="winner-name">@' + navn + '</div></div>';
+    return;
+  }
+  // Uten spinner styres visningen av om det finnes en vinner — ikke av argumentet.
+  if (!vinner) { kort.innerHTML = ''; return; }
+  kort.innerHTML = '<div class="winner-card"><div class="winner-label">🎉 Vinner</div>' +
+    '<div class="winner-name">@' + vinner.username + '</div>' +
+    '<div class="winner-comment">"' + (vinner.tekster[0] || '').replace(/</g, '&lt;') + '"</div>' +
+    '<a class="profile-link" target="_blank" rel="noreferrer" href="https://instagram.com/' + vinner.username + '">' +
+    'Åpne profil og sjekk «Følger deg» →</a>' +
+    '<div class="row"><button class="confirm-btn" id="okBtn">✅ Følger — bekreft vinner</button>' +
+    '<button class="reject-btn" id="neiBtn">❌ Følger ikke — trekk på nytt</button></div></div>';
+  $('okBtn').onclick = function () { bekreftede.push(vinner); vinner = null; tegnVinner(); tegnAlt(); };
+  $('neiBtn').onclick = function () { var f = vinner; vinner = null; vekslExkluder(f.username); trekk(); };
+}
+
+function trekk() {
+  var pott = kvalifiserte().filter(function (d) {
+    return !bekreftede.some(function (v) { return normaliser(v.username) === normaliser(d.username); });
+  });
+  if (!pott.length) { alert('Ingen kvalifiserte deltagere igjen å trekke blant.'); return; }
+
+  $('drawBtn').disabled = true;
+  var n = 0;
+  var id = setInterval(function () {
+    tegnVinner(true, pott[tilfeldig(pott.length)].username);
+    if (++n >= 22) {
+      clearInterval(id);
+      vinner = pott[tilfeldig(pott.length)];
+      tegnVinner(false);
+      $('drawBtn').disabled = false;
+    }
+  }, 80);
+}
+
+$('addBtn').onclick = function () {
+  var felt = $('paste'), feil = $('pasteError'), ok = $('pasteOk');
+  feil.classList.add('hidden'); ok.classList.add('hidden');
+  var data;
+  try {
+    data = JSON.parse(felt.value);
+    if (!Array.isArray(data)) throw 0;
+  } catch (e) {
+    feil.textContent = 'Klarte ikke å lese teksten. Lim inn det du kopierte fra boksen på Instagram.';
+    feil.classList.remove('hidden');
+    return;
+  }
+  var kart = new Map();
+  kommentarer.concat(data).forEach(function (k) {
+    if (k && typeof k.username === 'string') kart.set(k.username + '::' + k.text, { username: k.username, text: String(k.text || '') });
+  });
+  kommentarer = Array.from(kart.values());
+  lagre();
+  felt.value = '';
+  ok.textContent = 'La til ' + data.length + ' kommentarer. Totalt ' + deltagere().length + ' unike deltagere.';
+  ok.classList.remove('hidden');
+  tegnAlt();
+};
+
+$('resetBtn').onclick = function () {
+  if (!confirm('Slette alle deltagere og starte på nytt?')) return;
+  kommentarer = []; ekskludert = new Set(); bekreftede = []; vinner = null;
+  lagre(); tegnVinner(); tegnAlt();
+  $('pasteOk').classList.add('hidden');
+};
+
+$('excludeBtn').onclick = function () {
+  var v = $('excludeInput').value.trim();
+  if (!v) return;
+  ekskludert.add(normaliser(v));
+  $('excludeInput').value = '';
+  lagre(); tegnAlt();
+};
+$('excludeInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('excludeBtn').click(); });
+$('drawBtn').onclick = trekk;
+
+tegnAlt();
+</script>
+</body>
 </html>
