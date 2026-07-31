@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<title>Prisme — musikkvisualisering i glass</title>
+<style>
+  :root {
+    --panel: rgba(10, 14, 18, .6);
+    --line: rgba(255, 255, 255, .14);
+    --text: #eef3f5;
+    --muted: #9aa8ae;
+    --accent: #33c9c0;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: #05080a; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, sans-serif;
+    overflow: hidden; -webkit-tap-highlight-color: transparent;
+  }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  #hint {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; text-align: center;
+    padding: 24px; pointer-events: none; transition: opacity .5s ease;
+    text-shadow: 0 2px 30px rgba(0,0,0,.6);
+  }
+  #hint h1 { margin: 0; font-size: clamp(30px, 7vw, 62px); font-weight: 300; letter-spacing: .08em; }
+  #hint p { margin: 0; color: var(--muted); font-size: clamp(13px, 2.4vw, 16px); max-width: 32em; line-height: 1.7; }
+  #hint.gone { opacity: 0; }
+
+  #toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,.5); border: 1px solid var(--line); backdrop-filter: blur(14px);
+    padding: 8px 18px; border-radius: 999px; font-size: 13px; opacity: 0;
+    transition: opacity .3s ease; pointer-events: none; white-space: nowrap; z-index: 20;
+    max-width: 92vw; overflow: hidden; text-overflow: ellipsis;
+  }
+  #toast.show { opacity: 1; }
+
+  #drop {
+    position: fixed; inset: 12px; border: 2px dashed var(--accent); border-radius: 20px;
+    background: rgba(51,201,192,.08); display: none; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 600; pointer-events: none; z-index: 15;
+  }
+  body.dragging #drop { display: flex; }
+
+  #bar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    width: min(940px, calc(100% - 24px)); z-index: 10;
+    background: var(--panel); backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--line); border-radius: 18px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 10px;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  body.idle #bar { opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
+  body.idle { cursor: none; }
+
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 0; }
+
+  button, select, label.file {
+    font: inherit; font-size: 13px; color: var(--text);
+    background: rgba(255,255,255,.08); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px; cursor: pointer; white-space: nowrap;
+    transition: background .15s, transform .08s; user-select: none;
+  }
+  button:hover, select:hover, label.file:hover { background: rgba(255,255,255,.16); }
+  button:active { transform: scale(.96); }
+  button.on { background: var(--accent); border-color: transparent; color: #04211f; font-weight: 600; }
+  button.rec.on { background: #e5484d; color: #fff; }
+  button.icon { padding: 8px 11px; line-height: 1; }
+  button.play { padding: 9px 15px; font-size: 16px; }
+  select { padding: 7px 8px; }
+  option { background: #0d1418; }
+
+  .time { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); min-width: 40px; text-align: center; }
+  input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; height: 18px; margin: 0; }
+  input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 3px; background: rgba(255,255,255,.2); }
+  input[type=range]::-moz-range-track { height: 3px; border-radius: 3px; background: rgba(255,255,255,.2); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
+    background: #fff; margin-top: -5px; box-shadow: 0 1px 5px rgba(0,0,0,.6);
+  }
+  input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border: none; border-radius: 50%; background: #fff; }
+  #seek { flex: 1; min-width: 110px; }
+  .knob { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--muted);
+          text-transform: uppercase; letter-spacing: .05em; }
+  .knob input { width: 92px; }
+  .track { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  #fps { position: fixed; top: 12px; right: 14px; font-size: 11px; color: rgba(255,255,255,.35);
+         font-variant-numeric: tabular-nums; z-index: 12; display: none; }
+  body.showfps #fps { display: block; }
+
+  @media (max-width: 620px) {
+    .knob span { display: none; }
+    .knob input { width: 70px; }
+    .track { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gl"></canvas>
+
+<div id="hint">
+  <h1>PRISME</h1>
+  <p>Slipp en lyd- eller videofil hvor som helst, velg fil nedenfor — eller bruk mikrofonen.</p>
+</div>
+<div id="toast"></div>
+<div id="drop">Slipp filene her</div>
+<div id="fps"></div>
+
+<audio id="audio"></audio>
+<video id="video" playsinline webkit-playsinline style="display:none"></video>
+
+<div id="bar">
+  <div class="row">
+    <button class="icon" id="prev" title="Forrige">⏮</button>
+    <button class="play" id="play" title="Spill / pause (mellomrom)">▶︎</button>
+    <button class="icon" id="next" title="Neste">⏭</button>
+    <span class="time" id="cur">0:00</span>
+    <input type="range" id="seek" min="0" max="1000" value="0" />
+    <span class="time" id="dur">0:00</span>
+    <span class="track grow" id="trackName">Ingen fil valgt</span>
+  </div>
+  <div class="row">
+    <label class="file">Velg filer
+      <input type="file" id="file" accept="audio/*,video/*,.wav,.mp3,.flac,.ogg,.m4a,.mp4,.webm,.mov" multiple hidden />
+    </label>
+    <button id="mic" title="Mikrofon (M)">🎙</button>
+    <select id="palette" title="Fargetema"></select>
+    <select id="quality" title="Oppløsning">
+      <option value="1">Standard</option>
+      <option value="1.5" selected>Høy</option>
+      <option value="2">Ultra</option>
+    </select>
+    <label class="knob"><span>Styrke</span><input type="range" id="intensity" min="0" max="200" value="100"></label>
+    <div class="grow"></div>
+    <button id="fs" title="Fullskjerm (F)">⛶</button>
+    <button id="shot" title="Lagre bilde i 4K (S)">📷 4K</button>
+    <button id="rec" class="rec" title="Opptak (R)">⏺</button>
+  </div>
+</div>
+
+<script id="vert" type="x-shader/x-vertex">#version 300 es
+in vec2 aPos;
+void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }
+</script>
+
+<script id="frag" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+out vec4 O;
+
+uniform vec2  uRes;
+uniform float uTime;
+uniform float uBass, uMid, uTreble, uLevel, uBeatAge, uBeatPow;
+uniform float uIntensity;
+uniform sampler2D uSpec;
+uniform vec3  uWarm, uCool, uDeep;
+
+#define TAU 6.28318530718
+#define CAM_Z 8.0        /* kameraavstand — lang brennvidde gir rolig perspektiv */
+#define ZOOM 0.51        /* bildevinkel: kula fyller ca. 45 % av korteste side  */
+#define BG_Z -3.4        /* heksagonveggen bak kula                             */
+#define HEX_SCALE 0.72
+#define ORB_R 1.0
+#define RINGS 3
+
+/* ---------------------------------------------------------------- *
+ * Hjelpere
+ * ---------------------------------------------------------------- */
+float hash21(vec2 p){
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float hexDist(vec2 p){
+  p = abs(p);
+  return max(dot(p, normalize(vec2(1.0, 1.7320508))), p.x);
+}
+
+/* .xy = posisjon inne i cellen, .zw = celle-id */
+vec4 hexCoords(vec2 uv){
+  vec2 r = vec2(1.0, 1.7320508), h = r * 0.5;
+  vec2 a = mod(uv, r) - h;
+  vec2 b = mod(uv - h, r) - h;
+  vec2 gv = dot(a, a) < dot(b, b) ? a : b;
+  return vec4(gv, uv - gv);
+}
+
+float spec(float x){ return texture(uSpec, vec2(clamp(x, 0.0, 1.0), 0.5)).r; }
+
+mat3 rotX(float a){ float c = cos(a), s = sin(a); return mat3(1,0,0, 0,c,-s, 0,s,c); }
+mat3 rotY(float a){ float c = cos(a), s = sin(a); return mat3(c,0,s, 0,1,0, -s,0,c); }
+mat3 rotZ(float a){ float c = cos(a), s = sin(a); return mat3(c,-s,0, s,c,0, 0,0,1); }
+
+/* ---------------------------------------------------------------- *
+ * Bakgrunn: bevelet heksagonvegg.
+ * Kalles også fra refraksjonen, slik at glasset bryter det virkelige
+ * mønsteret i stedet for en flat gradient.
+ * ---------------------------------------------------------------- */
+vec3 background(vec3 ro, vec3 rd){
+  float dz = rd.z;
+  if (abs(dz) < 1e-4) dz = -1e-4;
+  float t = (BG_Z - ro.z) / dz;
+  if (t <= 0.0) return uDeep;
+  vec3 p = ro + rd * t;
+
+  vec4 hc = hexCoords(p.xy * HEX_SCALE);
+  vec2 gv = hc.xy, id = hc.zw;
+  float d = 0.5 - hexDist(gv);              /* 0 ved kanten, 0.5 i midten */
+  float rnd = hash21(id);
+
+  /* diagonal fargeovergang: varmt oppe til venstre, kjølig nede til høyre */
+  float grad = clamp(0.5 + 0.085 * (p.x * 1.05 - p.y * 0.85), 0.0, 1.0);
+  vec3 base = mix(uWarm, uCool, smoothstep(0.0, 1.0, grad));
+  base *= 0.74 + 0.20 * rnd;                /* cellene ligger i litt ulik høyde */
+
+  /* tre soner: mørk fuge, skrå bevelkant, flat celleflate */
+  float gapM   = smoothstep(0.0, 0.030, d);
+  float bevelM = smoothstep(0.030, 0.082, d);
+
+  vec2 L2 = normalize(vec2(-0.70, 0.72));
+  /* uten normalisering: glatt i hele cellen, og null nøyaktig i midten der
+     en retningsvektor ellers ville vært udefinert og gitt stripestøy */
+  float facing = dot(gv, L2) * 2.0;
+
+  vec3 col = base * (0.92 + 0.14 * facing);
+  /* bevelen fanger lyset: lys strek der kanten vender mot lampen */
+  float rim = (1.0 - bevelM) * gapM;
+  col += mix(base, vec3(1.0), 0.72) * rim * max(facing, 0.0) * 1.30;
+  col -= base * rim * max(-facing, 0.0) * 0.42;
+  col *= gapM;
+
+  /* lyskilde utenfor bildet, oppe til venstre */
+  float lamp = exp(-length(p.xy - vec2(-5.5, 6.0)) * 0.185);
+  col += uWarm * lamp * 0.55;
+  col += mix(uWarm, vec3(1.0), 0.5) * exp(-length(p.xy - vec2(-4.5, 5.0)) * 0.075) * 0.16;
+
+  /* ringbølge ut fra kula på taktslag */
+  float rr = length(p.xy);
+  float wave = exp(-abs(rr - uBeatAge * 7.0) * 1.15) * exp(-uBeatAge * 1.9) * uBeatPow;
+  col += mix(uWarm, uCool, 0.4) * wave * (1.0 - bevelM * 0.6) * 0.85 * uIntensity;
+
+  /* spekteret løfter cellene utover fra midten */
+  float s = spec(clamp(rr / 9.0, 0.0, 1.0));
+  col += mix(uCool, uWarm, rnd) * s * (1.0 - bevelM * 0.55) * 0.45 * uIntensity;
+
+  return col;
+}
+
+/* ---------------------------------------------------------------- *
+ * Kule
+ * ---------------------------------------------------------------- */
+float iSphere(vec3 ro, vec3 rd, float r, out vec3 nrm){
+  float b = dot(ro, rd);
+  float c = dot(ro, ro) - r * r;
+  float h = b * b - c;
+  if (h < 0.0) return -1.0;
+  h = sqrt(h);
+  float t = -b - h;
+  if (t < 0.0) return -1.0;
+  nrm = normalize(ro + rd * t);
+  return t;
+}
+
+/* Brytning gjennom begge glassflatene, med svak kromatisk splitt. */
+vec3 refractSample(vec3 p, vec3 rd, vec3 n, float R, float ior){
+  vec3 r1 = refract(rd, n, 1.0 / ior);
+  if (dot(r1, r1) < 1e-6) r1 = reflect(rd, n);
+  float b = dot(p, r1);
+  float c = dot(p, p) - R * R;
+  vec3 p2 = p + r1 * (-b + sqrt(max(b * b - c, 0.0)));
+  vec3 n2 = -normalize(p2);
+  vec3 r2 = refract(r1, n2, ior);
+  if (dot(r2, r2) < 1e-6) r2 = reflect(r1, n2);
+  return background(p2, r2);
+}
+
+/* To oppslag holder: den røde og den blå enden av splitten hentes hver
+   for seg, og grønn ligger midt imellom. Et tredje oppslag koster like
+   mye som de to andre og er ikke synlig i resultatet. */
+vec3 refractThrough(vec3 p, vec3 rd, vec3 n, float R, float iorBase){
+  vec3 lo = refractSample(p, rd, n, R, iorBase - 0.016);
+  vec3 hi = refractSample(p, rd, n, R, iorBase + 0.016);
+  return vec3(lo.r, (lo.g + hi.g) * 0.5, hi.b);
+}
+
+/* ---------------------------------------------------------------- *
+ * Ringer: hver ring er et eget plan. En stråle krysser planet i
+ * nøyaktig ett punkt, så forsiden og baksiden av ringen treffer
+ * hver sine piksler og sorteres mot kula uten sortering av lister.
+ * ---------------------------------------------------------------- */
+struct Ring { float t; float m; float ang; float across; };
+
+Ring ringHit(vec3 ro, vec3 rd, mat3 rot, float radius, float width){
+  Ring res;
+  res.t = -1.0; res.m = 0.0; res.ang = 0.0; res.across = 0.0;
+  vec3 lo = rot * ro, ld = rot * rd;
+  if (abs(ld.y) < 1e-4) return res;
+  float t = -lo.y / ld.y;
+  if (t < 0.0) return res;
+  vec3 p = lo + ld * t;
+  float u = (length(p.xz) - radius) / width;      /* -1..1 tvers over båndet */
+  if (abs(u) > 1.0) return res;
+  res.t = t;
+  res.across = u;
+  res.m = sqrt(max(1.0 - u * u, 0.0));            /* rundt tverrsnitt */
+  res.ang = atan(p.z, p.x);
+  return res;
+}
+
+vec3 ringShade(Ring h, float idx){
+  float a = fract(h.ang / TAU + 1.0);
+  float s = spec(a);                              /* spekteret rundt omkretsen */
+  float glossy = pow(h.m, 2.5);
+
+  float hue = fract(a * 1.5 + idx * 0.3 + uTime * 0.03);
+  vec3 iri = mix(uCool, uWarm, 0.5 + 0.5 * sin(hue * TAU));
+  iri = mix(iri, vec3(1.0), 0.10 + 0.35 * glossy);
+
+  vec3 col = iri * (0.62 + s * 1.15 * uIntensity);
+  /* varm glans langs den siden som vender mot lampen */
+  float lightSide = smoothstep(-0.4, 1.0, sin(h.ang + 2.2));
+  col += uWarm * pow(h.m, 5.0) * lightSide * (0.75 + s * 0.9);
+  /* skarp lysstrek der glasset er tynnest, som på en blåst glassring */
+  col += vec3(1.0) * pow(max(1.0 - abs(h.across), 0.0), 9.0) * 0.42;
+  col += vec3(1.0) * pow(h.m, 26.0) * 0.55;
+  return col;
+}
+
+/* ---------------------------------------------------------------- *
+ * Bobler
+ * ---------------------------------------------------------------- */
+vec3 bubblePos(int i, float t){
+  float f = float(i);
+  float rad = 1.7 + hash21(vec2(f, 3.1)) * 1.7;
+  float sp  = 0.10 + hash21(vec2(f, 7.7)) * 0.20;
+  float ph  = hash21(vec2(f, 1.3)) * TAU;
+  float y   = mod(hash21(vec2(f, 5.5)) * 6.0 + t * sp, 5.4) - 2.7;
+  float a   = ph + t * sp * 0.6;
+  float kick = exp(-uBeatAge * 2.4) * uBeatPow * 0.22;
+  return vec3(cos(a) * (rad + kick), y, sin(a) * (rad + kick) * 0.6);
+}
+
+/* ---------------------------------------------------------------- */
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / min(uRes.x, uRes.y);
+  float t = uTime;
+
+  vec3 ro = vec3(0.0, 0.0, CAM_Z);
+  vec3 rd = normalize(vec3(uv * ZOOM, -1.0));
+
+  float R = ORB_R * (1.0 + uBass * 0.05 + exp(-uBeatAge * 5.0) * uBeatPow * 0.03);
+
+  vec3 col = background(ro, rd);
+
+  mat3 rots[RINGS];
+  float radii[RINGS], widths[RINGS];
+  /* Ringplanene ligger nesten vannrett og sees skrått ovenfra. Det er det
+     som gir de avlange banene som går bak kula på oversiden og foran på
+     undersiden — står planet mot kamera blir ringene bare sirkler. */
+  rots[0] = rotZ(-0.40) * rotX(0.34 + sin(t * 0.11) * 0.035);
+  rots[1] = rotZ(-0.24) * rotX(0.45 + sin(t * 0.09 + 1.7) * 0.035) * rotY(t * 0.05);
+  rots[2] = rotZ(-0.54) * rotX(0.26 + sin(t * 0.13 + 3.1) * 0.035) * rotY(-t * 0.04);
+  radii[0]  = 1.22 + uMid * 0.04;
+  radii[1]  = 1.40 + uTreble * 0.05;
+  radii[2]  = 1.58 + uMid * 0.03;
+  widths[0] = 0.070 + uLevel * 0.034;
+  widths[1] = 0.052 + uLevel * 0.026;
+  widths[2] = 0.040 + uLevel * 0.020;
+
+  vec3 nrm;
+  float tS = iSphere(ro, rd, R, nrm);
+
+  Ring hits[RINGS];
+  for (int i = 0; i < RINGS; i++) hits[i] = ringHit(ro, rd, rots[i], radii[i], widths[i]);
+
+  /* ringer bak kula */
+  for (int i = 0; i < RINGS; i++){
+    Ring h = hits[i];
+    if (h.t > 0.0 && (tS < 0.0 || h.t > tS)){
+      col = mix(col, ringShade(h, float(i)) + col * 0.30, h.m * 0.80);
+    }
+  }
+
+  /* glasskula */
+  if (tS > 0.0){
+    vec3 p = ro + rd * tS;
+    vec3 n = nrm;
+    vec3 L = normalize(vec3(-0.62, 0.72, 0.62));
+
+    vec3 refr = refractThrough(p, rd, n, R, 1.34);
+
+    /* kula er ikke helt klar: en myk indre fargeovergang demper det
+       brutte mønsteret og gir den kropp */
+    float lit = dot(n, L) * 0.5 + 0.5;
+    vec3 inner = mix(uCool * 0.82, uWarm * 1.15, smoothstep(0.58, 1.0, lit));
+    refr = mix(refr, inner, 0.30);
+
+    /* væskeaktig virvel inne i glasset */
+    vec3 ip = normalize(p);
+    float sw = sin(ip.x * 4.2 + t * 0.55) * cos(ip.y * 3.6 - t * 0.42 + uLevel * 2.5);
+    refr += mix(uWarm, uCool, 0.5 + 0.5 * sw) * (0.03 + uMid * 0.22) * uIntensity;
+
+    /* indre energi som pustes av bassen og farges av spekteret */
+    float dc = length(ro - rd * dot(ro, rd));
+    float core = exp(-pow(dc / (R * 0.72), 2.0));
+    float sC = spec(0.04 + (dc / R) * 0.45);
+    refr += mix(uWarm, uCool, 0.55) * core * (0.03 + uBass * 0.34 + sC * 0.30) * uIntensity;
+
+    /* varm halvmåne der lyset samler seg på motsatt side */
+    /* smal varm halvmåne der lyset samler seg på motsatt side av kula */
+    refr += uWarm * pow(max(dot(n, -L), 0.0), 5.0) * 1.55;
+    /* varmt gjenskinn på lyssiden, som i et ekte glasslegeme */
+    refr += mix(uWarm, vec3(1.0), 0.35) * pow(max(dot(n, L), 0.0), 3.0) * 0.30;
+
+    /* glasset er tettere der strålen går langt gjennom det */
+    float thick = smoothstep(0.0, 1.0, 1.0 - abs(dot(n, rd)));
+    refr *= 1.0 - thick * 0.22;
+    refr += uCool * thick * 0.16;
+
+    float fres = pow(1.0 - max(dot(n, -rd), 0.0), 4.5);
+    vec3 refl = background(p, reflect(rd, n));
+
+    vec3 glass = mix(refr, refl * 0.85, clamp(fres * 0.85 + 0.04, 0.0, 1.0));
+    vec3 hv = normalize(L - rd);
+    glass += vec3(1.0) * pow(max(dot(n, hv), 0.0), 420.0) * 2.2;          /* lyspunkt */
+    glass += mix(uWarm, vec3(1.0), 0.6) * pow(max(dot(n, hv), 0.0), 22.0) * 0.16;
+    glass += mix(uCool, uWarm, 0.5) * pow(fres, 1.6) * 0.48;              /* kantlys */
+    col = glass;
+  }
+
+  /* ringer foran kula */
+  for (int i = 0; i < RINGS; i++){
+    Ring h = hits[i];
+    if (h.t > 0.0 && (tS < 0.0 || h.t <= tS)){
+      col = mix(col, ringShade(h, float(i)) + col * 0.22, h.m * 0.88);
+    }
+  }
+
+  /* bobler */
+  float bestT = 1e9; vec3 bestN = vec3(0.0);
+  for (int i = 0; i < 22; i++){
+    vec3 bp = bubblePos(i, t);
+    float br = 0.030 + hash21(vec2(float(i), 9.2)) * 0.055;
+    vec3 n2;
+    float bt = iSphere(ro - bp, rd, br, n2);
+    if (bt > 0.0 && bt < bestT){ bestT = bt; bestN = n2; }
+  }
+  if (bestT < 1e8){
+    vec3 bp = ro + rd * bestT;
+    vec3 L = normalize(vec3(-0.62, 0.72, 0.62));
+    vec3 hv = normalize(L - rd);
+    float f = pow(1.0 - max(dot(bestN, -rd), 0.0), 3.0);
+    vec3 bc = background(bp, refract(rd, bestN, 1.0 / 1.33)) * 0.82;
+    bc += vec3(1.0) * pow(max(dot(bestN, hv), 0.0), 60.0) * 2.2;      /* lyspunkt */
+    bc += mix(uCool, uWarm, 0.45) * pow(f, 0.8) * 1.15;               /* kantlys */
+    bc *= 0.85 + 0.15 * f;
+    col = mix(col, bc, clamp(0.45 + f * 0.55, 0.0, 1.0));
+  }
+
+  /* ettertone */
+  float vig = 1.0 - 0.30 * dot(uv, uv);
+  col *= vig;
+  col = col / (1.0 + col * 0.34);
+  col = pow(max(col, 0.0), vec3(0.90));
+  /* hash21 mister presisjon ved store pikselkoordinater og gir striper,
+     så kornet bruker en egen sinus-hash */
+  float grain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)) + t * 7.13) * 43758.5453);
+  col += (grain - 0.5) * 0.014;
+
+  O = vec4(col, 1.0);
+}
+</script>
+
+<script>
+(function () {
+'use strict';
+
+/* ================================================================== *
+ * JUSTERBARE KONSTANTER
+ * ================================================================== */
+const CFG = {
+  FFT: 4096,
+  BANDS: 128,          // oppløsning på spektrumteksturen
+  F_MIN: 30,
+  F_MAX: 16000,
+  SENSITIVITY: 1.25,
+  SMOOTHING: .74,
+  BEAT_MIN: .13,       // minste bassenergi som kan gi et taktslag
+  BEAT_RATIO: 1.30,    // hvor mye over snittet energien må ligge
+  BEAT_GAP: .17,       // sekunder mellom taktslag
+  IDLE_HIDE: 2600,     // ms før menyen skjules
+  SHOT_LONG: 3840      // lengste side i lagrede stillbilder
+};
+
+const PALETTES = [
+  { name: 'Rav & tur​kis', warm: [1.00, .58, .22], cool: [.13, .78, .80], deep: [.04, .10, .13] },
+  { name: 'Solnedgang',   warm: [1.00, .42, .30], cool: [.55, .22, .78], deep: [.07, .04, .12] },
+  { name: 'Dyphav',       warm: [.35, .80, 1.00], cool: [.10, .30, .85], deep: [.02, .05, .12] },
+  { name: 'Mynte',        warm: [.95, .95, .55], cool: [.16, .85, .55], deep: [.03, .10, .08] },
+  { name: 'Rosegull',     warm: [1.00, .72, .55], cool: [.85, .35, .55], deep: [.10, .05, .08] }
+];
+
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const fmt = s => {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60), r = Math.floor(s % 60);
+  return m + ':' + (r < 10 ? '0' : '') + r;
+};
+
+let toastT = 0;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 1900);
+}
+
+/* ================================================================== *
+ * WebGL
+ * ================================================================== */
+const canvas = $('#gl');
+const gl = canvas.getContext('webgl2', {
+  alpha: false, antialias: false, depth: false,
+  preserveDrawingBuffer: true, powerPreference: 'high-performance'
+});
+if (!gl) {
+  document.body.innerHTML = '<div style="padding:40px;font:16px sans-serif;color:#fff">' +
+    'Denne nettleseren støtter ikke WebGL 2, som visualiseringen krever.</div>';
+  return;
+}
+
+function compile(type, src) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    throw new Error('Shader: ' + gl.getShaderInfoLog(sh));
+  }
+  return sh;
+}
+
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, $('#vert').textContent.trim()));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, $('#frag').textContent.trim()));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error('Link: ' + gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'aPos');
+gl.enableVertexAttribArray(loc);
+gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+const U = {};
+['uRes','uTime','uBass','uMid','uTreble','uLevel','uBeatAge','uBeatPow',
+ 'uIntensity','uSpec','uWarm','uCool','uDeep'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+
+const specTex = gl.createTexture();
+gl.activeTexture(gl.TEXTURE0);
+gl.bindTexture(gl.TEXTURE_2D, specTex);
+gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, CFG.BANDS, 1, 0, gl.RED, gl.UNSIGNED_BYTE,
+              new Uint8Array(CFG.BANDS));
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.uniform1i(U.uSpec, 0);
+
+const state = { palette: 0, intensity: 1, quality: 1.5, source: 'none' };
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2) * state.quality;
+  const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+  const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w; canvas.height = h;
+  }
+  gl.viewport(0, 0, canvas.width, canvas.height);
+}
+window.addEventListener('resize', resize);
+
+/* ================================================================== *
+ * Lyd
+ * ================================================================== */
+const audioEl = $('#audio'), videoEl = $('#video');
+const A = {
+  ctx: null, an: null, out: null, recDest: null,
+  srcA: null, srcV: null, srcMic: null, micStream: null,
+  freq: null, edges: null,
+  bands: new Float32Array(CFG.BANDS),
+  tex: new Uint8Array(CFG.BANDS),
+  bass: 0, mid: 0, treble: 0, level: 0,
+  beatAge: 9, beatPow: 0, hist: [], lastBeat: -9
+};
+
+function ensureCtx() {
+  if (A.ctx) return A.ctx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  A.ctx = new AC();
+  A.an = A.ctx.createAnalyser();
+  A.an.fftSize = CFG.FFT;
+  A.an.smoothingTimeConstant = CFG.SMOOTHING;
+  A.an.minDecibels = -95;
+  A.an.maxDecibels = -12;
+  A.out = A.ctx.createGain();
+  A.recDest = A.ctx.createMediaStreamDestination();
+  A.an.connect(A.out);
+  A.out.connect(A.ctx.destination);
+  A.an.connect(A.recDest);
+  A.freq = new Uint8Array(A.an.frequencyBinCount);
+  buildEdges();
+  return A.ctx;
+}
+
+function buildEdges() {
+  const bins = A.an.frequencyBinCount, ny = A.ctx.sampleRate / 2;
+  const fMax = Math.min(CFG.F_MAX, ny);
+  const e = new Int32Array(CFG.BANDS + 1);
+  let prev = 0;
+  for (let i = 0; i <= CFG.BANDS; i++) {
+    const f = CFG.F_MIN * Math.pow(fMax / CFG.F_MIN, i / CFG.BANDS);
+    let b = Math.round(f / ny * bins);
+    if (i > 0 && b <= prev) b = prev + 1;
+    e[i] = Math.min(b, bins - 1);
+    prev = e[i];
+  }
+  A.edges = e;
+}
+
+function connectMedia(el) {
+  ensureCtx();
+  const k = el === audioEl ? 'srcA' : 'srcV';
+  if (!A[k]) { A[k] = A.ctx.createMediaElementSource(el); A[k].connect(A.an); }
+  return A[k];
+}
+
+function analyse(dt) {
+  if (!A.an) return;
+  A.an.getByteFrequencyData(A.freq);
+  const f = A.freq, e = A.edges, N = CFG.BANDS;
+  let sum = 0;
+  for (let i = 0; i < N; i++) {
+    const a = e[i], b = Math.max(e[i + 1], a + 1);
+    let peak = 0, acc = 0;
+    for (let j = a; j < b; j++) { acc += f[j]; if (f[j] > peak) peak = f[j]; }
+    const tilt = 1 + (i / N) * 0.8;
+    let v = clamp(((acc / (b - a)) * .55 + peak * .45) / 255 * CFG.SENSITIVITY * tilt, 0, 1);
+    sum += v;
+    const cur = A.bands[i];
+    A.bands[i] = v > cur ? cur + (v - cur) * .5 : cur + (v - cur) * .12;
+    A.tex[i] = A.bands[i] * 255;
+  }
+  A.level = A.level * .82 + (sum / N) * .18;
+  const th = Math.floor(N / 3);
+  A.bass = avg(0, th); A.mid = avg(th, th * 2); A.treble = avg(th * 2, N);
+
+  A.hist.push(A.bass);
+  if (A.hist.length > 48) A.hist.shift();
+  let m = 0;
+  for (let i = 0; i < A.hist.length; i++) m += A.hist[i];
+  m /= A.hist.length || 1;
+  A.beatAge += dt;
+  if (A.hist.length > 12 && A.bass > m * CFG.BEAT_RATIO && A.bass > CFG.BEAT_MIN &&
+      A.beatAge > CFG.BEAT_GAP) {
+    A.beatAge = 0;
+    A.beatPow = clamp((A.bass / (m || 1e-4) - 1) * 1.3, .3, 1.5);
+  }
+  gl.bindTexture(gl.TEXTURE_2D, specTex);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CFG.BANDS, 1, gl.RED, gl.UNSIGNED_BYTE, A.tex);
+}
+
+function avg(a, b) {
+  let s = 0;
+  for (let i = a; i < b; i++) s += A.bands[i];
+  return s / Math.max(1, b - a);
+}
+
+/* ================================================================== *
+ * Tegneløkke
+ * ================================================================== */
+let last = performance.now(), tSec = 0, fpsAcc = 0, fpsN = 0;
+
+function render() {
+  const p = PALETTES[state.palette];
+  gl.uniform2f(U.uRes, canvas.width, canvas.height);
+  gl.uniform1f(U.uTime, tSec);
+  gl.uniform1f(U.uBass, A.bass);
+  gl.uniform1f(U.uMid, A.mid);
+  gl.uniform1f(U.uTreble, A.treble);
+  gl.uniform1f(U.uLevel, A.level);
+  gl.uniform1f(U.uBeatAge, A.beatAge);
+  gl.uniform1f(U.uBeatPow, A.beatPow);
+  gl.uniform1f(U.uIntensity, state.intensity);
+  gl.uniform3fv(U.uWarm, p.warm);
+  gl.uniform3fv(U.uCool, p.cool);
+  gl.uniform3fv(U.uDeep, p.deep);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = clamp((now - last) / 1000, .001, .1);
+  last = now;
+  tSec += dt;
+
+  analyse(dt);
+  resize();
+  render();
+  updateSeek();
+
+  fpsAcc += dt; fpsN++;
+  if (fpsAcc >= .5) {
+    $('#fps').textContent = Math.round(fpsN / fpsAcc) + ' fps · ' + canvas.width + '×' + canvas.height;
+    fpsAcc = 0; fpsN = 0;
+  }
+}
+resize();
+requestAnimationFrame(frame);
+
+/* ================================================================== *
+ * Spilleliste
+ * ================================================================== */
+const list = [];
+let cur = -1;
+
+const isVideo = f => f.type ? f.type.startsWith('video/') : /\.(mp4|webm|mov|mkv|m4v)$/i.test(f.name);
+
+function addFiles(files) {
+  const arr = Array.from(files).filter(f =>
+    (f.type && (f.type.startsWith('audio/') || f.type.startsWith('video/'))) ||
+    /\.(mp3|wav|flac|ogg|oga|m4a|aac|opus|mp4|webm|mov|mkv|m4v)$/i.test(f.name));
+  if (!arr.length) { toast('Fant ingen lyd- eller videofiler'); return; }
+  const start = list.length;
+  arr.forEach(f => list.push({ name: f.name, url: URL.createObjectURL(f), video: isVideo(f) }));
+  if (cur < 0) play(start);
+  else toast(arr.length + (arr.length === 1 ? ' fil lagt til' : ' filer lagt til'));
+}
+
+function play(i) {
+  if (i < 0 || i >= list.length) return;
+  const tr = list[i];
+  ensureCtx();
+  if (A.ctx.state === 'suspended') A.ctx.resume();
+  stopMic();
+  audioEl.pause(); videoEl.pause();
+  cur = i;
+  state.source = tr.video ? 'video' : 'audio';
+  const el = tr.video ? videoEl : audioEl;
+  connectMedia(el);
+  el.src = tr.url;
+  el.play().then(() => { $('#hint').classList.add('gone'); toast(tr.name); })
+           .catch(e => toast('Kunne ikke spille av: ' + e.message));
+  $('#trackName').textContent = tr.name;
+  updatePlay();
+}
+
+const activeEl = () => state.source === 'video' ? videoEl : state.source === 'audio' ? audioEl : null;
+const updatePlay = () => { const e = activeEl(); $('#play').textContent = (e && !e.paused) ? '❚❚' : '▶︎'; };
+
+function togglePlay() {
+  const el = activeEl();
+  if (!el) { list.length ? play(0) : $('#file').click(); return; }
+  if (A.ctx && A.ctx.state === 'suspended') A.ctx.resume();
+  el.paused ? el.play().catch(() => {}) : el.pause();
+  updatePlay();
+}
+
+function step(d) { if (list.length) play((cur + d + list.length) % list.length); }
+
+[audioEl, videoEl].forEach(el => {
+  el.addEventListener('ended', () => list.length > 1 ? step(1) : updatePlay());
+  el.addEventListener('play', updatePlay);
+  el.addEventListener('pause', updatePlay);
+  el.addEventListener('error', () => { if (el.src) toast('Formatet støttes ikke av nettleseren'); });
+});
+
+let seeking = false;
+function updateSeek() {
+  const el = activeEl(), s = $('#seek');
+  if (!el || !isFinite(el.duration) || el.duration <= 0) {
+    if (!seeking) s.value = 0;
+    $('#cur').textContent = state.source === 'mic' ? 'LIVE' : '0:00';
+    $('#dur').textContent = '0:00';
+    return;
+  }
+  if (!seeking) s.value = Math.round(el.currentTime / el.duration * 1000);
+  $('#cur').textContent = fmt(el.currentTime);
+  $('#dur').textContent = fmt(el.duration);
+}
+$('#seek').addEventListener('pointerdown', () => seeking = true);
+$('#seek').addEventListener('pointerup', () => seeking = false);
+$('#seek').addEventListener('input', () => {
+  const el = activeEl();
+  if (el && isFinite(el.duration)) el.currentTime = ($('#seek').value / 1000) * el.duration;
+});
+function skip(s) {
+  const el = activeEl();
+  if (el && isFinite(el.duration)) el.currentTime = clamp(el.currentTime + s, 0, el.duration);
+}
+
+/* ================================================================== *
+ * Mikrofon
+ * ================================================================== */
+async function toggleMic() {
+  if (state.source === 'mic') { stopMic(); toast('Mikrofon av'); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    toast('Mikrofon krever https'); return;
+  }
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    ensureCtx();
+    if (A.ctx.state === 'suspended') A.ctx.resume();
+    audioEl.pause(); videoEl.pause();
+    A.micStream = st;
+    A.srcMic = A.ctx.createMediaStreamSource(st);
+    A.srcMic.connect(A.an);
+    A.out.gain.value = 0;                       // ingen rundgang
+    state.source = 'mic';
+    $('#mic').classList.add('on');
+    $('#hint').classList.add('gone');
+    $('#trackName').textContent = 'Mikrofon';
+    updatePlay();
+    toast('Mikrofon på — lyden spilles ikke ut igjen');
+  } catch (e) { toast('Fikk ikke tilgang til mikrofonen'); }
+}
+
+function stopMic() {
+  if (A.srcMic) { try { A.srcMic.disconnect(); } catch (e) {} A.srcMic = null; }
+  if (A.micStream) { A.micStream.getTracks().forEach(t => t.stop()); A.micStream = null; }
+  if (state.source === 'mic') state.source = 'none';
+  if (A.out) A.out.gain.value = 1;
+  $('#mic').classList.remove('on');
+}
+
+/* ================================================================== *
+ * Stillbilde i full oppløsning og opptak
+ * ================================================================== */
+function snapshot() {
+  const w0 = canvas.width, h0 = canvas.height;
+  const ar = w0 / h0;
+  let w, h;
+  if (ar >= 1) { w = CFG.SHOT_LONG; h = Math.round(CFG.SHOT_LONG / ar); }
+  else { h = CFG.SHOT_LONG; w = Math.round(CFG.SHOT_LONG * ar); }
+  const maxT = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+  w = Math.min(w, maxT); h = Math.min(h, maxT);
+
+  canvas.width = w; canvas.height = h;
+  gl.viewport(0, 0, w, h);
+  render();
+  canvas.toBlob(b => {
+    canvas.width = w0; canvas.height = h0;
+    gl.viewport(0, 0, w0, h0);
+    render();
+    if (!b) { toast('Kunne ikke lagre bildet'); return; }
+    save(URL.createObjectURL(b), 'prisme-' + Date.now() + '.png');
+    toast('Bilde lagret i ' + w + '×' + h);
+  }, 'image/png');
+}
+
+let rec = null, chunks = [];
+function pickMime() {
+  const l = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  for (const m of l) if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+function toggleRec() {
+  if (rec && rec.state !== 'inactive') { rec.stop(); return; }
+  if (!window.MediaRecorder || !canvas.captureStream) { toast('Opptak støttes ikke her'); return; }
+  if (!A.ctx) { toast('Start en lyd først'); return; }
+  const stream = canvas.captureStream(60);
+  A.recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mime = pickMime();
+  try {
+    rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12000000 } : undefined);
+  } catch (e) { toast('Kunne ikke starte opptak'); return; }
+  chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    $('#rec').classList.remove('on');
+    $('#rec').textContent = '⏺';
+    const blob = new Blob(chunks, { type: chunks[0] ? chunks[0].type : 'video/webm' });
+    save(URL.createObjectURL(blob), 'prisme-' + Date.now() + '.webm');
+    toast('Opptak lagret');
+  };
+  rec.start(1000);
+  $('#rec').classList.add('on');
+  $('#rec').textContent = '⏹';
+  toast('Opptak startet');
+}
+
+function save(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/* ================================================================== *
+ * Grensesnitt
+ * ================================================================== */
+PALETTES.forEach((p, i) => {
+  const o = document.createElement('option');
+  o.value = i; o.textContent = p.name;
+  $('#palette').appendChild(o);
+});
+
+$('#palette').addEventListener('change', e => state.palette = +e.target.value);
+$('#quality').addEventListener('change', e => { state.quality = +e.target.value; resize(); });
+$('#intensity').addEventListener('input', e => state.intensity = e.target.value / 100);
+$('#file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+$('#play').addEventListener('click', togglePlay);
+$('#prev').addEventListener('click', () => step(-1));
+$('#next').addEventListener('click', () => step(1));
+$('#mic').addEventListener('click', toggleMic);
+$('#shot').addEventListener('click', snapshot);
+$('#rec').addEventListener('click', toggleRec);
+$('#fs').addEventListener('click', fullscreen);
+
+function fullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+  else (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
+}
+
+/* menyen trekker seg unna når musen står stille */
+let idleT = 0;
+function wake() {
+  document.body.classList.remove('idle');
+  clearTimeout(idleT);
+  idleT = setTimeout(() => document.body.classList.add('idle'), CFG.IDLE_HIDE);
+}
+['mousemove', 'pointerdown', 'keydown', 'wheel'].forEach(ev => window.addEventListener(ev, wake));
+wake();
+
+let dragN = 0;
+window.addEventListener('dragenter', e => { e.preventDefault(); dragN++; document.body.classList.add('dragging'); });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('dragleave', () => { if (--dragN <= 0) { dragN = 0; document.body.classList.remove('dragging'); } });
+window.addEventListener('drop', e => {
+  e.preventDefault(); dragN = 0;
+  document.body.classList.remove('dragging');
+  if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+});
+
+window.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if ((tag === 'input' && e.target.type !== 'range') || tag === 'select') return;
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); return; }
+  if (e.key === 'ArrowRight') { e.preventDefault(); e.shiftKey ? step(1) : skip(5); return; }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); e.shiftKey ? step(-1) : skip(-5); return; }
+  switch (e.key.toLowerCase()) {
+    case 'f': fullscreen(); break;
+    case 's': snapshot(); break;
+    case 'r': toggleRec(); break;
+    case 'm': toggleMic(); break;
+    case 'd': document.body.classList.toggle('showfps'); break;
+    case 'c':
+      state.palette = (state.palette + 1) % PALETTES.length;
+      $('#palette').value = state.palette;
+      toast(PALETTES[state.palette].name);
+      break;
+  }
+});
+
+window.addEventListener('pointerdown', function once() {
+  if (A.ctx && A.ctx.state === 'suspended') A.ctx.resume();
+  window.removeEventListener('pointerdown', once);
+});
+
+})();
+</script>
+</body>
+</html>

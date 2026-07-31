@@ -4,6 +4,9 @@ En visualiseringsapp for musikk som kjører rett i nettleseren. Alt ligger i
 `index.html` — ingen installasjon, ingen byggesteg, ingen server. Filene dine
 lastes aldri opp noe sted; all lyd behandles lokalt i nettleseren.
 
+> Se også **[Prisme (V2)](v2/)** — en egen app med bare én visualisering,
+> tegnet i WebGL med ekte lysbrytning i stedet for Canvas 2D.
+
 **Åpne appen:** dobbeltklikk `visualizer/index.html`, eller legg mappen på
 GitHub Pages og gå til `.../visualizer/`.
 
