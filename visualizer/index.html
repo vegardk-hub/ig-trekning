@@ -157,7 +157,7 @@
   <div id="hint">
     <h1>Lydspeil</h1>
     <p>Slipp en lyd- eller videofil hvor som helst, velg fil nedenfor — eller bruk mikrofonen.<br>Støtter mp3, wav, flac, ogg, m4a, mp4, webm og mov.</p>
-    <p class="keys"><kbd>Mellomrom</kbd> spill/pause · <kbd>1–7</kbd> modus · <kbd>F</kbd> fullskjerm · <kbd>H</kbd> skjul meny</p>
+    <p class="keys"><kbd>Mellomrom</kbd> spill/pause · <kbd>1–8</kbd> modus · <kbd>F</kbd> fullskjerm · <kbd>H</kbd> skjul meny</p>
   </div>
   <div id="toast"></div>
   <div id="dropzone">Slipp filene her</div>
@@ -207,10 +207,12 @@
     <summary>Hurtigtaster og tips</summary>
     <ul>
       <li><kbd>Mellomrom</kbd> spill/pause · <kbd>←</kbd>/<kbd>→</kbd> spol 5 s · <kbd>Shift</kbd>+piltast bytt spor</li>
-      <li><kbd>1</kbd>–<kbd>7</kbd> velg visualisering · <kbd>C</kbd> neste fargetema · <kbd>A</kbd> auto-bytte</li>
+      <li><kbd>1</kbd>–<kbd>8</kbd> velg visualisering · <kbd>C</kbd> neste fargetema · <kbd>A</kbd> auto-bytte</li>
       <li><kbd>F</kbd> fullskjerm · <kbd>H</kbd> skjul menyen · <kbd>S</kbd> lagre bilde · <kbd>R</kbd> opptak · <kbd>M</kbd> mikrofon</li>
       <li>Mikrofonen krever <em>https</em> eller <em>localhost</em>. Bruk hodetelefoner for å unngå rundgang.</li>
       <li>Opptak lagres som .webm med både bilde og lyd.</li>
+      <li><b>Vekst</b> bygger seg opp gjennom hele sangen og nullstilles når du
+          bytter spor — start opptaket før sangen begynner.</li>
     </ul>
   </details>
 </div>
@@ -218,6 +220,58 @@
 <script>
 (function () {
 'use strict';
+
+/* ================================================================== *
+ * JUSTERBARE KONSTANTER — «Vekst»
+ *
+ * Disse er ment å tunes på ekte sanger. Alle er samlet her, ingen av
+ * dem er gjentatt lenger nede i logikken.
+ * ================================================================== */
+const GROWTH = {
+  /* --- form og skalering ------------------------------------------ */
+  BASE_RADIUS:    .34,   // grunnradius som andel av min(bredde, høyde)
+  SEED_RADIUS:    .15,   // hvor nær sentrum de første nodene plantes
+  GROWTH_SPAN:    2.5,   // hvor mye lengre ut strukturen vokser gjennom sangen
+  SCALE_FALLOFF:  1.0,   // hvor mye alt krymper: skala = 1 / (1 + p * denne)
+                         // ytterkanten havner på
+                         //   BASE_RADIUS * (SEED_RADIUS + GROWTH_SPAN) / (1 + SCALE_FALLOFF)
+                         // ved sangslutt — med disse verdiene ca. .45 av skjermen
+  SPIRAL:         .38,   // hvor mange omdreininger strukturen roterer gjennom sangen
+  BRANCHES:       28,    // antall grener korallet vokser i. De 96 båndene
+                         // fordeles på disse — færre grener gir tydeligere
+                         // sammenhengende kjeder, flere gir finere spredning
+  REACH_BASS:     .48,   // hvor langt ut bassbåndene rekker (0–1)
+  REACH_TREBLE:  1.00,   // hvor langt ut diskantbåndene rekker
+  ANGLE_JITTER:   .22,   // tilfeldig vinkelspredning per bånd (radianer)
+  DRIFT:          .55,   // hvor mye hver gren vrir seg gjennom sangen
+
+  /* --- hvor ofte det plantes -------------------------------------- */
+  SPAWN_THRESHOLD: .18,  // båndenergi som kreves for å plante en node
+  SPAWN_INTERVAL:  .08,  // sekunder mellom hvert planteforsøk
+  SPAWN_PER_TICK:  1,    // hvor mange noder hvert forsøk kan plante
+  SEG_MAX_GAP:     .02,  // største hull (andel av sangen) en gren kan spenne
+                         // over — større hull starter en ny gren i stedet for
+                         // å trekke en lang strek tvers gjennom bildet
+
+  /* --- taktslag som milepæler ------------------------------------- */
+  BEAT_RING_MIN:   .55,  // minste taktstyrke som gir en milepælsring
+  BEAT_RING_GAP:  6.00,  // sekunder mellom ringer (holder «kapitlene» lesbare)
+  MAX_RINGS:      26,
+
+  /* --- ytelse og aldring ------------------------------------------ */
+  MAX_NODES:    3500,    // hardt tak, uavhengig av sanglengde
+  GLOW_NODES:     70,    // bare de nyeste får shadowBlur — resten flate fyll
+  GLOW_STRENGTH:  14,    // shadowBlur i piksler for de nyeste
+  AGE_FADE:       .55,   // hvor mye gamle noder bleknes (0 = ingen bleking)
+  FADE_SPAN:      .55,   // over hvor stor del av sangen blekingen skjer
+
+  /* --- nodestørrelse ---------------------------------------------- */
+  NODE_SIZE:     2.6,    // grunnstørrelse i piksler ved full skala
+  BASS_THICKNESS: 2.4,   // hvor mye tykkere de laveste båndene tegnes
+
+  /* --- mikrofon: ingen sanglengde å måle mot ----------------------- */
+  MIC_SPAN:      300     // sekunder som regnes som «en hel sang» for mikrofon
+};
 
 /* ------------------------------------------------------------------ *
  * Hjelpefunksjoner
@@ -830,6 +884,232 @@ function drawKaleido(dt) {
   g.beginPath(); g.arc(cx, cy, r * 4, 0, TAU); g.fill();
 }
 
+/* 8 — Vekst ----------------------------------------------------------- *
+ * Akkumulerende modus: strukturen bygges opp gjennom hele sangen og
+ * ingenting forfaller. Node-listen er sannheten og lever på tvers av
+ * frames og modusbytter — den nullstilles bare når et nytt spor starter,
+ * eller når man spoler bakover (da fjernes noder som ennå ikke «finnes»).
+ *
+ * Merk at lerretet likevel tegnes på nytt hvert bilde: hele komposisjonen
+ * skaleres ned etter hvert som sangen skrider fram, og gamle piksler fra
+ * forrige skala måtte i så fall ha blitt liggende igjen som smuss. Modusen
+ * er derfor unntatt fade-systemet i frame(), men tegner fra en tilstand som
+ * aldri tømmes — se `persistent` i MODES.
+ * -------------------------------------------------------------------- */
+const Growth = {
+  nodes: [],            // { p, i, x, y, px, py, w, r, seg }
+  rings: [],            // { p, r, s }
+  tips: new Array(GROWTH.BRANCHES),  // siste verdenspunkt per gren
+  jitter: new Float32Array(GROWTH.BRANCHES),
+  trackKey: null,
+  lastSpawn: 0,
+  lastRing: 0,
+  micT: 0,
+  lastP: 0
+};
+
+for (let b = 0; b < GROWTH.BRANCHES; b++) {
+  Growth.jitter[b] = (Math.random() - .5) * GROWTH.ANGLE_JITTER;
+}
+/** Hvilken gren et frekvensbånd hører til. */
+function branchOf(i) {
+  return Math.min(GROWTH.BRANCHES - 1, Math.floor(i / NB * GROWTH.BRANCHES));
+}
+
+Growth.reset = function (key) {
+  this.nodes.length = 0;
+  this.rings.length = 0;
+  this.tips.fill(null);
+  this.micT = 0;
+  this.lastP = 0;
+  this.trackKey = key === undefined ? this.trackKey : key;
+};
+
+/** Progresjon 0–1. Leses av mediet selv, ikke av en egen teller, slik at
+ *  spoling og vilkårlig sanglengde behandles riktig. */
+Growth.progress = function (dt) {
+  const el = activeEl();
+  if (el && isFinite(el.duration) && el.duration > 0) {
+    return clamp(el.currentTime / el.duration, 0, 1);
+  }
+  if (state.source === 'mic') {
+    this.micT += dt;
+    return clamp(this.micT / GROWTH.MIC_SPAN, 0, 1);
+  }
+  return 0;
+};
+
+/** Verdensradius for et bånd ved en gitt progresjon (enheter, ikke piksler). */
+Growth.radiusAt = function (b, p) {
+  const reach = lerp(GROWTH.REACH_BASS, GROWTH.REACH_TREBLE, b / (GROWTH.BRANCHES - 1));
+  return (GROWTH.SEED_RADIUS + p * GROWTH.GROWTH_SPAN) * reach;
+};
+
+Growth.angleAt = function (b, p) {
+  return (b / GROWTH.BRANCHES) * TAU
+       + p * GROWTH.SPIRAL * TAU
+       + this.jitter[b]
+       + Math.sin(b * 12.9898) * GROWTH.DRIFT * p;
+};
+
+Growth.plant = function (i, p, energy) {
+  const b = branchOf(i);
+  const a = this.angleAt(b, p);
+  const r = this.radiusAt(b, p);
+  const x = Math.cos(a) * r, y = Math.sin(a) * r;
+  const prev = this.tips[b];
+  // en gren som har vært stille for lenge kobles ikke videre — ellers blir
+  // resultatet lange streker tvers over hele komposisjonen
+  const linked = !!prev && (p - prev.p) <= GROWTH.SEG_MAX_GAP;
+  const thick = lerp(GROWTH.BASS_THICKNESS, 1, i / (NB - 1));
+  this.nodes.push({
+    p: p, i: i, x: x, y: y,
+    px: linked ? prev.x : 0, py: linked ? prev.y : 0,
+    w: GROWTH.NODE_SIZE * thick * (.45 + energy * 1.1),
+    seg: linked
+  });
+  this.tips[b] = { x: x, y: y, p: p };
+  if (this.nodes.length > GROWTH.MAX_NODES) {
+    // de eldste er allerede blekt ned til minimum før de faller ut
+    this.nodes.splice(0, this.nodes.length - GROWTH.MAX_NODES);
+  }
+};
+
+/** Bygger grenspissene på nytt etter spoling bakover. */
+Growth.rebuildTips = function () {
+  this.tips.fill(null);
+  for (let k = 0; k < this.nodes.length; k++) {
+    const n = this.nodes[k];
+    this.tips[branchOf(n.i)] = { x: n.x, y: n.y, p: n.p };
+  }
+};
+
+Growth.update = function (dt, p) {
+  // spoling bakover: fjern det som ennå ikke er «vokst»
+  if (p < this.lastP - .002) {
+    let k = this.nodes.length;
+    while (k > 0 && this.nodes[k - 1].p > p) k--;
+    if (k < this.nodes.length) { this.nodes.length = k; this.rebuildTips(); }
+    let m = this.rings.length;
+    while (m > 0 && this.rings[m - 1].p > p) m--;
+    this.rings.length = m;
+  }
+  this.lastP = p;
+
+  // milepæl på kraftige taktslag
+  if (A.beat >= GROWTH.BEAT_RING_MIN && state.time - this.lastRing > GROWTH.BEAT_RING_GAP) {
+    this.lastRing = state.time;
+    this.rings.push({ p: p, r: this.radiusAt(GROWTH.BRANCHES - 1, p) * .92, s: clamp(A.beat, 0, 1.6) });
+    if (this.rings.length > GROWTH.MAX_RINGS) this.rings.shift();
+  }
+
+  // plant noder fra de kraftigste båndene over terskel
+  if (state.time - this.lastSpawn < GROWTH.SPAWN_INTERVAL) return;
+  this.lastSpawn = state.time;
+  for (let s = 0; s < GROWTH.SPAWN_PER_TICK; s++) {
+    // vektet trekning blant båndene over terskel, så samme bånd ikke dominerer
+    let total = 0;
+    for (let i = 0; i < NB; i++) {
+      if (A.bands[i] > GROWTH.SPAWN_THRESHOLD) total += A.bands[i] - GROWTH.SPAWN_THRESHOLD;
+    }
+    if (total <= 0) return;
+    let pick = Math.random() * total;
+    for (let i = 0; i < NB; i++) {
+      const e = A.bands[i] - GROWTH.SPAWN_THRESHOLD;
+      if (e <= 0) continue;
+      pick -= e;
+      if (pick <= 0) { this.plant(i, p, A.bands[i]); break; }
+    }
+  }
+};
+
+function drawGrowth(dt) {
+  const p = Growth.progress(dt);
+  Growth.update(dt, p);
+
+  const cx = W / 2, cy = HB / 2;
+  const unit = Math.min(W, HB) * GROWTH.BASE_RADIUS / (1 + p * GROWTH.SCALE_FALLOFF);
+
+  // oppfrisking av visningen — ikke en fade: ingen tilstand går tapt her,
+  // hele strukturen tegnes på nytt fra node-listen rett under
+  g.clearRect(0, 0, W, H);
+
+  // fargene avhenger bare av båndindeks, så én oppslagstabell per bilde
+  // holder — da slipper vi å bygge tusenvis av fargestrenger per frame
+  const lut = new Array(NB);
+  for (let i = 0; i < NB; i++) lut[i] = colorAt(i / NB, 4);
+
+  // milepælsringer bakerst
+  g.lineCap = 'butt';
+  for (let k = 0; k < Growth.rings.length; k++) {
+    const ring = Growth.rings[k];
+    const age = clamp((p - ring.p) / GROWTH.FADE_SPAN, 0, 1);
+    g.globalAlpha = (.12 + ring.s * .10) * (1 - age * GROWTH.AGE_FADE);
+    g.strokeStyle = colorAt((ring.p * .8 + .1) % 1, 18);
+    g.lineWidth = Math.max(.6, (1 + ring.s * 1.2) * unit * .006);
+    g.beginPath();
+    g.arc(cx, cy, ring.r * unit, 0, TAU);
+    g.stroke();
+  }
+
+  // selve korallet: eldst først, nyest øverst
+  const nodes = Growth.nodes;
+  const n = nodes.length;
+  const glowFrom = Math.max(0, n - GROWTH.GLOW_NODES);
+  g.lineCap = 'round';
+  g.shadowBlur = 0;
+
+  for (let k = 0; k < n; k++) {
+    const nd = nodes[k];
+    const age = clamp((p - nd.p) / GROWTH.FADE_SPAN, 0, 1);
+    const col = lut[nd.i];
+
+    if (k === glowFrom) {
+      g.shadowBlur = GROWTH.GLOW_STRENGTH;
+    }
+    if (k >= glowFrom) g.shadowColor = col;
+
+    g.globalAlpha = 1 - age * GROWTH.AGE_FADE;
+    const x = cx + nd.x * unit, y = cy + nd.y * unit;
+
+    if (nd.seg) {
+      g.strokeStyle = col;
+      g.lineWidth = Math.max(.5, nd.w * unit * .0055);
+      g.beginPath();
+      g.moveTo(cx + nd.px * unit, cy + nd.py * unit);
+      g.lineTo(x, y);
+      g.stroke();
+    }
+
+    g.fillStyle = col;
+    g.beginPath();
+    g.arc(x, y, Math.max(.6, nd.w * unit * .005), 0, TAU);
+    g.fill();
+  }
+
+  g.shadowBlur = 0;
+  g.globalAlpha = 1;
+
+  // kjerne: liten glød i sentrum som puster med bassen
+  const cr = Math.max(2, unit * .06 * (1 + A.bass * .6));
+  const grd = g.createRadialGradient(cx, cy, 0, cx, cy, cr * 3);
+  grd.addColorStop(0, colorAt(0, 30, .7));
+  grd.addColorStop(1, colorAt(.4, 0, 0));
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(cx, cy, cr * 3, 0, TAU); g.fill();
+
+  // tynn fremdriftsbue helt ytterst, så opptaket viser hvor i sangen man er
+  if (p > 0) {
+    g.globalAlpha = .5;
+    g.strokeStyle = colorAt(.15, 25);
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(cx, cy, Math.min(W, HB) * .47, -Math.PI / 2, -Math.PI / 2 + p * TAU);
+    g.stroke();
+    g.globalAlpha = 1;
+  }
+}
+
 const MODES = [
   { name: 'Søyler',      draw: drawBars,        trail: 1.6 },
   { name: 'Bølge',       draw: drawWave,        trail: 1.2 },
@@ -837,7 +1117,10 @@ const MODES = [
   { name: 'Partikler',   draw: drawParticles,   trail: .55 },
   { name: 'Spektrogram', draw: drawSpectrogram, trail: 1, opaque: true },
   { name: 'Nebula',      draw: drawNebula,      trail: .8 },
-  { name: 'Kaleidoskop', draw: drawKaleido,     trail: .7 }
+  { name: 'Kaleidoskop', draw: drawKaleido,     trail: .7 },
+  // persistent: unntatt fade-systemet — modusen eier lerretet selv og
+  // tegner fra en tilstand som aldri forfaller
+  { name: 'Vekst',       draw: drawGrowth,      persistent: true }
 ];
 
 /* ------------------------------------------------------------------ *
@@ -854,14 +1137,18 @@ function frame(now) {
   analyse(dt);
 
   const mode = MODES[state.mode];
-  if (mode.opaque) {
+  if (mode.persistent) {
+    // akkumulerende modus: verken fade eller clearRect her — den styrer
+    // lerretet selv ut fra en tilstand som ikke forfaller
+  } else if (mode.opaque) {
     g.clearRect(0, 0, W, H);
   } else {
     fade(clamp(state.trail * mode.trail, .02, 1));
   }
   mode.draw(dt);
 
-  if (state.cycle && state.time - state.cycleAt > 20) {
+  // auto-bytte ville avbrutt en akkumulerende modus midt i en sang
+  if (state.cycle && !mode.persistent && state.time - state.cycleAt > 20) {
     setMode((state.mode + 1) % MODES.length, true);
   }
 
@@ -948,6 +1235,7 @@ function play(i) {
     toast(track.name);
   }).catch(err => toast('Kunne ikke spille av: ' + err.message));
 
+  Growth.reset(track.url);   // ny sang = ny struktur
   $('#trackName').textContent = track.name;
   renderList();
   updatePlayBtn();
@@ -1037,6 +1325,7 @@ async function toggleMic() {
     A.srcMic.connect(A.analyser);
     A.out.gain.value = 0;                 // ingen rundgang i høyttalerne
     state.source = 'mic';
+    Growth.reset('mic');
     $('#mic').classList.add('on');
     $('#hint').classList.add('hidden');
     $('#trackName').textContent = 'Mikrofon';
@@ -1129,6 +1418,8 @@ function setMode(i, silent) {
   state.mode = ((i % MODES.length) + MODES.length) % MODES.length;
   state.cycleAt = state.time;
   document.querySelectorAll('#modes button').forEach((b, k) => b.classList.toggle('on', k === state.mode));
+  // tømmer bare lerretet — akkumulerte modi tegner seg opp igjen fra
+  // sin egen tilstand, som med vilje ikke nullstilles her
   g.clearRect(0, 0, W, H);
   if (!silent) toast(MODES[state.mode].name);
 }
