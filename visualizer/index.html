@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<title>Lydspeil — musikkvisualisering</title>
+<style>
+  :root {
+    --bg: #07070d;
+    --panel: rgba(18, 18, 28, .72);
+    --line: rgba(255, 255, 255, .12);
+    --text: #f2f2f7;
+    --muted: #9b9baa;
+    --accent: #7c5cff;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, sans-serif;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- scene ---------- */
+  #stage { position: fixed; inset: 0; background: #000; overflow: hidden; }
+  #video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; opacity: 0; transition: opacity .4s ease; background: #000;
+  }
+  #canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  #hint {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    text-align: center; padding: 24px; pointer-events: none;
+    transition: opacity .35s ease;
+  }
+  #hint h1 { margin: 0; font-size: clamp(28px, 6vw, 54px); letter-spacing: -.02em; }
+  #hint p { margin: 0; color: var(--muted); font-size: clamp(13px, 2.4vw, 16px); max-width: 30em; line-height: 1.6; }
+  #hint .keys { font-size: 12px; color: #6d6d80; }
+  #hint.hidden { opacity: 0; }
+
+  #toast {
+    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,.55); border: 1px solid var(--line); backdrop-filter: blur(12px);
+    padding: 8px 16px; border-radius: 999px; font-size: 13px; letter-spacing: .02em;
+    opacity: 0; transition: opacity .3s ease; pointer-events: none; white-space: nowrap;
+    max-width: 90vw; overflow: hidden; text-overflow: ellipsis;
+  }
+  #toast.show { opacity: 1; }
+
+  #dropzone {
+    position: absolute; inset: 0; border: 3px dashed var(--accent); border-radius: 18px;
+    background: rgba(124, 92, 255, .12); display: none; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; pointer-events: none; z-index: 5;
+  }
+  body.dragging #dropzone { display: flex; }
+
+  /* ---------- panel ---------- */
+  #panel {
+    position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+    width: min(1080px, 100%); z-index: 10;
+    background: var(--panel); backdrop-filter: blur(18px) saturate(1.3);
+    border: 1px solid var(--line); border-bottom: none;
+    border-radius: 20px 20px 0 0; padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+    max-height: 78vh; overflow-y: auto;
+  }
+  body.ui-hidden #panel { transform: translate(-50%, 105%); opacity: 0; }
+  body.ui-hidden { cursor: none; }
+
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .row.tight { gap: 6px; }
+  .grow { flex: 1; min-width: 0; }
+
+  button, select, label.file {
+    font: inherit; font-size: 13px; color: var(--text);
+    background: rgba(255,255,255,.07); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px; cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .08s ease;
+    white-space: nowrap; user-select: none;
+  }
+  button:hover, select:hover, label.file:hover { background: rgba(255,255,255,.14); }
+  button:active { transform: scale(.96); }
+  button.on { background: var(--accent); border-color: transparent; color: #fff; }
+  button.rec.on { background: #e5484d; }
+  button.icon { padding: 8px 11px; font-size: 15px; line-height: 1; }
+  button.play { padding: 10px 16px; font-size: 17px; }
+  select { padding: 7px 8px; }
+  option { background: #14141f; }
+
+  .modes { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .modes::-webkit-scrollbar { display: none; }
+  .modes button { flex: 0 0 auto; font-size: 12.5px; padding: 7px 12px; }
+
+  .time { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); min-width: 42px; text-align: center; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; height: 20px; margin: 0;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.18); }
+  input[type=range]::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.18); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; margin-top: -5px; box-shadow: 0 1px 4px rgba(0,0,0,.5);
+  }
+  input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: none; border-radius: 50%; background: #fff; }
+  #seek { flex: 1; min-width: 120px; }
+
+  .knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 16px; }
+  .knob { display: flex; flex-direction: column; gap: 2px; }
+  .knob span { font-size: 11px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+
+  .toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+  .track-name { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  #list { list-style: none; margin: 0; padding: 0; max-height: 132px; overflow-y: auto; border-top: 1px solid var(--line); }
+  #list:empty { display: none; }
+  #list li {
+    display: flex; align-items: center; gap: 8px; padding: 7px 4px; font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer;
+  }
+  #list li:hover { background: rgba(255,255,255,.05); }
+  #list li.active { color: #fff; }
+  #list li.active .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  #list li .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.25); flex: 0 0 auto; }
+  #list li .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+  #list li.active .nm { color: #fff; }
+  #list li .rm { background: none; border: none; color: #6d6d80; padding: 2px 6px; font-size: 15px; }
+  #list li .rm:hover { color: #e5484d; }
+
+  details.help { font-size: 12px; color: var(--muted); }
+  details.help summary { cursor: pointer; user-select: none; }
+  details.help kbd {
+    background: rgba(255,255,255,.1); border: 1px solid var(--line); border-radius: 5px;
+    padding: 1px 5px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; color: var(--text);
+  }
+  details.help ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.9; }
+
+  @media (max-width: 560px) {
+    #panel { border-radius: 16px 16px 0 0; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); gap: 9px; }
+    .knobs { grid-template-columns: repeat(2, 1fr); }
+    .track-name { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <video id="video" playsinline webkit-playsinline></video>
+  <canvas id="canvas"></canvas>
+  <div id="hint">
+    <h1>Lydspeil</h1>
+    <p>Slipp en lyd- eller videofil hvor som helst, velg fil nedenfor — eller bruk mikrofonen.<br>Støtter mp3, wav, flac, ogg, m4a, mp4, webm og mov.</p>
+    <p class="keys"><kbd>Mellomrom</kbd> spill/pause · <kbd>1–7</kbd> modus · <kbd>F</kbd> fullskjerm · <kbd>H</kbd> skjul meny</p>
+  </div>
+  <div id="toast"></div>
+  <div id="dropzone">Slipp filene her</div>
+</div>
+
+<audio id="audio" crossorigin="anonymous"></audio>
+
+<div id="panel">
+  <div class="modes" id="modes"></div>
+
+  <div class="row tight">
+    <button class="icon" id="prev" title="Forrige (Shift+←)">⏮</button>
+    <button class="play" id="play" title="Spill / pause (mellomrom)">▶︎</button>
+    <button class="icon" id="next" title="Neste (Shift+→)">⏭</button>
+    <span class="time" id="cur">0:00</span>
+    <input type="range" id="seek" min="0" max="1000" value="0" step="1" />
+    <span class="time" id="dur">0:00</span>
+    <span class="track-name grow" id="trackName">Ingen fil valgt</span>
+  </div>
+
+  <div class="row">
+    <label class="file">Velg filer
+      <input type="file" id="file" accept="audio/*,video/*,.wav,.mp3,.flac,.ogg,.m4a,.mp4,.webm,.mov" multiple hidden />
+    </label>
+    <button id="mic" title="Bruk mikrofon (M)">🎙 Mikrofon</button>
+    <select id="palette" title="Fargetema"></select>
+    <div class="toggles grow">
+      <button id="cycle" title="Bytt visualisering automatisk">🔀 Auto</button>
+      <button id="rainbow" title="Roter fargene over tid">🌈 Regnbue</button>
+      <button id="fs" title="Fullskjerm (F)">⛶ Fullskjerm</button>
+      <button id="shot" title="Lagre bilde (S)">📷 Bilde</button>
+      <button id="rec" class="rec" title="Ta opp video av visualiseringen (R)">⏺ Opptak</button>
+    </div>
+  </div>
+
+  <div class="knobs">
+    <label class="knob"><span>Volum</span><input type="range" id="vol" min="0" max="100" value="100"></label>
+    <label class="knob"><span>Følsomhet</span><input type="range" id="gain" min="30" max="300" value="115"></label>
+    <label class="knob"><span>Glatting</span><input type="range" id="smooth" min="0" max="95" value="72"></label>
+    <label class="knob"><span>Etterslep</span><input type="range" id="trail" min="2" max="98" value="22"></label>
+    <label class="knob"><span>Videobakgrunn</span><input type="range" id="vopacity" min="0" max="100" value="45"></label>
+  </div>
+
+  <ul id="list"></ul>
+
+  <details class="help">
+    <summary>Hurtigtaster og tips</summary>
+    <ul>
+      <li><kbd>Mellomrom</kbd> spill/pause · <kbd>←</kbd>/<kbd>→</kbd> spol 5 s · <kbd>Shift</kbd>+piltast bytt spor</li>
+      <li><kbd>1</kbd>–<kbd>7</kbd> velg visualisering · <kbd>C</kbd> neste fargetema · <kbd>A</kbd> auto-bytte</li>
+      <li><kbd>F</kbd> fullskjerm · <kbd>H</kbd> skjul menyen · <kbd>S</kbd> lagre bilde · <kbd>R</kbd> opptak · <kbd>M</kbd> mikrofon</li>
+      <li>Mikrofonen krever <em>https</em> eller <em>localhost</em>. Bruk hodetelefoner for å unngå rundgang.</li>
+      <li>Opptak lagres som .webm med både bilde og lyd.</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ------------------------------------------------------------------ *
+ * Hjelpefunksjoner
+ * ------------------------------------------------------------------ */
+const $ = (sel) => document.querySelector(sel);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const TAU = Math.PI * 2;
+
+function fmtTime(s) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const r = Math.floor(s % 60);
+  return m + ':' + (r < 10 ? '0' : '') + r;
+}
+
+let toastTimer = 0;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+/* ------------------------------------------------------------------ *
+ * Fargetema
+ * ------------------------------------------------------------------ */
+const PALETTES = [
+  { name: 'Neon',        colors: ['#00e5ff', '#4d5bff', '#b24bf3', '#ff2e93', '#ffd166'] },
+  { name: 'Solnedgang',  colors: ['#ffd166', '#ff8c42', '#ef476f', '#a12a5e', '#3d1e6d'] },
+  { name: 'Nordlys',     colors: ['#00ffa3', '#00e0c7', '#22a4ff', '#7b5cff', '#ff5cd2'] },
+  { name: 'Ild',         colors: ['#fff3b0', '#ffb703', '#fb5607', '#d00000', '#6a040f'] },
+  { name: 'Is',          colors: ['#ffffff', '#cdefff', '#7dd3fc', '#3b82f6', '#1e1b4b'] },
+  { name: 'Instagram',   colors: ['#feda75', '#fa7e1e', '#d62976', '#962fbf', '#4f5bd5'] },
+  { name: 'Gift',        colors: ['#d0ff14', '#6bff3b', '#00d97e', '#00a6a6', '#083d47'] },
+  { name: 'Monokrom',    colors: ['#ffffff', '#c8c8d4', '#8a8a9c', '#4a4a5c', '#1a1a24'] }
+];
+
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > .5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return [h, s * 100, l * 100];
+}
+PALETTES.forEach(p => { p.hsl = p.colors.map(hexToHsl); });
+
+function lerpHue(a, b, t) {
+  let d = ((b - a) % 360 + 540) % 360 - 180;
+  return a + d * t;
+}
+
+/** Farge langs gjeldende palett. t: 0–1. l/a justerer lyshet/gjennomsiktighet. */
+function colorAt(t, l = 0, a = 1) {
+  const p = PALETTES[state.palette].hsl;
+  const x = clamp(t, 0, 1) * (p.length - 1);
+  const i = Math.floor(x), f = x - i;
+  const c1 = p[i], c2 = p[Math.min(i + 1, p.length - 1)];
+  const h = lerpHue(c1[0], c2[0], f) + state.hue;
+  const s = lerp(c1[1], c2[1], f);
+  const li = clamp(lerp(c1[2], c2[2], f) + l, 0, 96);
+  return 'hsla(' + h.toFixed(1) + ',' + s.toFixed(1) + '%,' + li.toFixed(1) + '%,' + a + ')';
+}
+
+/* ------------------------------------------------------------------ *
+ * Tilstand
+ * ------------------------------------------------------------------ */
+const NB = 96;                      // antall frekvensbånd i visualiseringene
+const state = {
+  mode: 0,
+  palette: 0,
+  hue: 0,
+  rainbow: false,
+  cycle: false,
+  cycleAt: 0,
+  sensitivity: 1.15,
+  trail: .22,
+  videoOpacity: .45,
+  volume: 1,
+  rot: 0,
+  time: 0,
+  source: 'none'                    // 'none' | 'audio' | 'video' | 'mic'
+};
+
+/* ------------------------------------------------------------------ *
+ * Lydmotor
+ * ------------------------------------------------------------------ */
+const audioEl = $('#audio');
+const videoEl = $('#video');
+
+const A = {
+  ctx: null, analyser: null, out: null, recDest: null,
+  srcAudio: null, srcVideo: null, srcMic: null, micStream: null,
+  // fylles på nytt når lydmotoren starter — tomme buffere gjør at
+  // visualiseringene kan tegne stille før en fil er lastet
+  freq: new Uint8Array(2048), wave: new Uint8Array(4096).fill(128), edges: null,
+  bands: new Float32Array(NB),
+  peaks: new Float32Array(NB),
+  bass: 0, mid: 0, treble: 0, level: 0,
+  beat: 0, beatEnv: 0, hist: [], lastBeat: 0
+};
+
+function ensureCtx() {
+  if (A.ctx) return A.ctx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  A.ctx = new AC();
+  A.analyser = A.ctx.createAnalyser();
+  A.analyser.fftSize = 4096;
+  A.analyser.smoothingTimeConstant = .72;
+  A.analyser.minDecibels = -95;
+  A.analyser.maxDecibels = -12;
+  A.out = A.ctx.createGain();
+  A.out.gain.value = state.volume;
+  A.recDest = A.ctx.createMediaStreamDestination();
+  A.analyser.connect(A.out);
+  A.out.connect(A.ctx.destination);
+  A.analyser.connect(A.recDest);
+  A.freq = new Uint8Array(A.analyser.frequencyBinCount);
+  A.wave = new Uint8Array(A.analyser.fftSize);
+  buildEdges();
+  return A.ctx;
+}
+
+/** Logaritmiske båndgrenser slik at bassen ikke spiser hele bildet. */
+function buildEdges() {
+  const bins = A.analyser.frequencyBinCount;
+  const nyquist = A.ctx.sampleRate / 2;
+  const fMin = 28, fMax = Math.min(16500, nyquist);
+  const e = new Int32Array(NB + 1);
+  let prev = 0;
+  for (let i = 0; i <= NB; i++) {
+    const f = fMin * Math.pow(fMax / fMin, i / NB);
+    let b = Math.round(f / nyquist * bins);
+    if (i > 0 && b <= prev) b = prev + 1;
+    e[i] = Math.min(b, bins - 1);
+    prev = e[i];
+  }
+  A.edges = e;
+}
+
+function resume() {
+  if (A.ctx && A.ctx.state === 'suspended') A.ctx.resume();
+}
+
+function connectMedia(el) {
+  ensureCtx();
+  const key = el === audioEl ? 'srcAudio' : 'srcVideo';
+  if (!A[key]) {
+    A[key] = A.ctx.createMediaElementSource(el);
+    A[key].connect(A.analyser);
+  }
+  return A[key];
+}
+
+/* --- analyse --------------------------------------------------------- */
+function analyse(dt) {
+  if (!A.analyser) return;
+  A.analyser.getByteFrequencyData(A.freq);
+  A.analyser.getByteTimeDomainData(A.wave);
+
+  const f = A.freq, e = A.edges;
+  let sum = 0;
+  for (let i = 0; i < NB; i++) {
+    const a = e[i], b = Math.max(e[i + 1], a + 1);
+    let peak = 0, acc = 0;
+    for (let j = a; j < b; j++) { acc += f[j]; if (f[j] > peak) peak = f[j]; }
+    const avg = acc / (b - a);
+    // litt vekting oppover: diskanten er naturlig svakere enn bassen
+    const tilt = 1 + (i / NB) * 0.75;
+    let v = ((avg * .55 + peak * .45) / 255) * state.sensitivity * tilt;
+    v = clamp(v, 0, 1);
+    sum += v;
+    const cur = A.bands[i];
+    A.bands[i] = v > cur ? cur + (v - cur) * .55 : cur + (v - cur) * .13;
+    A.peaks[i] = Math.max(A.peaks[i] - dt * .45, A.bands[i]);
+  }
+  A.level = A.level * .8 + (sum / NB) * .2;
+
+  const third = Math.floor(NB / 3);
+  A.bass = avgBand(0, third);
+  A.mid = avgBand(third, third * 2);
+  A.treble = avgBand(third * 2, NB);
+
+  // taktdeteksjon på basseffekten
+  const energy = A.bass;
+  A.hist.push(energy);
+  if (A.hist.length > 48) A.hist.shift();
+  let m = 0;
+  for (let i = 0; i < A.hist.length; i++) m += A.hist[i];
+  m /= A.hist.length || 1;
+  const now = performance.now();
+  A.beat = 0;
+  if (A.hist.length > 12 && energy > m * 1.32 && energy > .12 && now - A.lastBeat > 170) {
+    A.beat = clamp((energy / (m || 1e-4) - 1) * 1.4, .3, 1.6);
+    A.lastBeat = now;
+  }
+  A.beatEnv = Math.max(A.beatEnv * Math.pow(.0025, dt), A.beat);
+}
+
+function avgBand(a, b) {
+  let s = 0;
+  for (let i = a; i < b; i++) s += A.bands[i];
+  return s / Math.max(1, b - a);
+}
+
+/* ------------------------------------------------------------------ *
+ * Lerret
+ * ------------------------------------------------------------------ */
+const canvas = $('#canvas');
+const g = canvas.getContext('2d', { alpha: true });
+let W = 0, H = 0, DPR = 1;
+
+/* Høyden som er fri for kontrollpanelet — visualiseringene komponeres
+ * innenfor denne så motivet ikke havner bak menyen. */
+let HB = 0;
+function updateSafeArea() {
+  const panel = $('#panel');
+  const hidden = document.body.classList.contains('ui-hidden');
+  const pad = hidden ? 0 : Math.min(panel.offsetHeight * .62, H * .35);
+  HB = Math.max(120, H - pad);
+}
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const r = canvas.getBoundingClientRect();
+  W = Math.max(1, Math.round(r.width));
+  H = Math.max(1, Math.round(r.height));
+  canvas.width = Math.round(W * DPR);
+  canvas.height = Math.round(H * DPR);
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  updateSafeArea();
+  Spec.resize(W, H);
+}
+window.addEventListener('resize', resize);
+if (window.ResizeObserver) new ResizeObserver(updateSafeArea).observe($('#panel'));
+
+/** Tømmer/toner ned forrige bilde. Gjennomsiktig når video vises bak. */
+function fade(alpha) {
+  const showVideo = state.source === 'video' && state.videoOpacity > 0.02;
+  g.save();
+  if (showVideo) {
+    g.globalCompositeOperation = 'destination-out';
+    g.fillStyle = 'rgba(0,0,0,' + alpha + ')';
+  } else {
+    g.globalCompositeOperation = 'source-over';
+    g.fillStyle = 'rgba(7,7,13,' + alpha + ')';
+  }
+  g.fillRect(0, 0, W, H);
+  g.restore();
+}
+
+/* ------------------------------------------------------------------ *
+ * Visualiseringer
+ * ------------------------------------------------------------------ */
+
+/* 1 — Søyler ---------------------------------------------------------- */
+function drawBars(dt) {
+  const base = HB * .82;
+  const gap = Math.max(1, (W / NB) * .16);
+  const bw = Math.max(1, W / NB - gap);
+  for (let i = 0; i < NB; i++) {
+    const v = A.bands[i];
+    const x = i * (W / NB) + gap / 2;
+    const hgt = Math.max(2, v * base * .9);
+    const col = colorAt(i / NB, 2);
+
+    g.shadowBlur = 8 + v * 14;
+    g.shadowColor = col;
+    g.fillStyle = col;
+    g.fillRect(x, base - hgt, bw, hgt);
+
+    // speilbilde
+    g.shadowBlur = 0;
+    g.globalAlpha = .28;
+    const grd = g.createLinearGradient(0, base, 0, base + hgt * .5);
+    grd.addColorStop(0, col);
+    grd.addColorStop(1, colorAt(i / NB, 0, 0));
+    g.fillStyle = grd;
+    g.fillRect(x, base, bw, hgt * .5);
+    g.globalAlpha = 1;
+
+    // topplokk
+    const py = base - Math.max(2, A.peaks[i] * base * .92);
+    g.fillStyle = colorAt(i / NB, 28);
+    g.fillRect(x, py - 3, bw, 3);
+  }
+  g.shadowBlur = 0;
+
+  // gulvlinje som pulserer på takten
+  g.strokeStyle = colorAt(.5, 20, .35 + A.beatEnv * .5);
+  g.lineWidth = 1 + A.beatEnv * 2;
+  g.beginPath(); g.moveTo(0, base + .5); g.lineTo(W, base + .5); g.stroke();
+}
+
+/* 2 — Bølge ----------------------------------------------------------- */
+function drawWave(dt) {
+  const n = A.wave.length;
+  const mid = HB / 2;
+  for (let layer = 0; layer < 3; layer++) {
+    const amp = (HB * .32) * (1 - layer * .28) * (0.35 + A.level * 2.2);
+    const col = colorAt(layer / 2.4 + state.time * .05 % 1, 6, 1 - layer * .25);
+    g.beginPath();
+    const step = Math.max(1, Math.floor(n / Math.max(200, W)));
+    for (let i = 0; i < n; i += step) {
+      const t = i / (n - 1);
+      const v = (A.wave[i] - 128) / 128;
+      const y = mid + v * amp + Math.sin(t * 6 + state.time * (1 + layer)) * layer * 6;
+      const x = t * W;
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.lineWidth = 3 - layer * .7;
+    g.strokeStyle = col;
+    g.shadowBlur = 22 - layer * 5;
+    g.shadowColor = col;
+    g.stroke();
+  }
+  g.shadowBlur = 0;
+
+  // svak spektrumsokkel under bølgen
+  g.globalAlpha = .9;
+  g.beginPath();
+  g.moveTo(0, HB);
+  for (let i = 0; i < NB; i++) {
+    g.lineTo((i / (NB - 1)) * W, HB - A.bands[i] * HB * .22);
+  }
+  g.lineTo(W, HB);
+  g.closePath();
+  g.fillStyle = colorAt(.75, -6, .28);
+  g.fill();
+  g.globalAlpha = 1;
+}
+
+/* 3 — Sirkel ---------------------------------------------------------- */
+function drawRadial(dt) {
+  const cx = W / 2, cy = HB / 2;
+  const R = Math.min(W, HB) * .17 * (1 + A.bass * .45 + A.beatEnv * .12);
+  state.rot += dt * (.08 + A.level * .55);
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(state.rot);
+
+  const half = NB;
+  for (let s = 0; s < 2; s++) {
+    for (let i = 0; i < half; i++) {
+      const v = A.bands[i];
+      const ang = (i / half) * Math.PI * (s ? -1 : 1) - Math.PI / 2;
+      const len = 8 + v * Math.min(W, HB) * .34;
+      const col = colorAt(i / half, 4);
+      g.strokeStyle = col;
+      g.lineWidth = Math.max(1.5, (Math.PI * R * 2 / half) * .55);
+      g.lineCap = 'round';
+      g.shadowBlur = 14 + v * 24;
+      g.shadowColor = col;
+      g.beginPath();
+      g.moveTo(Math.cos(ang) * R, Math.sin(ang) * R);
+      g.lineTo(Math.cos(ang) * (R + len), Math.sin(ang) * (R + len));
+      g.stroke();
+
+      const pk = A.peaks[i];
+      g.shadowBlur = 0;
+      g.fillStyle = colorAt(i / half, 30, .9);
+      const pr = R + 8 + pk * Math.min(W, HB) * .34;
+      g.beginPath();
+      g.arc(Math.cos(ang) * pr, Math.sin(ang) * pr, 1.6, 0, TAU);
+      g.fill();
+    }
+  }
+  g.shadowBlur = 0;
+
+  // indre bølgering
+  g.beginPath();
+  const n = 240;
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * TAU;
+    const idx = Math.floor(i / n * (A.wave.length - 1));
+    const v = (A.wave[idx] - 128) / 128;
+    const r = R * (.78 + v * .35);
+    const x = Math.cos(a) * r, y = Math.sin(a) * r;
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.closePath();
+  g.strokeStyle = colorAt(.2, 25, .9);
+  g.lineWidth = 2;
+  g.stroke();
+
+  g.restore();
+}
+
+/* 4 — Partikler ------------------------------------------------------- */
+const P = { list: [], max: 900 };
+function drawParticles(dt) {
+  const cx = W / 2, cy = HB / 2;
+  const spawn = Math.floor(A.beat * 42) + (A.level > .06 ? 2 : 0);
+  for (let i = 0; i < spawn && P.list.length < P.max; i++) {
+    const a = Math.random() * TAU;
+    const sp = (60 + Math.random() * 260) * (.5 + A.bass * 1.6);
+    P.list.push({
+      x: cx, y: cy,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      life: 1, size: 1.2 + Math.random() * 3.4 + A.beatEnv * 2,
+      t: Math.random()
+    });
+  }
+
+  g.globalCompositeOperation = 'lighter';
+  const drag = Math.pow(.42, dt);
+  const swirl = (.25 + A.treble * 1.4) * dt;
+  for (let i = P.list.length - 1; i >= 0; i--) {
+    const p = P.list[i];
+    // liten virvel rundt sentrum
+    const dx = p.x - cx, dy = p.y - cy;
+    const c = Math.cos(swirl), s = Math.sin(swirl);
+    p.x = cx + dx * c - dy * s;
+    p.y = cy + dx * s + dy * c;
+    p.vx *= drag; p.vy *= drag;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.life -= dt * .34;
+    if (p.life <= 0 || p.x < -60 || p.x > W + 60 || p.y < -60 || p.y > H + 60) {
+      P.list.splice(i, 1);
+      continue;
+    }
+    const col = colorAt(p.t, 8, clamp(p.life, 0, 1));
+    g.fillStyle = col;
+    g.shadowBlur = 12;
+    g.shadowColor = col;
+    g.beginPath();
+    g.arc(p.x, p.y, p.size * (.4 + p.life * .9), 0, TAU);
+    g.fill();
+  }
+  g.shadowBlur = 0;
+
+  // pulserende kjerne
+  g.globalCompositeOperation = 'source-over';
+  const r = Math.min(W, HB) * (.05 + A.bass * .12 + A.beatEnv * .05);
+  const grd = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, r * 3));
+  grd.addColorStop(0, colorAt(.1, 25, .7));
+  grd.addColorStop(.4, colorAt(.5, 0, .3));
+  grd.addColorStop(1, colorAt(.9, -10, 0));
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(cx, cy, r * 3, 0, TAU); g.fill();
+}
+
+/* 5 — Spektrogram ----------------------------------------------------- *
+ * Ringbuffer på et eget lerret: vi tegner én ny kolonne per bilde og
+ * viser bufferet i to biter, slik at bildet ruller uten kvalitetstap.  */
+const Spec = {
+  cv: null, cx: null, w: 0, h: 0, ptr: 0, colW: 1,
+  resize(w, h) {
+    if (!this.cv) { this.cv = document.createElement('canvas'); this.cx = this.cv.getContext('2d'); }
+    const px = Math.max(1, Math.round(w * DPR)), ch = Math.max(1, Math.round(h * DPR));
+    // ca. seks sekunder historikk over hele bredden, uansett skjermoppløsning
+    const colW = Math.max(1, Math.round(px / 360));
+    const cw = Math.ceil(px / colW) * colW;
+    if (cw === this.w && ch === this.h) return;
+    this.w = cw; this.h = ch; this.colW = colW; this.ptr = 0;
+    this.cv.width = cw; this.cv.height = ch;
+    this.cx.fillStyle = '#07070d';
+    this.cx.fillRect(0, 0, cw, ch);
+  },
+  column() {
+    const cx = this.cx, h = this.h, x = this.ptr, cw = this.colW;
+    cx.fillStyle = '#07070d';
+    cx.fillRect(x, 0, cw, h);
+    const steps = Math.min(h, 320);
+    const ph = h / steps;
+    for (let s = 0; s < steps; s++) {
+      const t = 1 - s / steps;                    // 0 nederst = bass
+      const fi = t * (NB - 1);
+      const i0 = Math.floor(fi), i1 = Math.min(NB - 1, i0 + 1);
+      const v = lerp(A.bands[i0], A.bands[i1], fi - i0);
+      if (v < .012) continue;
+      cx.fillStyle = colorAt(clamp(v * 1.25, 0, 1), -12 + v * 34, clamp(v * 2.2, 0, 1));
+      cx.fillRect(x, s * ph, cw, ph + 1);
+    }
+    this.ptr = (this.ptr + cw) % this.w;
+  },
+  draw() {
+    const p = this.ptr, sw = this.w, k = W / sw;
+    // eldste del til venstre, nyeste til høyre
+    if (sw - p > 0) g.drawImage(this.cv, p, 0, sw - p, this.h, 0, 0, (sw - p) * k, H);
+    if (p > 0) g.drawImage(this.cv, 0, 0, p, this.h, (sw - p) * k, 0, p * k, H);
+  }
+};
+
+function drawSpectrogram(dt) {
+  Spec.column();
+  Spec.draw();
+  // markørlinje og nivåkurve
+  g.strokeStyle = 'rgba(255,255,255,.25)';
+  g.lineWidth = 1;
+  g.beginPath(); g.moveTo(W - .5, 0); g.lineTo(W - .5, H); g.stroke();
+  g.globalCompositeOperation = 'lighter';
+  g.beginPath();
+  for (let i = 0; i < NB; i++) {
+    const y = H - (i / (NB - 1)) * H;
+    const x = W - 8 - A.bands[i] * W * .18;
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.strokeStyle = colorAt(.15, 30, .8);
+  g.lineWidth = 2;
+  g.stroke();
+  g.globalCompositeOperation = 'source-over';
+}
+
+/* 6 — Nebula ---------------------------------------------------------- */
+function drawNebula(dt) {
+  const cx = W / 2, cy = HB / 2;
+  const R = Math.min(W, HB) * .3;
+  state.rot += dt * (.12 + A.level * .4);
+
+  for (let layer = 0; layer < 3; layer++) {
+    const scale = 1 - layer * .22;
+    const off = layer * 7;
+    g.save();
+    g.translate(cx, cy);
+    g.rotate(state.rot * (layer % 2 ? -1 : 1) * (1 + layer * .3));
+    g.beginPath();
+    const n = NB;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const idx = (i + off) % NB;
+      const v = A.bands[idx];
+      const a = (i / n) * TAU;
+      const r = R * scale * (.55 + v * 1.25 + A.beatEnv * .08);
+      pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+    }
+    // myk lukket kurve gjennom punktene
+    g.moveTo((pts[0][0] + pts[n - 1][0]) / 2, (pts[0][1] + pts[n - 1][1]) / 2);
+    for (let i = 0; i < n; i++) {
+      const p = pts[i], q = pts[(i + 1) % n];
+      g.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2);
+    }
+    g.closePath();
+
+    const grd = g.createRadialGradient(0, 0, R * .05, 0, 0, R * scale * 1.6);
+    grd.addColorStop(0, colorAt(.05 + layer * .1, 10, .38));
+    grd.addColorStop(.6, colorAt(.45 + layer * .15, 0, .2));
+    grd.addColorStop(1, colorAt(.95, -20, 0));
+    g.fillStyle = grd;
+    g.fill();
+
+    const col = colorAt(.2 + layer * .28, 22, .85);
+    g.strokeStyle = col;
+    g.lineWidth = 2 - layer * .5;
+    g.shadowBlur = 18;
+    g.shadowColor = col;
+    g.stroke();
+    g.restore();
+  }
+  g.shadowBlur = 0;
+}
+
+/* 7 — Kaleidoskop ----------------------------------------------------- */
+function drawKaleido(dt) {
+  const cx = W / 2, cy = HB / 2;
+  const R = Math.min(W, HB) * .48;
+  const seg = 12;
+  state.rot += dt * (.15 + A.level * .8);
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(state.rot);
+
+  const step = TAU / seg;
+  for (let s = 0; s < seg; s++) {
+    g.save();
+    g.rotate(s * step);
+    if (s % 2) g.scale(1, -1);
+
+    g.beginPath();
+    g.moveTo(0, 0);
+    for (let i = 0; i < NB; i++) {
+      const t = i / (NB - 1);
+      const a = t * step;
+      const wv = (A.wave[Math.floor(t * (A.wave.length - 1))] - 128) / 128;
+      const r = R * (.18 + A.bands[i] * .72 + Math.abs(wv) * .18);
+      g.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    g.closePath();
+
+    const col = colorAt((s / seg + state.time * .05) % 1, 2, .42);
+    g.fillStyle = col;
+    g.fill();
+    g.strokeStyle = colorAt((s / seg + .3) % 1, 26, .9);
+    g.lineWidth = 1.4;
+    g.shadowBlur = 18;
+    g.shadowColor = col;
+    g.stroke();
+    g.restore();
+  }
+  g.restore();
+  g.shadowBlur = 0;
+
+  // sentrumsglød på takten
+  const r = Math.min(W, HB) * (.03 + A.beatEnv * .07);
+  const grd = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, r * 4));
+  grd.addColorStop(0, colorAt(0, 35, .8));
+  grd.addColorStop(1, colorAt(.5, 0, 0));
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(cx, cy, r * 4, 0, TAU); g.fill();
+}
+
+const MODES = [
+  { name: 'Søyler',      draw: drawBars,        trail: 1.6 },
+  { name: 'Bølge',       draw: drawWave,        trail: 1.2 },
+  { name: 'Sirkel',      draw: drawRadial,      trail: 1 },
+  { name: 'Partikler',   draw: drawParticles,   trail: .55 },
+  { name: 'Spektrogram', draw: drawSpectrogram, trail: 1, opaque: true },
+  { name: 'Nebula',      draw: drawNebula,      trail: .8 },
+  { name: 'Kaleidoskop', draw: drawKaleido,     trail: .7 }
+];
+
+/* ------------------------------------------------------------------ *
+ * Tegneløkke
+ * ------------------------------------------------------------------ */
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = clamp((now - last) / 1000, 0.001, 0.1);
+  last = now;
+  state.time += dt;
+  if (state.rainbow) state.hue = (state.hue + dt * 18) % 360;
+
+  analyse(dt);
+
+  const mode = MODES[state.mode];
+  if (mode.opaque) {
+    g.clearRect(0, 0, W, H);
+  } else {
+    fade(clamp(state.trail * mode.trail, .02, 1));
+  }
+  mode.draw(dt);
+
+  if (state.cycle && state.time - state.cycleAt > 20) {
+    setMode((state.mode + 1) % MODES.length, true);
+  }
+
+  updateProgress();
+}
+requestAnimationFrame(frame);
+
+/* ------------------------------------------------------------------ *
+ * Spilleliste og avspilling
+ * ------------------------------------------------------------------ */
+const playlist = [];
+let current = -1;
+
+function isVideoFile(file) {
+  if (file.type) return file.type.startsWith('video/');
+  return /\.(mp4|webm|mov|mkv|m4v|avi)$/i.test(file.name);
+}
+
+function addFiles(files) {
+  const arr = Array.from(files).filter(f =>
+    f.type.startsWith('audio/') || f.type.startsWith('video/') ||
+    /\.(mp3|wav|flac|ogg|oga|m4a|aac|opus|mp4|webm|mov|mkv|m4v|aiff?|wma)$/i.test(f.name)
+  );
+  if (!arr.length) { toast('Fant ingen lyd- eller videofiler'); return; }
+  const startIndex = playlist.length;
+  arr.forEach(f => playlist.push({ name: f.name, url: URL.createObjectURL(f), video: isVideoFile(f) }));
+  renderList();
+  if (current < 0) play(startIndex);
+  else toast(arr.length + (arr.length === 1 ? ' fil lagt til' : ' filer lagt til'));
+}
+
+function renderList() {
+  const ul = $('#list');
+  ul.innerHTML = '';
+  playlist.forEach((t, i) => {
+    const li = document.createElement('li');
+    if (i === current) li.className = 'active';
+    const dot = document.createElement('span'); dot.className = 'dot';
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = t.name;
+    const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
+    rm.title = 'Fjern';
+    rm.addEventListener('click', (e) => { e.stopPropagation(); removeTrack(i); });
+    li.append(dot, nm, rm);
+    li.addEventListener('click', () => play(i));
+    ul.appendChild(li);
+  });
+}
+
+function removeTrack(i) {
+  URL.revokeObjectURL(playlist[i].url);
+  playlist.splice(i, 1);
+  if (i === current) {
+    stopMedia();
+    current = -1;
+    if (playlist.length) play(Math.min(i, playlist.length - 1));
+    else { $('#trackName').textContent = 'Ingen fil valgt'; $('#hint').classList.remove('hidden'); state.source = 'none'; }
+  } else if (i < current) current--;
+  renderList();
+}
+
+function stopMedia() {
+  audioEl.pause();
+  videoEl.pause();
+  videoEl.style.opacity = 0;
+}
+
+function play(i) {
+  if (i < 0 || i >= playlist.length) return;
+  const track = playlist[i];
+  ensureCtx(); resume();
+  stopMic();
+  stopMedia();
+  current = i;
+  state.source = track.video ? 'video' : 'audio';
+
+  const el = track.video ? videoEl : audioEl;
+  connectMedia(el);
+  el.src = track.url;
+  el.currentTime = 0;
+  videoEl.style.opacity = track.video ? state.videoOpacity : 0;
+
+  el.play().then(() => {
+    $('#hint').classList.add('hidden');
+    toast(track.name);
+  }).catch(err => toast('Kunne ikke spille av: ' + err.message));
+
+  $('#trackName').textContent = track.name;
+  renderList();
+  updatePlayBtn();
+}
+
+function activeEl() {
+  if (state.source === 'video') return videoEl;
+  if (state.source === 'audio') return audioEl;
+  return null;
+}
+
+function togglePlay() {
+  const el = activeEl();
+  if (!el) {
+    if (playlist.length) play(0);
+    else $('#file').click();
+    return;
+  }
+  resume();
+  if (el.paused) el.play().catch(() => {}); else el.pause();
+  updatePlayBtn();
+}
+
+function updatePlayBtn() {
+  const el = activeEl();
+  $('#play').textContent = (el && !el.paused) ? '❚❚' : '▶︎';
+}
+
+function nextTrack(delta) {
+  if (!playlist.length) return;
+  play((current + delta + playlist.length) % playlist.length);
+}
+
+[audioEl, videoEl].forEach(el => {
+  el.addEventListener('ended', () => { if (playlist.length > 1) nextTrack(1); else updatePlayBtn(); });
+  el.addEventListener('play', updatePlayBtn);
+  el.addEventListener('pause', updatePlayBtn);
+  el.addEventListener('error', () => {
+    if (el.src) toast('Formatet støttes ikke av nettleseren');
+  });
+});
+
+/* framdrift ----------------------------------------------------------- */
+let seeking = false;
+function updateProgress() {
+  const el = activeEl();
+  const seek = $('#seek');
+  if (!el || !isFinite(el.duration) || el.duration <= 0) {
+    if (!seeking) seek.value = 0;
+    $('#cur').textContent = state.source === 'mic' ? 'LIVE' : '0:00';
+    $('#dur').textContent = '0:00';
+    return;
+  }
+  if (!seeking) seek.value = Math.round(el.currentTime / el.duration * 1000);
+  $('#cur').textContent = fmtTime(el.currentTime);
+  $('#dur').textContent = fmtTime(el.duration);
+}
+
+$('#seek').addEventListener('pointerdown', () => { seeking = true; });
+$('#seek').addEventListener('pointerup', () => { seeking = false; });
+$('#seek').addEventListener('input', () => {
+  const el = activeEl();
+  if (el && isFinite(el.duration)) el.currentTime = ($('#seek').value / 1000) * el.duration;
+});
+
+function skip(sec) {
+  const el = activeEl();
+  if (el && isFinite(el.duration)) el.currentTime = clamp(el.currentTime + sec, 0, el.duration);
+}
+
+/* ------------------------------------------------------------------ *
+ * Mikrofon
+ * ------------------------------------------------------------------ */
+async function toggleMic() {
+  if (state.source === 'mic') { stopMic(); toast('Mikrofon av'); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    toast('Mikrofon støttes ikke her (krever https)'); return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+    ensureCtx(); resume();
+    stopMedia();
+    A.micStream = stream;
+    A.srcMic = A.ctx.createMediaStreamSource(stream);
+    A.srcMic.connect(A.analyser);
+    A.out.gain.value = 0;                 // ingen rundgang i høyttalerne
+    state.source = 'mic';
+    $('#mic').classList.add('on');
+    $('#hint').classList.add('hidden');
+    $('#trackName').textContent = 'Mikrofon';
+    updatePlayBtn();
+    toast('Mikrofon på — lyden spilles ikke ut igjen');
+  } catch (e) {
+    toast('Fikk ikke tilgang til mikrofonen');
+  }
+}
+
+function stopMic() {
+  if (A.srcMic) { try { A.srcMic.disconnect(); } catch (e) {} A.srcMic = null; }
+  if (A.micStream) { A.micStream.getTracks().forEach(t => t.stop()); A.micStream = null; }
+  if (state.source === 'mic') state.source = 'none';
+  if (A.out) A.out.gain.value = state.volume;
+  $('#mic').classList.remove('on');
+}
+
+/* ------------------------------------------------------------------ *
+ * Bilde og opptak
+ * ------------------------------------------------------------------ */
+function snapshot() {
+  const out = document.createElement('canvas');
+  out.width = canvas.width; out.height = canvas.height;
+  const o = out.getContext('2d');
+  o.fillStyle = '#07070d';
+  o.fillRect(0, 0, out.width, out.height);
+  if (state.source === 'video' && videoEl.videoWidth) {
+    const vr = videoEl.videoWidth / videoEl.videoHeight, cr = out.width / out.height;
+    let dw, dh;
+    if (vr > cr) { dw = out.width; dh = out.width / vr; } else { dh = out.height; dw = out.height * vr; }
+    o.globalAlpha = state.videoOpacity;
+    o.drawImage(videoEl, (out.width - dw) / 2, (out.height - dh) / 2, dw, dh);
+    o.globalAlpha = 1;
+  }
+  o.drawImage(canvas, 0, 0);
+  out.toBlob(b => {
+    if (!b) { toast('Kunne ikke lagre bildet'); return; }
+    download(URL.createObjectURL(b), 'lydspeil-' + Date.now() + '.png', true);
+    toast('Bilde lagret');
+  }, 'image/png');
+}
+
+let recorder = null, chunks = [];
+function pickMime() {
+  const list = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+  for (const m of list) if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+
+function toggleRecord() {
+  if (recorder && recorder.state !== 'inactive') { recorder.stop(); return; }
+  if (!window.MediaRecorder || !canvas.captureStream) { toast('Opptak støttes ikke i denne nettleseren'); return; }
+  if (!A.ctx) { toast('Start en lyd først'); return; }
+  const mime = pickMime();
+  const stream = canvas.captureStream(60);
+  A.recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  try {
+    recorder = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8000000 } : undefined);
+  } catch (e) { toast('Kunne ikke starte opptak'); return; }
+  chunks = [];
+  recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    $('#rec').classList.remove('on');
+    $('#rec').textContent = '⏺ Opptak';
+    const blob = new Blob(chunks, { type: chunks[0] ? chunks[0].type : 'video/webm' });
+    const ext = (blob.type.indexOf('mp4') > -1) ? 'mp4' : 'webm';
+    download(URL.createObjectURL(blob), 'lydspeil-' + Date.now() + '.' + ext, true);
+    toast('Opptak lagret');
+  };
+  recorder.start(1000);
+  $('#rec').classList.add('on');
+  $('#rec').textContent = '⏹ Stopp';
+  toast('Opptak startet');
+}
+
+function download(url, name, revoke) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  if (revoke) setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/* ------------------------------------------------------------------ *
+ * Brukergrensesnitt
+ * ------------------------------------------------------------------ */
+function setMode(i, silent) {
+  state.mode = ((i % MODES.length) + MODES.length) % MODES.length;
+  state.cycleAt = state.time;
+  document.querySelectorAll('#modes button').forEach((b, k) => b.classList.toggle('on', k === state.mode));
+  g.clearRect(0, 0, W, H);
+  if (!silent) toast(MODES[state.mode].name);
+}
+
+MODES.forEach((m, i) => {
+  const b = document.createElement('button');
+  b.textContent = (i + 1) + '. ' + m.name;
+  b.addEventListener('click', () => setMode(i));
+  $('#modes').appendChild(b);
+});
+
+PALETTES.forEach((p, i) => {
+  const o = document.createElement('option');
+  o.value = i; o.textContent = p.name;
+  $('#palette').appendChild(o);
+});
+
+$('#palette').addEventListener('change', e => { state.palette = +e.target.value; });
+$('#file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+$('#play').addEventListener('click', togglePlay);
+$('#prev').addEventListener('click', () => nextTrack(-1));
+$('#next').addEventListener('click', () => nextTrack(1));
+$('#mic').addEventListener('click', toggleMic);
+$('#shot').addEventListener('click', snapshot);
+$('#rec').addEventListener('click', toggleRecord);
+$('#cycle').addEventListener('click', e => {
+  state.cycle = !state.cycle;
+  state.cycleAt = state.time;
+  e.currentTarget.classList.toggle('on', state.cycle);
+  toast(state.cycle ? 'Auto-bytte på' : 'Auto-bytte av');
+});
+$('#rainbow').addEventListener('click', e => {
+  state.rainbow = !state.rainbow;
+  if (!state.rainbow) state.hue = 0;
+  e.currentTarget.classList.toggle('on', state.rainbow);
+});
+$('#fs').addEventListener('click', toggleFullscreen);
+
+$('#vol').addEventListener('input', e => {
+  state.volume = e.target.value / 100;
+  if (A.out && state.source !== 'mic') A.out.gain.value = state.volume;
+});
+$('#gain').addEventListener('input', e => { state.sensitivity = e.target.value / 100; });
+$('#smooth').addEventListener('input', e => {
+  if (A.analyser) A.analyser.smoothingTimeConstant = e.target.value / 100;
+});
+$('#trail').addEventListener('input', e => { state.trail = e.target.value / 100; });
+$('#vopacity').addEventListener('input', e => {
+  state.videoOpacity = e.target.value / 100;
+  if (state.source === 'video') videoEl.style.opacity = state.videoOpacity;
+});
+
+function toggleFullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) {
+    (el.requestFullscreen || el.webkitRequestFullscreen || function () {}).call(el);
+  } else {
+    (document.exitFullscreen || document.webkitExitFullscreen || function () {}).call(document);
+  }
+}
+
+/* dra og slipp -------------------------------------------------------- */
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  dragDepth = 0;
+  document.body.classList.remove('dragging');
+  if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+});
+
+/* hurtigtaster -------------------------------------------------------- */
+window.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' && e.target.type !== 'range' || tag === 'textarea' || tag === 'select') return;
+  const k = e.key;
+  if (k === ' ') { e.preventDefault(); togglePlay(); return; }
+  if (k >= '1' && k <= String(MODES.length)) { setMode(+k - 1); return; }
+  if (k === 'ArrowRight') { e.preventDefault(); e.shiftKey ? nextTrack(1) : skip(5); return; }
+  if (k === 'ArrowLeft') { e.preventDefault(); e.shiftKey ? nextTrack(-1) : skip(-5); return; }
+  switch (k.toLowerCase()) {
+    case 'f': toggleFullscreen(); break;
+    case 'h':
+      document.body.classList.toggle('ui-hidden');
+      updateSafeArea();
+      if (document.body.classList.contains('ui-hidden')) toast('Trykk H for å vise menyen');
+      break;
+    case 's': snapshot(); break;
+    case 'r': toggleRecord(); break;
+    case 'm': toggleMic(); break;
+    case 'a': $('#cycle').click(); break;
+    case 'c':
+      state.palette = (state.palette + 1) % PALETTES.length;
+      $('#palette').value = state.palette;
+      toast(PALETTES[state.palette].name);
+      break;
+    case 'arrowup': e.preventDefault(); bumpVolume(.05); break;
+    case 'arrowdown': e.preventDefault(); bumpVolume(-.05); break;
+  }
+});
+
+function bumpVolume(d) {
+  state.volume = clamp(state.volume + d, 0, 1);
+  $('#vol').value = Math.round(state.volume * 100);
+  if (A.out && state.source !== 'mic') A.out.gain.value = state.volume;
+  toast('Volum ' + Math.round(state.volume * 100) + '%');
+}
+
+/* vis menyen igjen ved museklikk i bunnen når den er skjult */
+window.addEventListener('mousemove', e => {
+  if (document.body.classList.contains('ui-hidden') && e.clientY > window.innerHeight - 40) {
+    document.body.classList.remove('ui-hidden');
+    updateSafeArea();
+  }
+});
+
+/* første trykk låser opp lyd i mobile nettlesere */
+window.addEventListener('pointerdown', function once() {
+  resume();
+  window.removeEventListener('pointerdown', once);
+});
+
+setMode(0, true);
+resize();
+
+})();
+</script>
+</body>
+</html>
