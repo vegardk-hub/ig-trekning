@@ -130,7 +130,8 @@
 
 <div id="hint">
   <h1>PRISME</h1>
-  <p>Slipp en lyd- eller videofil hvor som helst, velg fil nedenfor — eller bruk mikrofonen.</p>
+  <p>Slipp en lyd- eller videofil hvor som helst, velg fil nedenfor — eller bruk mikrofonen.<br>
+     Klikk på de små boblene for å sprekke dem.</p>
 </div>
 <div id="toast"></div>
 <div id="drop">Slipp filene her</div>
@@ -197,6 +198,8 @@ uniform float uCamZ, uZoom;
    uPopT er 0 for en hel boble og går 0→1 mens den sprekker. */
 uniform vec4  uBub[NBUB];
 uniform float uPopT[NBUB];
+uniform float uHover;      /* boblen under pekeren, eller -1 */
+uniform float uHoverR;     /* klikkflatens radius i verdensenheter */
 
 #define TAU 6.28318530718
 #define BG_Z -3.4        /* heksagonveggen bak kula                             */
@@ -467,6 +470,7 @@ void main(){
   /* bobler: hele bobler tegnes som glassdråper, og de som sprekker
      som et tynt, voksende skall som toner ut */
   float bestT = 1e9; vec3 bestN = vec3(0.0);
+  int bestI = -1;
   vec3 burst = vec3(0.0);
   for (int i = 0; i < NBUB; i++){
     vec4 b = uBub[i];
@@ -490,7 +494,21 @@ void main(){
     }
     vec3 n2;
     float bt = iSphere(ro - b.xyz, rd, b.w, n2);
-    if (bt > 0.0 && bt < bestT){ bestT = bt; bestN = n2; }
+    if (bt > 0.0 && bt < bestT){ bestT = bt; bestN = n2; bestI = i; }
+
+    /* markér boblen under pekeren med en ring, så man ser hva et klikk
+       kommer til å treffe før man trykker */
+    if (float(i) == uHover){
+      vec3 oc = b.xyz - ro;
+      float tca = dot(oc, rd);
+      if (tca > 0.0){
+        float dist = sqrt(max(dot(oc, oc) - tca * tca, 0.0));
+        /* ringen tegnes på klikkflatens radius, ikke på boblens egen, så
+           den viser nøyaktig hvor stort området er som treffer */
+        float ring = exp(-pow((dist - uHoverR) / (uHoverR * 0.10), 2.0));
+        burst += mix(uCool, vec3(1.0), 0.65) * ring * 2.2;
+      }
+    }
   }
   if (bestT < 1e8){
     vec3 bp = ro + rd * bestT;
@@ -501,6 +519,7 @@ void main(){
     bc += vec3(1.0) * pow(max(dot(bestN, hv), 0.0), 60.0) * 2.2;      /* lyspunkt */
     bc += mix(uCool, uWarm, 0.45) * pow(f, 0.8) * 1.15;               /* kantlys */
     bc *= 0.85 + 0.15 * f;
+    if (bestI >= 0 && float(bestI) == uHover) bc += vec3(0.35, 0.5, 0.5);
     col = mix(col, bc, clamp(0.45 + f * 0.55, 0.0, 1.0));
   }
   col += burst;
@@ -548,8 +567,10 @@ const CFG = {
   POP_MS: 520,         // hvor lenge sprekk-animasjonen varer
   RESPAWN_MIN: 1200,   // ms før en sprukket boble kommer tilbake et nytt sted
   RESPAWN_MAX: 3400,
-  HIT_SCALE: 2.2       // treffradius i forhold til boblas egen — gjør små
-                       // bobler klikkbare uten at man må treffe helt presist
+  HIT_SCALE: 2.0,      // treffflate i forhold til boblens synlige størrelse
+  HIT_MIN_PX: 34       // ...men aldri mindre enn dette i skjermpiksler. Små
+                       // bobler er bare noen få piksler brede, og uten et
+                       // gulv her må man treffe urimelig presist
 };
 
 const PALETTES = [
@@ -621,7 +642,7 @@ gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 const U = {};
 ['uRes','uTime','uBass','uMid','uTreble','uLevel','uBeatAge','uBeatPow',
  'uIntensity','uSpec','uWarm','uCool','uDeep','uCamZ','uZoom',
- 'uBub','uPopT'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+ 'uBub','uPopT','uHover','uHoverR'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
 const specTex = gl.createTexture();
 gl.activeTexture(gl.TEXTURE0);
@@ -756,7 +777,9 @@ const B = {
   list: [],
   buf: new Float32Array(CFG.BUBBLES * 4),
   pop: new Float32Array(CFG.BUBBLES),
-  popped: 0
+  popped: 0,
+  hover: -1,         // boblen under pekeren, markeres i shaderen
+  hoverR: 0.1        // klikkflatens radius, i verdensenheter
 };
 
 function spawnBubble(b) {
@@ -795,6 +818,7 @@ function updateBubbles(dt) {
         b.popT = 0;
         b.dead = CFG.RESPAWN_MIN + Math.random() * (CFG.RESPAWN_MAX - CFG.RESPAWN_MIN);
         B.buf[i * 4 + 3] = 0; B.pop[i] = 0;
+        if (B.hover === i) B.hover = -1;
         continue;
       }
     }
@@ -805,35 +829,37 @@ function updateBubbles(dt) {
   }
 }
 
-/** Strålen gjennom et punkt på skjermen — nøyaktig samme oppsett som i
- *  shaderens main(), slik at det man klikker på er det man ser. */
-function rayThrough(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-  const w = canvas.width, h = canvas.height;
-  const fx = ((clientX - rect.left) / rect.width) * w;
-  const fy = (1 - (clientY - rect.top) / rect.height) * h;   // gl_FragCoord er nedenfra
-  const m = Math.min(w, h);
-  const ux = (fx - 0.5 * w) / m, uy = (fy - 0.5 * h) / m;
-  const dx = ux * CFG.ZOOM, dy = uy * CFG.ZOOM, dz = -1;
-  const len = Math.hypot(dx, dy, dz);
-  return { ox: 0, oy: 0, oz: CFG.CAM_Z, dx: dx / len, dy: dy / len, dz: dz / len };
+/** Hvor boblen havner på skjermen, i CSS-piksler, med synlig radius.
+ *  Utledet av nøyaktig samme kamera som shaderen bruker:
+ *  uv = P.xy / (ZOOM * (CAM_Z - P.z)). */
+function projectBubble(b, rect) {
+  const depth = CFG.CAM_Z - b.z;
+  if (depth <= 0.05) return null;                 // bak kameraet
+  const ux = b.x / (CFG.ZOOM * depth);
+  const uy = b.y / (CFG.ZOOM * depth);
+  const m = Math.min(rect.width, rect.height);    // samme normalisering som i shaderen
+  return {
+    x: rect.left + rect.width * 0.5 + ux * m,
+    y: rect.top + rect.height * 0.5 - uy * m,     // skjermen har y nedover
+    r: (b.r / (CFG.ZOOM * depth)) * m
+  };
 }
 
-/** Nærmeste hele boble strålen treffer, eller -1. */
+/** Boblen nærmest punktet, så lenge den er innenfor treffflaten.
+ *  Treffprøvingen skjer i skjermpiksler og ikke som en 3D-stråle: det er
+ *  avstanden på skjermen brukeren faktisk sikter etter, og det gir et gulv
+ *  som gjør selv de minste boblene klikkbare. */
 function pickBubble(clientX, clientY) {
-  const r = rayThrough(clientX, clientY);
-  let best = -1, bestT = 1e9;
+  const rect = canvas.getBoundingClientRect();
+  let best = -1, bestD = 1e9;
   for (let i = 0; i < B.list.length; i++) {
     const b = B.list[i];
     if (b.dead > 0 || b.popT > 0) continue;
-    const ox = r.ox - b.x, oy = r.oy - b.y, oz = r.oz - b.z;
-    const bb = ox * r.dx + oy * r.dy + oz * r.dz;
-    const rad = b.r * CFG.HIT_SCALE;
-    const c = ox * ox + oy * oy + oz * oz - rad * rad;
-    const disc = bb * bb - c;
-    if (disc < 0) continue;
-    const t = -bb - Math.sqrt(disc);
-    if (t > 0 && t < bestT) { bestT = t; best = i; }
+    const s = projectBubble(b, rect);
+    if (!s) continue;
+    const d = Math.hypot(clientX - s.x, clientY - s.y);
+    const reach = Math.max(CFG.HIT_MIN_PX, s.r * CFG.HIT_SCALE);
+    if (d <= reach && d < bestD) { bestD = d; best = i; }
   }
   return best;
 }
@@ -858,7 +884,22 @@ canvas.addEventListener('pointerdown', e => {
 });
 
 canvas.addEventListener('pointermove', e => {
-  document.body.classList.toggle('overbubble', pickBubble(e.clientX, e.clientY) >= 0);
+  B.hover = pickBubble(e.clientX, e.clientY);
+  if (B.hover >= 0) {
+    // regn klikkflaten om fra skjermpiksler til verdensenheter, slik at
+    // ringen shaderen tegner er nøyaktig det området som treffer
+    const rect = canvas.getBoundingClientRect();
+    const bub = B.list[B.hover];
+    const m = Math.min(rect.width, rect.height);
+    const depth = CFG.CAM_Z - bub.z;
+    const px = Math.max(CFG.HIT_MIN_PX, (bub.r / (CFG.ZOOM * depth)) * m * CFG.HIT_SCALE);
+    B.hoverR = (px / m) * CFG.ZOOM * depth;
+  }
+  document.body.classList.toggle('overbubble', B.hover >= 0);
+});
+canvas.addEventListener('pointerleave', () => {
+  B.hover = -1;
+  document.body.classList.remove('overbubble');
 });
 
 /* ================================================================== *
@@ -884,6 +925,8 @@ function render() {
   gl.uniform1f(U.uZoom, CFG.ZOOM);
   gl.uniform4fv(U.uBub, B.buf);
   gl.uniform1fv(U.uPopT, B.pop);
+  gl.uniform1f(U.uHover, B.hover);
+  gl.uniform1f(U.uHoverR, B.hoverR);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 

@@ -31,17 +31,23 @@ Her beregnes i stedet hver piksel som en lysstråle:
 Klikk (eller trykk) på en av de små boblene som seiler rundt kula, så
 sprekker den: et tynt skall utvider seg og toner ut, og telleren oppe i
 høyre hjørne går opp. Boblen kommer tilbake et nytt sted etter noen
-sekunder, så det er alltid noe å sikte på. Musepekeren blir en peker når
-den er over en boble.
+sekunder, så det er alltid noe å sikte på.
+
+Når pekeren er nær en boble, tegnes en ring rundt den som viser nøyaktig
+hvor stort området er som treffer, og musepekeren blir en peker. Uten den
+ringen er de minste boblene bare noen få piksler brede, og man aner ikke
+om man bommet eller om funksjonen er i stykker.
 
 Dette krevde en endring under panseret. Boblene lå opprinnelig bare i
 shaderen, regnet ut fra en hash-funksjon — de fantes ikke på CPU-siden, og
 det man ikke vet hvor er, kan man heller ikke klikke på. Nå eier JavaScript
 boblene, og posisjonene lastes opp som en uniform-array hver frame.
 
-Det gir også treffdeteksjonen gratis: et klikk gjøres om til nøyaktig samme
-lysstråle som shaderen bruker for den pikselen, og strålen testes mot de
-samme kulene som tegnes. Derfor treffer du det du ser. Kameraverdiene
+Treffprøvingen skjer i skjermpiksler, ikke som en stråle i 3D: boblen
+projiseres til skjermen med nøyaktig samme kamera som shaderen bruker, og
+den nærmeste innenfor treffflaten vinner. Det er avstanden på skjermen man
+faktisk sikter etter, og det gjør at treffflaten kan ha et gulv målt i
+piksler. Kameraverdiene
 (`CAM_Z`, `ZOOM`) er uniformer og ikke `#define` nettopp for at JS og
 shaderen skal dele ett sett tall, og antallet bobler skytes inn i shaderen
 ved kompilering, slik at CPU-listen og GPU-arrayen ikke kan komme i utakt.
@@ -120,7 +126,8 @@ Boblene styres fra `CFG` øverst i skriptet:
 | Konstant | Betydning |
 |----------|-----------|
 | `BUBBLES` | Hvor mange bobler som er i lufta samtidig |
-| `HIT_SCALE` | Hvor mye større treffflaten er enn boblen. Høyere gjør det lettere å treffe |
+| `HIT_SCALE` | Hvor mye større treffflaten er enn boblens synlige størrelse |
+| `HIT_MIN_PX` | Minste treffflate i skjermpiksler. Det er denne som gjør de minste boblene klikkbare |
 | `POP_MS` | Hvor lenge sprekk-animasjonen varer |
 | `RESPAWN_MIN` / `RESPAWN_MAX` | Hvor lenge det går før en sprukket boble kommer tilbake |
 
