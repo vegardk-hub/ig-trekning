@@ -26,6 +26,30 @@ Her beregnes i stedet hver piksel som en lysstråle:
   ett punkt, så forsiden og baksiden av ringen treffer hver sine piksler og
   sorteres mot kula uten at noe må sorteres i en liste.
 
+## Bobler du kan sprekke
+
+Klikk (eller trykk) på en av de små boblene som seiler rundt kula, så
+sprekker den: et tynt skall utvider seg og toner ut, og telleren oppe i
+høyre hjørne går opp. Boblen kommer tilbake et nytt sted etter noen
+sekunder, så det er alltid noe å sikte på. Musepekeren blir en peker når
+den er over en boble.
+
+Dette krevde en endring under panseret. Boblene lå opprinnelig bare i
+shaderen, regnet ut fra en hash-funksjon — de fantes ikke på CPU-siden, og
+det man ikke vet hvor er, kan man heller ikke klikke på. Nå eier JavaScript
+boblene, og posisjonene lastes opp som en uniform-array hver frame.
+
+Det gir også treffdeteksjonen gratis: et klikk gjøres om til nøyaktig samme
+lysstråle som shaderen bruker for den pikselen, og strålen testes mot de
+samme kulene som tegnes. Derfor treffer du det du ser. Kameraverdiene
+(`CAM_Z`, `ZOOM`) er uniformer og ikke `#define` nettopp for at JS og
+shaderen skal dele ett sett tall, og antallet bobler skytes inn i shaderen
+ved kompilering, slik at CPU-listen og GPU-arrayen ikke kan komme i utakt.
+
+Telleren er et vanlig HTML-element over lerretet. Den er derfor **ikke** med
+i 4K-stillbildene eller i opptakene — de fanger bare selve lerretet. Det er
+med vilje for stillbildene, som da blir rene bakgrunnsbilder.
+
 ## Lyd
 
 Samme analyse som i V1: Web Audio med 4096 punkters FFT, delt i 128
@@ -52,6 +76,7 @@ tekstur hver frame, slik at shaderen kan slå opp spekteret direkte.
 | `R` | Start/stopp opptak |
 | `M` | Mikrofon |
 | `D` | Vis bildefrekvens og oppløsning |
+| Klikk | Sprekk en boble |
 
 Menyen trekker seg unna når musen står stille, og kommer tilbake ved bevegelse.
 
@@ -89,6 +114,15 @@ Rammeverket for motivet ligger i `#define`-blokken øverst i fragment-shaderen:
 | `BG_Z` | Hvor langt bak kula heksagonveggen står |
 | `HEX_SCALE` | Størrelsen på cellene |
 | `RINGS` | Antall ringer |
+
+Boblene styres fra `CFG` øverst i skriptet:
+
+| Konstant | Betydning |
+|----------|-----------|
+| `BUBBLES` | Hvor mange bobler som er i lufta samtidig |
+| `HIT_SCALE` | Hvor mye større treffflaten er enn boblen. Høyere gjør det lettere å treffe |
+| `POP_MS` | Hvor lenge sprekk-animasjonen varer |
+| `RESPAWN_MIN` / `RESPAWN_MAX` | Hvor lenge det går før en sprukket boble kommer tilbake |
 
 Ringenes vinkler, radier og bredder settes i `main()`. Vippen (`rotX`) er den
 som betyr mest visuelt: små verdier gir avlange baner som går bak og foran
