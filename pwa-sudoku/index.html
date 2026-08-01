@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#2f6fb3">
+<meta name="description" content="Sudoku med automatiske blyantmerker og hint som forklarer løseteknikkene.">
+<title>Sudoku</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topp">
+    <h1>Sudoku</h1>
+    <div class="meta">
+      <span id="meta-nivaa">–</span>
+      <span class="prikk">·</span>
+      <span id="meta-igjen">–</span>
+    </div>
+  </header>
+
+  <div id="brett" class="brett" role="grid" aria-label="Sudokurutenett"></div>
+
+  <div id="hint" class="hint" hidden>
+    <div class="hint-topp">
+      <span id="hint-navn" class="hint-navn"></span>
+      <button id="hint-lukk" class="ikonknapp" aria-label="Lukk hint">&times;</button>
+    </div>
+    <p id="hint-tekst" class="hint-tekst"></p>
+    <div class="hint-knapper">
+      <button id="hint-mer" class="knapp">Vis hvor</button>
+      <button id="hint-bruk" class="knapp primaer">Bruk</button>
+    </div>
+  </div>
+
+  <div id="melding" class="melding" hidden></div>
+
+  <div class="tastatur">
+    <div class="tall" id="tall"></div>
+    <div class="verktoy">
+      <button id="btn-slett" class="knapp verktoyknapp">
+        <span class="vsymbol">⌫</span><span class="vtekst">Slett</span>
+      </button>
+      <button id="btn-angre" class="knapp verktoyknapp" disabled>
+        <span class="vsymbol">↶</span><span class="vtekst">Angre</span>
+      </button>
+      <button id="btn-gjorom" class="knapp verktoyknapp" disabled>
+        <span class="vsymbol">↷</span><span class="vtekst">Gjør om</span>
+      </button>
+      <button id="btn-blyant" class="knapp verktoyknapp" aria-pressed="false">
+        <span class="vsymbol">✎</span><span class="vtekst">Blyant</span>
+      </button>
+      <button id="btn-auto" class="knapp verktoyknapp" aria-pressed="true">
+        <span class="vsymbol">◈</span><span class="vtekst">Auto</span>
+      </button>
+      <button id="btn-hint" class="knapp verktoyknapp">
+        <span class="vsymbol">?</span><span class="vtekst">Hint</span>
+      </button>
+      <button id="btn-nytt" class="knapp verktoyknapp">
+        <span class="vsymbol">✦</span><span class="vtekst">Nytt</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<div id="nytt-panel" class="modal" hidden>
+  <div class="modal-kort">
+    <h2>Nytt spill</h2>
+    <p class="modal-under">Vanskelighetsgraden bestemmes av hvilke løseteknikker som trengs.</p>
+    <div class="nivaaliste">
+      <button class="nivaaknapp" data-nivaa="lett">
+        <strong>Lett</strong><span>Bare nakne og skjulte enere</span>
+      </button>
+      <button class="nivaaknapp" data-nivaa="middels">
+        <strong>Middels</strong><span>Låste kandidater</span>
+      </button>
+      <button class="nivaaknapp" data-nivaa="vanskelig">
+        <strong>Vanskelig</strong><span>Nakne og skjulte par</span>
+      </button>
+      <button class="nivaaknapp" data-nivaa="ekspert">
+        <strong>Ekspert</strong><span>Tripler, X-Wing, XY-Wing og sverdfisk</span>
+      </button>
+    </div>
+    <button id="nytt-avbryt" class="knapp bred">Avbryt</button>
+  </div>
+</div>
+
+<div id="jobber" class="modal" hidden>
+  <div class="modal-kort smal">
+    <div class="spinner"></div>
+    <p id="jobber-tekst">Lager puslespill …</p>
+  </div>
+</div>
+
+<div id="ferdig" class="modal" hidden>
+  <div class="modal-kort smal">
+    <div class="pokal">★</div>
+    <h2>Løst!</h2>
+    <p id="ferdig-tekst" class="modal-under"></p>
+    <button id="ferdig-nytt" class="knapp primaer bred">Nytt spill</button>
+    <button id="ferdig-lukk" class="knapp bred">Se på brettet</button>
+  </div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/solver.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

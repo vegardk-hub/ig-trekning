@@ -1,0 +1,437 @@
+/* Sudoku — utseende. Lyst papirtema med mørk variant. */
+
+:root {
+  --bg: #f2efe7;
+  --flate: #ffffff;
+  --ramme: #b9b2a4;
+  --ramme-tykk: #3c4450;
+  --blekk: #262c35;
+  --blekk-svak: #7b8390;
+  --gitt: #262c35;
+  --skrevet: #2f6fb3;
+  --merke: #8b93a1;
+
+  --valgt: #cfe1f5;
+  --naboer: #eceff4;
+  --likt-tall: #dce9f7;
+
+  --hint-hoved: #ffdf9e;
+  --hint-enhet: #fff6e2;
+  --hint-mal: #fbcfc6;
+  --hint-kant: #d98a2b;
+
+  --aksent: #2f6fb3;
+  --aksent-tekst: #ffffff;
+  --knapp: #ffffff;
+  --knapp-kant: #d6d0c4;
+
+  --skygge: 0 1px 2px rgba(38, 44, 53, .08), 0 6px 18px rgba(38, 44, 53, .07);
+  --brett: min(94vw, 520px, 56vh);
+  --celle: calc(var(--brett) / 9);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171a1f;
+    --flate: #21262e;
+    --ramme: #3b424d;
+    --ramme-tykk: #8a94a3;
+    --blekk: #e6e9ee;
+    --blekk-svak: #939ba8;
+    --gitt: #e6e9ee;
+    --skrevet: #74b3f0;
+    --merke: #7f8896;
+
+    --valgt: #2f4a68;
+    --naboer: #272d36;
+    --likt-tall: #2a3b4d;
+
+    --hint-hoved: #6b5423;
+    --hint-enhet: #37301f;
+    --hint-mal: #5e2f2a;
+    --hint-kant: #e0a94f;
+
+    --aksent: #4d90d9;
+    --knapp: #2a3038;
+    --knapp-kant: #3b424d;
+    --skygge: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .35);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--blekk);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.app {
+  width: 100%;
+  max-width: 560px;
+  min-height: 100dvh;
+  padding: 10px 12px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ---------- Topp ---------- */
+
+.topp { text-align: center; }
+
+.topp h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--blekk);
+}
+
+.meta {
+  margin-top: 2px;
+  font-size: .82rem;
+  color: var(--blekk-svak);
+}
+
+.prikk { opacity: .5; margin: 0 .3em; }
+
+/* ---------- Brett ---------- */
+
+.brett {
+  width: var(--brett);
+  height: var(--brett);
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  background: var(--flate);
+  border: 2.5px solid var(--ramme-tykk);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--skygge);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.celle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--ramme);
+  border-bottom: 1px solid var(--ramme);
+  cursor: pointer;
+  transition: background-color .12s ease;
+}
+
+/* Tykke skiller mellom boksene */
+.celle:nth-child(9n) { border-right: none; }
+.celle:nth-child(9n+3), .celle:nth-child(9n+6) { border-right: 2.5px solid var(--ramme-tykk); }
+.celle:nth-child(n+73) { border-bottom: none; }
+.celle:nth-child(n+19):nth-child(-n+27),
+.celle:nth-child(n+46):nth-child(-n+54) { border-bottom: 2.5px solid var(--ramme-tykk); }
+
+.tall-stor {
+  font-size: calc(var(--celle) * .62);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.celle.gitt .tall-stor { color: var(--gitt); font-weight: 600; }
+.celle.skrevet .tall-stor { color: var(--skrevet); font-weight: 500; }
+
+.merker {
+  position: absolute;
+  inset: 6%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  font-size: calc(var(--celle) * .26);
+  line-height: 1;
+  color: var(--merke);
+}
+
+.merker i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  visibility: hidden;
+}
+
+.merker i.paa { visibility: visible; }
+
+/* Markering */
+.celle.naboer { background: var(--naboer); }
+.celle.likt   { background: var(--likt-tall); }
+.celle.valgt  { background: var(--valgt); }
+
+.celle.hint-enhet { background: var(--hint-enhet); }
+.celle.hint-mal   { background: var(--hint-mal); }
+.celle.hint-hoved {
+  background: var(--hint-hoved);
+  box-shadow: inset 0 0 0 2px var(--hint-kant);
+}
+
+.merker i.hint-tall  { color: var(--hint-kant); font-weight: 700; }
+.merker i.hint-vekk  { color: #c0392b; text-decoration: line-through; font-weight: 700; }
+
+@media (prefers-color-scheme: dark) {
+  .merker i.hint-vekk { color: #f08a7c; }
+}
+
+.celle.puls { animation: puls .5s ease; }
+
+@keyframes puls {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Hintpanel ---------- */
+
+.hint {
+  width: var(--brett);
+  background: var(--flate);
+  border: 1px solid var(--knapp-kant);
+  border-left: 4px solid var(--hint-kant);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: var(--skygge);
+}
+
+.hint-topp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hint-navn { font-weight: 700; font-size: .95rem; }
+
+.hint-tekst {
+  margin: 6px 0 10px;
+  font-size: .88rem;
+  line-height: 1.45;
+  color: var(--blekk);
+}
+
+.hint-knapper { display: flex; gap: 8px; }
+.hint-knapper .knapp { flex: 1; }
+
+.ikonknapp {
+  border: none;
+  background: none;
+  color: var(--blekk-svak);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+.melding {
+  width: var(--brett);
+  background: var(--flate);
+  border: 1px solid var(--knapp-kant);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: .86rem;
+  line-height: 1.45;
+  color: var(--blekk);
+  box-shadow: var(--skygge);
+}
+
+/* ---------- Tastatur ---------- */
+
+.tastatur {
+  width: var(--brett);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tall {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 5px;
+}
+
+.tallknapp {
+  aspect-ratio: 2 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--celle) * .5);
+  font-weight: 500;
+  color: var(--skrevet);
+  background: var(--knapp);
+  border: 1px solid var(--knapp-kant);
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: var(--skygge);
+  transition: transform .08s ease, background-color .12s ease;
+}
+
+.tallknapp:active { transform: scale(.94); }
+.tallknapp.ferdig { color: var(--blekk-svak); opacity: .4; }
+
+.verktoy {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.knapp {
+  font: inherit;
+  font-size: .85rem;
+  color: var(--blekk);
+  background: var(--knapp);
+  border: 1px solid var(--knapp-kant);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  box-shadow: var(--skygge);
+  transition: transform .08s ease, background-color .12s ease;
+}
+
+.knapp:active { transform: scale(.96); }
+
+.knapp:disabled { opacity: .35; cursor: default; box-shadow: none; }
+.knapp:disabled:active { transform: none; }
+
+.knapp.primaer {
+  background: var(--aksent);
+  border-color: var(--aksent);
+  color: var(--aksent-tekst);
+  font-weight: 600;
+}
+
+.knapp.bred { width: 100%; }
+
+.verktoyknapp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 1px;
+}
+
+.vsymbol { font-size: 1.05rem; line-height: 1; }
+/* Sju knapper på smale skjermer: teksten krymper med brettet, ellers sprenger
+   «Gjør om» kolonnen. */
+.vtekst {
+  font-size: min(.66rem, calc(var(--brett) * .032));
+  color: var(--blekk-svak);
+  white-space: nowrap;
+}
+
+.verktoyknapp[aria-pressed="true"] {
+  background: var(--aksent);
+  border-color: var(--aksent);
+  color: var(--aksent-tekst);
+}
+
+.verktoyknapp[aria-pressed="true"] .vtekst { color: var(--aksent-tekst); opacity: .9; }
+
+/* ---------- Modaler ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 28, 34, .5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+  backdrop-filter: blur(2px);
+}
+
+.modal[hidden] { display: none; }
+
+.modal-kort {
+  width: 100%;
+  max-width: 380px;
+  background: var(--flate);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .3);
+  animation: opp .18s ease;
+}
+
+.modal-kort.smal { max-width: 300px; text-align: center; }
+
+@keyframes opp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.modal-kort h2 { margin: 0 0 4px; font-size: 1.15rem; }
+
+.modal-under {
+  margin: 0 0 14px;
+  font-size: .84rem;
+  line-height: 1.45;
+  color: var(--blekk-svak);
+}
+
+.nivaaliste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.nivaaknapp {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--knapp);
+  color: var(--blekk);
+  border: 1px solid var(--knapp-kant);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.nivaaknapp:hover { border-color: var(--aksent); }
+.nivaaknapp strong { font-size: .95rem; }
+.nivaaknapp span { font-size: .76rem; color: var(--blekk-svak); }
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  margin: 4px auto 12px;
+  border: 3px solid var(--knapp-kant);
+  border-top-color: var(--aksent);
+  border-radius: 50%;
+  animation: snurr .8s linear infinite;
+}
+
+@keyframes snurr { to { transform: rotate(360deg); } }
+
+.pokal { font-size: 2.6rem; color: var(--hint-kant); line-height: 1; }
+
+#ferdig .knapp { margin-top: 8px; }
+
+/* Litt luftigere på store skjermer */
+@media (min-width: 480px) and (min-height: 760px) {
+  :root { --brett: min(94vw, 520px, 62vh); }
+}
