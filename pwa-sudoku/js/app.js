@@ -90,6 +90,20 @@
     // ikke tallet i ruta du sist rørte.
     const likTall = (state.fyllModus && state.aktivtTall) ? state.aktivtTall : selVerdi;
 
+    // Regelbrudd: et tall du har skrevet som står i samme rad, kolonne eller
+    // boks som et likt tall. Merk at dette ikke er en sammenlikning mot
+    // løsningen — det røper ingenting, det sier bare at disse to ikke kan stå
+    // sammen. Bare dine egne tall merkes; de gitte kan du likevel ikke endre,
+    // og et rødt tall skal alltid være noe du kan rette.
+    const konflikt = new Uint8Array(81);
+    for (let i = 0; i < 81; i++) {
+      const v = state.verdier[i];
+      if (!v || state.gitt[i]) continue;
+      for (const j of C.PEERS[i]) {
+        if (state.verdier[j] === v) { konflikt[i] = 1; break; }
+      }
+    }
+
     const antallTall = new Array(10).fill(0);
 
     for (let i = 0; i < 81; i++) {
@@ -99,6 +113,7 @@
 
       let cls = 'celle';
       if (v) cls += state.gitt[i] ? ' gitt' : ' skrevet';
+      if (konflikt[i]) cls += ' konflikt';
       if (naboer && naboer.has(i)) cls += ' naboer';
       if (likTall && v === likTall && i !== sel) cls += ' likt';
       if (i === sel) cls += ' valgt';

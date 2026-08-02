@@ -23,6 +23,16 @@ legg mappa på en webserver og installer den på hjemskjermen.
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
 
+## Når to tall ikke kan stå sammen
+
+Skriver du et tall som allerede står i samme rad, kolonne eller boks, blir det
+stående rødt. Det er et rent regelbrudd som vises — ikke en sammenlikning mot
+løsningen — så markeringen røper ingenting du ikke kunne sett selv ved å følge
+raden. Retter du, forsvinner den.
+
+Bare tall du har skrevet blir røde. De gitte kan du likevel ikke endre, og et
+rødt tall skal alltid være noe du kan gjøre noe med.
+
 ## To måter å skrive på
 
 Vanligvis går det rute først: velg ruta, trykk tallet. Skal det samme tallet inn

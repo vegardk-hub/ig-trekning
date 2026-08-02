@@ -19,6 +19,7 @@
   --hint-enhet: #fff6e2;
   --hint-mal: #fbcfc6;
   --hint-kant: #d98a2b;
+  --feil: #c0392b;
 
   --aksent: #2f6fb3;
   --aksent-tekst: #ffffff;
@@ -50,6 +51,7 @@
     --hint-enhet: #37301f;
     --hint-mal: #5e2f2a;
     --hint-kant: #e0a94f;
+    --feil: #f08a7c;
 
     --aksent: #4d90d9;
     --knapp: #2a3038;
@@ -154,6 +156,8 @@ body {
 
 .celle.gitt .tall-stor { color: var(--gitt); font-weight: 600; }
 .celle.skrevet .tall-stor { color: var(--skrevet); font-weight: 500; }
+/* Etter .skrevet: like spesifikke, så rekkefølgen her avgjør at rødt vinner. */
+.celle.konflikt .tall-stor { color: var(--feil); font-weight: 600; }
 
 .merker {
   position: absolute;
@@ -189,11 +193,7 @@ body {
 }
 
 .merker i.hint-tall  { color: var(--hint-kant); font-weight: 700; }
-.merker i.hint-vekk  { color: #c0392b; text-decoration: line-through; font-weight: 700; }
-
-@media (prefers-color-scheme: dark) {
-  .merker i.hint-vekk { color: #f08a7c; }
-}
+.merker i.hint-vekk  { color: var(--feil); text-decoration: line-through; font-weight: 700; }
 
 .celle.puls { animation: puls .5s ease; }
 
