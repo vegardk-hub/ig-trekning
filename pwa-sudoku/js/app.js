@@ -69,6 +69,39 @@
     tallKnapper.push(b);
   }
 
+  /* ---------- Fargeoppsett ---------- */
+
+  const temaKnapper = [];
+  const temaListe = $('#temaliste');
+
+  window.SudokuTema.TEMAER.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'temavalg';
+    b.dataset.tema = t.id;
+    b.setAttribute('role', 'radio');
+
+    const prove = document.createElement('span');
+    prove.className = 'prove';
+    prove.style.background = 'linear-gradient(135deg, ' + t.prove[0] + ' 50%, ' + t.prove[1] + ' 50%)';
+
+    const tekst = document.createElement('span');
+    tekst.className = 'tematekst';
+    const navn = document.createElement('strong');
+    navn.textContent = t.navn;
+    const om = document.createElement('span');
+    om.textContent = t.om;
+    tekst.append(navn, om);
+
+    b.append(prove, tekst);
+    temaListe.appendChild(b);
+    temaKnapper.push(b);
+  });
+
+  function merkValgtTema() {
+    const valgt = window.SudokuTema.lagret();
+    temaKnapper.forEach(b => b.setAttribute('aria-checked', String(b.dataset.tema === valgt)));
+  }
+
   /* ---------- Tegning ---------- */
 
   function tegn() {
@@ -576,9 +609,21 @@
   // Trykk på det mørke feltet rundt lukker — den vanlige gesten på telefon,
   // der det ikke finnes noen Esc-tast. #jobber står med vilje utenfor: der
   // pågår det en generering, og et bomtrykk skal ikke etterlate den halvveis.
-  ['#nytt-panel', '#ferdig'].forEach(sel => {
+  ['#nytt-panel', '#ferdig', '#tema-panel'].forEach(sel => {
     const el = $(sel);
     el.addEventListener('click', e => { if (e.target === el) el.hidden = true; });
+  });
+
+  $('#btn-tema').addEventListener('click', () => {
+    merkValgtTema();
+    $('#tema-panel').hidden = false;
+  });
+  $('#tema-lukk').addEventListener('click', () => { $('#tema-panel').hidden = true; });
+  temaListe.addEventListener('click', e => {
+    const b = e.target.closest('.temavalg');
+    if (!b) return;
+    window.SudokuTema.velg(b.dataset.tema);   // slår inn med en gang, så du ser det
+    merkValgtTema();
   });
 
   $('#btn-nytt').addEventListener('click', () => { $('#nytt-panel').hidden = false; });
@@ -631,7 +676,8 @@
     if (k === 'h' || k === 'H') { hintTrykk(); e.preventDefault(); return; }
     if (k === 'p' || k === 'P') { $('#btn-blyant').click(); e.preventDefault(); return; }
     if (k === 'Escape') {
-      if (!$('#nytt-panel').hidden) $('#nytt-panel').hidden = true;
+      if (!$('#tema-panel').hidden) $('#tema-panel').hidden = true;
+      else if (!$('#nytt-panel').hidden) $('#nytt-panel').hidden = true;
       else if (hint) { lukkHint(); tegn(); }
     }
   });

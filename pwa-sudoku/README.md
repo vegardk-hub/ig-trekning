@@ -19,6 +19,7 @@ legg mappa på en webserver og installer den på hjemskjermen.
 | Angre | **Angre** | `Ctrl`/`Cmd` + `Z` |
 | Gjør om | **Gjør om** | `Ctrl`/`Cmd` + `Shift` + `Z`, eller `Ctrl` + `Y` |
 | Hint | **Hint** | `H` |
+| Fargeoppsett | ◐ oppe til høyre | – |
 | Lukk hint/dialog | ✕, eller trykk utenfor | `Esc` |
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
@@ -93,6 +94,39 @@ strykningene tilbake.
 Endrer du et tall du allerede hadde satt, nullstilles strykningene fra hint — de
 var utledet fra et brett som ikke gjelder lenger.
 
+## Fargeoppsett
+
+◐-knappen oppe til høyre gir fire oppsett, pluss **Følg systemet** som veksler
+mellom Papir og Natt etter hva telefonen står på. Valget huskes.
+
+| Oppsett | Til hva |
+| --- | --- |
+| Papir | Varmt og dempet — standarden |
+| Sollys | Maks kontrast, for sterkt dagslys |
+| Natt | Mørkt og kjølig |
+| Kveld | Mørkt og varmt, uten det blå |
+
+**Sollys** finnes fordi blyantmerkene er det første som forsvinner ute. Målt mot
+flaten de står på:
+
+| Oppsett | Gitte tall | Skrevne tall | Blyantmerker |
+| --- | --- | --- | --- |
+| Papir | 14,1:1 | 5,2:1 | **3,1:1** |
+| Sollys | 21,0:1 | 7,9:1 | **11,7:1** |
+| Natt | 12,5:1 | 6,8:1 | 4,2:1 |
+| Kveld | 12,7:1 | 7,8:1 | 4,4:1 |
+
+3,1:1 er under WCAG-grensa på 4,5:1 for småtekst — behagelig innendørs, borte i
+sol. Sollys tar merkene til 11,7:1, setter rutenettet i svart i stedet for
+blågrått, og bytter de myke skyggene mot én skarp strek: diffuse skygger
+forsvinner uansett i sterkt lys og etterlater bare uskarpe kanter.
+
+Palettene ligger i `styles.css`, én blokk per oppsett. `js/tema.js` lastes fra
+`<head>` og setter `data-tema` på `<html>` før første maling — gjøres det fra
+`app.js`, som lastes nederst, rekker standardfargene å blinke til. Den slår også
+«Følg systemet» opp mot `prefers-color-scheme`, slik at hver palett står
+nøyaktig ett sted og ingen mediaspørring skal holdes i takt.
+
 ## Vanskelighetsgrader
 
 Nivået er ikke antall ledetråder, men **den vanskeligste teknikken som faktisk
@@ -117,6 +151,7 @@ seks nivåene ett bånd.
 | `js/core.js` | Rutenett, enheter, kandidater, brute force-løser med propagering |
 | `js/solver.js` | De tolv løseteknikkene, forklaringene og graderingen |
 | `js/generator.js` | Lager entydige brett på ønsket nivå |
+| `js/tema.js` | Fargeoppsettene — settes før første maling |
 | `js/app.js` | Grensesnitt, tastatur, angrelogg, lagring |
 | `lag_ikon.py` | Lager appikonene (krever Pillow) |
 

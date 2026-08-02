@@ -1,4 +1,11 @@
-/* Sudoku — utseende. Lyst papirtema med mørk variant. */
+/* Sudoku — utseende.
+ *
+ * Fire fargeoppsett, ett per blokk. tema.js setter data-tema på <html> før
+ * første maling og slår «Følg systemet» opp mot prefers-color-scheme, slik at
+ * hver palett står nøyaktig ett sted her — ingen mediaspørring å holde i takt.
+ *
+ * Papir er grunntemaet og ligger i :root, så det gjelder om attributtet mangler.
+ */
 
 :root {
   --bg: #f2efe7;
@@ -31,33 +38,95 @@
   --celle: calc(var(--brett) / 9);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #171a1f;
-    --flate: #21262e;
-    --ramme: #3b424d;
-    --ramme-tykk: #8a94a3;
-    --blekk: #e6e9ee;
-    --blekk-svak: #939ba8;
-    --gitt: #e6e9ee;
-    --skrevet: #74b3f0;
-    --merke: #7f8896;
+/* Sollys — for skjermen du knapt ser. Blyantmerkene er den virkelige taperen
+   i sterkt lys: #8b93a1 på hvitt ligger rundt 2,9:1, altså under grensa for
+   lesbar småtekst. Her er de #33393f, i overkant av 10:1. Rutenettet er svart
+   i stedet for blågrått, og de myke skyggene er byttet mot én skarp strek —
+   diffuse skygger forsvinner i sol og etterlater bare uskarpe kanter. */
+:root[data-tema="sollys"] {
+  --bg: #ffffff;
+  --flate: #ffffff;
+  --ramme: #7a8189;
+  --ramme-tykk: #000000;
+  --blekk: #000000;
+  --blekk-svak: #3f464e;
+  --gitt: #000000;
+  --skrevet: #0a4ea8;
+  --merke: #33393f;
 
-    --valgt: #2f4a68;
-    --naboer: #272d36;
-    --likt-tall: #2a3b4d;
+  --valgt: #9ec8f2;
+  --naboer: #e6eaee;
+  --likt-tall: #c3ddf7;
 
-    --hint-hoved: #6b5423;
-    --hint-enhet: #37301f;
-    --hint-mal: #5e2f2a;
-    --hint-kant: #e0a94f;
-    --feil: #f08a7c;
+  --hint-hoved: #ffd166;
+  --hint-enhet: #fff3d1;
+  --hint-mal: #ffb4a6;
+  --hint-kant: #94480a;
+  --feil: #b3000f;
 
-    --aksent: #4d90d9;
-    --knapp: #2a3038;
-    --knapp-kant: #3b424d;
-    --skygge: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .35);
-  }
+  --aksent: #0a4ea8;
+  --aksent-tekst: #ffffff;
+  --knapp: #ffffff;
+  --knapp-kant: #6f767e;
+  --skygge: 0 1px 0 rgba(0, 0, 0, .22);
+}
+
+/* Natt — kjølig og dempet, for mørke rom. */
+:root[data-tema="natt"] {
+  --bg: #171a1f;
+  --flate: #21262e;
+  --ramme: #3b424d;
+  --ramme-tykk: #8a94a3;
+  --blekk: #e6e9ee;
+  --blekk-svak: #939ba8;
+  --gitt: #e6e9ee;
+  --skrevet: #74b3f0;
+  --merke: #7f8896;
+
+  --valgt: #2f4a68;
+  --naboer: #272d36;
+  --likt-tall: #2a3b4d;
+
+  --hint-hoved: #6b5423;
+  --hint-enhet: #37301f;
+  --hint-mal: #5e2f2a;
+  --hint-kant: #e0a94f;
+  --feil: #f08a7c;
+
+  --aksent: #4d90d9;
+  --knapp: #2a3038;
+  --knapp-kant: #3b424d;
+  --skygge: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .35);
+}
+
+/* Kveld — samme mørke, men uten det blå. Skriften er rav i stedet for blå, så
+   skjermen er lettere å ha foran seg sent. */
+:root[data-tema="kveld"] {
+  --bg: #1e1a15;
+  --flate: #29231c;
+  --ramme: #473d31;
+  --ramme-tykk: #9c8a72;
+  --blekk: #f2e7d8;
+  --blekk-svak: #a9967f;
+  --gitt: #f2e7d8;
+  --skrevet: #efa964;
+  --merke: #9a866f;
+
+  --valgt: #5b452c;
+  --naboer: #302921;
+  --likt-tall: #4a3826;
+
+  --hint-hoved: #6f5622;
+  --hint-enhet: #3b3120;
+  --hint-mal: #613327;
+  --hint-kant: #e0a94f;
+  --feil: #f0907e;
+
+  --aksent: #d1934f;
+  --aksent-tekst: #1e1a15;
+  --knapp: #302921;
+  --knapp-kant: #473d31;
+  --skygge: 0 1px 2px rgba(0, 0, 0, .35), 0 6px 18px rgba(0, 0, 0, .4);
 }
 
 * { box-sizing: border-box; }
@@ -357,6 +426,70 @@ body {
 }
 
 .verktoyknapp[aria-pressed="true"] .vtekst { color: var(--aksent-tekst); opacity: .9; }
+
+/* ---------- Fargeoppsett ---------- */
+
+.temaknapp {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--blekk-svak);
+  background: var(--knapp);
+  border: 1px solid var(--knapp-kant);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: var(--skygge);
+  transition: transform .08s ease;
+}
+
+.temaknapp:active { transform: scale(.94); }
+
+.temaliste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.temavalg {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--knapp);
+  color: var(--blekk);
+  border: 1px solid var(--knapp-kant);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.temavalg:hover { border-color: var(--aksent); }
+.temavalg[aria-checked="true"] {
+  border-color: var(--aksent);
+  box-shadow: inset 0 0 0 1px var(--aksent);
+}
+
+/* Prøvelapp: flatefargen mot skriftfargen, delt på diagonalen. */
+.prove {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 8px;
+  border: 1px solid var(--ramme);
+}
+
+.tematekst { display: flex; flex-direction: column; gap: 2px; }
+.tematekst strong { font-size: .95rem; }
+.tematekst span { font-size: .76rem; color: var(--blekk-svak); }
 
 /* Hvilken kode kjører her? Skal være til å slå opp, ikke til å se på. Ligger
    utenfor flyten med vilje: i flyten stjal den de siste pikslene på en 320 px

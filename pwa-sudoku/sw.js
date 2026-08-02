@@ -12,12 +12,13 @@
  * i en fersk cache, der den så ble liggende. Derfor no-store begge steder.
  */
 
-const CACHE = 'sudoku-v9';
+const CACHE = 'sudoku-v10';
 const FILER = [
   './',
   './index.html',
   './styles.css',
   './manifest.json',
+  './js/tema.js',
   './js/core.js',
   './js/solver.js',
   './js/generator.js',

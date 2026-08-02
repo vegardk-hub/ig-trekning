@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#2f6fb3">
+<meta name="theme-color" content="#f2efe7">
 <meta name="description" content="Sudoku med automatiske blyantmerker og hint som forklarer løseteknikkene.">
 <title>Sudoku</title>
 <link rel="manifest" href="manifest.json">
@@ -11,10 +11,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="styles.css">
+<!-- Før stilene rekker å male: setter data-tema på <html>, ellers blinker
+     standardfargene til for den som har valgt et annet oppsett. -->
+<script src="js/tema.js"></script>
 </head>
 <body>
 
 <div class="app">
+
+  <button id="btn-tema" class="temaknapp" aria-label="Fargeoppsett">◐</button>
 
   <header class="topp">
     <h1>Sudoku</h1>
@@ -94,6 +99,15 @@
       </button>
     </div>
     <button id="nytt-avbryt" class="knapp bred">Avbryt</button>
+  </div>
+</div>
+
+<div id="tema-panel" class="modal" hidden>
+  <div class="modal-kort">
+    <h2>Fargeoppsett</h2>
+    <p class="modal-under">Velg det som er lettest å se der du sitter.</p>
+    <div id="temaliste" class="temaliste" role="radiogroup" aria-label="Fargeoppsett"></div>
+    <button id="tema-lukk" class="knapp bred">Lukk</button>
   </div>
 </div>
 
