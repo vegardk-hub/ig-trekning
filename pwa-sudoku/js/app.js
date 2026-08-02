@@ -573,6 +573,14 @@
     tegn();
   });
 
+  // Trykk på det mørke feltet rundt lukker — den vanlige gesten på telefon,
+  // der det ikke finnes noen Esc-tast. #jobber står med vilje utenfor: der
+  // pågår det en generering, og et bomtrykk skal ikke etterlate den halvveis.
+  ['#nytt-panel', '#ferdig'].forEach(sel => {
+    const el = $(sel);
+    el.addEventListener('click', e => { if (e.target === el) el.hidden = true; });
+  });
+
   $('#btn-nytt').addEventListener('click', () => { $('#nytt-panel').hidden = false; });
   $('#nytt-avbryt').addEventListener('click', () => { $('#nytt-panel').hidden = true; });
   $('#ferdig-lukk').addEventListener('click', () => { $('#ferdig').hidden = true; });
@@ -628,6 +636,27 @@
     }
   });
 
+  /* ---------- Versjon ---------- */
+
+  /**
+   * Viser hvilken utgave av koden som faktisk kjører her.
+   *
+   * Navnet hentes fra cachen service worker-en har lagt opp, ikke fra en
+   * konstant i denne fila: da finnes versjonen ett sted (`CACHE` i sw.js), og
+   * det som vises er den koden enheten virkelig har — ikke den vi håper den har.
+   */
+  function visVersjon() {
+    if (!('caches' in window)) return;
+    caches.keys().then(navn => {
+      const vår = navn.filter(n => /^sudoku-v\d+$/.test(n))
+                      .sort((a, b) => Number(a.slice(8)) - Number(b.slice(8)));
+      if (!vår.length) return;
+      const el = $('#versjon');
+      el.textContent = vår[vår.length - 1].replace('sudoku-', '');
+      el.hidden = false;
+    }).catch(() => {});
+  }
+
   /* ---------- Oppstart ---------- */
 
   // Knappene må stilles etter at det lagrede er lest, ikke før: lagringen kan ha
@@ -641,6 +670,8 @@
     // updateViaCache: 'none' — selve sw.js skal aldri hentes fra HTTP-cachen,
     // ellers kan en ny versjon bli stående og vente på at den gamle utløper.
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
+    navigator.serviceWorker.ready.then(visVersjon).catch(() => {});
   }
+  visVersjon();
 
 })();

@@ -19,7 +19,7 @@ legg mappa på en webserver og installer den på hjemskjermen.
 | Angre | **Angre** | `Ctrl`/`Cmd` + `Z` |
 | Gjør om | **Gjør om** | `Ctrl`/`Cmd` + `Shift` + `Z`, eller `Ctrl` + `Y` |
 | Hint | **Hint** | `H` |
-| Lukk hint/dialog | ✕ | `Esc` |
+| Lukk hint/dialog | ✕, eller trykk utenfor | `Esc` |
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
 
@@ -145,6 +145,12 @@ asymmetrisk graving for å bli hardt nok.
 `sw.js` bruker **nett først, cache som reserve**. Cache først ville servert
 gammel kode i det uendelige etter en oppdatering, siden filnavnene aldri endrer
 seg. Bumper du `CACHE`-navnet, ryddes gamle cacher bort ved aktivering.
+
+Nederst på skjermen står cachenavnet — `v8`, `v9` — som et lite, dust merke.
+Det svarer på «kjører telefonen den koden jeg nettopp la ut?», som ellers er
+overraskende vanskelig å avgjøre. Tallet leses fra cachen enheten faktisk har,
+ikke fra en konstant i `app.js`, så det kan ikke påstå noe annet enn sannheten.
+Det forutsetter til gjengjeld at `CACHE` bumpes ved hver endring.
 
 Nett først må bety nettet, ikke nettleserens HTTP-cache. GitHub Pages sender
 `Cache-Control: max-age=600`, og et vanlig `fetch()` inne i en service worker

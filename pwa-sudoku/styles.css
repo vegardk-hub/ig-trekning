@@ -81,6 +81,7 @@ body {
 }
 
 .app {
+  position: relative;          /* holdepunkt for .versjon */
   width: 100%;
   max-width: 560px;
   min-height: 100dvh;
@@ -356,6 +357,18 @@ body {
 }
 
 .verktoyknapp[aria-pressed="true"] .vtekst { color: var(--aksent-tekst); opacity: .9; }
+
+/* Hvilken kode kjører her? Skal være til å slå opp, ikke til å se på. Ligger
+   utenfor flyten med vilje: i flyten stjal den de siste pikslene på en 320 px
+   skjerm, og da måtte hele brettet krympe for en opplysning man leser sjelden. */
+.versjon {
+  position: absolute;
+  bottom: 3px;
+  font-size: .66rem;
+  letter-spacing: .06em;
+  color: var(--blekk-svak);
+  opacity: .5;
+}
 
 /* ---------- Modaler ---------- */
 
