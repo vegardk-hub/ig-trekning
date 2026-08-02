@@ -7,7 +7,7 @@
  * faller vi tilbake til index.html.
  */
 
-const CACHE = 'sudoku-v4';
+const CACHE = 'sudoku-v5';
 const FILER = [
   './',
   './index.html',

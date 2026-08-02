@@ -74,6 +74,12 @@ Slår du av **Auto**, tømmes brettet for merker, og du fører dem selv med
 **Auto** på igjen, regnes kandidatene ut på nytt, og det du hadde ført selv,
 viker for dem.
 
+Setter du et tall inn i en rute, stryker appen det samme tallet fra blyantmerkene
+i resten av boksen. Står tallet først der, er merkene motbevist, og da er de bare
+i veien. Rad og kolonne rører den ikke — der får du rydde selv. Det samme skjer
+når et hint setter inn tallet for deg, og **Angre** tar med seg strykningen
+tilbake.
+
 Endrer du et tall du allerede hadde satt, nullstilles strykningene fra hint — de
 var utledet fra et brett som ikke gjelder lenger.
 
