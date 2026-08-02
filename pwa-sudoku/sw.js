@@ -5,9 +5,14 @@
  * gammel kode i det uendelige etter en oppdatering, siden filnavnene aldri
  * endrer seg. Er nettet borte, svarer vi fra cachen — og for sidenavigasjon
  * faller vi tilbake til index.html.
+ *
+ * «Nett først» må bety nettet, ikke nettleserens HTTP-cache. GitHub Pages
+ * sender Cache-Control: max-age=600, så uten no-store kunne både oppslagene
+ * her og forhåndslagringen under få ti minutter gammel kode — og bake den inn
+ * i en fersk cache, der den så ble liggende. Derfor no-store begge steder.
  */
 
-const CACHE = 'sudoku-v5';
+const CACHE = 'sudoku-v6';
 const FILER = [
   './',
   './index.html',
@@ -22,7 +27,13 @@ const FILER = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILER)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => Promise.all(FILER.map(url =>
+        fetch(url, { cache: 'no-store' }).then(svar => svar.ok ? c.put(url, svar) : null)
+      )))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
@@ -38,7 +49,7 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
 
   e.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-store' })
       .then(svar => {
         if (svar.ok) {
           const kopi = svar.clone();

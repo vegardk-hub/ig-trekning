@@ -624,7 +624,9 @@
   else nyttSpill('middels');
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    // updateViaCache: 'none' — selve sw.js skal aldri hentes fra HTTP-cachen,
+    // ellers kan en ny versjon bli stående og vente på at den gamle utløper.
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
   }
 
 })();

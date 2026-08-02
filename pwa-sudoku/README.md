@@ -136,6 +136,14 @@ asymmetrisk graving for å bli hardt nok.
 gammel kode i det uendelige etter en oppdatering, siden filnavnene aldri endrer
 seg. Bumper du `CACHE`-navnet, ryddes gamle cacher bort ved aktivering.
 
+Nett først må bety nettet, ikke nettleserens HTTP-cache. GitHub Pages sender
+`Cache-Control: max-age=600`, og et vanlig `fetch()` inne i en service worker
+går gjennom den cachen — så i ti minutter etter en utrulling kunne appen servere
+forrige versjon, og forhåndslagringen kunne bake den gamle koden inn i en fersk
+cache, der den så ble liggende. Både oppslagene og forhåndslagringen bruker
+derfor `cache: 'no-store'`, og registreringen `updateViaCache: 'none'`, slik at
+heller ikke `sw.js` selv kan bli hengende igjen i HTTP-cachen.
+
 ## Ikoner
 
 ```
