@@ -58,16 +58,52 @@
     celler.push({ el, stor, marks });
   }
 
-  const tallEl = $('#tall');
-  const tallKnapper = [];
-  for (let d = 1; d <= 9; d++) {
-    const b = document.createElement('button');
-    b.className = 'tallknapp';
-    b.textContent = d;
-    b.dataset.d = d;
-    tallEl.appendChild(b);
-    tallKnapper.push(b);
-  }
+  /*
+   * Tastaturet finnes i to like sett, ett på hver side av brettet, så alt kan
+   * nås med begge tomler når telefonen ligger. Derfor bygges knappene herfra i
+   * stedet for å stå i markupen: to sett i HTML ville betydd doble id-er.
+   * Trykk fanges med delegering, så det er likegyldig hvilket sett du bruker.
+   */
+  const VERKTOY = [
+    { id: 'slett',  symbol: '⌫', tekst: 'Slett' },
+    { id: 'angre',  symbol: '↶', tekst: 'Angre' },
+    { id: 'gjorom', symbol: '↷', tekst: 'Gjør om' },
+    { id: 'fyll',   symbol: '⊞', tekst: 'Fyll' },
+    { id: 'blyant', symbol: '✎', tekst: 'Blyant' },
+    { id: 'auto',   symbol: '◈', tekst: 'Auto' },
+    { id: 'hint',   symbol: '?', tekst: 'Hint' },
+    { id: 'nytt',   symbol: '✦', tekst: 'Nytt' }
+  ];
+
+  const $$ = sel => document.querySelectorAll(sel);
+  const tallKnapper = d => $$('.tallknapp[data-d="' + d + '"]');
+  const verktoyKnapper = id => $$('.verktoyknapp[data-verktoy="' + id + '"]');
+
+  $$('.side').forEach(side => {
+    const tall = side.querySelector('.tall');
+    for (let d = 1; d <= 9; d++) {
+      const b = document.createElement('button');
+      b.className = 'tallknapp';
+      b.textContent = d;
+      b.dataset.d = d;
+      tall.appendChild(b);
+    }
+
+    const verktoy = side.querySelector('.verktoy');
+    VERKTOY.forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'knapp verktoyknapp';
+      b.dataset.verktoy = v.id;
+      const symbol = document.createElement('span');
+      symbol.className = 'vsymbol';
+      symbol.textContent = v.symbol;
+      const tekst = document.createElement('span');
+      tekst.className = 'vtekst';
+      tekst.textContent = v.tekst;
+      b.append(symbol, tekst);
+      verktoy.appendChild(b);
+    });
+  });
 
   /* ---------- Fargeoppsett ---------- */
 
@@ -171,15 +207,22 @@
     }
 
     for (let d = 1; d <= 9; d++) {
-      tallKnapper[d - 1].classList.toggle('ferdig', antallTall[d] >= 9);
-      tallKnapper[d - 1].classList.toggle('aktiv', state.fyllModus && state.aktivtTall === d);
+      const ferdig = antallTall[d] >= 9;
+      const aktiv = state.fyllModus && state.aktivtTall === d;
+      tallKnapper(d).forEach(b => {
+        b.classList.toggle('ferdig', ferdig);
+        b.classList.toggle('aktiv', aktiv);
+      });
     }
 
     let igjen = 0;
     for (let i = 0; i < 81; i++) if (!state.verdier[i]) igjen++;
     const nivaa = S.NIVAAER.find(n => n.id === state.nivaa);
-    $('#meta-nivaa').textContent = nivaa ? nivaa.navn : '';
-    $('#meta-igjen').textContent = igjen === 0 ? 'Fullt' : igjen + ' igjen';
+    const navn = nivaa ? nivaa.navn : '';
+    const rest = igjen === 0 ? 'Fullt' : igjen + ' igjen';
+    $('#meta-nivaa').textContent = navn;
+    $('#meta-igjen').textContent = rest;
+    $('#side-meta').textContent = navn + ' · ' + rest;   // toppen av venstre side, liggende
   }
 
   function puls(i) {
@@ -530,11 +573,33 @@
   /* ---------- Verktøyknapper ---------- */
 
   function oppdaterVerktoy() {
-    $('#btn-blyant').setAttribute('aria-pressed', String(state.blyantModus));
-    $('#btn-auto').setAttribute('aria-pressed', String(state.autoBlyant));
-    $('#btn-fyll').setAttribute('aria-pressed', String(state.fyllModus));
-    $('#btn-angre').disabled = fortid.length === 0;
-    $('#btn-gjorom').disabled = fremtid.length === 0;
+    const trykt = (id, paa) => verktoyKnapper(id).forEach(b => b.setAttribute('aria-pressed', String(paa)));
+    const sperret = (id, av) => verktoyKnapper(id).forEach(b => { b.disabled = av; });
+    trykt('blyant', state.blyantModus);
+    trykt('auto', state.autoBlyant);
+    trykt('fyll', state.fyllModus);
+    sperret('angre', fortid.length === 0);
+    sperret('gjorom', fremtid.length === 0);
+  }
+
+  function vekslFyll() {
+    state.fyllModus = !state.fyllModus;
+    state.aktivtTall = 0;
+    oppdaterVerktoy();
+    lagre();
+    if (state.fyllModus) melding('Fyll: velg et tall, og trykk så på rutene der det skal stå.');
+    else skjulMelding();
+    tegn();
+  }
+
+  function vekslBlyant() {
+    state.blyantModus = !state.blyantModus;
+    oppdaterVerktoy();
+    if (state.blyantModus && state.autoBlyant) {
+      melding('Blyantmerkene fylles ut automatisk. Slå av «Auto» hvis du vil skrive dem selv.');
+    } else {
+      skjulMelding();
+    }
   }
 
   function vekslAuto() {
@@ -572,38 +637,28 @@
     velg(i);
   });
 
-  tallEl.addEventListener('click', e => {
-    const b = e.target.closest('.tallknapp');
-    if (!b) return;
-    const d = Number(b.dataset.d);
-    if (state.fyllModus) velgAktivtTall(d);
-    else skrivTall(d);
-  });
+  const HANDLING = {
+    slett: slett,
+    angre: angre,
+    gjorom: gjorOm,
+    fyll: vekslFyll,
+    blyant: vekslBlyant,
+    auto: vekslAuto,
+    hint: hintTrykk,
+    nytt: () => { $('#nytt-panel').hidden = false; }
+  };
 
-  $('#btn-slett').addEventListener('click', slett);
-  $('#btn-angre').addEventListener('click', angre);
-  $('#btn-gjorom').addEventListener('click', gjorOm);
-  $('#btn-hint').addEventListener('click', hintTrykk);
-  $('#btn-auto').addEventListener('click', vekslAuto);
-
-  $('#btn-blyant').addEventListener('click', () => {
-    state.blyantModus = !state.blyantModus;
-    oppdaterVerktoy();
-    if (state.blyantModus && state.autoBlyant) {
-      melding('Blyantmerkene fylles ut automatisk. Slå av «Auto» hvis du vil skrive dem selv.');
-    } else {
-      skjulMelding();
+  // Ett oppslag for begge settene: hvilken side knappen sto på, spiller ingen rolle.
+  $('.spilleflate').addEventListener('click', e => {
+    const tall = e.target.closest('.tallknapp');
+    if (tall) {
+      const d = Number(tall.dataset.d);
+      if (state.fyllModus) velgAktivtTall(d);
+      else skrivTall(d);
+      return;
     }
-  });
-
-  $('#btn-fyll').addEventListener('click', () => {
-    state.fyllModus = !state.fyllModus;
-    state.aktivtTall = 0;
-    oppdaterVerktoy();
-    lagre();
-    if (state.fyllModus) melding('Fyll: velg et tall, og trykk så på rutene der det skal stå.');
-    else skjulMelding();
-    tegn();
+    const v = e.target.closest('.verktoyknapp');
+    if (v) HANDLING[v.dataset.verktoy]();
   });
 
   // Trykk på det mørke feltet rundt lukker — den vanlige gesten på telefon,
@@ -626,7 +681,6 @@
     merkValgtTema();
   });
 
-  $('#btn-nytt').addEventListener('click', () => { $('#nytt-panel').hidden = false; });
   $('#nytt-avbryt').addEventListener('click', () => { $('#nytt-panel').hidden = true; });
   $('#ferdig-lukk').addEventListener('click', () => { $('#ferdig').hidden = true; });
   $('#ferdig-nytt').addEventListener('click', () => {
@@ -674,7 +728,7 @@
     if (k === 'ArrowLeft') { flyttValg(0, -1); e.preventDefault(); return; }
     if (k === 'ArrowRight') { flyttValg(0, 1); e.preventDefault(); return; }
     if (k === 'h' || k === 'H') { hintTrykk(); e.preventDefault(); return; }
-    if (k === 'p' || k === 'P') { $('#btn-blyant').click(); e.preventDefault(); return; }
+    if (k === 'p' || k === 'P') { vekslBlyant(); e.preventDefault(); return; }
     if (k === 'Escape') {
       if (!$('#tema-panel').hidden) $('#tema-panel').hidden = true;
       else if (!$('#nytt-panel').hidden) $('#nytt-panel').hidden = true;

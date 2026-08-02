@@ -7,6 +7,21 @@ tall som skal inn, men **forklarer hvilken løseteknikk som gjelder og hvorfor**
 Appen er en PWA. Ingen byggesteg, ingen avhengigheter: åpne `index.html`, eller
 legg mappa på en webserver og installer den på hjemskjermen.
 
+## Stående og liggende
+
+Stående ligger tastaturet under brettet, med tittelen over.
+
+Legger du telefonen ned, deler layouten seg: brettet tar hele høyden, og
+tastaturet står i **to like sett, ett på hver side**, så alt kan nås uten å
+flytte tomlene. Tittelen og telleren flytter opp i venstre hjørne — sto de i
+midten, ville de kostet nettopp den høyden brettet skal ha. Hint og meldinger
+legger seg over brettet, av samme grunn.
+
+Begge settene styrer den samme tilstanden: slår du på **Fyll** til høyre, lyser
+knappen på begge sider. Derfor bygges knappene fra `VERKTOY`-lista i `app.js` og
+ikke fra markupen — to sett i HTML ville betydd doble id-er — og trykk fanges
+med delegering på spilleflata.
+
 ## Slik spiller du
 
 | Handling | Mus/berøring | Tastatur |

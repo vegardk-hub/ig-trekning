@@ -30,50 +30,43 @@
     </div>
   </header>
 
-  <div id="brett" class="brett" role="grid" aria-label="Sudokurutenett"></div>
+  <!-- Sidepanelene fylles av app.js og er like, så alt kan nås med begge tomler
+       når telefonen ligger. Stående vises bare den venstre, under brettet. -->
+  <div class="spilleflate">
 
-  <div id="hint" class="hint" hidden>
-    <div class="hint-topp">
-      <span id="hint-navn" class="hint-navn"></span>
-      <button id="hint-lukk" class="ikonknapp" aria-label="Lukk hint">&times;</button>
+    <div class="side venstre">
+      <div class="sidetopp">
+        <span class="sidetittel">Sudoku</span>
+        <span id="side-meta"></span>
+      </div>
+      <div class="tall"></div>
+      <div class="verktoy"></div>
     </div>
-    <p id="hint-tekst" class="hint-tekst"></p>
-    <div class="hint-knapper">
-      <button id="hint-mer" class="knapp">Vis hvor</button>
-      <button id="hint-bruk" class="knapp primaer">Bruk</button>
-    </div>
-  </div>
 
-  <div id="melding" class="melding" hidden></div>
+    <div id="brett" class="brett" role="grid" aria-label="Sudokurutenett"></div>
 
-  <div class="tastatur">
-    <div class="tall" id="tall"></div>
-    <div class="verktoy">
-      <button id="btn-slett" class="knapp verktoyknapp">
-        <span class="vsymbol">⌫</span><span class="vtekst">Slett</span>
-      </button>
-      <button id="btn-angre" class="knapp verktoyknapp" disabled>
-        <span class="vsymbol">↶</span><span class="vtekst">Angre</span>
-      </button>
-      <button id="btn-gjorom" class="knapp verktoyknapp" disabled>
-        <span class="vsymbol">↷</span><span class="vtekst">Gjør om</span>
-      </button>
-      <button id="btn-fyll" class="knapp verktoyknapp" aria-pressed="false">
-        <span class="vsymbol">⊞</span><span class="vtekst">Fyll</span>
-      </button>
-      <button id="btn-blyant" class="knapp verktoyknapp" aria-pressed="false">
-        <span class="vsymbol">✎</span><span class="vtekst">Blyant</span>
-      </button>
-      <button id="btn-auto" class="knapp verktoyknapp" aria-pressed="true">
-        <span class="vsymbol">◈</span><span class="vtekst">Auto</span>
-      </button>
-      <button id="btn-hint" class="knapp verktoyknapp">
-        <span class="vsymbol">?</span><span class="vtekst">Hint</span>
-      </button>
-      <button id="btn-nytt" class="knapp verktoyknapp">
-        <span class="vsymbol">✦</span><span class="vtekst">Nytt</span>
-      </button>
+    <!-- Tom topp: holder av plassen ◐-knappen legger seg i, så begge sidene
+         får samme høyde og knappene står rett overfor hverandre. -->
+    <div class="side hoyre" aria-hidden="true">
+      <div class="sidetopp"></div>
+      <div class="tall"></div>
+      <div class="verktoy"></div>
     </div>
+
+    <div id="hint" class="hint" hidden>
+      <div class="hint-topp">
+        <span id="hint-navn" class="hint-navn"></span>
+        <button id="hint-lukk" class="ikonknapp" aria-label="Lukk hint">&times;</button>
+      </div>
+      <p id="hint-tekst" class="hint-tekst"></p>
+      <div class="hint-knapper">
+        <button id="hint-mer" class="knapp">Vis hvor</button>
+        <button id="hint-bruk" class="knapp primaer">Bruk</button>
+      </div>
+    </div>
+
+    <div id="melding" class="melding" hidden></div>
+
   </div>
 
   <p id="versjon" class="versjon" hidden></p>

@@ -328,7 +328,27 @@ body {
 
 /* ---------- Tastatur ---------- */
 
-.tastatur {
+/* Stående: brettet øverst, så hint og melding, og det ene tastatursettet under.
+   Det andre settet er skjult — det trengs først når telefonen ligger. */
+.spilleflate {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.brett    { order: 1; }
+.hint     { order: 2; }
+.melding  { order: 3; }
+.venstre  { order: 4; }
+.sidetopp { display: none; }
+/* .side setter display: flex — derfor .side.hoyre her, ellers avgjør
+   rekkefølgen i fila hvem som vinner. */
+.side.hoyre { display: none; }
+
+.side {
   width: var(--brett);
   display: flex;
   flex-direction: column;
@@ -589,6 +609,110 @@ body {
 /* Litt luftigere på store skjermer */
 @media (min-width: 480px) and (min-height: 760px) {
   :root { --brett: min(94vw, 520px, 62vh); }
+}
+
+/* ---------- Liggende telefon ---------- */
+/*
+ * Brettet tar hele høyden, og tastaturet står i to like sett — ett under hver
+ * tommel. Tittelen og telleren flytter opp i venstre hjørne, for i midten ville
+ * de kostet nettopp den høyden brettet skal ha.
+ *
+ * Høydegrensa holder skrivebordsvinduer utenfor: de er også «landscape», men
+ * der er den stående layouten riktig.
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  :root {
+    --side: clamp(104px, 19vw, 180px);
+    /* Høyden bestemmer normalt. Breddeleddet er en sikring for korte, smale
+       vinduer — og for hakket i skjermen, som spiser av bredden i liggende. */
+    --brett: min(calc(100dvh - 8px), calc(100vw - 2 * var(--side) - 56px));
+  }
+
+  .app {
+    max-width: none;
+    padding: 4px 6px;
+    gap: 0;
+  }
+
+  .topp { display: none; }
+  .versjon { display: none; }
+
+  .spilleflate {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .venstre { order: 1; }
+  .brett   { order: 2; flex: none; }
+  .side.hoyre { order: 3; display: flex; }
+
+  .side {
+    flex: 0 1 var(--side);
+    min-width: 96px;
+    width: auto;
+    height: var(--brett);
+    gap: 6px;
+  }
+
+  .sidetopp {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 28px;
+    line-height: 1.2;
+    overflow: hidden;
+  }
+
+  .sidetittel {
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--blekk);
+  }
+
+  #side-meta {
+    font-size: .64rem;
+    color: var(--blekk-svak);
+    white-space: nowrap;
+  }
+
+  /* Radene deler høyden mellom seg: tre rader tall, fire rader verktøy. */
+  .side .tall {
+    flex: 3 0 0;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+  }
+
+  .side .verktoy {
+    flex: 4 0 0;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .tallknapp {
+    aspect-ratio: auto;                    /* rutenettet styrer høyden nå */
+    font-size: calc(var(--celle) * .46);
+  }
+
+  .verktoyknapp { padding: 3px 2px; gap: 1px; }
+  .vsymbol { font-size: .92rem; }
+  .vtekst { font-size: .56rem; }
+
+  .temaknapp { top: 3px; right: 6px; width: 30px; height: 30px; font-size: .95rem; }
+
+  /* Hint og melding legger seg over brettet — det finnes ingen ledig høyde. */
+  .hint, .melding {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(340px, 62vw);
+    z-index: 5;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .38);
+  }
 }
 
 /* Fra nettbrettbredde og opp er det plass til alle åtte på én rad. Teksten
