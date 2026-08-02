@@ -221,17 +221,16 @@
   }
 
   /**
-   * Stryker blyantmerket d fra resten av boksen rundt rute i. Står tallet
-   * først i boksen, er merket motbevist, og da er det bare i veien.
+   * Stryker blyantmerket d fra alle rutene som deler rad, kolonne eller boks
+   * med rute i. Står tallet først der, er merket motbevist overalt det kunne
+   * kollidert, og da er det bare i veien.
    *
    * Bare de manuelle merkene: er «Auto» på, regnes kandidatene ut fra brettet
    * og har allerede sluppet tallet.
    */
-  function ryddBoks(i, d) {
+  function ryddNaboer(i, d) {
     const uten = ~(1 << d);
-    for (const j of C.BOXES[C.boxOf(i)]) {
-      if (j !== i) state.blyant[j] &= uten;
-    }
+    for (const j of C.PEERS[i]) state.blyant[j] &= uten;   // PEERS er uten ruta selv
   }
 
   /**
@@ -259,7 +258,7 @@
         if (state.verdier[i]) nullstillElim();
         state.verdier[i] = d;
         state.blyant[i] = 0;
-        ryddBoks(i, d);
+        ryddNaboer(i, d);
         lukkHint();
         puls(i);
       }
@@ -357,7 +356,7 @@
     if (s.placement) {
       state.verdier[s.placement.cell] = s.placement.digit;
       state.blyant[s.placement.cell] = 0;
-      ryddBoks(s.placement.cell, s.placement.digit);   // samme regel som når du skriver selv
+      ryddNaboer(s.placement.cell, s.placement.digit);   // samme regel som når du skriver selv
       state.valgt = s.placement.cell;
     }
 
