@@ -69,9 +69,13 @@ brettet ferdig.
 **Auto** er på som standard: kandidatene regnes ut og oppdateres av seg selv når
 du fyller inn tall. Kandidater du stryker via et hint, blir borte for godt.
 
-Slår du av **Auto**, kopieres merkene over til deg, og du styrer dem selv med
-**Blyant** + tall. Endrer du et tall du allerede hadde satt, nullstilles
-strykningene fra hint — de var utledet fra et brett som ikke gjelder lenger.
+Slår du av **Auto**, tømmes brettet for merker, og du fører dem selv med
+**Blyant** + tall. Var det et feiltrykk, henter **Angre** dem tilbake. Slår du
+**Auto** på igjen, regnes kandidatene ut på nytt, og det du hadde ført selv,
+viker for dem.
+
+Endrer du et tall du allerede hadde satt, nullstilles strykningene fra hint — de
+var utledet fra et brett som ikke gjelder lenger.
 
 ## Vanskelighetsgrader
 

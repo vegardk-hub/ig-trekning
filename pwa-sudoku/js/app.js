@@ -477,12 +477,11 @@
   function vekslAuto() {
     husk();               // skriver om alle blyantmerkene — må kunne angres
     if (state.autoBlyant) {
-      // Ta med de beregnede merkene inn i manuell modus, så ingenting går tapt.
-      for (let i = 0; i < 81; i++) {
-        state.blyant[i] = state.verdier[i] ? 0 : (kandidater[i] & ~state.elim[i]);
-      }
+      // Blankt ark: den som slår av Auto vil føre merkene selv, og da er de
+      // beregnede i veien. Angre henter dem tilbake om det var et feiltrykk.
+      state.blyant.fill(0);
       state.autoBlyant = false;
-      melding('Auto er av. Blyantmerkene er kopiert over, og du styrer dem selv.');
+      melding('Auto er av. Blyantmerkene er tømt — nå fører du dem selv med «Blyant».');
     } else {
       state.autoBlyant = true;
       skjulMelding();
