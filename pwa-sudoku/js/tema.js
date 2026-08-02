@@ -17,7 +17,7 @@
 
   /* prove: de to fargene som vises i prøvelappen — flate og skrift. */
   const TEMAER = [
-    { id: 'system', navn: 'Følg systemet', om: 'Lyst om dagen, mørkt om kvelden',
+    { id: 'system', navn: 'Følg systemet', om: 'Følger lys/mørk-innstillingen på enheten',
       prove: ['#f2efe7', '#171a1f'] },
     { id: 'papir',  navn: 'Papir',  om: 'Varmt og dempet — standarden',
       prove: ['#f2efe7', '#2f6fb3'] },
