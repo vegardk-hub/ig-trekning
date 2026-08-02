@@ -19,6 +19,8 @@
     blyant: new Int16Array(81),      // manuelle blyantmerker
     autoBlyant: true,
     blyantModus: false,
+    fyllModus: false,                // tall først: velg tallet, trykk så rutene
+    aktivtTall: 0,                   // tallet som fylles inn (0 = ingen valgt)
     nivaa: 'middels',
     maksNavn: '',
     valgt: -1
@@ -84,6 +86,10 @@
     const selVerdi = sel >= 0 ? state.verdier[sel] : 0;
     const naboer = sel >= 0 ? C.PEER_SETS[sel] : null;
 
+    // I fyllmodus er det det aktive tallet som er interessant å se hvor står,
+    // ikke tallet i ruta du sist rørte.
+    const likTall = (state.fyllModus && state.aktivtTall) ? state.aktivtTall : selVerdi;
+
     const antallTall = new Array(10).fill(0);
 
     for (let i = 0; i < 81; i++) {
@@ -94,7 +100,7 @@
       let cls = 'celle';
       if (v) cls += state.gitt[i] ? ' gitt' : ' skrevet';
       if (naboer && naboer.has(i)) cls += ' naboer';
-      if (selVerdi && v === selVerdi && i !== sel) cls += ' likt';
+      if (likTall && v === likTall && i !== sel) cls += ' likt';
       if (i === sel) cls += ' valgt';
       if (hEnhet.has(i)) cls += ' hint-enhet';
       if (hMal.has(i)) cls += ' hint-mal';
@@ -118,6 +124,7 @@
 
     for (let d = 1; d <= 9; d++) {
       tallKnapper[d - 1].classList.toggle('ferdig', antallTall[d] >= 9);
+      tallKnapper[d - 1].classList.toggle('aktiv', state.fyllModus && state.aktivtTall === d);
     }
 
     let igjen = 0;
@@ -213,18 +220,19 @@
     sjekkFerdig();
   }
 
-  function skrivTall(d) {
-    const i = state.valgt;
-    if (i < 0) { melding('Velg en rute på brettet først.'); return; }
-    if (state.gitt[i]) return;
-    skjulMelding();
+  /**
+   * Skriver tallet d i rute i. Returnerer false hvis ruta står urørt — enten
+   * fordi den ikke kan endres, eller fordi blyanten er sperret av «Auto».
+   */
+  function skrivTallI(i, d) {
+    if (i < 0 || state.gitt[i]) return false;
 
     if (state.blyantModus) {
       if (state.autoBlyant) {
         melding('Blyantmerkene fylles ut automatisk. Slå av «Auto» hvis du vil skrive dem selv.');
-        return;
+        return false;
       }
-      if (state.verdier[i]) return;
+      if (state.verdier[i]) return false;
       husk();
       state.blyant[i] ^= (1 << d);
     } else {
@@ -245,6 +253,21 @@
     lagre();
     tegn();
     sjekkFerdig();
+    return true;
+  }
+
+  /** Rute først: tallet havner i ruta som allerede er valgt. */
+  function skrivTall(d) {
+    if (state.valgt < 0) { melding('Velg en rute på brettet først.'); return; }
+    skjulMelding();
+    skrivTallI(state.valgt, d);
+  }
+
+  /** Tall først: peker ut tallet som skal fylles inn. Samme tall igjen slår det av. */
+  function velgAktivtTall(d) {
+    state.aktivtTall = state.aktivtTall === d ? 0 : d;
+    skjulMelding();
+    tegn();
   }
 
   function slett() {
@@ -390,6 +413,7 @@
       state.maksNavn = r.grade.maksNavn || '';
       state.valgt = -1;
       state.blyantModus = false;
+      state.aktivtTall = 0;          // fyllmodus er en preferanse og består, tallet ikke
       nullstillHistorikk();
       oppdaterVerktoy();
       lagre();
@@ -413,6 +437,7 @@
         elim: Array.from(state.elim),
         blyant: Array.from(state.blyant),
         autoBlyant: state.autoBlyant,
+        fyllModus: state.fyllModus,
         nivaa: state.nivaa,
         maksNavn: state.maksNavn
       }));
@@ -432,6 +457,7 @@
       state.elim = Int16Array.from(d.elim || new Array(81).fill(0));
       state.blyant = Int16Array.from(d.blyant || new Array(81).fill(0));
       state.autoBlyant = d.autoBlyant !== false;
+      state.fyllModus = d.fyllModus === true;
       state.nivaa = d.nivaa || 'middels';
       state.maksNavn = d.maksNavn || '';
       return true;
@@ -443,6 +469,7 @@
   function oppdaterVerktoy() {
     $('#btn-blyant').setAttribute('aria-pressed', String(state.blyantModus));
     $('#btn-auto').setAttribute('aria-pressed', String(state.autoBlyant));
+    $('#btn-fyll').setAttribute('aria-pressed', String(state.fyllModus));
     $('#btn-angre').disabled = fortid.length === 0;
     $('#btn-gjorom').disabled = fremtid.length === 0;
   }
@@ -469,12 +496,26 @@
 
   brettEl.addEventListener('click', e => {
     const c = e.target.closest('.celle');
-    if (c) velg(Number(c.dataset.i));
+    if (!c) return;
+    const i = Number(c.dataset.i);
+
+    if (state.fyllModus && state.aktivtTall) {
+      // Ruta markeres uansett, så naboer og like tall lyser opp selv om det
+      // ikke ble skrevet noe (gitt rute, eller blyanten sperret av «Auto»).
+      state.valgt = i;
+      skjulMelding();
+      if (!skrivTallI(i, state.aktivtTall)) tegn();
+      return;
+    }
+    velg(i);
   });
 
   tallEl.addEventListener('click', e => {
     const b = e.target.closest('.tallknapp');
-    if (b) skrivTall(Number(b.dataset.d));
+    if (!b) return;
+    const d = Number(b.dataset.d);
+    if (state.fyllModus) velgAktivtTall(d);
+    else skrivTall(d);
   });
 
   $('#btn-slett').addEventListener('click', slett);
@@ -491,6 +532,16 @@
     } else {
       skjulMelding();
     }
+  });
+
+  $('#btn-fyll').addEventListener('click', () => {
+    state.fyllModus = !state.fyllModus;
+    state.aktivtTall = 0;
+    oppdaterVerktoy();
+    lagre();
+    if (state.fyllModus) melding('Fyll: velg et tall, og trykk så på rutene der det skal stå.');
+    else skjulMelding();
+    tegn();
   });
 
   $('#btn-nytt').addEventListener('click', () => { $('#nytt-panel').hidden = false; });
@@ -518,7 +569,23 @@
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-    if (k >= '1' && k <= '9') { skrivTall(Number(k)); e.preventDefault(); return; }
+    if (k >= '1' && k <= '9') {
+      if (state.fyllModus) velgAktivtTall(Number(k));
+      else skrivTall(Number(k));
+      e.preventDefault();
+      return;
+    }
+    if (k === 'Enter' || k === ' ') {
+      // Har en knapp fokus, skal den få svare selv — ellers slutter Enter og
+      // mellomrom å virke på verktøylinja.
+      if (e.target instanceof Element && e.target.closest('button')) return;
+      if (state.fyllModus && state.aktivtTall && state.valgt >= 0) {
+        skjulMelding();
+        skrivTallI(state.valgt, state.aktivtTall);
+        e.preventDefault();
+      }
+      return;
+    }
     if (k === '0' || k === 'Backspace' || k === 'Delete') { slett(); e.preventDefault(); return; }
     if (k === 'ArrowUp') { flyttValg(-1, 0); e.preventDefault(); return; }
     if (k === 'ArrowDown') { flyttValg(1, 0); e.preventDefault(); return; }
@@ -534,12 +601,12 @@
 
   /* ---------- Oppstart ---------- */
 
+  // Knappene må stilles etter at det lagrede er lest, ikke før: lagringen kan ha
+  // «Auto» av eller «Fyll» på, og da sto knappene og løy om tilstanden.
+  const varLagret = hentLagret();
   oppdaterVerktoy();
-  if (hentLagret()) {
-    tegn();
-  } else {
-    nyttSpill('middels');
-  }
+  if (varLagret) tegn();
+  else nyttSpill('middels');
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => {});

@@ -14,6 +14,7 @@ legg mappa på en webserver og installer den på hjemskjermen.
 | Velg rute | trykk på ruta | piltaster |
 | Skriv tall | trykk 1–9 | `1`–`9` |
 | Visk ut | **Slett** | `Backspace`, `Delete` eller `0` |
+| Fyllmodus | **Fyll** | – |
 | Blyantmodus | **Blyant** | `P` |
 | Angre | **Angre** | `Ctrl`/`Cmd` + `Z` |
 | Gjør om | **Gjør om** | `Ctrl`/`Cmd` + `Shift` + `Z`, eller `Ctrl` + `Y` |
@@ -21,6 +22,29 @@ legg mappa på en webserver og installer den på hjemskjermen.
 | Lukk hint/dialog | ✕ | `Esc` |
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
+
+## To måter å skrive på
+
+Vanligvis går det rute først: velg ruta, trykk tallet. Skal det samme tallet inn
+flere steder, er det en omvei — du må innom ruta og tallet annenhver gang.
+
+**Fyll** snur på det. Du velger tallet én gang, og så er hvert trykk på brettet
+en innsetting: fire ruter, fire trykk. Tallknappen du har valgt lyser opp, og
+brettet markerer hvor tallet allerede står, så du ser med én gang hvilke rader,
+kolonner og bokser som er tatt. Trykker du tallknappen om igjen, legger du den
+fra deg.
+
+Ruter som er gitt i oppgaven, står naturligvis i fred — de blir bare markert, så
+du kan bruke trykket til å se på naboene. Treffer du en rute der tallet allerede
+står, viskes det ut, akkurat som ellers. Hvert trykk er sitt eget steg i
+angreloggen.
+
+Fyll og **Blyant** virker sammen: med Auto slått av setter du samme kandidat i
+mange ruter på rad, som er den kjedeligste delen av å føre merker for hånd.
+
+Med tastatur velger `1`–`9` tallet, og `Enter` eller mellomrom setter det inn i
+ruta du står i — piltastene flytter deg videre. Bryr du deg ikke om fyllmodus,
+merker du ingenting: med **Fyll** avslått er alt nøyaktig som før.
 
 Angreloggen er ubegrenset og dekker tall, blyantmerker, strykninger fra hint og
 **Auto**-vekslingen. Den ligger i minnet — den lagres ikke sammen med brettet, og

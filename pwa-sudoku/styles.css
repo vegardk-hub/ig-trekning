@@ -290,9 +290,20 @@ body {
 .tallknapp:active { transform: scale(.94); }
 .tallknapp.ferdig { color: var(--blekk-svak); opacity: .4; }
 
+/* Tallet som fylles inn i fyllmodus. Står etter .ferdig med vilje: er alle ni
+   satt ut, skal knappen likevel vises tydelig når den er valgt. */
+.tallknapp.aktiv {
+  background: var(--aksent);
+  border-color: var(--aksent);
+  color: var(--aksent-tekst);
+  opacity: 1;
+}
+
+/* Åtte verktøy i to rader på telefon. Én rad ville gitt 31–39 px brede knapper
+   på vanlige skjermer — for smått både å treffe og å få «Gjør om» inn i. */
 .verktoy {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px;
 }
 
@@ -332,10 +343,8 @@ body {
 }
 
 .vsymbol { font-size: 1.05rem; line-height: 1; }
-/* Sju knapper på smale skjermer: teksten krymper med brettet, ellers sprenger
-   «Gjør om» kolonnen. */
 .vtekst {
-  font-size: min(.66rem, calc(var(--brett) * .032));
+  font-size: .7rem;
   color: var(--blekk-svak);
   white-space: nowrap;
 }
@@ -434,4 +443,11 @@ body {
 /* Litt luftigere på store skjermer */
 @media (min-width: 480px) and (min-height: 760px) {
   :root { --brett: min(94vw, 520px, 62vh); }
+}
+
+/* Fra nettbrettbredde og opp er det plass til alle åtte på én rad. Teksten
+   krymper med brettet, ellers sprenger «Gjør om» kolonnen. */
+@media (min-width: 480px) {
+  .verktoy { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .vtekst { font-size: min(.66rem, calc(var(--brett) * .026)); }
 }
