@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Fargeflasker</title>
+<meta name="description" content="Rolig sorteringsspill for de minste: hell fargene sammen til hver flaske har sin egen farge.">
+<meta name="theme-color" content="#1b2450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" href="data:image/png;base64,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">
+<style>
+/*
+ * Fargeflasker – utseende.
+ *
+ * Flaskene tegnes som et SVG-omriss med en vanlig div oppå som væske.
+ * Da skalerer selve flaskeformen fritt med skjermbredden, mens væsken er
+ * enkle rektangler vi kan animere høyden på når det helles.
+ */
+
+:root {
+  --bak1: #202a58;
+  --bak2: #131a3a;
+  --tekst: #f2f5ff;
+  --dempet: #a9b3d9;
+  --panel: rgba(255, 255, 255, 0.10);
+  --panel-kant: rgba(255, 255, 255, 0.22);
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-fyll: rgba(255, 255, 255, 0.07);
+  --gull: #ffc61a;
+  --flaskebredde: 62px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: radial-gradient(120% 90% at 50% 0%, var(--bak1) 0%, var(--bak2) 100%) fixed;
+  color: var(--tekst);
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.app {
+  height: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- topplinje ---------- */
+
+.topp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.rundknapp {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 16px;
+  border: 2px solid var(--panel-kant);
+  background: var(--panel);
+  color: var(--tekst);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.nivaamerke {
+  flex: 1 1 auto;
+  text-align: center;
+  background: var(--panel);
+  border: 2px solid var(--panel-kant);
+  border-radius: 999px;
+  padding: 8px 4px;
+  font-size: 19px;
+  letter-spacing: 0.3px;
+}
+.nivaamerke strong { color: var(--gull); font-size: 22px; }
+.nivaaord { color: var(--dempet); }
+
+/* ---------- brettet ---------- */
+
+.brett {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(10px, 3.5vh, 26px);
+  min-height: 0;
+}
+
+.rad {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(6px, 2.6vw, 16px);
+}
+
+.flaske {
+  position: relative;
+  width: var(--flaskebredde);
+  aspect-ratio: 68 / 160;
+  flex: 0 0 auto;
+  cursor: pointer;
+  transform-origin: 50% 8%;      /* munningen – slik at flasken svinger om tuten */
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.flaske.valgt { transform: translateY(-16px); }
+
+.flaske.rist { animation: rist 0.32s ease; }
+@keyframes rist {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}
+
+.flaske.peker::after {
+  content: "";
+  position: absolute;
+  inset: -8px -6px;
+  border: 3px dashed var(--gull);
+  border-radius: 22px;
+  animation: puls 0.9s ease-in-out 5;
+}
+@keyframes puls {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.omriss {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.omriss path.kant { fill: var(--glass-fyll); stroke: var(--glass); stroke-width: 3.2; }
+.omriss path.blank { fill: rgba(255, 255, 255, 0.28); }
+
+/* Væskeboksen ligger inne i flaskekroppen. Tallene er prosent av
+   SVG-koordinatene 68 x 160, så omriss og væske følger hverandre. */
+.vaeske {
+  position: absolute;
+  left: 14.7%;
+  width: 70.6%;
+  top: 30%;
+  height: 61.9%;
+  display: flex;
+  flex-direction: column-reverse;
+  border-radius: 0 0 40% 40% / 0 0 18% 18%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.del {
+  width: 100%;
+  flex: 0 0 auto;
+  transition: height 0.3s ease;
+}
+
+/* Liten stjerne når flasken er ferdig sortert */
+.merke {
+  position: absolute;
+  top: -6%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-size: calc(var(--flaskebredde) * 0.42);
+  z-index: 3;
+  pointer-events: none;
+}
+.flaske.ferdig .merke { animation: sprett 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) forwards; }
+@keyframes sprett {
+  0% { transform: translateX(-50%) scale(0) rotate(-40deg); }
+  100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+}
+.flaske.nyferdig { animation: hopp 0.55s ease; }
+@keyframes hopp {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-14px) scale(1.06); }
+  70% { transform: translateY(0) scale(0.97); }
+}
+
+/* Strålen som renner mellom to flasker under helling */
+.straale {
+  position: fixed;
+  z-index: 60;
+  border-radius: 0 0 4px 4px;
+  pointer-events: none;
+  transition: height 0.12s linear, opacity 0.15s ease;
+}
+
+/* ---------- tips og verktøy ---------- */
+
+.tips {
+  margin: 0;
+  min-height: 24px;
+  text-align: center;
+  color: var(--dempet);
+  font-size: 16px;
+  transition: opacity 0.3s ease;
+}
+.tips.borte { opacity: 0; }
+
+.verktoy {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.verktoyknapp {
+  flex: 1 1 0;
+  max-width: 150px;
+  min-height: 60px;
+  border-radius: 18px;
+  border: 2px solid var(--panel-kant);
+  background: var(--panel);
+  color: var(--tekst);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.verktoyknapp .ikon { font-size: 22px; line-height: 1; }
+.verktoyknapp:disabled { opacity: 0.35; }
+.verktoyknapp:active:not(:disabled), .rundknapp:active { transform: scale(0.94); }
+
+/* ---------- overlegg ---------- */
+
+.overlegg {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(10, 14, 34, 0.72);
+  backdrop-filter: blur(3px);
+}
+.overlegg.skjult { display: none; }
+
+.kort {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 330px;
+  text-align: center;
+  padding: 26px 22px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #2c3767, #1d2650);
+  border: 2px solid var(--panel-kant);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  animation: opp 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.bredkort { max-width: 420px; }
+@keyframes opp {
+  from { opacity: 0; transform: translateY(24px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+.kort h2 { margin: 6px 0 8px; font-size: 27px; }
+.kort p { margin: 0 0 18px; color: var(--dempet); }
+.stjerner { font-size: 34px; letter-spacing: 4px; }
+
+.storknapp {
+  width: 100%;
+  min-height: 58px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffd24d, #f5ac00);
+  color: #3a2b00;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.storknapp:active { transform: scale(0.97); }
+
+.tekstknapp {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 44px;
+  background: none;
+  border: none;
+  color: var(--dempet);
+  font-size: 16px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.nivaaliste {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  max-height: 46vh;
+  overflow-y: auto;
+  margin-bottom: 18px;
+  padding: 4px;
+}
+.nivaaknapp {
+  aspect-ratio: 1;
+  border-radius: 14px;
+  border: 2px solid var(--panel-kant);
+  background: var(--panel);
+  color: var(--tekst);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nivaaknapp.klart { border-color: var(--gull); color: var(--gull); }
+.nivaaknapp.naa {
+  background: linear-gradient(180deg, #ffd24d, #f5ac00);
+  border-color: #ffd24d;
+  color: #3a2b00;
+}
+.nivaaknapp.laast { opacity: 0.3; cursor: default; }
+
+/* ---------- konfetti ---------- */
+
+.konfetti { position: absolute; inset: 0; overflow: hidden; z-index: 1; }
+.konfetti i {
+  position: absolute;
+  top: -24px;
+  width: 11px;
+  height: 16px;
+  border-radius: 2px;
+  animation: dal 2.6s linear forwards;
+}
+@keyframes dal {
+  from { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  to { transform: translateY(110vh) rotate(760deg); opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topp">
+    <button id="knappNivaaer" class="rundknapp" title="Velg nivå" aria-label="Velg nivå">
+      <span aria-hidden="true">☰</span>
+    </button>
+    <div class="nivaamerke"><span class="nivaaord">Nivå</span> <strong id="nivaaTall">1</strong></div>
+    <button id="knappLyd" class="rundknapp" title="Lyd av eller på" aria-label="Lyd av eller på">
+      <span aria-hidden="true">🔊</span>
+    </button>
+  </header>
+
+  <main id="brett" class="brett" aria-label="Flasker"></main>
+
+  <p id="tips" class="tips">Trykk på en flaske, og så på en annen 👆</p>
+
+  <nav class="verktoy">
+    <button id="knappAngre" class="verktoyknapp" aria-label="Angre">
+      <span class="ikon" aria-hidden="true">↩︎</span><span class="etikett">Angre</span>
+    </button>
+    <button id="knappHint" class="verktoyknapp" aria-label="Hjelp meg">
+      <span class="ikon" aria-hidden="true">💡</span><span class="etikett">Hjelp</span>
+    </button>
+    <button id="knappStartPaaNytt" class="verktoyknapp" aria-label="Start nivået på nytt">
+      <span class="ikon" aria-hidden="true">↻</span><span class="etikett">På nytt</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- Feiring når nivået er løst -->
+<div id="seier" class="overlegg skjult" role="dialog" aria-modal="true" aria-labelledby="seierTittel">
+  <div id="konfetti" class="konfetti" aria-hidden="true"></div>
+  <div class="kort">
+    <div class="stjerner" aria-hidden="true">⭐️⭐️⭐️</div>
+    <h2 id="seierTittel">Bra jobba!</h2>
+    <p id="seierTekst">Alle flaskene har sin egen farge.</p>
+    <button id="knappNeste" class="storknapp">Neste nivå ▶</button>
+    <button id="knappOmIgjen" class="tekstknapp">Spill dette på nytt</button>
+  </div>
+</div>
+
+<!-- Nivåvelger -->
+<div id="nivaavelger" class="overlegg skjult" role="dialog" aria-modal="true" aria-labelledby="velgerTittel">
+  <div class="kort bredkort">
+    <h2 id="velgerTittel">Velg nivå</h2>
+    <div id="nivaaliste" class="nivaaliste"></div>
+    <button id="knappLukkVelger" class="storknapp">Tilbake</button>
+  </div>
+</div>
+
+<script>
+/*
+ * Spillogikken til Fargeflasker – rene funksjoner, ingen DOM.
+ *
+ * En flaske er en liste med fargenumre der indeks 0 er bunnen. Et nivå er
+ * løst når hver flaske enten er tom eller full av én farge.
+ *
+ * Nivåene lages ved å stokke fargene tilfeldig og deretter la løseren
+ * sjekke at det faktisk går an. Alternativet – å stokke "baklengs" fra et
+ * ferdig brett – gir ofte nivåer som løser seg selv, og et barn som aldri
+ * møter motstand kjeder seg like fort som et barn som står fast.
+ */
+'use strict';
+
+var Spill = (function () {
+
+  /* Fargene er valgt for å være lette å skille fra hverandre, også for et
+     barn som ennå ikke kan navnene på dem. */
+  var FARGER = [
+    { navn: 'rød',     kode: '#f4483c', lys: '#ff7b70' },
+    { navn: 'blå',     kode: '#2f74e8', lys: '#6ea3ff' },
+    { navn: 'gul',     kode: '#ffc61a', lys: '#ffe07a' },
+    { navn: 'grønn',   kode: '#33bf4c', lys: '#79e58c' },
+    { navn: 'lilla',   kode: '#9b5de5', lys: '#c39bff' },
+    { navn: 'oransje', kode: '#ff8c2b', lys: '#ffb877' },
+    { navn: 'rosa',    kode: '#ff7ec4', lys: '#ffb2dc' },
+    { navn: 'turkis',  kode: '#1fcfd4', lys: '#7ceef1' },
+    { navn: 'lime',    kode: '#b9e01f', lys: '#dcf277' },
+    { navn: 'brun',    kode: '#a9714b', lys: '#cd9d7c' }
+  ];
+
+  /* ---------- småting ---------- */
+
+  // Mulberry32: liten og god nok tilfeldighetsgenerator. Poenget med å ha
+  // en egen er at nivå 7 skal se likt ut hver gang – et barn liker å kjenne
+  // igjen brettet det holdt på med i går.
+  function lagTilfeldig(fro) {
+    var a = fro >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function stokk(liste, tilfeldig) {
+    for (var i = liste.length - 1; i > 0; i--) {
+      var j = Math.floor(tilfeldig() * (i + 1));
+      var m = liste[i]; liste[i] = liste[j]; liste[j] = m;
+    }
+    return liste;
+  }
+
+  function kopi(flasker) {
+    return flasker.map(function (f) { return f.slice(); });
+  }
+
+  function toppFarge(flaske) {
+    return flaske.length ? flaske[flaske.length - 1] : -1;
+  }
+
+  // Hvor mange enheter av samme farge ligger øverst?
+  function toppAntall(flaske) {
+    if (!flaske.length) return 0;
+    var farge = flaske[flaske.length - 1], n = 1;
+    for (var i = flaske.length - 2; i >= 0 && flaske[i] === farge; i--) n++;
+    return n;
+  }
+
+  function ensfarget(flaske) {
+    for (var i = 1; i < flaske.length; i++) if (flaske[i] !== flaske[0]) return false;
+    return flaske.length > 0;
+  }
+
+  function erKomplett(flaske, kapasitet) {
+    return flaske.length === kapasitet && ensfarget(flaske);
+  }
+
+  /* ---------- reglene ---------- */
+
+  // Returnerer hvor mange enheter som kan helles fra -> til, eller 0.
+  function kanHelle(flasker, fra, til, kapasitet) {
+    if (fra === til) return 0;
+    var a = flasker[fra], b = flasker[til];
+    if (!a.length || b.length >= kapasitet) return 0;
+    if (b.length && toppFarge(b) !== toppFarge(a)) return 0;
+    return Math.min(toppAntall(a), kapasitet - b.length);
+  }
+
+  function helle(flasker, fra, til, antall) {
+    for (var i = 0; i < antall; i++) flasker[til].push(flasker[fra].pop());
+  }
+
+  function erFerdig(flasker, kapasitet) {
+    for (var i = 0; i < flasker.length; i++) {
+      var f = flasker[i];
+      if (f.length !== 0 && !erKomplett(f, kapasitet)) return false;
+    }
+    return true;
+  }
+
+  /* ---------- løser ---------- */
+
+  // To brett er det samme brettet om flaskene bare står i en annen
+  // rekkefølge, så nøkkelen sorteres før den havner i "sett".
+  function nokkel(flasker) {
+    return flasker.map(function (f) { return f.join(','); }).sort().join('|');
+  }
+
+  // Kandidattrekk, best først. Rekkefølgen er det som gjør dybdesøket raskt
+  // nok til å brukes både til nivågenerering og til hint.
+  function trekkListe(flasker, kapasitet) {
+    var trekk = [];
+    for (var fra = 0; fra < flasker.length; fra++) {
+      var a = flasker[fra];
+      if (!a.length || erKomplett(a, kapasitet)) continue;
+      for (var til = 0; til < flasker.length; til++) {
+        var antall = kanHelle(flasker, fra, til, kapasitet);
+        if (!antall) continue;
+        var b = flasker[til];
+        // Å flytte hele innholdet av en ensfarget flaske til en tom flaske
+        // endrer ingenting – bare hvilken flaske fargen står i.
+        if (!b.length && ensfarget(a)) continue;
+
+        var poeng = 0;
+        if (b.length) {
+          poeng += 40;                                          // fyller på riktig farge
+          if (b.length + antall === kapasitet) poeng += 60;      // gjør flasken ferdig
+        }
+        if (antall === a.length) poeng += 15;                    // tømmer kilden
+        poeng += antall;
+        trekk.push({ fra: fra, til: til, antall: antall, poeng: poeng });
+      }
+    }
+    trekk.sort(function (x, y) { return y.poeng - x.poeng; });
+    return trekk;
+  }
+
+  // Dybdesøk med besøkt-mengde. Returnerer en liste med trekk, eller null
+  // om brettet ikke lar seg løse innenfor grensen.
+  function loes(flasker, kapasitet, grense) {
+    grense = grense || 80000;
+    var sett = {}, sti = [], teller = 0;
+
+    function sok(st) {
+      if (erFerdig(st, kapasitet)) return true;
+      if (++teller > grense) return false;
+      var k = nokkel(st);
+      if (sett[k]) return false;
+      sett[k] = 1;
+
+      var trekk = trekkListe(st, kapasitet);
+      for (var i = 0; i < trekk.length; i++) {
+        var t = trekk[i];
+        var ny = kopi(st);
+        helle(ny, t.fra, t.til, t.antall);
+        sti.push(t);
+        if (sok(ny)) return true;
+        sti.pop();
+      }
+      return false;
+    }
+
+    return sok(kopi(flasker)) ? sti.slice() : null;
+  }
+
+  /* ---------- nivåene ---------- */
+
+  // Vanskegraden vokser med antall farger, ikke ved å ta bort de tomme
+  // flaskene. To tomme flasker hele veien gir rom for å prøve seg fram,
+  // og det er akkurat det en femåring trenger.
+  function nivaaOppsett(n) {
+    var farger;
+    if (n <= 2) farger = 2;
+    else if (n <= 5) farger = 3;
+    else if (n <= 9) farger = 4;
+    else if (n <= 13) farger = 5;
+    else if (n <= 17) farger = 6;
+    else if (n <= 22) farger = 7;
+    else if (n <= 28) farger = 8;
+    else if (n <= 35) farger = 9;
+    else farger = 10;
+    // Små flasker de første nivåene: tre lag er lettere å holde styr på.
+    return { farger: farger, kapasitet: n <= 6 ? 3 : 4, tomme: 2 };
+  }
+
+  function lagNivaa(n) {
+    var o = nivaaOppsett(n);
+    var tilfeldig = lagTilfeldig(n * 7919 + 13);
+    var reserve = null;
+
+    for (var forsok = 0; forsok < 400; forsok++) {
+      var enheter = [];
+      for (var f = 0; f < o.farger; f++) {
+        for (var i = 0; i < o.kapasitet; i++) enheter.push(f);
+      }
+      stokk(enheter, tilfeldig);
+
+      var flasker = [];
+      for (var b = 0; b < o.farger; b++) {
+        flasker.push(enheter.slice(b * o.kapasitet, (b + 1) * o.kapasitet));
+      }
+      for (var t = 0; t < o.tomme; t++) flasker.push([]);
+      if (erFerdig(flasker, o.kapasitet)) continue;
+
+      var fasit = loes(flasker, o.kapasitet);
+      if (!fasit) continue;
+      // Krev litt substans, men ta til takke med hva vi har om det drar ut.
+      if (fasit.length >= o.farger + 1) {
+        return { flasker: flasker, kapasitet: o.kapasitet, fasit: fasit };
+      }
+      if (!reserve) reserve = { flasker: flasker, kapasitet: o.kapasitet, fasit: fasit };
+    }
+
+    return reserve || { flasker: [[0, 0, 0], [0], []], kapasitet: 3, fasit: null };
+  }
+
+  return {
+    FARGER: FARGER,
+    kopi: kopi,
+    toppFarge: toppFarge,
+    toppAntall: toppAntall,
+    ensfarget: ensfarget,
+    erKomplett: erKomplett,
+    kanHelle: kanHelle,
+    helle: helle,
+    erFerdig: erFerdig,
+    loes: loes,
+    nivaaOppsett: nivaaOppsett,
+    lagNivaa: lagNivaa
+  };
+})();
+
+/*
+ * Fargeflasker – grensesnittet.
+ *
+ * Målgruppen er en femåring, så tre ting styrer valgene her: ingen tidtaking,
+ * ingen måte å tape på, og alt kan angres. Trykker man på feil flaske, blir
+ * den bare den nye valgte i stedet for å gi et avslag.
+ */
+'use strict';
+
+(function () {
+
+  var LAGER = 'fargeflasker';
+
+  /* ---------- lyd ---------- */
+
+  // Små toner laget på stedet. Ingen lydfiler å laste ned, og appen virker
+  // like godt fra en usb-pinne som fra nett.
+  var Lyd = (function () {
+    var ctx = null;
+
+    function kontekst() {
+      if (!ctx) {
+        try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { ctx = false; }
+      }
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      return ctx || null;
+    }
+
+    function tone(frekvens, forsinkelse, lengde, volum, type, sluttfrekvens) {
+      var c = kontekst();
+      if (!c || !data.lyd) return;
+      var t = c.currentTime + forsinkelse;
+      var osc = c.createOscillator();
+      var gain = c.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(frekvens, t);
+      if (sluttfrekvens) osc.frequency.exponentialRampToValueAtTime(sluttfrekvens, t + lengde);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(volum, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + lengde);
+      osc.connect(gain); gain.connect(c.destination);
+      osc.start(t); osc.stop(t + lengde + 0.05);
+    }
+
+    return {
+      plukk: function () { tone(660, 0, 0.09, 0.16, 'triangle'); },
+      slipp: function () { tone(420, 0, 0.09, 0.12, 'triangle'); },
+      hell:  function () { tone(300, 0, 0.34, 0.14, 'sine', 620); },
+      nei:   function () { tone(200, 0, 0.14, 0.12, 'square', 150); },
+      ferdig: function () {
+        tone(660, 0, 0.12, 0.16, 'triangle');
+        tone(880, 0.09, 0.16, 0.16, 'triangle');
+      },
+      seier: function () {
+        [523, 659, 784, 1047].forEach(function (f, i) {
+          tone(f, i * 0.13, 0.22, 0.17, 'triangle');
+        });
+        tone(1319, 0.55, 0.5, 0.15, 'triangle');
+      }
+    };
+  })();
+
+  /* ---------- lagring ---------- */
+
+  var data = { opplaast: 1, sisteNivaa: 1, lyd: true };
+
+  function lastData() {
+    try {
+      var raa = localStorage.getItem(LAGER);
+      if (raa) {
+        var d = JSON.parse(raa);
+        if (d && typeof d === 'object') {
+          data.opplaast = Math.max(1, d.opplaast | 0);
+          data.sisteNivaa = Math.max(1, d.sisteNivaa | 0);
+          data.lyd = d.lyd !== false;
+        }
+      }
+    } catch (e) { /* privat modus eller file:// – vi klarer oss uten */ }
+  }
+
+  function lagreData() {
+    try { localStorage.setItem(LAGER, JSON.stringify(data)); } catch (e) { }
+  }
+
+  /* ---------- tilstand ---------- */
+
+  var tilstand = {
+    nivaa: 1,
+    kapasitet: 4,
+    flasker: [],
+    start: [],
+    historikk: [],
+    valgt: null,
+    laast: false,
+    ferdigeFra: []      // hvilke flasker som allerede var komplette – for å feire bare nye
+  };
+
+  var brett = document.getElementById('brett');
+  var elFlasker = [], elVaeske = [];
+
+  /* ---------- oppsett av nivå ---------- */
+
+  function startNivaa(n) {
+    var nivaa = Spill.lagNivaa(n);
+    tilstand.nivaa = n;
+    tilstand.kapasitet = nivaa.kapasitet;
+    tilstand.flasker = Spill.kopi(nivaa.flasker);
+    tilstand.start = Spill.kopi(nivaa.flasker);
+    tilstand.historikk = [];
+    tilstand.valgt = null;
+    tilstand.laast = false;
+    tilstand.ferdigeFra = [];
+    data.sisteNivaa = n;
+    lagreData();
+    document.getElementById('nivaaTall').textContent = n;
+    visTips(n === 1 ? 'Trykk på en flaske, og så på en annen 👆' : '');
+    tegn();
+  }
+
+  function startPaaNytt() {
+    if (tilstand.laast) return;
+    tilstand.flasker = Spill.kopi(tilstand.start);
+    tilstand.historikk = [];
+    tilstand.valgt = null;
+    tilstand.ferdigeFra = [];
+    Lyd.slipp();
+    tegn();
+  }
+
+  /* ---------- tegning ---------- */
+
+  var OMRISS =
+    '<svg class="omriss" viewBox="0 0 68 160" aria-hidden="true">' +
+      '<path class="kant" d="M27 5 h14 v17 c0 8 19 8 19 24 v88 c0 10 -6 15 -16 15 ' +
+      'h-20 c-10 0 -16 -5 -16 -15 v-88 c0 -16 19 -16 19 -24 z"/>' +
+      '<path class="blank" d="M16 64 c0 -9 4 -13 7 -15 v72 c-4 -2 -7 -7 -7 -13 z"/>' +
+    '</svg>';
+
+  // Flaskene fordeles på rader med høyst fem i hver, og radene gjøres like
+  // lange. Ti flasker blir 5 + 5, sju blir 4 + 3.
+  function radInndeling(antall) {
+    var rader = Math.ceil(antall / 5);
+    var igjen = antall, ut = [];
+    for (var r = 0; r < rader; r++) {
+      var n = Math.ceil(igjen / (rader - r));
+      ut.push(n);
+      igjen -= n;
+    }
+    return ut;
+  }
+
+  // Flaskebredden settes så hele brettet får plass uten rulling – både i
+  // bredden og i høyden.
+  function settBredde(inndeling) {
+    var maks = Math.max.apply(null, inndeling);
+    var rader = inndeling.length;
+    var mellomrom = Math.min(16, Math.max(6, brett.clientWidth * 0.026));
+    var radAvstand = 26;
+
+    var etterBredde = (brett.clientWidth - (maks - 1) * mellomrom - 8) / maks;
+    var etterHoyde = (brett.clientHeight - (rader - 1) * radAvstand - 18) / (rader * (160 / 68));
+    var bredde = Math.min(etterBredde, etterHoyde, 110);
+    bredde = Math.max(30, bredde);
+    document.documentElement.style.setProperty('--flaskebredde', bredde.toFixed(1) + 'px');
+  }
+
+  function tegn() {
+    var flasker = tilstand.flasker;
+    var inndeling = radInndeling(flasker.length);
+    brett.innerHTML = '';
+    settBredde(inndeling);
+
+    elFlasker = [];
+    elVaeske = [];
+    var enhet = 100 / tilstand.kapasitet;
+    var i = 0;
+
+    inndeling.forEach(function (antall) {
+      var rad = document.createElement('div');
+      rad.className = 'rad';
+      for (var k = 0; k < antall; k++) {
+        rad.appendChild(lagFlaske(i, flasker[i], enhet));
+        i++;
+      }
+      brett.appendChild(rad);
+    });
+  }
+
+  function lagFlaske(indeks, innhold, enhet) {
+    var el = document.createElement('div');
+    el.className = 'flaske';
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', beskriv(innhold));
+    el.dataset.i = indeks;
+    el.innerHTML = OMRISS + '<span class="merke" aria-hidden="true">⭐️</span>';
+
+    var vaeske = document.createElement('div');
+    vaeske.className = 'vaeske';
+    innhold.forEach(function (farge) {
+      vaeske.appendChild(lagDel(farge, enhet));
+    });
+    el.insertBefore(vaeske, el.firstChild);
+
+    if (tilstand.valgt === indeks) el.classList.add('valgt');
+    if (Spill.erKomplett(innhold, tilstand.kapasitet)) el.classList.add('ferdig');
+
+    el.addEventListener('click', function () { klikk(indeks); });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); klikk(indeks); }
+    });
+
+    elFlasker[indeks] = el;
+    elVaeske[indeks] = vaeske;
+    return el;
+  }
+
+  function lagDel(farge, hoyde) {
+    var d = document.createElement('div');
+    d.className = 'del';
+    d.style.height = hoyde + '%';
+    d.style.background = 'linear-gradient(90deg,' + Spill.FARGER[farge].kode + ' 0%,' +
+      Spill.FARGER[farge].lys + ' 42%,' + Spill.FARGER[farge].kode + ' 100%)';
+    d.dataset.farge = farge;
+    return d;
+  }
+
+  function beskriv(innhold) {
+    if (!innhold.length) return 'Tom flaske';
+    var navn = innhold.map(function (f) { return Spill.FARGER[f].navn; });
+    return 'Flaske med ' + navn.join(', ') + ' nedenfra';
+  }
+
+  /* ---------- trykk ---------- */
+
+  function klikk(i) {
+    if (tilstand.laast) return;
+    var flasker = tilstand.flasker;
+
+    if (tilstand.valgt === null) {
+      if (!flasker[i].length) { rist(i); return; }
+      if (Spill.erKomplett(flasker[i], tilstand.kapasitet)) { rist(i); return; }
+      tilstand.valgt = i;
+      elFlasker[i].classList.add('valgt');
+      Lyd.plukk();
+      skjulTips();
+      return;
+    }
+
+    if (tilstand.valgt === i) {
+      tilstand.valgt = null;
+      elFlasker[i].classList.remove('valgt');
+      Lyd.slipp();
+      return;
+    }
+
+    var fra = tilstand.valgt;
+    var antall = Spill.kanHelle(flasker, fra, i, tilstand.kapasitet);
+    if (antall > 0) {
+      hell(fra, i, antall);
+      return;
+    }
+
+    // Går ikke: si fra med en liten risting, og la trykket velge den nye
+    // flasken i stedet. Da slipper barnet å trykke to ganger.
+    rist(i);
+    elFlasker[fra].classList.remove('valgt');
+    if (flasker[i].length && !Spill.erKomplett(flasker[i], tilstand.kapasitet)) {
+      tilstand.valgt = i;
+      elFlasker[i].classList.add('valgt');
+    } else {
+      tilstand.valgt = null;
+    }
+  }
+
+  function rist(i) {
+    var el = elFlasker[i];
+    if (!el) return;
+    Lyd.nei();
+    el.classList.remove('rist');
+    void el.offsetWidth;
+    el.classList.add('rist');
+    setTimeout(function () { el.classList.remove('rist'); }, 340);
+  }
+
+  /* ---------- hellingen ---------- */
+
+  function hell(fra, til, antall) {
+    tilstand.laast = true;
+    tilstand.historikk.push(Spill.kopi(tilstand.flasker));
+    tilstand.valgt = null;
+    skjulTips();
+
+    var farge = Spill.toppFarge(tilstand.flasker[fra]);
+    var nivaaTil = tilstand.flasker[til].length;
+    var eFra = elFlasker[fra], eTil = elFlasker[til];
+    var rFra = eFra.getBoundingClientRect(), rTil = eTil.getBoundingClientRect();
+
+    // Flasken svinger om munningen (transform-origin i css), så vi kan sikte
+    // rett på et punkt like over målflasken.
+    var tilVenstre = rFra.left <= rTil.left;
+    var vinkel = tilVenstre ? 54 : -54;
+    var munnX = rFra.left + rFra.width / 2;
+    var munnY = rFra.top + rFra.height * 0.08;
+    var maalX = rTil.left + rTil.width / 2;
+    var maalY = rTil.top - rTil.height * 0.14;
+
+    eFra.classList.remove('valgt');
+    eFra.style.zIndex = '40';
+    eFra.style.transition = 'transform .24s cubic-bezier(.4,.1,.3,1)';
+    eFra.style.transform = 'translate(' + (maalX - munnX).toFixed(1) + 'px,' +
+      (maalY - munnY).toFixed(1) + 'px) rotate(' + vinkel + 'deg)';
+
+    // Overflaten på væsken i målflasken: prosentene er de samme som i css.
+    var overflate = rTil.top + rTil.height * (0.919 - 0.619 * nivaaTil / tilstand.kapasitet);
+
+    setTimeout(function () {
+      var straale = document.createElement('div');
+      straale.className = 'straale';
+      straale.style.left = (maalX - 4) + 'px';
+      straale.style.top = maalY + 'px';
+      straale.style.width = '8px';
+      straale.style.height = '0px';
+      straale.style.background = Spill.FARGER[farge].kode;
+      document.body.appendChild(straale);
+      void straale.offsetWidth;
+      straale.style.height = Math.max(6, overflate - maalY + 4) + 'px';
+      Lyd.hell();
+
+      // Væsken forlater kildeflasken og fyller målflasken samtidig.
+      var enhet = 100 / tilstand.kapasitet;
+      var deler = elVaeske[fra].children;
+      for (var k = 0; k < antall; k++) {
+        deler[deler.length - 1 - k].style.height = '0%';
+      }
+      var nye = [];
+      for (var m = 0; m < antall; m++) {
+        var d = lagDel(farge, enhet);
+        d.style.height = '0%';
+        elVaeske[til].appendChild(d);
+        nye.push(d);
+      }
+      void elVaeske[til].offsetWidth;
+      nye.forEach(function (d) { d.style.height = enhet + '%'; });
+
+      setTimeout(function () {
+        straale.style.height = '0px';
+        straale.style.opacity = '0';
+        setTimeout(function () { straale.remove(); }, 200);
+        eFra.style.transform = '';
+        setTimeout(function () {
+          eFra.style.zIndex = '';
+          eFra.style.transition = '';
+          fullfor(fra, til, antall);
+        }, 240);
+      }, 320);
+    }, 250);
+  }
+
+  function fullfor(fra, til, antall) {
+    var varFerdig = tilstand.flasker.map(function (f) {
+      return Spill.erKomplett(f, tilstand.kapasitet);
+    });
+    Spill.helle(tilstand.flasker, fra, til, antall);
+    tegn();
+
+    var blePlutseligFerdig = !varFerdig[til] &&
+      Spill.erKomplett(tilstand.flasker[til], tilstand.kapasitet);
+    if (blePlutseligFerdig) {
+      elFlasker[til].classList.add('nyferdig');
+      Lyd.ferdig();
+    }
+
+    if (Spill.erFerdig(tilstand.flasker, tilstand.kapasitet)) {
+      setTimeout(visSeier, blePlutseligFerdig ? 550 : 250);
+    } else {
+      tilstand.laast = false;
+      oppdaterKnapper();
+    }
+  }
+
+  function angre() {
+    if (tilstand.laast || !tilstand.historikk.length) return;
+    tilstand.flasker = tilstand.historikk.pop();
+    tilstand.valgt = null;
+    Lyd.slipp();
+    tegn();
+    oppdaterKnapper();
+  }
+
+  function oppdaterKnapper() {
+    document.getElementById('knappAngre').disabled = tilstand.historikk.length === 0;
+  }
+
+  /* ---------- hint ---------- */
+
+  function hint() {
+    if (tilstand.laast) return;
+    var fasit = Spill.loes(tilstand.flasker, tilstand.kapasitet);
+    if (!fasit || !fasit.length) {
+      visTips('Det går ikke videre herfra – trykk Angre 🙂');
+      return;
+    }
+    tilstand.valgt = null;
+    tegn();
+    peker(fasit[0].fra);
+    peker(fasit[0].til);
+    visTips('Hell fra den ene til den andre 👀');
+  }
+
+  function peker(i) {
+    var el = elFlasker[i];
+    if (!el) return;
+    el.classList.add('peker');
+    setTimeout(function () { el.classList.remove('peker'); }, 4600);
+  }
+
+  /* ---------- tips ---------- */
+
+  var tipsEl = document.getElementById('tips');
+
+  function visTips(tekst) {
+    tipsEl.textContent = tekst || '';
+    tipsEl.classList.toggle('borte', !tekst);
+  }
+
+  function skjulTips() {
+    tipsEl.classList.add('borte');
+  }
+
+  /* ---------- seier ---------- */
+
+  var seier = document.getElementById('seier');
+
+  function visSeier() {
+    if (tilstand.nivaa + 1 > data.opplaast) data.opplaast = tilstand.nivaa + 1;
+    lagreData();
+    document.getElementById('seierTekst').textContent =
+      'Nivå ' + tilstand.nivaa + ' er ferdig. Alle flaskene har sin egen farge!';
+    seier.classList.remove('skjult');
+    konfetti();
+    Lyd.seier();
+  }
+
+  function konfetti() {
+    var boks = document.getElementById('konfetti');
+    boks.innerHTML = '';
+    for (var i = 0; i < 55; i++) {
+      var b = document.createElement('i');
+      b.style.left = (Math.random() * 100) + '%';
+      b.style.background = Spill.FARGER[i % Spill.FARGER.length].kode;
+      b.style.animationDelay = (Math.random() * 1.1).toFixed(2) + 's';
+      b.style.animationDuration = (2 + Math.random() * 1.6).toFixed(2) + 's';
+      b.style.transform = 'scale(' + (0.6 + Math.random() * 0.8).toFixed(2) + ')';
+      boks.appendChild(b);
+    }
+  }
+
+  /* ---------- nivåvelger ---------- */
+
+  var velger = document.getElementById('nivaavelger');
+
+  function visVelger() {
+    var liste = document.getElementById('nivaaliste');
+    liste.innerHTML = '';
+    var antall = Math.max(30, data.opplaast + 5);
+    for (var n = 1; n <= antall; n++) {
+      var b = document.createElement('button');
+      b.className = 'nivaaknapp';
+      b.textContent = n;
+      if (n < data.opplaast) b.classList.add('klart');
+      if (n === tilstand.nivaa) b.classList.add('naa');
+      if (n > data.opplaast) {
+        b.classList.add('laast');
+        b.disabled = true;
+        b.textContent = '🔒';
+      } else {
+        (function (m) {
+          b.addEventListener('click', function () {
+            velger.classList.add('skjult');
+            startNivaa(m);
+            oppdaterKnapper();
+          });
+        })(n);
+      }
+      liste.appendChild(b);
+    }
+    velger.classList.remove('skjult');
+
+    // Rull fram til nivået som spilles nå – ellers må man lete etter det.
+    var naa = liste.querySelector('.naa');
+    if (naa) liste.scrollTop = Math.max(0, naa.offsetTop - liste.clientHeight / 2);
+  }
+
+  /* ---------- knapper ---------- */
+
+  document.getElementById('knappAngre').addEventListener('click', angre);
+  document.getElementById('knappHint').addEventListener('click', hint);
+  document.getElementById('knappStartPaaNytt').addEventListener('click', startPaaNytt);
+  document.getElementById('knappNivaaer').addEventListener('click', visVelger);
+  document.getElementById('knappLukkVelger').addEventListener('click', function () {
+    velger.classList.add('skjult');
+  });
+
+  document.getElementById('knappNeste').addEventListener('click', function () {
+    seier.classList.add('skjult');
+    startNivaa(tilstand.nivaa + 1);
+    oppdaterKnapper();
+  });
+  document.getElementById('knappOmIgjen').addEventListener('click', function () {
+    seier.classList.add('skjult');
+    startNivaa(tilstand.nivaa);
+    oppdaterKnapper();
+  });
+
+  var knappLyd = document.getElementById('knappLyd');
+  function tegnLydknapp() {
+    knappLyd.firstElementChild.textContent = data.lyd ? '🔊' : '🔇';
+  }
+  knappLyd.addEventListener('click', function () {
+    data.lyd = !data.lyd;
+    lagreData();
+    tegnLydknapp();
+    if (data.lyd) Lyd.plukk();
+  });
+
+  // Skjermen kan snus, og da må flaskene måles på nytt.
+  var tidtaker = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(tidtaker);
+    tidtaker = setTimeout(function () { if (!tilstand.laast) tegn(); }, 150);
+  });
+
+  /* ---------- i gang ---------- */
+
+  lastData();
+  tegnLydknapp();
+  startNivaa(data.sisteNivaa);
+  oppdaterKnapper();
+
+
+})();
+</script>
+</body>
+</html>

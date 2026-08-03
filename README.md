@@ -10,7 +10,13 @@
 - **[Sudoku](pwa-sudoku/)** — `pwa-sudoku/index.html`: sudoku med automatiske
   blyantmerker og en hintmotor som forklarer hvilken løseteknikk som gjelder
   og hvorfor. PWA — kan installeres på hjemskjermen og virker offline.
+- **[Fargeflasker](pwa-flasker/)** — `pwa-flasker/index.html`: rolig
+  sorteringsspill for de aller minste. Hell fargene fra flaske til flaske til
+  hver flaske har sin egen farge. Ingen klokke, ingen måte å tape på, og et
+  hint som viser et trekk som faktisk fører fram. PWA. Finnes også som én
+  enkelt fil i `flaskespill.html`.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på
-<https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/>.
+<https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/> og Fargeflasker på
+<https://vegardk-hub.github.io/ig-trekning/pwa-flasker/>.

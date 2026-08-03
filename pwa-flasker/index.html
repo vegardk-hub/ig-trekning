@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Fargeflasker</title>
+<meta name="description" content="Rolig sorteringsspill for de minste: hell fargene sammen til hver flaske har sin egen farge.">
+<meta name="theme-color" content="#1b2450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topp">
+    <button id="knappNivaaer" class="rundknapp" title="Velg nivå" aria-label="Velg nivå">
+      <span aria-hidden="true">☰</span>
+    </button>
+    <div class="nivaamerke"><span class="nivaaord">Nivå</span> <strong id="nivaaTall">1</strong></div>
+    <button id="knappLyd" class="rundknapp" title="Lyd av eller på" aria-label="Lyd av eller på">
+      <span aria-hidden="true">🔊</span>
+    </button>
+  </header>
+
+  <main id="brett" class="brett" aria-label="Flasker"></main>
+
+  <p id="tips" class="tips">Trykk på en flaske, og så på en annen 👆</p>
+
+  <nav class="verktoy">
+    <button id="knappAngre" class="verktoyknapp" aria-label="Angre">
+      <span class="ikon" aria-hidden="true">↩︎</span><span class="etikett">Angre</span>
+    </button>
+    <button id="knappHint" class="verktoyknapp" aria-label="Hjelp meg">
+      <span class="ikon" aria-hidden="true">💡</span><span class="etikett">Hjelp</span>
+    </button>
+    <button id="knappStartPaaNytt" class="verktoyknapp" aria-label="Start nivået på nytt">
+      <span class="ikon" aria-hidden="true">↻</span><span class="etikett">På nytt</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- Feiring når nivået er løst -->
+<div id="seier" class="overlegg skjult" role="dialog" aria-modal="true" aria-labelledby="seierTittel">
+  <div id="konfetti" class="konfetti" aria-hidden="true"></div>
+  <div class="kort">
+    <div class="stjerner" aria-hidden="true">⭐️⭐️⭐️</div>
+    <h2 id="seierTittel">Bra jobba!</h2>
+    <p id="seierTekst">Alle flaskene har sin egen farge.</p>
+    <button id="knappNeste" class="storknapp">Neste nivå ▶</button>
+    <button id="knappOmIgjen" class="tekstknapp">Spill dette på nytt</button>
+  </div>
+</div>
+
+<!-- Nivåvelger -->
+<div id="nivaavelger" class="overlegg skjult" role="dialog" aria-modal="true" aria-labelledby="velgerTittel">
+  <div class="kort bredkort">
+    <h2 id="velgerTittel">Velg nivå</h2>
+    <div id="nivaaliste" class="nivaaliste"></div>
+    <button id="knappLukkVelger" class="storknapp">Tilbake</button>
+  </div>
+</div>
+
+<script src="js/spill.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
