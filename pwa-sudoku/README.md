@@ -12,10 +12,15 @@ legg mappa på en webserver og installer den på hjemskjermen.
 Stående ligger tastaturet under brettet, med tittelen over.
 
 Legger du telefonen ned, deler layouten seg: brettet tar hele høyden, og
-tastaturet står i **ett sett på hver side**, så alt kan nås uten å flytte
-tomlene. Tittelen og telleren flytter opp i venstre hjørne — sto de i midten,
-ville de kostet nettopp den høyden brettet skal ha. Hint og meldinger legger seg
-over brettet, av samme grunn.
+talltastene står på **hver sin side**, så alt kan nås uten å flytte tomlene.
+Tittelen og telleren flytter opp i venstre hjørne — sto de i midten, ville de
+kostet nettopp den høyden brettet skal ha.
+
+Verktøyknappene finnes bare til **høyre** liggende. Ett sett er nok, og plassen
+under venstre talltast går til **hint og meldinger** i stedet. Før lå de midt
+over brettet, og skjulte da gjerne nettopp rutene et hint pekte på — som er hele
+poenget med å vise dem. Er hintet høyere enn feltet, skroller teksten; knappene
+står fast i bunnen, så **Bruk** aldri havner utenfor.
 
 Liggende er sida **frosset**: ingen skroll, ingen sprett. Brettet fyller høyden,
 så et drag har ingenting å avdekke — det ville bare skjøvet nederste rad ut av

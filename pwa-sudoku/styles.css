@@ -292,7 +292,7 @@ body {
 /* ---------- Hintpanel ---------- */
 
 .hint {
-  width: var(--brett);
+  width: 100%;
   background: var(--flate);
   border: 1px solid var(--knapp-kant);
   border-left: 4px solid var(--hint-kant);
@@ -331,7 +331,7 @@ body {
 }
 
 .melding {
-  width: var(--brett);
+  width: 100%;
   background: var(--flate);
   border: 1px solid var(--knapp-kant);
   border-radius: 8px;
@@ -346,6 +346,11 @@ body {
 
 /* Stående: brettet øverst, så hint og melding, og det ene tastatursettet under.
    Det andre settet er skjult — det trengs først når telefonen ligger. */
+
+/* display: contents stående: .forklaring lager ingen boks, så hint og melding
+   blir flex-barn av .side rett under brettet, som før — og en skjult melding
+   etterlater ingen tom glipe. Liggende blir den en ekte boks med egen plass. */
+.forklaring { display: contents; }
 .spilleflate {
   position: relative;
   width: 100%;
@@ -356,9 +361,7 @@ body {
 }
 
 .brett    { order: 1; }
-.hint     { order: 2; }
-.melding  { order: 3; }
-.venstre  { order: 4; }
+.venstre  { order: 2; }
 .sidetopp { display: none; }
 /* .side setter display: flex — derfor .side.hoyre her, ellers avgjør
    rekkefølgen i fila hvem som vinner. */
@@ -814,16 +817,62 @@ body {
     font-size: .95rem;
   }
 
-  /* Hint og melding legger seg over brettet — det finnes ingen ledig høyde. */
-  .hint, .melding {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: min(340px, 62vw);
-    z-index: 5;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, .38);
+  /*
+   * Venstre panel har ingen verktøyknapper — de finnes på høyre side, og ett
+   * sett er nok. Plassen går til forklaringene i stedet. Før lå de midt over
+   * brettet, og skjulte da gjerne nettopp rutene et hint pekte på.
+   *
+   * Samme flex-tall som verktøyene hadde (3 mot 4), så talltastene står i
+   * nøyaktig samme høyde på begge sider.
+   */
+  .venstre .verktoy { display: none; }
+
+  /* Alle fire må ha order — uten den faller .verktoy på 0 og havner først. */
+  .sidetopp      { order: 1; }
+  .side .tall    { order: 2; }
+  .side .verktoy { order: 4; }
+
+  .forklaring {
+    order: 3;
+    margin-top: 10px;          /* samme luft som verktøyene har, så sidene flukter */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 4 0 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
+
+  /*
+   * Smal spalte: teksten settes mindre, og knappene under hverandre. Blir
+   * hintet høyere enn feltet, er det teksten som skal skrolle — «Bruk» er
+   * hovedhandlingen og skal aldri ligge under kanten.
+   */
+  .hint {
+    padding: 8px 9px;
+    border-left-width: 3px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+  }
+
+  .hint-topp, .hint-knapper { flex: none; }
+
+  .hint-tekst {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .melding { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+  .hint-navn { font-size: .82rem; }
+  .hint-tekst { margin: 5px 0 8px; font-size: .72rem; line-height: 1.4; }
+  .hint-knapper { flex-direction: column; gap: 5px; }
+  .hint-knapper .knapp { padding: 6px 8px; font-size: .76rem; }
+  .melding { padding: 8px 9px; font-size: .74rem; line-height: 1.4; }
 }
 
 /* Fra nettbrettbredde og opp er det plass til alle åtte på én rad. Teksten

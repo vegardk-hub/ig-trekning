@@ -34,11 +34,32 @@
        når telefonen ligger. Stående vises bare den venstre, under brettet. -->
   <div class="spilleflate">
 
+    <!-- Hint og melding bor i venstre panel. Stående faller de rett under
+         brettet slik de alltid har gjort; liggende tar de plassen der
+         verktøyknappene ellers ville stått, i stedet for å legge seg over
+         brettet og skjule nettopp rutene hintet peker på. -->
     <div class="side venstre">
       <div class="sidetopp">
         <span class="sidetittel">Sudoku</span>
         <span id="side-meta"></span>
       </div>
+
+      <div class="forklaring">
+        <div id="hint" class="hint" hidden>
+          <div class="hint-topp">
+            <span id="hint-navn" class="hint-navn"></span>
+            <button id="hint-lukk" class="ikonknapp" aria-label="Lukk hint">&times;</button>
+          </div>
+          <p id="hint-tekst" class="hint-tekst"></p>
+          <div class="hint-knapper">
+            <button id="hint-mer" class="knapp">Vis hvor</button>
+            <button id="hint-bruk" class="knapp primaer">Bruk</button>
+          </div>
+        </div>
+
+        <div id="melding" class="melding" hidden></div>
+      </div>
+
       <div class="tall"></div>
       <div class="verktoy"></div>
     </div>
@@ -52,20 +73,6 @@
       <div class="tall"></div>
       <div class="verktoy"></div>
     </div>
-
-    <div id="hint" class="hint" hidden>
-      <div class="hint-topp">
-        <span id="hint-navn" class="hint-navn"></span>
-        <button id="hint-lukk" class="ikonknapp" aria-label="Lukk hint">&times;</button>
-      </div>
-      <p id="hint-tekst" class="hint-tekst"></p>
-      <div class="hint-knapper">
-        <button id="hint-mer" class="knapp">Vis hvor</button>
-        <button id="hint-bruk" class="knapp primaer">Bruk</button>
-      </div>
-    </div>
-
-    <div id="melding" class="melding" hidden></div>
 
   </div>
 
