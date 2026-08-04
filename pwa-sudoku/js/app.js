@@ -155,7 +155,6 @@
 
     const sel = state.valgt;
     const selVerdi = sel >= 0 ? state.verdier[sel] : 0;
-    const naboer = sel >= 0 ? C.PEER_SETS[sel] : null;
 
     // I fyllmodus er det det aktive tallet som er interessant å se hvor står,
     // ikke tallet i ruta du sist rørte.
@@ -185,7 +184,6 @@
       let cls = 'celle';
       if (v) cls += state.gitt[i] ? ' gitt' : ' skrevet';
       if (konflikt[i]) cls += ' konflikt';
-      if (naboer && naboer.has(i)) cls += ' naboer';
       if (likTall && v === likTall && i !== sel) cls += ' likt';
       if (i === sel) cls += ' valgt';
       if (hEnhet.has(i)) cls += ' hint-enhet';
@@ -629,8 +627,8 @@
     const i = Number(c.dataset.i);
 
     if (state.fyllModus && state.aktivtTall) {
-      // Ruta markeres uansett, så naboer og like tall lyser opp selv om det
-      // ikke ble skrevet noe (gitt rute, eller blyanten sperret av «Auto»).
+      // Ruta markeres uansett, så like tall lyser opp selv om det ikke ble
+      // skrevet noe (gitt rute, eller blyanten sperret av «Auto»).
       state.valgt = i;
       skjulMelding();
       if (!skrivTallI(i, state.aktivtTall)) tegn();

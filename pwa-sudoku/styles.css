@@ -22,7 +22,6 @@
   --merke: #9a5f2b;
 
   --valgt: #cfc6ae;
-  --naboer: #f0ede6;
   --likt-tall: #e3dccb;
 
   --hint-hoved: #ffdf9e;
@@ -60,7 +59,6 @@
   --merke: #8a4a08;
 
   --valgt: #c9c9c9;
-  --naboer: #ededed;
   --likt-tall: #dcdcdc;
 
   --hint-hoved: #ffd166;
@@ -90,7 +88,6 @@
   --merke: #d9a05f;          /* rav mot blått — motsatt side av sirkelen */
 
   --valgt: #444b53;          /* nøytral grå, ikke blå: blå skrift skal ikke stå på blått */
-  --naboer: #262a2e;
   --likt-tall: #33383e;
 
   --hint-hoved: #6b5423;
@@ -123,7 +120,6 @@
   --merke: #86b87f;
 
   --valgt: #4a4034;          /* varm nøytral, ikke gull på gull */
-  --naboer: #2e2822;
   --likt-tall: #3c342b;
 
   --hint-hoved: #6f5622;
@@ -262,7 +258,6 @@ body {
 .merker i.paa { visibility: visible; }
 
 /* Markering */
-.celle.naboer { background: var(--naboer); }
 .celle.likt   { background: var(--likt-tall); }
 .celle.valgt  { background: var(--valgt); }
 

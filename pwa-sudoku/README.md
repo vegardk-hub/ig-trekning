@@ -138,8 +138,13 @@ og Natt er avstanden mellom skrift og blyant 176–177°. Kveld er unntaket: gul
 komplement *er* blått, og blått er akkurat det oppsettet skal være fritt for, så
 der går det så langt som mulig uten å slippe blåtonen inn igjen — 79°.
 
-Markeringsflatene (valgt rute, naboer, like tall) er nøytrale med vilje. Var de
-blå, ville blå tall stått på blå flate.
+Markeringsflatene (valgt rute, like tall) er nøytrale med vilje. Var de blå,
+ville blå tall stått på blå flate.
+
+Brettet markerer ikke raden, kolonnen og boksen rundt ruta du står i. Det gjorde
+det før, men tre tonede felt som legger seg i kryss over brettet er mye flate i
+bevegelse for lite igjen — ruta du har valgt ser du uansett, og hvilken rad den
+står i er ikke noe du trenger hjelp til å se.
 
 ### Kontrast
 
