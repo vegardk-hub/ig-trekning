@@ -506,6 +506,11 @@ body {
   cursor: pointer;
   box-shadow: var(--skygge);
   transition: transform .08s ease;
+  /* Over .spilleflate: den er position: relative for at hint skal kunne legge
+     seg over brettet, og kommer etter knappen i DOM-en. Uten z-index her maler
+     den over knappen, og liggende — der sidepanelet fyller høyden — ble den
+     umulig å trykke på. */
+  z-index: 10;
 }
 
 .temaknapp:active { transform: scale(.94); }
@@ -570,6 +575,7 @@ body {
 .modal {
   position: fixed;
   inset: 0;
+  z-index: 20;                   /* over temaknappen, som ligger på 10 */
   background: rgba(24, 28, 34, .5);
   display: flex;
   align-items: flex-start;
@@ -798,7 +804,15 @@ body {
   .vsymbol { font-size: .92rem; }
   .vtekst { font-size: .56rem; }
 
-  .temaknapp { top: 3px; right: 6px; width: 30px; height: 30px; font-size: .95rem; }
+  /* Midt over høyre sidepanel i stedet for inn i hjørnet: telefoner har
+     avrundede hjørner, og 6 px fra kanten er innenfor kurven på mange av dem. */
+  .temaknapp {
+    top: 4px;
+    right: calc(6px + (var(--side) - 30px) / 2);
+    width: 30px;
+    height: 30px;
+    font-size: .95rem;
+  }
 
   /* Hint og melding legger seg over brettet — det finnes ingen ledig høyde. */
   .hint, .melding {
