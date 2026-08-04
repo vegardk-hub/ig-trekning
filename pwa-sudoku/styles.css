@@ -816,5 +816,8 @@ body {
    krymper med brettet, ellers sprenger «Gjør om» kolonnen. */
 @media (min-width: 480px) {
   .verktoy { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-  .vtekst { font-size: min(.66rem, calc(var(--brett) * .026)); }
+  /* «Nytt spill» er den lengste etiketten, og med åtte knapper på rad er
+     kolonnen ~50 px. Systemfonten varierer mellom plattformer, så her er det
+     satt med slakk i stedet for akkurat nok. */
+  .vtekst { font-size: min(.62rem, calc(var(--brett) * .024)); }
 }

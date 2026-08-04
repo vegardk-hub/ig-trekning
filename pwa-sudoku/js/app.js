@@ -75,7 +75,7 @@
     { id: 'blyant', symbol: '✎', tekst: 'Blyant' },
     { id: 'auto',   symbol: '◈', tekst: 'Auto' },
     { id: 'hint',   symbol: '?', tekst: 'Hint' },
-    { id: 'nytt',   symbol: '✦', tekst: 'Nytt' }
+    { id: 'nytt',   symbol: '✦', tekst: 'Nytt spill' }
   ];
 
   const $$ = sel => document.querySelectorAll(sel);

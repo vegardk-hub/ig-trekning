@@ -12,7 +12,7 @@
  * i en fersk cache, der den så ble liggende. Derfor no-store begge steder.
  */
 
-const CACHE = 'sudoku-v18';
+const CACHE = 'sudoku-v19';
 const FILER = [
   './',
   './index.html',
