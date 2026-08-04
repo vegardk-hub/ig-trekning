@@ -118,7 +118,9 @@
 
     const prove = document.createElement('span');
     prove.className = 'prove';
-    prove.style.background = 'linear-gradient(135deg, ' + t.prove[0] + ' 50%, ' + t.prove[1] + ' 50%)';
+    prove.style.background = 'linear-gradient(135deg, ' +
+      t.prove[0] + ' 34%, ' + t.prove[1] + ' 34%, ' +
+      t.prove[1] + ' 67%, ' + t.prove[2] + ' 67%)';
 
     const tekst = document.createElement('span');
     tekst.className = 'tematekst';

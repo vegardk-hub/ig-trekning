@@ -15,33 +15,40 @@
 
   const LAGER = 'sudoku-tema';
 
-  /* prove: de to fargene som vises i prøvelappen — flate og skrift. */
+  /* prove: de tre fargene som vises i prøvelappen — flate, skrevne tall og
+     blyantmerker. De to siste er med vilje fra hver sin side av fargesirkelen. */
   const TEMAER = [
-    { id: 'system', navn: 'Følg systemet', om: 'Følger lys/mørk-innstillingen på enheten',
-      prove: ['#f2efe7', '#171a1f'] },
     { id: 'papir',  navn: 'Papir',  om: 'Varmt og dempet — standarden',
-      prove: ['#f2efe7', '#2f6fb3'] },
-    { id: 'sollys', navn: 'Sollys', om: 'Maks kontrast, for sterkt dagslys',
-      prove: ['#ffffff', '#0a4ea8'] },
-    { id: 'natt',   navn: 'Natt',   om: 'Mørkt og kjølig',
-      prove: ['#171a1f', '#74b3f0'] },
+      prove: ['#f2efe7', '#1f62aa', '#9a5f2b'] },
+    { id: 'dag',    navn: 'Dag',    om: 'Maks kontrast, for sterkt dagslys',
+      prove: ['#ffffff', '#0a4ea8', '#8a4a08'] },
     { id: 'kveld',  navn: 'Kveld',  om: 'Mørkt og varmt, uten det blå',
-      prove: ['#1e1a15', '#efa964'] }
+      prove: ['#1e1a15', '#f0a94f', '#86b87f'] },
+    { id: 'natt',   navn: 'Natt',   om: 'Mørkt og kjølig',
+      prove: ['#171a1f', '#6cb2f0', '#d9a05f'] },
+    { id: 'system', navn: 'Følg systemet', om: 'Følger lys/mørk-innstillingen på enheten',
+      prove: ['#f2efe7', '#1f62aa', '#171a1f'] }
   ];
 
   const BAKGRUNN = {
-    papir:  '#f2efe7',
-    sollys: '#ffffff',
-    natt:   '#171a1f',
-    kveld:  '#1e1a15'
+    papir: '#f2efe7',
+    dag:   '#ffffff',
+    natt:  '#171a1f',
+    kveld: '#1e1a15'
   };
+
+  /* «Sollys» het temaet før det ble hetende «Dag». Uten dette ville alle som
+     hadde valgt det, falt tilbake til systemets innstilling ved neste oppstart. */
+  const GAMLE_NAVN = { sollys: 'dag' };
 
   // Må holdes i en variabel: matchMedia() gir et nytt objekt hver gang, og en
   // lytter på et objekt ingen holder fast i kan bli ryddet bort under føttene.
   const mørkt = global.matchMedia('(prefers-color-scheme: dark)');
 
   function lagret() {
-    try { return localStorage.getItem(LAGER) || 'system'; } catch (e) { return 'system'; }
+    let id;
+    try { id = localStorage.getItem(LAGER); } catch (e) { /* privat modus */ }
+    return GAMLE_NAVN[id] || id || 'system';
   }
 
   /** «system» slås opp mot systeminnstillingen; et ekte tema er seg selv. */

@@ -112,29 +112,52 @@ var utledet fra et brett som ikke gjelder lenger.
 ## Fargeoppsett
 
 ◐-knappen oppe til høyre gir fire oppsett, pluss **Følg systemet** som veksler
-mellom Papir og Natt etter hva telefonen står på. Valget huskes.
+mellom Papir og Natt etter lys/mørk-innstillingen på enheten. Valget huskes.
 
 | Oppsett | Til hva |
 | --- | --- |
 | Papir | Varmt og dempet — standarden |
-| Sollys | Maks kontrast, for sterkt dagslys |
-| Natt | Mørkt og kjølig |
+| Dag | Maks kontrast, for sterkt dagslys |
 | Kveld | Mørkt og varmt, uten det blå |
+| Natt | Mørkt og kjølig |
 
-**Sollys** finnes fordi blyantmerkene er det første som forsvinner ute. Målt mot
-flaten de står på:
+### Tre roller, tre farger
+
+Hvert oppsett holder tre ting fra hverandre, og gir dem hver sin farge i stedet
+for hver sin valør av det samme:
+
+| | Gitte tall | Dine egne | Blyantmerker |
+| --- | --- | --- | --- |
+| Papir | nøytral blekk | blå | brent oransje |
+| Dag | svart | mørk blå | mørk oransjebrun |
+| Kveld | varm hvit | gull | grønn |
+| Natt | kjølig hvit | blå | rav |
+
+Blå og oransje ligger rett overfor hverandre på fargesirkelen, og i Papir, Dag
+og Natt er avstanden mellom skrift og blyant 176–177°. Kveld er unntaket: gullets
+komplement *er* blått, og blått er akkurat det oppsettet skal være fritt for, så
+der går det så langt som mulig uten å slippe blåtonen inn igjen — 79°.
+
+Markeringsflatene (valgt rute, naboer, like tall) er nøytrale med vilje. Var de
+blå, ville blå tall stått på blå flate.
+
+### Kontrast
+
+Målt mot flaten tallene står på:
 
 | Oppsett | Gitte tall | Skrevne tall | Blyantmerker |
 | --- | --- | --- | --- |
-| Papir | 14,1:1 | 5,2:1 | **3,1:1** |
-| Sollys | 21,0:1 | 7,9:1 | **11,7:1** |
-| Natt | 12,5:1 | 6,8:1 | 4,2:1 |
-| Kveld | 12,7:1 | 7,8:1 | 4,4:1 |
+| Papir | 14,1:1 | 6,2:1 | 5,2:1 |
+| Dag | 21,0:1 | 7,9:1 | **6,9:1** |
+| Kveld | 13,3:1 | 7,8:1 | 6,8:1 |
+| Natt | 12,9:1 | 6,7:1 | 6,6:1 |
 
-3,1:1 er under WCAG-grensa på 4,5:1 for småtekst — behagelig innendørs, borte i
-sol. Sollys tar merkene til 11,7:1, setter rutenettet i svart i stedet for
-blågrått, og bytter de myke skyggene mot én skarp strek: diffuse skygger
-forsvinner uansett i sterkt lys og etterlater bare uskarpe kanter.
+Blyantmerkene var lenge det svake punktet: den gamle blågrå lå på 3,1:1 i Papir,
+under WCAG-grensa på 4,5:1 for småtekst — behagelig innendørs, borte i sol. Alle
+oppsettene ligger nå over grensa. **Dag** går lengst, og setter i tillegg
+rutenettet i svart i stedet for blågrått og bytter de myke skyggene mot én skarp
+strek: diffuse skygger forsvinner uansett i sterkt lys og etterlater bare
+uskarpe kanter.
 
 Palettene ligger i `styles.css`, én blokk per oppsett. `js/tema.js` lastes fra
 `<head>` og setter `data-tema` på `<html>` før første maling — gjøres det fra

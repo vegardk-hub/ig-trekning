@@ -14,21 +14,25 @@
   --ramme-tykk: #3c4450;
   --blekk: #262c35;
   --blekk-svak: #7b8390;
+  /* Tre roller, tre tydelig ulike farger: gitte tall nøytralt, dine egne blå,
+     blyantmerkene fra motsatt side av fargesirkelen. Markeringsflatene er
+     nøytrale, ellers havner blå skrift på blå flate. */
   --gitt: #262c35;
-  --skrevet: #2f6fb3;
-  --merke: #8b93a1;
+  --skrevet: #1f62aa;
+  --merke: #9a5f2b;
 
-  --valgt: #cfe1f5;
-  --naboer: #eceff4;
-  --likt-tall: #dce9f7;
+  --valgt: #cfc6ae;
+  --naboer: #f0ede6;
+  --likt-tall: #e3dccb;
 
   --hint-hoved: #ffdf9e;
   --hint-enhet: #fff6e2;
   --hint-mal: #fbcfc6;
-  --hint-kant: #d98a2b;
+  --hint-kant: #b5651d;
+  --hint-merke: #1f62aa;      /* merkene teknikken gjelder — mot merkefargen */
   --feil: #c0392b;
 
-  --aksent: #2f6fb3;
+  --aksent: #1f62aa;
   --aksent-tekst: #ffffff;
   --knapp: #ffffff;
   --knapp-kant: #d6d0c4;
@@ -38,30 +42,32 @@
   --celle: calc(var(--brett) / 9);
 }
 
-/* Sollys — for skjermen du knapt ser. Blyantmerkene er den virkelige taperen
-   i sterkt lys: #8b93a1 på hvitt ligger rundt 2,9:1, altså under grensa for
-   lesbar småtekst. Her er de #33393f, i overkant av 10:1. Rutenettet er svart
-   i stedet for blågrått, og de myke skyggene er byttet mot én skarp strek —
-   diffuse skygger forsvinner i sol og etterlater bare uskarpe kanter. */
-:root[data-tema="sollys"] {
+/* Dag — for skjermen du knapt ser. Blyantmerkene var den virkelige taperen i
+   sterkt lys: den gamle blågrå lå rundt 2,9:1, under grensa for lesbar
+   småtekst. Her er de mørk oransjebrun, godt over kravet, og tydelig en annen
+   farge enn de blå tallene. Rutenettet er svart i stedet for blågrått, og de
+   myke skyggene er byttet mot én skarp strek — diffuse skygger forsvinner i sol
+   og etterlater bare uskarpe kanter. */
+:root[data-tema="dag"] {
   --bg: #ffffff;
   --flate: #ffffff;
-  --ramme: #7a8189;
+  --ramme: #6f767e;
   --ramme-tykk: #000000;
   --blekk: #000000;
-  --blekk-svak: #3f464e;
+  --blekk-svak: #3a4148;
   --gitt: #000000;
   --skrevet: #0a4ea8;
-  --merke: #33393f;
+  --merke: #8a4a08;
 
-  --valgt: #9ec8f2;
-  --naboer: #e6eaee;
-  --likt-tall: #c3ddf7;
+  --valgt: #c9c9c9;
+  --naboer: #ededed;
+  --likt-tall: #dcdcdc;
 
   --hint-hoved: #ffd166;
   --hint-enhet: #fff3d1;
   --hint-mal: #ffb4a6;
-  --hint-kant: #94480a;
+  --hint-kant: #7a3c06;
+  --hint-merke: #0a4ea8;
   --feil: #b3000f;
 
   --aksent: #0a4ea8;
@@ -79,18 +85,19 @@
   --ramme-tykk: #8a94a3;
   --blekk: #e6e9ee;
   --blekk-svak: #939ba8;
-  --gitt: #e6e9ee;
-  --skrevet: #74b3f0;
-  --merke: #7f8896;
+  --gitt: #e9edf2;
+  --skrevet: #6cb2f0;
+  --merke: #d9a05f;          /* rav mot blått — motsatt side av sirkelen */
 
-  --valgt: #2f4a68;
-  --naboer: #272d36;
-  --likt-tall: #2a3b4d;
+  --valgt: #444b53;          /* nøytral grå, ikke blå: blå skrift skal ikke stå på blått */
+  --naboer: #262a2e;
+  --likt-tall: #33383e;
 
   --hint-hoved: #6b5423;
   --hint-enhet: #37301f;
   --hint-mal: #5e2f2a;
   --hint-kant: #e0a94f;
+  --hint-merke: #9ecdf7;
   --feil: #f08a7c;
 
   --aksent: #4d90d9;
@@ -108,18 +115,22 @@
   --ramme-tykk: #9c8a72;
   --blekk: #f2e7d8;
   --blekk-svak: #a9967f;
-  --gitt: #f2e7d8;
-  --skrevet: #efa964;
-  --merke: #9a866f;
+  --gitt: #f5ece0;
+  --skrevet: #f0a94f;
+  /* Grønn: den tredje fargen. Gullets ekte komplement er blått, og blått er
+     nettopp det Kveld skal være fri for — så her går vi så langt fra gullet som
+     det er mulig å komme uten å slippe det inn igjen. */
+  --merke: #86b87f;
 
-  --valgt: #5b452c;
-  --naboer: #302921;
-  --likt-tall: #4a3826;
+  --valgt: #4a4034;          /* varm nøytral, ikke gull på gull */
+  --naboer: #2e2822;
+  --likt-tall: #3c342b;
 
   --hint-hoved: #6f5622;
   --hint-enhet: #3b3120;
   --hint-mal: #613327;
   --hint-kant: #e0a94f;
+  --hint-merke: #ffe3ac;
   --feil: #f0907e;
 
   --aksent: #d1934f;
@@ -262,7 +273,7 @@ body {
   box-shadow: inset 0 0 0 2px var(--hint-kant);
 }
 
-.merker i.hint-tall  { color: var(--hint-kant); font-weight: 700; }
+.merker i.hint-tall  { color: var(--hint-merke); font-weight: 700; }
 .merker i.hint-vekk  { color: var(--feil); text-decoration: line-through; font-weight: 700; }
 
 .celle.puls { animation: puls .5s ease; }
@@ -498,7 +509,7 @@ body {
   box-shadow: inset 0 0 0 1px var(--aksent);
 }
 
-/* Prøvelapp: flatefargen mot skriftfargen, delt på diagonalen. */
+/* Prøvelapp: flate, skrevne tall og blyantmerker — de tre fargene i temaet. */
 .prove {
   width: 30px;
   height: 30px;
