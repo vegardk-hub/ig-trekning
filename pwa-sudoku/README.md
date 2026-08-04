@@ -17,6 +17,15 @@ tomlene. Tittelen og telleren flytter opp i venstre hjørne — sto de i midten,
 ville de kostet nettopp den høyden brettet skal ha. Hint og meldinger legger seg
 over brettet, av samme grunn.
 
+Liggende er sida **frosset**: ingen skroll, ingen sprett. Brettet fyller høyden,
+så et drag har ingenting å avdekke — det ville bare skjøvet nederste rad ut av
+syne. Stående får fortsatt skrolle, for der kan en forklaringsmelding gjøre
+innholdet høyere enn skjermen, og da må den kunne nås.
+
+Brettet trekker fra det trygge området i begge retninger. `100dvh` teller hele
+skjermen, også stripa hjemindikatoren ligger i, og et brett regnet uten den blir
+høyere enn plassen det faktisk får.
+
 Tallknappene er delt etter side:
 
 | Side | Trykket gir |

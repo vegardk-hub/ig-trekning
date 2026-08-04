@@ -145,6 +145,7 @@
 html, body {
   margin: 0;
   padding: 0;
+  overscroll-behavior: none;     /* ingen sprett: sida skal ikke la seg dra */
   background: var(--bg);
   color: var(--blekk);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -563,13 +564,18 @@ body {
 
 /* ---------- Modaler ---------- */
 
+/* align-items: flex-start + margin: auto på kortet sentrerer når det er plass,
+   og lar toppen være i behold når det ikke er — sentrering alene klipper begge
+   ender av et kort som er høyere enn skjermen. */
 .modal {
   position: fixed;
   inset: 0;
   background: rgba(24, 28, 34, .5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px;
   z-index: 20;
   backdrop-filter: blur(2px);
@@ -580,6 +586,7 @@ body {
 .modal-kort {
   width: 100%;
   max-width: 380px;
+  margin: auto;
   background: var(--flate);
   border-radius: 14px;
   padding: 20px;
@@ -661,16 +668,49 @@ body {
 @media (orientation: landscape) and (max-height: 560px) {
   :root {
     --side: clamp(104px, 19vw, 180px);
-    /* Høyden bestemmer normalt. Breddeleddet er en sikring for korte, smale
-       vinduer — og for hakket i skjermen, som spiser av bredden i liggende. */
-    --brett: min(calc(100dvh - 8px), calc(100vw - 2 * var(--side) - 56px));
+    /*
+     * Høyden bestemmer normalt. Det trygge området må trekkes fra begge veier:
+     * 100dvh teller hele skjermen, også stripa hjemindikatoren ligger i, og et
+     * brett regnet uten den blir høyere enn plassen det får. Da forsvinner
+     * nederste rad ut av syne — særlig tydelig når sida også lar seg dra.
+     */
+    --trygg-loddrett: calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
+    --trygg-vannrett: calc(env(safe-area-inset-left) + env(safe-area-inset-right));
+    --brett: min(
+      calc(100dvh - 8px - var(--trygg-loddrett)),
+      calc(100vw - 2 * var(--side) - 56px - var(--trygg-vannrett))
+    );
+  }
+
+  /* Liggende er brettet så høyt som skjermen tillater, og da har et drag
+     ingenting å avdekke annet enn brettet selv. Så her fryser vi sida helt:
+     ingen skroll, ingen sprett. Stående får fortsatt skrolle — der kan en
+     melding gjøre innholdet høyere enn skjermen, og da må den kunne nås. */
+  html { overflow: hidden; }
+
+  body {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
   }
 
   .app {
     max-width: none;
+    min-height: 100%;
+    height: 100%;
     padding: 4px 6px;
     gap: 0;
   }
+
+  /* Kortere kort, så «Nytt spill» får plass uten å måtte skrolles. */
+  .modal { padding: 8px; }
+  .modal-kort { padding: 14px 16px; }
+  .modal-kort h2 { font-size: 1.05rem; }
+  .modal-under { margin-bottom: 10px; font-size: .78rem; }
+  .nivaaliste { gap: 6px; margin-bottom: 10px; }
+  .nivaaknapp { padding: 7px 10px; }
+  .nivaaknapp strong { font-size: .88rem; }
+  .nivaaknapp span { font-size: .72rem; }
 
   .topp { display: none; }
   .versjon { display: none; }
