@@ -110,13 +110,28 @@ brettet ferdig.
 
 ## Blyantmerker
 
-**Auto** er på som standard: kandidatene regnes ut og oppdateres av seg selv når
-du fyller inn tall. Kandidater du stryker via et hint, blir borte for godt.
+**Auto**-knappen går i ring gjennom tre trinn, ikke av og på:
 
-Slår du av **Auto**, tømmes brettet for merker, og du fører dem selv med
-**Blyant** + tall. Var det et feiltrykk, henter **Angre** dem tilbake. Slår du
-**Auto** på igjen, regnes kandidatene ut på nytt, og det du hadde ført selv,
-viker for dem.
+| Trinn | Knappen | Merkene |
+| --- | --- | --- |
+| 1 | ◈ Auto | regnes ut og oppdateres av seg selv |
+| 2 | ◇ Manuell | de beregnede er kopiert over — nå er de dine å redigere |
+| 3 | ○ Tomt | fjernet, du fører dem fra bunnen |
+
+Knappen viser trinnet du står i, ikke det neste, og symbolene går fra fylt til
+tomt, så rekkefølgen er til å lese uten å ha trykket seg gjennom den.
+
+Trinn 2 finnes fordi de to ytterpunktene sjelden er det man vil ha: å begynne
+helt på bar bakke er mye arbeid, og å ha alt regnet ut hindrer deg i å føre dine
+egne. Med **Manuell** starter du fra det maskinen kom fram til, og retter på det.
+
+Kandidater du stryker via et hint, blir borte for godt. Hvert trinnbytte er ett
+steg i angreloggen, så **Angre** går baklengs gjennom ringen — var trykket et
+uhell, er merkene tilbake med det samme.
+
+Starter du et nytt spill mens du står på **Manuell**, flyttes trinnet til
+**Tomt**: brettet er nytt og merkene er borte, og da ville «Manuell» sagt noe
+som ikke stemte.
 
 Setter du et tall inn i en rute, stryker appen det samme tallet fra blyantmerkene
 i hele raden, kolonnen og boksen — de tjue rutene som tallet ville kollidert med.

@@ -17,7 +17,9 @@
     losning: new Uint8Array(81),
     elim: new Int16Array(81),        // kandidater strøket via hint
     blyant: new Int16Array(81),      // manuelle blyantmerker
-    autoBlyant: true,
+    /* Blyantmerkene har tre trinn, ikke to: 'auto' regner dem ut selv,
+       'manuell' overlater de beregnede til deg, 'tom' fjerner dem. */
+    merkeModus: 'auto',
     blyantModus: false,
     fyllModus: false,                // tall først: velg tallet, trykk så rutene
     aktivtTall: 0,                   // tallet som fylles inn (0 = ingen valgt)
@@ -211,7 +213,7 @@
       c.stor.textContent = v ? v : '';
 
       const maske = v ? 0
-        : state.autoBlyant ? (kandidater[i] & ~state.elim[i])
+        : autoMerker() ? (kandidater[i] & ~state.elim[i])
         : state.blyant[i];
 
       for (let d = 1; d <= 9; d++) {
@@ -284,7 +286,7 @@
       verdier: state.verdier.slice(),
       elim: state.elim.slice(),
       blyant: state.blyant.slice(),
-      autoBlyant: state.autoBlyant,
+      merkeModus: state.merkeModus,
       valgt: state.valgt
     };
   }
@@ -293,7 +295,7 @@
     state.verdier.set(t.verdier);
     state.elim.set(t.elim);
     state.blyant.set(t.blyant);
-    state.autoBlyant = t.autoBlyant;
+    state.merkeModus = t.merkeModus;
     state.valgt = t.valgt;
   }
 
@@ -353,8 +355,8 @@
     if (i < 0 || state.gitt[i]) return false;
 
     if (blyant) {
-      if (state.autoBlyant) {
-        melding('Blyantmerkene fylles ut automatisk. Slå av «Auto» hvis du vil skrive dem selv.');
+      if (autoMerker()) {
+        melding('Merkene fylles ut automatisk. Trykk «Auto» for å overta dem selv.');
         return false;
       }
       if (state.verdier[i]) return false;
@@ -551,6 +553,7 @@
       state.blyantModus = false;
       state.aktivtTall = 0;          // fyllmodus er en preferanse og består, tallet ikke
       state.aktivtBlyant = false;
+      if (state.merkeModus === 'manuell') state.merkeModus = 'tom';   // brettet er tømt
       nullstillHistorikk();
       oppdaterVerktoy();
       lagre();
@@ -573,7 +576,7 @@
         losning: Array.from(state.losning),
         elim: Array.from(state.elim),
         blyant: Array.from(state.blyant),
-        autoBlyant: state.autoBlyant,
+        merkeModus: state.merkeModus,
         fyllModus: state.fyllModus,
         nivaa: state.nivaa,
         maksNavn: state.maksNavn
@@ -593,7 +596,10 @@
       state.losning = Uint8Array.from(d.losning);
       state.elim = Int16Array.from(d.elim || new Array(81).fill(0));
       state.blyant = Int16Array.from(d.blyant || new Array(81).fill(0));
-      state.autoBlyant = d.autoBlyant !== false;
+      // Eldre lagringer kjente bare av og på. Har de merker liggende, var de
+      // i ferd med å redigeres; ellers var de tømt.
+      state.merkeModus = d.merkeModus ||
+        (d.autoBlyant === false ? (state.blyant.some(m => m) ? 'manuell' : 'tom') : 'auto');
       state.fyllModus = d.fyllModus === true;
       state.nivaa = d.nivaa || 'middels';
       state.maksNavn = d.maksNavn || '';
@@ -603,14 +609,38 @@
 
   /* ---------- Verktøyknapper ---------- */
 
+  /*
+   * «Auto» går i ring gjennom tre trinn i stedet for å slå av og på:
+   *
+   *   auto     merkene regnes ut og oppdateres selv
+   *   manuell  de beregnede merkene er kopiert over — nå er de dine å redigere
+   *   tom      merkene er fjernet, du fører dem fra bunnen
+   *
+   * Knappen viser trinnet du står i, ikke det neste. Symbolene går fra fylt til
+   * tomt, så rekkefølgen er til å lese uten å ha trykket seg gjennom den.
+   */
+  const AUTO_STEG = {
+    auto:    { symbol: '◈', tekst: 'Auto',    neste: 'manuell' },
+    manuell: { symbol: '◇', tekst: 'Manuell', neste: 'tom' },
+    tom:     { symbol: '○', tekst: 'Tomt',    neste: 'auto' }
+  };
+
+  const autoMerker = () => state.merkeModus === 'auto';
+
   function oppdaterVerktoy() {
     const trykt = (id, paa) => verktoyKnapper(id).forEach(b => b.setAttribute('aria-pressed', String(paa)));
     const sperret = (id, av) => verktoyKnapper(id).forEach(b => { b.disabled = av; });
     trykt('blyant', state.blyantModus);
-    trykt('auto', state.autoBlyant);
     trykt('fyll', state.fyllModus);
     sperret('angre', fortid.length === 0);
     sperret('gjorom', fremtid.length === 0);
+
+    const steg = AUTO_STEG[state.merkeModus];
+    verktoyKnapper('auto').forEach(b => {
+      b.querySelector('.vsymbol').textContent = steg.symbol;
+      b.querySelector('.vtekst').textContent = steg.tekst;
+      b.setAttribute('aria-pressed', String(autoMerker()));
+    });
   }
 
   function vekslFyll() {
@@ -627,8 +657,8 @@
   function vekslBlyant() {
     state.blyantModus = !state.blyantModus;
     oppdaterVerktoy();
-    if (state.blyantModus && state.autoBlyant) {
-      melding('Blyantmerkene fylles ut automatisk. Slå av «Auto» hvis du vil skrive dem selv.');
+    if (state.blyantModus && autoMerker()) {
+      melding('Merkene fylles ut automatisk. Trykk «Auto» for å overta dem selv.');
     } else {
       skjulMelding();
     }
@@ -636,16 +666,23 @@
 
   function vekslAuto() {
     husk();               // skriver om alle blyantmerkene — må kunne angres
-    if (state.autoBlyant) {
-      // Blankt ark: den som slår av Auto vil føre merkene selv, og da er de
-      // beregnede i veien. Angre henter dem tilbake om det var et feiltrykk.
+    const neste = AUTO_STEG[state.merkeModus].neste;
+
+    if (neste === 'manuell') {
+      // Ta de beregnede med over, så du har noe å redigere i stedet for å
+      // begynne på bar bakke.
+      for (let i = 0; i < 81; i++) {
+        state.blyant[i] = state.verdier[i] ? 0 : (kandidater[i] & ~state.elim[i]);
+      }
+      melding('Merkene er dine nå. Rediger dem med «Blyant» + tall.');
+    } else if (neste === 'tom') {
       state.blyant.fill(0);
-      state.autoBlyant = false;
-      melding('Auto er av. Blyantmerkene er tømt — nå fører du dem selv med «Blyant».');
+      melding('Merkene er tømt. Før dine egne med «Blyant» + tall.');
     } else {
-      state.autoBlyant = true;
-      skjulMelding();
+      skjulMelding();     // tilbake til auto: de regnes ut på nytt av seg selv
     }
+
+    state.merkeModus = neste;
     oppdaterVerktoy();
     lagre();
     tegn();
