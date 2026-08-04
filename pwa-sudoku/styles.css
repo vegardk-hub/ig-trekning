@@ -361,6 +361,10 @@ body {
   gap: 8px;
 }
 
+/* Luft mellom talltastene og kommandoene. Uten den ligger de to radene så tett
+   at et bomtrykk på «Slett» i stedet for «1» er lett gjort. */
+.side .verktoy { margin-top: 8px; }
+
 .tall {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
@@ -368,6 +372,7 @@ body {
 }
 
 .tallknapp {
+  position: relative;
   aspect-ratio: 2 / 3;
   display: flex;
   align-items: center;
@@ -382,6 +387,24 @@ body {
   box-shadow: var(--skygge);
   transition: transform .08s ease, background-color .12s ease;
 }
+
+.siffer { line-height: 1; }
+
+/* Hvor mange av tallet som ennå ikke står på brettet. Liten og dus: den skal
+   kunne slås opp i forbifarten, ikke konkurrere med sifferet. */
+.igjen {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: .58rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--blekk-svak);
+  opacity: .7;
+}
+
+.tallknapp.aktiv .igjen { color: var(--aksent-tekst); opacity: .85; }
+.tallknapp.ferdig .igjen { display: none; }
 
 .tallknapp:active { transform: scale(.94); }
 .tallknapp.ferdig { color: var(--blekk-svak); opacity: .4; }
@@ -694,14 +717,33 @@ body {
 
   .side .verktoy {
     flex: 4 0 0;
+    margin-top: 10px;                      /* luft ned til kommandoene */
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(4, 1fr);
   }
+
+  /*
+   * Delt tastatur: venstre side fører blyant, høyre skriver tall. Da trengs
+   * ingen «Blyant»-knapp — siden du trykker på er bryteren. «Nytt» tar den
+   * ledige plassen, så rutenettet går opp.
+   */
+  .side .verktoyknapp[data-verktoy="blyant"] { display: none; }
+  .side .verktoyknapp[data-verktoy="nytt"] { grid-column: 1 / -1; }
 
   .tallknapp {
     aspect-ratio: auto;                    /* rutenettet styrer høyden nå */
     font-size: calc(var(--celle) * .46);
   }
+
+  /* Venstre tast ser ut som det den lager: blyantmerkets farge og størrelse.
+     Det er hele skiltingen av hvilken side som gjør hva. */
+  .venstre .tallknapp {
+    color: var(--merke);
+    font-size: calc(var(--celle) * .3);
+    font-weight: 600;
+  }
+
+  .venstre .igjen { display: none; }       /* telleren gjelder tall, ikke merker */
 
   .verktoyknapp { padding: 3px 2px; gap: 1px; }
   .vsymbol { font-size: .92rem; }

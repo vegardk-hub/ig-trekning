@@ -21,6 +21,7 @@
     blyantModus: false,
     fyllModus: false,                // tall først: velg tallet, trykk så rutene
     aktivtTall: 0,                   // tallet som fylles inn (0 = ingen valgt)
+    aktivtBlyant: false,             // om det aktive tallet skal bli merke eller tall
     nivaa: 'middels',
     maksNavn: '',
     valgt: -1
@@ -79,13 +80,29 @@
   const tallKnapper = d => $$('.tallknapp[data-d="' + d + '"]');
   const verktoyKnapper = id => $$('.verktoyknapp[data-verktoy="' + id + '"]');
 
+  /*
+   * Liggende er tastaturet delt etter side: venstre fører blyant, høyre skriver
+   * tall. Da er «Blyant» overflødig, og den er skjult der.
+   *
+   * Om vi er delt, spør vi DOM-en om — CSS eier den avgjørelsen, og en kopi av
+   * mediaspørningen her ville bare vært noe å holde i takt.
+   */
+  const hoyreSide = $('.side.hoyre');
+  const erDelt = () => hoyreSide.offsetWidth > 0;
+  const erBlyantside = knapp => knapp.closest('.side').classList.contains('venstre');
+
   $$('.side').forEach(side => {
     const tall = side.querySelector('.tall');
     for (let d = 1; d <= 9; d++) {
       const b = document.createElement('button');
       b.className = 'tallknapp';
-      b.textContent = d;
       b.dataset.d = d;
+      const siffer = document.createElement('span');
+      siffer.className = 'siffer';
+      siffer.textContent = d;
+      const igjen = document.createElement('span');   // hvor mange av tallet som mangler
+      igjen.className = 'igjen';
+      b.append(siffer, igjen);
       tall.appendChild(b);
     }
 
@@ -206,12 +223,16 @@
       }
     }
 
+    const delt = erDelt();
     for (let d = 1; d <= 9; d++) {
       const ferdig = antallTall[d] >= 9;
-      const aktiv = state.fyllModus && state.aktivtTall === d;
+      const valgtTall = state.fyllModus && state.aktivtTall === d;
       tallKnapper(d).forEach(b => {
+        // Er tastaturet delt, skal bare den siden det ble valgt fra, lyse.
+        const aktiv = valgtTall && (!delt || erBlyantside(b) === state.aktivtBlyant);
         b.classList.toggle('ferdig', ferdig);
         b.classList.toggle('aktiv', aktiv);
+        b.querySelector('.igjen').textContent = ferdig ? '' : String(9 - antallTall[d]);
       });
     }
 
@@ -328,10 +349,10 @@
    * Skriver tallet d i rute i. Returnerer false hvis ruta står urørt — enten
    * fordi den ikke kan endres, eller fordi blyanten er sperret av «Auto».
    */
-  function skrivTallI(i, d) {
+  function skrivTallI(i, d, blyant) {
     if (i < 0 || state.gitt[i]) return false;
 
-    if (state.blyantModus) {
+    if (blyant) {
       if (state.autoBlyant) {
         melding('Blyantmerkene fylles ut automatisk. Slå av «Auto» hvis du vil skrive dem selv.');
         return false;
@@ -362,15 +383,24 @@
   }
 
   /** Rute først: tallet havner i ruta som allerede er valgt. */
-  function skrivTall(d) {
+  function skrivTall(d, blyant) {
     if (state.valgt < 0) { melding('Velg en rute på brettet først.'); return; }
     skjulMelding();
-    skrivTallI(state.valgt, d);
+    skrivTallI(state.valgt, d, blyant);
   }
 
-  /** Tall først: peker ut tallet som skal fylles inn. Samme tall igjen slår det av. */
-  function velgAktivtTall(d) {
-    state.aktivtTall = state.aktivtTall === d ? 0 : d;
+  /**
+   * Tall først: peker ut tallet som skal fylles inn, og om det skal bli et tall
+   * eller et merke. Samme tall fra samme side igjen legger det fra seg; fra den
+   * andre siden bytter det bare hva trykket skal gi.
+   */
+  function velgAktivtTall(d, blyant) {
+    if (state.aktivtTall === d && state.aktivtBlyant === blyant) {
+      state.aktivtTall = 0;
+    } else {
+      state.aktivtTall = d;
+      state.aktivtBlyant = blyant;
+    }
     skjulMelding();
     tegn();
   }
@@ -520,6 +550,7 @@
       state.valgt = -1;
       state.blyantModus = false;
       state.aktivtTall = 0;          // fyllmodus er en preferanse og består, tallet ikke
+      state.aktivtBlyant = false;
       nullstillHistorikk();
       oppdaterVerktoy();
       lagre();
@@ -585,6 +616,7 @@
   function vekslFyll() {
     state.fyllModus = !state.fyllModus;
     state.aktivtTall = 0;
+    state.aktivtBlyant = false;
     oppdaterVerktoy();
     lagre();
     if (state.fyllModus) melding('Fyll: velg et tall, og trykk så på rutene der det skal stå.');
@@ -631,7 +663,7 @@
       // skrevet noe (gitt rute, eller blyanten sperret av «Auto»).
       state.valgt = i;
       skjulMelding();
-      if (!skrivTallI(i, state.aktivtTall)) tegn();
+      if (!skrivTallI(i, state.aktivtTall, state.aktivtBlyant)) tegn();
       return;
     }
     velg(i);
@@ -653,8 +685,10 @@
     const tall = e.target.closest('.tallknapp');
     if (tall) {
       const d = Number(tall.dataset.d);
-      if (state.fyllModus) velgAktivtTall(d);
-      else skrivTall(d);
+      // Delt tastatur: siden knappen står på avgjør. Ellers gjelder «Blyant».
+      const blyant = erDelt() ? erBlyantside(tall) : state.blyantModus;
+      if (state.fyllModus) velgAktivtTall(d, blyant);
+      else skrivTall(d, blyant);
       return;
     }
     const v = e.target.closest('.verktoyknapp');
@@ -706,8 +740,9 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (k >= '1' && k <= '9') {
-      if (state.fyllModus) velgAktivtTall(Number(k));
-      else skrivTall(Number(k));
+      // Tastaturet har ingen side å stå på, så «Blyant» gjelder som før.
+      if (state.fyllModus) velgAktivtTall(Number(k), state.blyantModus);
+      else skrivTall(Number(k), state.blyantModus);
       e.preventDefault();
       return;
     }
@@ -717,7 +752,7 @@
       if (e.target instanceof Element && e.target.closest('button')) return;
       if (state.fyllModus && state.aktivtTall && state.valgt >= 0) {
         skjulMelding();
-        skrivTallI(state.valgt, state.aktivtTall);
+        skrivTallI(state.valgt, state.aktivtTall, state.aktivtBlyant);
         e.preventDefault();
       }
       return;

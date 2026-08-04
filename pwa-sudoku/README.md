@@ -12,15 +12,29 @@ legg mappa på en webserver og installer den på hjemskjermen.
 Stående ligger tastaturet under brettet, med tittelen over.
 
 Legger du telefonen ned, deler layouten seg: brettet tar hele høyden, og
-tastaturet står i **to like sett, ett på hver side**, så alt kan nås uten å
-flytte tomlene. Tittelen og telleren flytter opp i venstre hjørne — sto de i
-midten, ville de kostet nettopp den høyden brettet skal ha. Hint og meldinger
-legger seg over brettet, av samme grunn.
+tastaturet står i **ett sett på hver side**, så alt kan nås uten å flytte
+tomlene. Tittelen og telleren flytter opp i venstre hjørne — sto de i midten,
+ville de kostet nettopp den høyden brettet skal ha. Hint og meldinger legger seg
+over brettet, av samme grunn.
 
-Begge settene styrer den samme tilstanden: slår du på **Fyll** til høyre, lyser
-knappen på begge sider. Derfor bygges knappene fra `VERKTOY`-lista i `app.js` og
-ikke fra markupen — to sett i HTML ville betydd doble id-er — og trykk fanges
-med delegering på spilleflata.
+Tallknappene er delt etter side:
+
+| Side | Trykket gir |
+| --- | --- |
+| Høyre | tallet, stort i ruta |
+| Venstre | et blyantmerke |
+
+Derfor finnes ingen **Blyant**-knapp liggende — siden du trykker på *er*
+bryteren. Venstre tast er skiltet med det den lager: blyantmerkets farge og
+størrelse. **Fyll** husker hvilken side tallet ble valgt fra, så et armet tall
+fra venstre blir merker og fra høyre blir tall.
+
+Verktøyene er like på begge sider og styrer samme tilstand: slår du på **Fyll**
+til høyre, lyser knappen til venstre også. Derfor bygges knappene fra
+`VERKTOY`-lista i `app.js` og ikke fra markupen — to sett i HTML ville betydd
+doble id-er — og trykk fanges med delegering på spilleflata. Hvilken side en
+knapp står på leser koden av DOM-en, ikke av en kopi av mediaspørringen: CSS
+eier avgjørelsen om når tastaturet er delt.
 
 ## Slik spiller du
 
@@ -38,6 +52,10 @@ med delegering på spilleflata.
 | Lukk hint/dialog | ✕, eller trykk utenfor | `Esc` |
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
+
+Hver tallknapp bærer et lite tall oppe i hjørnet: hvor mange av det sifferet som
+ennå ikke står på brettet. Er alle ni satt, forsvinner telleren og knappen
+tones ned.
 
 ## Når to tall ikke kan stå sammen
 
