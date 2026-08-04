@@ -848,7 +848,24 @@
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     // updateViaCache: 'none' — selve sw.js skal aldri hentes fra HTTP-cachen,
     // ellers kan en ny versjon bli stående og vente på at den gamle utløper.
-    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(reg => {
+        /*
+         * Den nye service worker-en installerer seg et sekund eller to etter at
+         * sida er lastet. Leses merket bare ved oppstart, viser det forrige
+         * versjon ut hele besøket — og da lyver det nettopp når man står og
+         * lurer på om oppdateringen kom fram. Derfor leses det om igjen når en
+         * ny tar over.
+         */
+        reg.addEventListener('updatefound', () => {
+          const ny = reg.installing;
+          if (ny) ny.addEventListener('statechange', () => {
+            if (ny.state === 'activated') visVersjon();
+          });
+        });
+      })
+      .catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', visVersjon);
     navigator.serviceWorker.ready.then(visVersjon).catch(() => {});
   }
   visVersjon();
