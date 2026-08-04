@@ -205,15 +205,15 @@
         : state.blyant[i];
 
       // Tallet finnes to steder: satt inn i ruta, eller ført som blyantmerke.
-      // Begge lyser opp, men ikke likt — et satt tall og en kandidat er ikke
-      // det samme, og fargen skal ikke få dem til å se ut som det.
+      // Begge får samme flate — det er tallet som skal være lett å finne, og to
+      // styrker gjorde bare den svakeste av dem vanskelig å se. Hvilket av
+      // slagene det er, leser du av innholdet: stort tall eller uthevet merke.
       const merketHer = likTall && (maske & (1 << likTall));
 
       let cls = 'celle';
       if (v) cls += state.gitt[i] ? ' gitt' : ' skrevet';
       if (konflikt[i]) cls += ' konflikt';
-      if (likTall && v === likTall && i !== sel) cls += ' likt';
-      else if (merketHer) cls += ' likt-merke';
+      if (likTall && (v === likTall && i !== sel || merketHer)) cls += ' likt';
       if (i === sel) cls += ' valgt';
       if (hEnhet.has(i)) cls += ' hint-enhet';
       if (hMal.has(i)) cls += ' hint-mal';

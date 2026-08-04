@@ -69,9 +69,10 @@ i spill: rutene der det **står**, og rutene der det er **ført som blyantmerke*
 I de siste blir selve merket uthevet, så du ser hvilken av kandidatene det
 gjelder, ikke bare hvilken rute.
 
-De to markeringene ser ikke like ut, og skal ikke gjøre det — et satt tall og en
-kandidat er ikke det samme. Flata er sterkest på ruta du står i, mellomsterk der
-tallet står, og lettest der det bare er en mulighet. I fyllmodus gjelder det
+Begge slag får **samme flate**. To styrker var forsøkt først, og gjorde bare den
+svakeste av dem vanskelig å se — det er tallet som skal være lett å finne.
+Hvilket av slagene en rute er, leser du av innholdet: stort tall eller uthevet
+merke. Ruta du står i er ett hakk sterkere enn resten. I fyllmodus gjelder det
 samme for tallet du har armet.
 
 Hver tallknapp bærer et lite tall oppe i hjørnet: hvor mange av det sifferet som
@@ -192,8 +193,26 @@ og Natt er avstanden mellom skrift og blyant 176–177°. Kveld er unntaket: gul
 komplement *er* blått, og blått er akkurat det oppsettet skal være fritt for, så
 der går det så langt som mulig uten å slippe blåtonen inn igjen — 79°.
 
-Markeringsflatene (valgt rute, like tall, like blyantmerker) er nøytrale med
-vilje. Var de blå, ville blå tall stått på blå flate.
+### Markeringsflata
+
+Flata må være sterk nok til å se, og svak nok til at tallene som står oppå den
+fortsatt er lesbare. Det er de to kravene som setter styrken, og begge er målt:
+
+| Oppsett | Flata mot brettet | Valgt mot flata | Gitte | Skrevne | Blyant |
+| --- | --- | --- | --- | --- | --- |
+| Papir | 1,41:1 | 1,41:1 | 10,0 | 5,3 | 4,7 |
+| Dag | 1,43:1 | 1,29:1 | 14,7 | 5,5 | 4,8 |
+| Kveld | 1,52:1 | 1,53:1 | 8,7 | 5,1 | 4,5 |
+| Natt | 1,59:1 | 1,53:1 | 8,1 | 5,2 | 4,2 |
+
+De tre siste kolonnene er tallenes kontrast **mot flata**, ikke mot brettet.
+Papir måtte ha mørkere blyantfarge og mørkere blå for å tåle en flate på 1,41:1
+— uten det falt de skrevne tallene under 4,5:1 så snart flata ble sterk nok til
+å se.
+
+Flatene er nøytrale med vilje. Var de blå, ville blå tall stått på blå flate; i
+Kveld er de holdt på 17 % metning, ellers ville gullet i skriften stått på en
+gullfarget flate.
 
 Brettet markerer ikke raden, kolonnen og boksen rundt ruta du står i. Det gjorde
 det før, men tre tonede felt som legger seg i kryss over brettet er mye flate i
