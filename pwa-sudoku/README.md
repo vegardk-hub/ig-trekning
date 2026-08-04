@@ -53,6 +53,18 @@ eier avgjørelsen om når tastaturet er delt.
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
 
+## Hvor tallet ellers finnes
+
+Trykker du på en rute med et tall i, lyser brettet opp begge stedene tallet er
+i spill: rutene der det **står**, og rutene der det er **ført som blyantmerke**.
+I de siste blir selve merket uthevet, så du ser hvilken av kandidatene det
+gjelder, ikke bare hvilken rute.
+
+De to markeringene ser ikke like ut, og skal ikke gjøre det — et satt tall og en
+kandidat er ikke det samme. Flata er sterkest på ruta du står i, mellomsterk der
+tallet står, og lettest der det bare er en mulighet. I fyllmodus gjelder det
+samme for tallet du har armet.
+
 Hver tallknapp bærer et lite tall oppe i hjørnet: hvor mange av det sifferet som
 ennå ikke står på brettet. Er alle ni satt, forsvinner telleren og knappen
 tones ned.
@@ -171,8 +183,8 @@ og Natt er avstanden mellom skrift og blyant 176–177°. Kveld er unntaket: gul
 komplement *er* blått, og blått er akkurat det oppsettet skal være fritt for, så
 der går det så langt som mulig uten å slippe blåtonen inn igjen — 79°.
 
-Markeringsflatene (valgt rute, like tall) er nøytrale med vilje. Var de blå,
-ville blå tall stått på blå flate.
+Markeringsflatene (valgt rute, like tall, like blyantmerker) er nøytrale med
+vilje. Var de blå, ville blå tall stått på blå flate.
 
 Brettet markerer ikke raden, kolonnen og boksen rundt ruta du står i. Det gjorde
 det før, men tre tonede felt som legger seg i kryss over brettet er mye flate i

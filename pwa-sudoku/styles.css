@@ -23,6 +23,7 @@
 
   --valgt: #cfc6ae;
   --likt-tall: #e3dccb;
+  --likt-merke: #f3efe4;
 
   --hint-hoved: #ffdf9e;
   --hint-enhet: #fff6e2;
@@ -60,6 +61,7 @@
 
   --valgt: #c9c9c9;
   --likt-tall: #dcdcdc;
+  --likt-merke: #f0f0f0;
 
   --hint-hoved: #ffd166;
   --hint-enhet: #fff3d1;
@@ -89,6 +91,7 @@
 
   --valgt: #444b53;          /* nøytral grå, ikke blå: blå skrift skal ikke stå på blått */
   --likt-tall: #33383e;
+  --likt-merke: #262b31;
 
   --hint-hoved: #6b5423;
   --hint-enhet: #37301f;
@@ -121,6 +124,7 @@
 
   --valgt: #4a4034;          /* varm nøytral, ikke gull på gull */
   --likt-tall: #3c342b;
+  --likt-merke: #2d2721;
 
   --hint-hoved: #6f5622;
   --hint-enhet: #3b3120;
@@ -258,7 +262,8 @@ body {
 .merker i.paa { visibility: visible; }
 
 /* Markering */
-.celle.likt   { background: var(--likt-tall); }
+.celle.likt       { background: var(--likt-tall); }
+.celle.likt-merke { background: var(--likt-merke); }
 .celle.valgt  { background: var(--valgt); }
 
 .celle.hint-enhet { background: var(--hint-enhet); }
@@ -267,6 +272,10 @@ body {
   background: var(--hint-hoved);
   box-shadow: inset 0 0 0 2px var(--hint-kant);
 }
+
+/* Merket med samme tall som ruta du står i. Feit, ikke farget: det er fortsatt
+   en kandidat, og skal ikke låne fargen til noe som står fast. */
+.merker i.uthevet    { font-weight: 700; }
 
 .merker i.hint-tall  { color: var(--hint-merke); font-weight: 700; }
 .merker i.hint-vekk  { color: var(--feil); text-decoration: line-through; font-weight: 700; }

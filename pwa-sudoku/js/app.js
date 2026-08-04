@@ -200,10 +200,20 @@
       const v = state.verdier[i];
       if (v) antallTall[v]++;
 
+      const maske = v ? 0
+        : autoMerker() ? (kandidater[i] & ~state.elim[i])
+        : state.blyant[i];
+
+      // Tallet finnes to steder: satt inn i ruta, eller ført som blyantmerke.
+      // Begge lyser opp, men ikke likt — et satt tall og en kandidat er ikke
+      // det samme, og fargen skal ikke få dem til å se ut som det.
+      const merketHer = likTall && (maske & (1 << likTall));
+
       let cls = 'celle';
       if (v) cls += state.gitt[i] ? ' gitt' : ' skrevet';
       if (konflikt[i]) cls += ' konflikt';
       if (likTall && v === likTall && i !== sel) cls += ' likt';
+      else if (merketHer) cls += ' likt-merke';
       if (i === sel) cls += ' valgt';
       if (hEnhet.has(i)) cls += ' hint-enhet';
       if (hMal.has(i)) cls += ' hint-mal';
@@ -212,15 +222,12 @@
 
       c.stor.textContent = v ? v : '';
 
-      const maske = v ? 0
-        : autoMerker() ? (kandidater[i] & ~state.elim[i])
-        : state.blyant[i];
-
       for (let d = 1; d <= 9; d++) {
         const m = c.marks[d - 1];
         if (!(maske & (1 << d))) { m.className = ''; continue; }
         if (vis && (vekk[i] & (1 << d))) m.className = 'paa hint-vekk';
         else if (vis && hHoved.has(i) && hTall.has(d)) m.className = 'paa hint-tall';
+        else if (d === likTall) m.className = 'paa uthevet';   // selve merket, ikke bare ruta
         else m.className = 'paa';
       }
     }
