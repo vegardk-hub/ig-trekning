@@ -33,8 +33,23 @@ står fast i bunnen, så **Bruk** aldri havner utenfor.
 
 Liggende er sida **frosset**: ingen skroll, ingen sprett. Brettet fyller høyden,
 så et drag har ingenting å avdekke — det ville bare skjøvet nederste rad ut av
-syne. Stående får fortsatt skrolle, for der kan en forklaringsmelding gjøre
-innholdet høyere enn skjermen, og da må den kunne nås.
+syne.
+
+Stående er den også frosset, men bare når det faktisk ikke er noe under kanten.
+Er et hint eller en melding framme, slipper låsen: under brettet er det plass
+til tastaturet og lite annet, og hintboksen alene er 143 px, så en lås som
+gjaldt uansett ville klippet **Bruk** vekk i stedet for å la den skrolles fram.
+Betingelsen står i CSS med `:has(#hint[hidden]):has(#melding[hidden])`, så
+`app.js` slipper å huske å sette en klasse på fire steder.
+
+Det som *var* mulig å dra i stående, var ikke sprett men en ekte overflyt.
+`body` polstres med det trygge området, og med `border-box` er `body` 100 dvh
+høy — innholdsboksen er da 100 dvh minus hakket og hjemindikatoren. En `.app`
+på fulle `100dvh` stakk nøyaktig de innsettingene utenfor. Målt på en telefon
+med 59 px hakk og 34 px hjemindikator ble det 93 px skroll på et brett der
+ingenting lå under kanten. Innsettingene ligger nå i `--trygg-topp` og
+`--trygg-bunn`, brukt både i polstringa og i høyden, så de to ikke kan komme i
+utakt — og en test kan sette dem, siden `env()` ikke lar seg emulere.
 
 Brettet trekker fra det trygge området i begge retninger. `100dvh` teller hele
 skjermen, også stripa hjemindikatoren ligger i, og et brett regnet uten den blir
