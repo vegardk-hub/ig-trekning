@@ -19,8 +19,6 @@
 
 <div class="app">
 
-  <button id="btn-tema" class="temaknapp" aria-label="Fargeoppsett">◐</button>
-
   <header class="topp">
     <h1>Sudoku</h1>
     <div class="meta">
@@ -38,10 +36,13 @@
          brettet slik de alltid har gjort; liggende tar de plassen der
          verktøyknappene ellers ville stått, i stedet for å legge seg over
          brettet og skjule nettopp rutene hintet peker på. -->
+    <!-- ◐ bor her, ikke i toppen av .app: liggende skal den stå i flyten ved
+         siden av appnavnet, der den er lett å treffe uansett hvor bred spalta
+         blir. Stående er den absolutt plassert og havner i hjørnet som før. -->
     <div class="side venstre">
       <div class="sidetopp">
         <span class="sidetittel">Sudoku</span>
-        <span id="side-meta"></span>
+        <button id="btn-tema" class="temaknapp" aria-label="Fargeoppsett">◐</button>
       </div>
 
       <div class="forklaring">
@@ -66,11 +67,16 @@
 
     <div id="brett" class="brett" role="grid" aria-label="Sudokurutenett"></div>
 
-    <!-- Tom topp: holder av plassen ◐-knappen legger seg i, så begge sidene
-         får samme høyde og knappene står rett overfor hverandre. -->
-    <div class="side hoyre" aria-hidden="true">
-      <div class="sidetopp"></div>
-      <div class="tall"></div>
+    <!-- Nivå og teller står her liggende, over de store tallene: det gir
+         appnavnet hele venstre spalte. aria-hidden ligger på talltastene
+         alene — de er en kopi av settet til venstre, mens telleren og
+         verktøyene her er de eneste synlige liggende. -->
+    <div class="side hoyre">
+      <div class="sidetopp">
+        <span id="side-nivaa" class="side-nivaa"></span>
+        <span id="side-igjen" class="side-igjen"></span>
+      </div>
+      <div class="tall" aria-hidden="true"></div>
       <div class="verktoy"></div>
     </div>
 

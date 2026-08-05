@@ -181,7 +181,7 @@ body {
 
 .topp h1 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -190,7 +190,7 @@ body {
 
 .meta {
   margin-top: 2px;
-  font-size: .82rem;
+  font-size: .92rem;
   color: var(--blekk-svak);
 }
 
@@ -308,11 +308,11 @@ body {
   gap: 8px;
 }
 
-.hint-navn { font-weight: 700; font-size: .95rem; }
+.hint-navn { font-weight: 700; font-size: 1.02rem; }
 
 .hint-tekst {
   margin: 6px 0 10px;
-  font-size: .88rem;
+  font-size: .95rem;
   line-height: 1.45;
   color: var(--blekk);
 }
@@ -324,9 +324,9 @@ body {
   border: none;
   background: none;
   color: var(--blekk-svak);
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   line-height: 1;
-  padding: 0 4px;
+  padding: 2px 6px;
   cursor: pointer;
 }
 
@@ -336,7 +336,7 @@ body {
   border: 1px solid var(--knapp-kant);
   border-radius: 8px;
   padding: 10px 12px;
-  font-size: .86rem;
+  font-size: .94rem;
   line-height: 1.45;
   color: var(--blekk);
   box-shadow: var(--skygge);
@@ -351,8 +351,10 @@ body {
    blir flex-barn av .side rett under brettet, som før — og en skjult melding
    etterlater ingen tom glipe. Liggende blir den en ekte boks med egen plass. */
 .forklaring { display: contents; }
+/* Ikke position: relative. Den sto her for at hintet skulle kunne legge seg
+   over brettet, og det gjør det ikke lenger. Nå ville den i stedet fanget
+   ◐-knappen, som bor inne i sidepanelet men skal plasseres mot .app. */
 .spilleflate {
-  position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -362,7 +364,11 @@ body {
 
 .brett    { order: 1; }
 .venstre  { order: 2; }
-.sidetopp { display: none; }
+/* contents, ikke none: ◐-knappen står inne i .sidetopp, og med none ville den
+   forsvunnet stående. Tekstene skjules hver for seg, og knappen ligger utenfor
+   flyten — så toppen tar fortsatt ingen plass her. */
+.sidetopp { display: contents; }
+.sidetittel, .side-nivaa, .side-igjen { display: none; }
 /* .side setter display: flex — derfor .side.hoyre her, ellers avgjør
    rekkefølgen i fila hvem som vinner. */
 .side.hoyre { display: none; }
@@ -390,7 +396,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(var(--celle) * .5);
+  font-size: calc(var(--celle) * .54);
   font-weight: 500;
   color: var(--skrevet);
   background: var(--knapp);
@@ -409,7 +415,7 @@ body {
   position: absolute;
   top: 3px;
   right: 5px;
-  font-size: .58rem;
+  font-size: .64rem;
   font-weight: 500;
   line-height: 1;
   color: var(--blekk-svak);
@@ -441,7 +447,7 @@ body {
 
 .knapp {
   font: inherit;
-  font-size: .85rem;
+  font-size: .92rem;
   color: var(--blekk);
   background: var(--knapp);
   border: 1px solid var(--knapp-kant);
@@ -474,9 +480,9 @@ body {
   padding: 7px 1px;
 }
 
-.vsymbol { font-size: 1.05rem; line-height: 1; }
+.vsymbol { font-size: 1.1rem; line-height: 1; }
 .vtekst {
-  font-size: .7rem;
+  font-size: .76rem;
   color: var(--blekk-svak);
   white-space: nowrap;
 }
@@ -555,16 +561,19 @@ body {
 }
 
 .tematekst { display: flex; flex-direction: column; gap: 2px; }
-.tematekst strong { font-size: .95rem; }
-.tematekst span { font-size: .76rem; color: var(--blekk-svak); }
+.tematekst strong { font-size: 1.02rem; }
+.tematekst span { font-size: .84rem; color: var(--blekk-svak); }
 
 /* Hvilken kode kjører her? Skal være til å slå opp, ikke til å se på. Ligger
    utenfor flyten med vilje: i flyten stjal den de siste pikslene på en 320 px
    skjerm, og da måtte hele brettet krympe for en opplysning man leser sjelden. */
 .versjon {
   position: absolute;
+  /* <p> har 1em margin fra nettleseren, og på en absolutt plassert boks løfter
+     margin-bottom teksten opp i verktøylinja på de laveste skjermene. */
+  margin: 0;
   bottom: 3px;
-  font-size: .66rem;
+  font-size: .72rem;
   letter-spacing: .06em;
   color: var(--blekk-svak);
   opacity: .5;
@@ -610,11 +619,11 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
-.modal-kort h2 { margin: 0 0 4px; font-size: 1.15rem; }
+.modal-kort h2 { margin: 0 0 4px; font-size: 1.25rem; }
 
 .modal-under {
   margin: 0 0 14px;
-  font-size: .84rem;
+  font-size: .92rem;
   line-height: 1.45;
   color: var(--blekk-svak);
 }
@@ -641,8 +650,8 @@ body {
 }
 
 .nivaaknapp:hover { border-color: var(--aksent); }
-.nivaaknapp strong { font-size: .95rem; }
-.nivaaknapp span { font-size: .76rem; color: var(--blekk-svak); }
+.nivaaknapp strong { font-size: 1.02rem; }
+.nivaaknapp span { font-size: .84rem; color: var(--blekk-svak); }
 
 .spinner {
   width: 34px;
@@ -723,12 +732,12 @@ body {
   /* Kortere kort, så «Nytt spill» får plass uten å måtte skrolles. */
   .modal { padding: 8px; }
   .modal-kort { padding: 14px 16px; }
-  .modal-kort h2 { font-size: 1.05rem; }
-  .modal-under { margin-bottom: 10px; font-size: .78rem; }
+  .modal-kort h2 { font-size: 1.12rem; }
+  .modal-under { margin-bottom: 10px; font-size: .84rem; }
   .nivaaliste { gap: 6px; margin-bottom: 10px; }
   .nivaaknapp { padding: 7px 10px; }
-  .nivaaknapp strong { font-size: .88rem; }
-  .nivaaknapp span { font-size: .72rem; }
+  .nivaaknapp strong { font-size: .95rem; }
+  .nivaaknapp span { font-size: .78rem; }
 
   .topp { display: none; }
   .versjon { display: none; }
@@ -752,25 +761,50 @@ body {
     gap: 6px;
   }
 
+  /*
+   * Fast høyde, ikke min-height: venstre topp er én linje med appnavnet,
+   * høyre er to linjer med nivå og teller. Uten en felles høyde ville
+   * tastaturene under dem stått i hver sin høyde.
+   */
   .sidetopp {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 28px;
-    line-height: 1.2;
+    height: 32px;
+    flex: none;
+    line-height: 1.15;
     overflow: hidden;
   }
 
+  /* Appnavnet til venstre, ◐ ytterst mot brettet — der er den lett å treffe,
+     langt fra de avrundede skjermhjørnene. */
+  .venstre .sidetopp { align-items: center; justify-content: space-between; gap: 6px; }
+
+  /* Så stort som spalta tåler: navnet skalerer med sidepanelet i stedet for å
+     stå med en fast, liten størrelse som forsvinner på en armlengdes avstand. */
+  /* Stående er de tre skjult hver for seg — her tas de fram igjen. */
+  .sidetittel, .side-nivaa, .side-igjen { display: block; }
+
   .sidetittel {
-    font-size: .6rem;
+    font-size: min(1.35rem, calc(var(--side) * .125));
     font-weight: 700;
-    letter-spacing: .14em;
+    letter-spacing: .1em;
     text-transform: uppercase;
     color: var(--blekk);
+    white-space: nowrap;
   }
 
-  #side-meta {
-    font-size: .64rem;
+  /* Nivå og teller over de store tallene. To linjer: «Vanskelig · 45 igjen»
+     på én måtte settes for smått til å leses i en så smal spalte. */
+  .hoyre .sidetopp { flex-direction: column; justify-content: center; align-items: center; }
+
+  .side-nivaa {
+    font-size: .84rem;
+    font-weight: 600;
+    color: var(--blekk);
+    white-space: nowrap;
+  }
+
+  .side-igjen {
+    font-size: .76rem;
     color: var(--blekk-svak);
     white-space: nowrap;
   }
@@ -813,14 +847,15 @@ body {
   .venstre .igjen { display: none; }       /* telleren gjelder tall, ikke merker */
 
   .verktoyknapp { padding: 3px 2px; gap: 1px; }
-  .vsymbol { font-size: .92rem; }
-  .vtekst { font-size: .56rem; }
+  .vsymbol { font-size: .98rem; }
+  .vtekst { font-size: .62rem; }
 
-  /* Midt over høyre sidepanel i stedet for inn i hjørnet: telefoner har
-     avrundede hjørner, og 6 px fra kanten er innenfor kurven på mange av dem. */
+  /* I flyten, ikke i hjørnet. Absolutt plassering måtte gjette hvor spalta
+     begynner — og gjettet bommer, siden brettet ofte er høydebegrenset og
+     hele raden da står midtstilt med luft på sidene. */
   .temaknapp {
-    top: 4px;
-    right: calc(6px + (var(--side) - 30px) / 2);
+    position: static;
+    flex: none;
     width: 30px;
     height: 30px;
     font-size: .95rem;
@@ -880,11 +915,11 @@ body {
   }
 
   .melding { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
-  .hint-navn { font-size: .82rem; }
-  .hint-tekst { margin: 5px 0 8px; font-size: .72rem; line-height: 1.4; }
+  .hint-navn { font-size: .9rem; }
+  .hint-tekst { margin: 5px 0 8px; font-size: .8rem; line-height: 1.4; }
   .hint-knapper { flex-direction: column; gap: 5px; }
-  .hint-knapper .knapp { padding: 6px 8px; font-size: .76rem; }
-  .melding { padding: 8px 9px; font-size: .74rem; line-height: 1.4; }
+  .hint-knapper .knapp { padding: 6px 8px; font-size: .82rem; }
+  .melding { padding: 8px 9px; font-size: .82rem; line-height: 1.4; }
 }
 
 /* Fra nettbrettbredde og opp er det plass til alle åtte på én rad. Teksten
@@ -894,5 +929,5 @@ body {
   /* «Nytt spill» er den lengste etiketten, og med åtte knapper på rad er
      kolonnen ~50 px. Systemfonten varierer mellom plattformer, så her er det
      satt med slakk i stedet for akkurat nok. */
-  .vtekst { font-size: min(.62rem, calc(var(--brett) * .024)); }
+  .vtekst { font-size: min(.68rem, calc(var(--brett) * .026)); }
 }

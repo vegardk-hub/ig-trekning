@@ -13,8 +13,17 @@ Stående ligger tastaturet under brettet, med tittelen over.
 
 Legger du telefonen ned, deler layouten seg: brettet tar hele høyden, og
 talltastene står på **hver sin side**, så alt kan nås uten å flytte tomlene.
-Tittelen og telleren flytter opp i venstre hjørne — sto de i midten, ville de
-kostet nettopp den høyden brettet skal ha.
+Tittelen og telleren flytter opp i hjørnene — sto de i midten, ville de kostet
+nettopp den høyden brettet skal ha. Appnavnet får hele venstre spalte og
+skalerer med bredden på den, i stedet for å stå i en fast, liten størrelse.
+Nivået og telleren står til høyre, over de store tallene, på to linjer:
+«Vanskelig · 45 igjen» på én måtte settes for smått til å leses i en så smal
+spalte. De to toppene har samme faste høyde, ellers ville tastaturene under dem
+stått i hver sin høyde.
+
+◐-knappen står i flyten ved siden av appnavnet liggende, ikke absolutt plassert
+i hjørnet. Absolutt plassering måtte gjette hvor spalta begynner, og gjettet
+bommer: er brettet høydebegrenset, står hele raden midtstilt med luft på sidene.
 
 Verktøyknappene finnes bare til **høyre** liggende. Ett sett er nok, og plassen
 under venstre talltast går til **hint og meldinger** i stedet. Før lå de midt
@@ -35,6 +44,20 @@ Loddrett brukes den **største** av innsettingene på begge sider. Hjemindikator
 gir en stripe nederst og som regel ingenting øverst, så et brett som bare tar
 hensyn til hver side for seg havner tett i toppen og fritt i bunnen. Brettet blir
 et hakk mindre av å balansere det, men står midt i skjermen.
+
+### Skriftstørrelser
+
+Appen skal kunne leses på en armlengdes avstand av noen som ikke har unge øyne.
+Etikettene under verktøysymbolene, tellerne på tallknappene, hintteksten,
+meldingene og teksten i dialogene er derfor satt opp et hakk fra der de lå — de
+hadde krympet et par ganger for å gi plass til noe annet, og var blitt vanskelige
+å lese.
+
+Grensa for hvor stort det kan bli, er **etikettene**: åtte verktøyknapper på rad
+gir smale kolonner, og «Nytt spill» og «Gjør om» er de lengste ordene. `.vtekst`
+er derfor det eneste tallet som ikke er fast — fra nettbrettbredde og opp følger
+den brettbredden. Testene måler `scrollWidth` mot knappebredden på ni skjermer og
+sier fra når et ord sprekker.
 
 Tallknappene er delt etter side:
 
@@ -67,7 +90,7 @@ eier avgjørelsen om når tastaturet er delt.
 | Angre | **Angre** | `Ctrl`/`Cmd` + `Z` |
 | Gjør om | **Gjør om** | `Ctrl`/`Cmd` + `Shift` + `Z`, eller `Ctrl` + `Y` |
 | Hint | **Hint** | `H` |
-| Fargeoppsett | ◐ oppe til høyre | – |
+| Fargeoppsett | ◐ oppe til høyre (stående) / ved appnavnet (liggende) | – |
 | Lukk hint/dialog | ✕, eller trykk utenfor | `Esc` |
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
@@ -176,7 +199,7 @@ var utledet fra et brett som ikke gjelder lenger.
 
 ## Fargeoppsett
 
-◐-knappen oppe til høyre gir fire oppsett, pluss **Følg systemet** som veksler
+◐-knappen gir fire oppsett, pluss **Følg systemet** som veksler
 mellom Papir og Natt etter lys/mørk-innstillingen på enheten. Valget huskes.
 
 | Oppsett | Til hva |

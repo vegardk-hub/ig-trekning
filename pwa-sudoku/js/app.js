@@ -252,7 +252,10 @@
     const rest = igjen === 0 ? 'Fullt' : igjen + ' igjen';
     $('#meta-nivaa').textContent = navn;
     $('#meta-igjen').textContent = rest;
-    $('#side-meta').textContent = navn + ' · ' + rest;   // toppen av venstre side, liggende
+    // Liggende: to linjer over høyre talltastatur. Delt i to fordi spalta er
+    // smal — «Vanskelig · 45 igjen» på én linje måtte settes for smått.
+    $('#side-nivaa').textContent = navn;
+    $('#side-igjen').textContent = rest;
   }
 
   function puls(i) {
