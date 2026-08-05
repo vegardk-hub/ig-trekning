@@ -255,12 +255,12 @@ der går det så langt som mulig uten å slippe blåtonen inn igjen — 79°.
 Flata må være sterk nok til å se, og svak nok til at tallene som står oppå den
 fortsatt er lesbare. Det er de to kravene som setter styrken, og begge er målt:
 
-| Oppsett | Flata mot brettet | Valgt mot flata | Gitte | Skrevne | Blyant |
-| --- | --- | --- | --- | --- | --- |
-| Papir | 1,41:1 | 1,41:1 | 10,0 | 5,3 | 4,7 |
-| Dag | 1,43:1 | 1,29:1 | 14,7 | 5,5 | 4,8 |
-| Kveld | 1,52:1 | 1,53:1 | 8,7 | 5,1 | 4,5 |
-| Natt | 1,59:1 | 1,53:1 | 8,1 | 5,2 | 4,2 |
+| Oppsett | Flata mot brettet | Gitte | Skrevne | Blyant |
+| --- | --- | --- | --- | --- |
+| Papir | 1,41:1 | 10,0 | 5,3 | 4,7 |
+| Dag | 1,43:1 | 14,7 | 5,5 | 4,8 |
+| Kveld | 1,52:1 | 8,7 | 5,1 | 4,5 |
+| Natt | 1,59:1 | 8,1 | 5,2 | 4,2 |
 
 De tre siste kolonnene er tallenes kontrast **mot flata**, ikke mot brettet.
 Papir måtte ha mørkere blyantfarge og mørkere blå for å tåle en flate på 1,41:1
@@ -275,6 +275,32 @@ Brettet markerer ikke raden, kolonnen og boksen rundt ruta du står i. Det gjord
 det før, men tre tonede felt som legger seg i kryss over brettet er mye flate i
 bevegelse for lite igjen — ruta du har valgt ser du uansett, og hvilken rad den
 står i er ikke noe du trenger hjelp til å se.
+
+### Valgt rute
+
+Ruta du står i var lenge bare en mørkere utgave av markeringsflata — samme
+nyanse, 1,3–1,5:1 mellom dem. To dempede flater i samme farge ved siden av
+hverandre skiller seg ikke tydelig, uansett hvor stort hakket er.
+
+Å gjøre flata mørkere nok løser det ikke, for da beveger den seg mot
+skriftfargene. Målt viste det seg at tallet i ruta du faktisk står i var det
+svakeste punktet i hele oppsettet: skrevne tall lå på 3,3–4,3:1 og blyantmerker
+på 2,7–3,7:1 der, under WCAG-grensa på 4,5 — det eneste stedet i appen som ikke
+holdt den.
+
+Så flata går andre veien: bort fra skriften, og over i en helt annen nyanse.
+Skiltet er **ringen**, ikke flata — samme grep som en valgt talltast bruker.
+
+| Oppsett | Valgt rute | Nyanse fra markeringa | Ringen mot ruta | Svakeste tall |
+| --- | --- | --- | --- | --- |
+| Papir | blek grønngrå | 123° | 6,0:1 | 5,4:1 |
+| Dag | blek grønngrå | 159° | 6,0:1 | 5,2:1 |
+| Kveld | plomme | 66° | 4,9:1 | 5,6:1 |
+| Natt | fiolett | 58° | 3,5:1 | 5,1:1 |
+
+Nyansen må dessuten ligge minst 25° fra både skrift- og blyantfargen — samme
+grunn som at de andre flatene er nøytrale, men her løst med avstand i stedet
+for med grå. Alt fire kravene står som prøver i `tema.js`.
 
 ### Kontrast
 
