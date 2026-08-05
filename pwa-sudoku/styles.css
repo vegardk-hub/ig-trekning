@@ -683,7 +683,14 @@ body {
      * brett regnet uten den blir høyere enn plassen det får. Da forsvinner
      * nederste rad ut av syne — særlig tydelig når sida også lar seg dra.
      */
-    --trygg-loddrett: calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
+    /*
+     * Symmetrisk luft over og under. Hjemindikatoren gir en stripe nederst og
+     * som regel ingenting øverst, så brettet lå tett i toppen og fritt i bunnen.
+     * Den største av de to innsettingene brukes på begge sider — brettet blir
+     * et hakk mindre, men står midt i skjermen i stedet for høyt oppe.
+     */
+    --trygg-vertikal: max(env(safe-area-inset-top), env(safe-area-inset-bottom));
+    --trygg-loddrett: calc(var(--trygg-vertikal) * 2);
     --trygg-vannrett: calc(env(safe-area-inset-left) + env(safe-area-inset-right));
     --brett: min(
       calc(100dvh - 8px - var(--trygg-loddrett)),
@@ -701,6 +708,8 @@ body {
     position: fixed;
     inset: 0;
     overflow: hidden;
+    padding-top: var(--trygg-vertikal);
+    padding-bottom: var(--trygg-vertikal);
   }
 
   .app {

@@ -31,6 +31,11 @@ Brettet trekker fra det trygge området i begge retninger. `100dvh` teller hele
 skjermen, også stripa hjemindikatoren ligger i, og et brett regnet uten den blir
 høyere enn plassen det faktisk får.
 
+Loddrett brukes den **største** av innsettingene på begge sider. Hjemindikatoren
+gir en stripe nederst og som regel ingenting øverst, så et brett som bare tar
+hensyn til hver side for seg havner tett i toppen og fritt i bunnen. Brettet blir
+et hakk mindre av å balansere det, men står midt i skjermen.
+
 Tallknappene er delt etter side:
 
 | Side | Trykket gir |
