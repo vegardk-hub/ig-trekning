@@ -753,8 +753,13 @@
   $('#btn-tema').addEventListener('click', () => {
     merkValgtTema();
     $('#tema-panel').hidden = false;
+    // Etter hidden = false, ikke før: et skjult element har ingen boks å skrolle,
+    // så tilordningen ville vært en ren nulloperasjon. Og stillingen henger igjen
+    // mellom åpninger — har du skrollet ned én gang, ligger ✕ utenfor neste gang.
+    $('#tema-panel').scrollTop = 0;
   });
-  $('#tema-lukk').addEventListener('click', () => { $('#tema-panel').hidden = true; });
+  ['#tema-lukk', '#tema-x'].forEach(sel =>
+    $(sel).addEventListener('click', () => { $('#tema-panel').hidden = true; }));
   temaListe.addEventListener('click', e => {
     const b = e.target.closest('.temavalg');
     if (!b) return;

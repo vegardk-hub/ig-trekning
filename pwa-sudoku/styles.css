@@ -621,6 +621,22 @@ body {
 
 .modal-kort h2 { margin: 0 0 4px; font-size: 1.25rem; }
 
+.modal-topp {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Negativ marg trekker knappen ut i hjørnet av kortet uten å flytte
+   overskrifta, og lar polstringen gå til trykkflata i stedet for til luft
+   rundt tegnet. */
+.modal-x {
+  flex: none;
+  margin: -8px -8px 0 0;
+  padding: 8px 12px;
+}
+
 .modal-under {
   margin: 0 0 14px;
   font-size: .92rem;
@@ -738,6 +754,22 @@ body {
   .nivaaknapp { padding: 7px 10px; }
   .nivaaknapp strong { font-size: .95rem; }
   .nivaaknapp span { font-size: .78rem; }
+
+  /* Fem oppsett under hverandre ga et kort på 460 px — halvannen skjermhøyde
+     liggende, og da måtte man skrolle for å nå ✕ igjen. Skjermen er bred her,
+     så lista går i to spalter i stedet. «Følg systemet» tar begge. */
+  #tema-panel .modal-kort { max-width: 520px; }
+  .temaliste {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .temavalg:last-child { grid-column: 1 / -1; }
+  .temavalg { padding: 6px 9px; gap: 9px; }
+  .prove { width: 26px; height: 26px; }
+  .tematekst strong { font-size: .9rem; }
+  .tematekst span { font-size: .74rem; }
 
   .topp { display: none; }
   .versjon { display: none; }

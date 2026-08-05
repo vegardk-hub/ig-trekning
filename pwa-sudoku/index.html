@@ -110,7 +110,12 @@
 
 <div id="tema-panel" class="modal" hidden>
   <div class="modal-kort">
-    <h2>Fargeoppsett</h2>
+    <!-- ✕ i hjørnet: valget slår inn med en gang du trykker på det, så her er
+         det ingenting å bekrefte — man vil bare ut igjen. -->
+    <div class="modal-topp">
+      <h2>Fargeoppsett</h2>
+      <button id="tema-x" class="ikonknapp modal-x" aria-label="Lukk">&times;</button>
+    </div>
     <p class="modal-under">Velg det som er lettest å se der du sitter.</p>
     <div id="temaliste" class="temaliste" role="radiogroup" aria-label="Fargeoppsett"></div>
     <button id="tema-lukk" class="knapp bred">Lukk</button>

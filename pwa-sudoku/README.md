@@ -202,6 +202,15 @@ var utledet fra et brett som ikke gjelder lenger.
 ◐-knappen gir fire oppsett, pluss **Følg systemet** som veksler
 mellom Papir og Natt etter lys/mørk-innstillingen på enheten. Valget huskes.
 
+Oppsettet slår inn i det du trykker på det, så det er ingenting å bekrefte — en
+**✕** i hjørnet er hele veien ut. Liggende står lista i to spalter: fem oppsett
+under hverandre ga et kort på 460 px, halvannen skjermhøyde, og da lå ✕ over
+kanten. Nå er kortet 298 px og får plass på den laveste telefonen.
+
+Panelet nullstiller skrollen når det åpnes, og det må skje *etter*
+`hidden = false`: et skjult element har ingen boks å skrolle, så tilordningen
+ville ellers vært en nulloperasjon — og stillingen henger igjen mellom åpninger.
+
 | Oppsett | Til hva |
 | --- | --- |
 | Papir | Varmt og dempet — standarden |
