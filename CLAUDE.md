@@ -28,13 +28,23 @@ en gren, må grenen slås sammen først.
 
 ## Arbeidsflyt
 
-Ingen avhengigheter å installere, ingen tester å kjøre, ingen linter. Skal du
-se en app lokalt, hold deg til en statisk server i mappa — `file://` slår av
-både service worker og modullasting:
+Ingen avhengigheter å installere, ingen linter. Skal du se en app lokalt, hold
+deg til en statisk server i mappa — `file://` slår av både service worker og
+modullasting:
 
 ```
 python3 -m http.server 8000
 ```
+
+Sudoku har prøver, som eneste app her. Kjør dem etter endringer i
+`pwa-sudoku/`:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-sudoku/tester/kjor.js
+```
+
+De tar 40 sekunder, starter serveren selv og trenger bare playwright.
+`pwa-sudoku/tester/README.md` sier hva hver av dem svarer for.
 
 Sudoku og Fargeflasker er PWA-er. Endrer du filene de forhåndslagrer, bump
 `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen igjen hos alle som
@@ -65,6 +75,12 @@ ikke etter magefølelse, så de tåler ikke å justeres på slump.
 Appen er bygd for telefon først: `dvh`-høyder, `viewport-fit=cover`,
 `touch-action`, og én enkelt oppskalering på `@media (min-width: 480px) and
 (min-height: 760px)`. Test endringer i grensesnittet i en smal viewport.
+
+Utseendet er målt, ikke vurdert: kontrasten på hver farge mot flata den står på,
+nyanseavstanden mellom rollene, bredden på hver etikett i den smaleste kolonnen.
+Tallene står i `pwa-sudoku/README.md`, og kravene som prøver i `tester/tema.js`
+og `tester/liggende.js`. Endrer du en farge eller en skriftstørrelse, kjør dem
+og les hva de sier før du velger.
 
 ## Fargeflasker
 

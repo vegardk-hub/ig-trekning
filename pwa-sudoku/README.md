@@ -353,6 +353,7 @@ seks nivåene ett bånd.
 | `js/tema.js` | Fargeoppsettene — settes før første maling |
 | `js/app.js` | Grensesnitt, tastatur, angrelogg, lagring |
 | `lag_ikon.py` | Lager appikonene (krever Pillow) |
+| `tester/` | Femten prøver i ekte nettleser — `tester/README.md` |
 
 ### Løseteknikkene
 
