@@ -167,6 +167,10 @@ går gjennom resten.
 
 Vulkanen i midten er **en regel, ikke pynt**: en ferdigsortert flaske tappes
 ned i den og står igjen tom, og brettet er løst når alle flaskene er tomme.
+**Tappingen er barnets trekk, ikke noe som skjer av seg selv** — flasken lyser,
+vulkanen lyser når den kan ta imot, og først et trykk utløser det. Løseren
+tapper derimot automatisk, for det er alltid trygt; planen sammenlignes derfor
+mot `tappetNokkel()` og ikke mot brettet slik det står.
 Det er den gjenbruken som bærer vanskegraden — fra nivå 16 er det bare én tom
 flaske, og brettet løsner først når den første flasken er i havn. Fjerner du
 tappingen, blir alt fra nivå 16 og opp uløselig.

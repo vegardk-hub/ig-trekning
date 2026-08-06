@@ -1,9 +1,15 @@
 # Fargeflasker
 
 Et sorteringsspill for de aller minste. Flaskene står rundt en stor
-glassvulkan. Får du en flaske ensfarget, flyr den bort og renner ned i
-vulkanen — og står igjen **tom**. Er vulkanen full, går den i utbrudd, og
-nivået er løst.
+glassvulkan. Får du en flaske ensfarget, begynner den å lyse — og da kan du
+trykke på den og så på vulkanen, så flyr den bort, tømmer seg nedi og står
+igjen **tom**. Er vulkanen full, går den i utbrudd, og nivået er løst.
+
+**Tappingen skjer ikke av seg selv.** Den gjorde det først, og da var
+belønningen noe som bare hendte. Nå er det barnet som utfører den: full
+flaske lyser og vipper, vulkanen lyser når den kan ta imot, og først når hun
+trykker, renner det. Bare en full, ensfarget flaske slipper nedi — en halvfull
+ville tatt fargen ut av spill og gjort nivået uløselig.
 
 Laget for en femåring, og det styrer alle valgene:
 
@@ -100,11 +106,26 @@ faktisk går an å løse. Går det ikke, stokkes det på nytt. Alternativet – 
 stokke «baklengs» fra et ferdig brett – gir ofte nivåer som nesten løser seg
 selv.
 
-Tappingen er ikke et trekk, men en følge av et trekk: både i `loes()` og i
-grensesnittet kalles `tapp()` rett etter hver helling. Derfor er brettet løst
-nøyaktig når **alle flaskene står tomme** — hver ferdig farge har da forlatt
-brettet. Generatoren forkaster også utdelinger der en flaske alt er ensfarget;
-den ville rent ned i vulkanen før barnet fikk tatt i den, og se ut som en feil.
+Brettet er løst nøyaktig når **alle flaskene står tomme** — hver ferdig farge
+har da forlatt brettet og blitt et lag i vulkanen. Generatoren forkaster
+utdelinger der en flaske alt er ensfarget; den ville stått og lyst før barnet
+fikk tatt i den, og sett ut som en feil.
+
+### Løseren tapper automatisk, barnet gjør det ikke
+
+`loes()` kaller `tapp()` etter hver helling, altså tømmer ferdige flasker med
+en gang. Det er riktig for å avgjøre om et brett *går an*: å tappe er aldri
+skadelig, og barnet kan alltid gjøre det, så en løsning som finnes med
+automatisk tapping, finnes også med manuell.
+
+Men da stemmer ikke løserens brett med skjermens når en full flaske står
+utappet. Derfor sammenlignes planen mot `tappetNokkel()` — brettet slik det
+*ville* sett ut om alt ferdig var tømt. Uten det ville planen blitt forkastet
+hver gang en flaske ble full, og vi er tilbake til hintet som går i ring.
+
+Hjelp-knappen har en egen snarvei: står det en full flaske og venter, peker
+den på den og på vulkanen. Det er alltid rett trekk — det er tappingen som
+frigjør plassen alt annet henger på.
 
 Tilfeldigheten er sådd med nivånummeret, så nivå 7 ser likt ut hver gang.
 Et barn liker å kjenne igjen brettet det holdt på med i går.

@@ -113,7 +113,8 @@
   };
 
   var brett = document.getElementById('brett');
-  var elFlasker = [], elVaeske = [], elVulkan = null, elLag = null, elGnister = null;
+  var elFlasker = [], elVaeske = [];
+  var elVulkanboks = null, elVulkan = null, elLag = null, elGnister = null;
 
   /* ---------- små hjelpere ---------- */
 
@@ -309,6 +310,19 @@
     var vulkanboks = document.createElement('div');
     vulkanboks.className = 'vulkanboks';
     vulkanboks.innerHTML = VULKAN + '<div class="gnister"></div>';
+    vulkanboks.setAttribute('role', 'button');
+    vulkanboks.setAttribute('tabindex', '0');
+    vulkanboks.setAttribute('aria-label',
+      'Vulkanen, ' + tilstand.vulkan.length + ' av ' + tilstand.lag + ' fylt');
+    vulkanboks.addEventListener('click', klikkVulkan);
+    vulkanboks.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); klikkVulkan(); }
+    });
+    // Lys opp når en full flaske er valgt, så det er tydelig hvor den skal.
+    if (tilstand.valgt !== null &&
+        Spill.erKomplett(tilstand.flasker[tilstand.valgt], tilstand.kapasitet)) {
+      vulkanboks.classList.add('klar');
+    }
 
     var i = 0, k;
     for (k = 0; k < m.side; k++) { venstre.appendChild(lagFlaske(i)); i++; }
@@ -322,6 +336,7 @@
     arena.appendChild(hoyre);
     brett.appendChild(arena);
 
+    elVulkanboks = vulkanboks;
     elVulkan = vulkanboks.querySelector('.vulkan');
     elLag = vulkanboks.querySelector('.vulkanlag');
     elGnister = vulkanboks.querySelector('.gnister');
@@ -345,6 +360,8 @@
     el.insertBefore(vaeske, el.firstChild);
 
     if (tilstand.valgt === indeks) el.classList.add('valgt');
+    // Full og ensfarget: klar for vulkanen, og den skal se slik ut.
+    if (Spill.erKomplett(innhold, tilstand.kapasitet)) el.classList.add('klar');
 
     el.addEventListener('click', function () { klikk(indeks); });
     el.addEventListener('keydown', function (e) {
@@ -424,6 +441,14 @@
 
   /* ---------- trykk ---------- */
 
+  // Vulkanen lyser når den kan ta imot, altså når en full flaske er valgt.
+  function oppdaterVulkanlys() {
+    if (!elVulkanboks) return;
+    var i = tilstand.valgt;
+    elVulkanboks.classList.toggle('klar',
+      i !== null && Spill.erKomplett(tilstand.flasker[i], tilstand.kapasitet));
+  }
+
   function klikk(i) {
     if (tilstand.laast) return;
     var flasker = tilstand.flasker;
@@ -433,7 +458,9 @@
       tilstand.valgt = i;
       elFlasker[i].classList.add('valgt');
       Lyd.plukk();
-      skjulTips();
+      oppdaterVulkanlys();
+      if (Spill.erKomplett(flasker[i], tilstand.kapasitet)) visTips('Og så på vulkanen 🌋');
+      else skjulTips();
       return;
     }
 
@@ -441,6 +468,7 @@
       tilstand.valgt = null;
       elFlasker[i].classList.remove('valgt');
       Lyd.slipp();
+      oppdaterVulkanlys();
       return;
     }
 
@@ -458,6 +486,7 @@
     } else {
       tilstand.valgt = null;
     }
+    oppdaterVulkanlys();
   }
 
   function rist(i) {
@@ -567,54 +596,70 @@
 
   /* ---------- tappingen ned i vulkanen ---------- */
 
-  // Etter hvert trekk: ble noen flaske ferdig? Da flyr den bort til krateret,
-  // tømmer seg, og kommer tilbake tom. Flere kan bli ferdige av samme trekk,
-  // så de tappes etter tur i stedet for oppå hverandre.
+  // En ferdig flaske tømmer seg ikke selv. Den blir stående og lyse, og barnet
+  // må trykke på den og så på vulkanen. Å gjøre selve belønningen til hennes
+  // handling er hele poenget – ellers skjer det bare, uten at hun gjorde det.
   function etterTrekk(fra, til, antall) {
-    var ferdige = [];
-    for (var i = 0; i < tilstand.flasker.length; i++) {
-      if (Spill.erKomplett(tilstand.flasker[i], tilstand.kapasitet)) {
-        ferdige.push({ flaske: i, farge: tilstand.flasker[i][0] });
-      }
-    }
-    if (!ferdige.length) {
-      planEtterTrekk(fra, til, antall);
-      tilstand.laast = false;
-      oppdaterKnapper();
-      return;
-    }
-    tappNeste(ferdige, 0, { fra: fra, til: til, antall: antall });
+    planEtterTrekk(fra, til, antall);
+    tilstand.laast = false;
+    oppdaterKnapper();
+    if (finnKomplett() !== -1) visTips('Trykk på den fulle flasken, og så på vulkanen 🌋');
   }
 
-  function tappNeste(ferdige, nr, trekk) {
-    if (nr >= ferdige.length) {
-      // Først når alt er tappet, stemmer brettet med det planen venter seg.
-      planEtterTrekk(trekk.fra, trekk.til, trekk.antall);
-      tegn();
-      if (Spill.erFerdig(tilstand.flasker)) vent(240, utbrudd);
-      else { tilstand.laast = false; oppdaterKnapper(); }
+  function finnKomplett() {
+    for (var i = 0; i < tilstand.flasker.length; i++) {
+      if (Spill.erKomplett(tilstand.flasker[i], tilstand.kapasitet)) return i;
+    }
+    return -1;
+  }
+
+  // Trykk på vulkanen: bare en full, ensfarget flaske kan helles nedi. Slapp
+  // vi en halvfull flaske forbi, ville fargen forsvunnet fra brettet og
+  // nivået blitt uløselig.
+  function klikkVulkan() {
+    if (tilstand.laast) return;
+    var i = tilstand.valgt;
+    if (i === null || !Spill.erKomplett(tilstand.flasker[i], tilstand.kapasitet)) {
+      Lyd.nei();
+      var boks = elVulkan.parentNode;
+      boks.classList.remove('rist');
+      void boks.offsetWidth;
+      boks.classList.add('rist');
+      vent(340, function () { boks.classList.remove('rist'); });
+      visTips('Bare en flaske med én farge kan i vulkanen 🙂');
       return;
     }
+    tappFlaske(i);
+  }
 
-    var f = ferdige[nr];
-    var el = elFlasker[f.flaske];
+  function tappFlaske(indeks) {
+    tilstand.laast = true;
+    tilstand.historikk.push({
+      flasker: Spill.kopi(tilstand.flasker), vulkan: tilstand.vulkan.slice()
+    });
+    tilstand.valgt = null;
+    skjulTips();
+
+    var farge = tilstand.flasker[indeks][0];
+    var el = elFlasker[indeks];
     var krater = kraterPunkt();
     var r = el.getBoundingClientRect();
     var tilVenstre = r.left + r.width / 2 <= krater.x;
 
+    el.classList.remove('valgt', 'klar');
     el.classList.add('tapper');
     // Nesten opp ned, så hele innholdet renner ut i krateret.
     flyTil(el, krater.x, krater.y - r.height * 0.10, tilVenstre ? 148 : -148, 380);
     Lyd.tapp();
 
     vent(400, function () {
-      var straale = lagStraale(krater.x, krater.y - 4, 34, f.farge, 12);
+      var straale = lagStraale(krater.x, krater.y - 4, 34, farge, 12);
 
       var deler = el.querySelectorAll('.del');
       for (var i = 0; i < deler.length; i++) deler[i].style.height = '0%';
 
       var plass = tilstand.vulkan.length;
-      var rekt = lagRekt(f.farge, plass, 0);
+      var rekt = lagRekt(farge, plass, 0);
       elLag.appendChild(rekt);
       var h = lagHoyde(), bunnY = FYLL_BUNN - h * plass;
       tween(460, function (p) {
@@ -624,11 +669,17 @@
 
       vent(480, function () {
         fjernStraale(straale);
-        tilstand.vulkan.push(f.farge);
-        tilstand.flasker[f.flaske] = [];
+        tilstand.vulkan.push(farge);
+        tilstand.flasker[indeks] = [];
         tilbake(el, 300, function () {
           el.classList.remove('tapper');
-          tappNeste(ferdige, nr + 1, trekk);
+          tegn();
+          if (Spill.erFerdig(tilstand.flasker)) vent(240, utbrudd);
+          else {
+            tilstand.laast = false;
+            oppdaterKnapper();
+            if (finnKomplett() !== -1) visTips('Én til! Trykk på den og så på vulkanen 🌋');
+          }
         });
       });
     });
@@ -738,8 +789,18 @@
   //
   // Planen holdes så lenge brettet står der planen forventer. Gjør barnet noe
   // annet, kastes den og vi regner på nytt – det er jo da et nytt råd trengs.
+  // Løseren tapper ferdige flasker automatisk, mens barnet gjør det for hånd.
+  // Planen sammenlignes derfor mot brettet slik det ville sett ut om alt
+  // ferdig var tømt – ellers ville planen blitt forkastet hver gang en flaske
+  // ble full, og da er vi tilbake til hintet som går i ring.
+  function tappetNokkel() {
+    var kopi = Spill.kopi(tilstand.flasker);
+    Spill.tapp(kopi, tilstand.kapasitet);
+    return stillingsNokkel(kopi);
+  }
+
   function hentPlan() {
-    var naa = stillingsNokkel(tilstand.flasker);
+    var naa = tappetNokkel();
     var p = tilstand.plan;
     if (p && p.nokkel === naa && p.trekk.length) return p;
 
@@ -757,7 +818,7 @@
     var t = p.trekk[0];
     if (t.fra === fra && t.til === til && t.antall === antall) {
       p.trekk.shift();
-      p.nokkel = stillingsNokkel(tilstand.flasker);
+      p.nokkel = tappetNokkel();
     } else {
       tilstand.plan = null;
     }
@@ -765,6 +826,22 @@
 
   function hint() {
     if (tilstand.laast) return;
+
+    // Står det en full flaske og venter, er det alltid rett trekk – den
+    // frigjør plassen alt annet henger på.
+    var full = finnKomplett();
+    if (full !== -1) {
+      tilstand.valgt = null;
+      tegn();
+      peker(full);
+      if (elVulkanboks) {
+        elVulkanboks.classList.add('peker');
+        vent(4600, function () { elVulkanboks.classList.remove('peker'); });
+      }
+      visTips('Tøm den fulle flasken i vulkanen 🌋');
+      return;
+    }
+
     var p = hentPlan();
     if (!p) {
       visTips('Det går ikke videre herfra – trykk Angre 🙂');
