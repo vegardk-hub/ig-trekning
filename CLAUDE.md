@@ -32,6 +32,20 @@ endring han ikke kan prøve på telefonen. Vanlig runde er derfor commit på
 arbeidsgrenen, så `git checkout main && git merge --ff-only <gren> && git push
 origin main`. Ingen pull request med mindre det blir bedt om.
 
+**Henger utrullingen, sjekk `githubstatus.com` før du feilsøker repoet.**
+`curl -s https://www.githubstatus.com/api/v2/summary.json` viser komponentene
+`Actions` og `Pages` direkte. Et bygg som blir stående i `queued` eller
+`building` i mer enn et par minutter, er nesten alltid en hendelse hos GitHub —
+et normalt Pages-bygg tar rundt ett minutt. Symptomet er forvirrende, for
+`git push` går fint hele tiden: Git Operations er en annen komponent enn Pages.
+6. august 2026 kostet det en runde med å avbryte kjøringer og be om nye bygg før
+statussida ble sjekket, og da sto det «Pages – Deployment Lag» der hele tiden.
+
+Feiler et Pages-bygg med `"duration": 0` og den generiske meldinga
+`"Page build failed."` — se `GET /repos/{eier}/{repo}/pages/builds/latest` — er
+det heller ikke innholdet. Et ekte Jekyll-problem gir en melding som peker på en
+fil.
+
 Utrullingen lar seg ikke sjekke med et oppslag mot `github.io` herfra — proxyen
 svarer 403 på CONNECT. Se på byggekjøringene i stedet: workflow-id `323690282`
 (`pages-build-deployment`) gjennom GitHub-verktøyene. Svaret er stort nok til å
