@@ -31,6 +31,7 @@ const PROVER = [
   ['naboer', 'naboer: og i raden og kolonnen'],
   ['alle', 'alle: rydding gjelder hele nabolaget'],
   ['konflikt', 'konflikt: tall som ikke kan stå sammen'],
+  ['tid', 'tid: klokka stopper, og løste brett telles én gang'],
   ['uthev', 'uthev: samme tall, både store og blyant'],
   ['tastatur', 'tastatur: venstre fører blyant, høyre skriver'],
   ['liggende', 'liggende: to sider, topptekst, plass på fem skjermer'],

@@ -25,6 +25,8 @@
       <span id="meta-nivaa">–</span>
       <span class="prikk">·</span>
       <span id="meta-igjen">–</span>
+      <span class="prikk">·</span>
+      <span id="meta-tid">0:00</span>
     </div>
   </header>
 
@@ -75,6 +77,7 @@
       <div class="sidetopp">
         <span id="side-nivaa" class="side-nivaa"></span>
         <span id="side-igjen" class="side-igjen"></span>
+        <span id="side-tid" class="side-tid"></span>
       </div>
       <div class="tall" aria-hidden="true"></div>
       <div class="verktoy"></div>
@@ -104,7 +107,12 @@
         <strong>Ekspert</strong><span>Tripler, X-Wing, XY-Wing og sverdfisk</span>
       </button>
     </div>
-    <button id="nytt-avbryt" class="knapp bred">Avbryt</button>
+    <!-- To knapper på én rad, ikke to rader: kortet har fire nivåknapper over
+         seg og skal fortsatt få plass på en liggende telefon uten skrolling. -->
+    <div class="modal-knapper">
+      <button id="nytt-stat" class="knapp">Statistikk</button>
+      <button id="nytt-avbryt" class="knapp">Avbryt</button>
+    </div>
   </div>
 </div>
 
@@ -122,6 +130,23 @@
   </div>
 </div>
 
+<div id="stat-panel" class="modal" hidden>
+  <div class="modal-kort">
+    <div class="modal-topp">
+      <h2>Statistikk</h2>
+      <button id="stat-x" class="ikonknapp modal-x" aria-label="Lukk">&times;</button>
+    </div>
+    <p class="modal-under">Bare brett du har løst helt, telles med.</p>
+    <div id="statliste" class="statliste"></div>
+    <!-- «Nullstill» krever to trykk. Den sletter noe som ikke kan hentes fram
+         igjen, og står rett ved siden av knappen man egentlig var ute etter. -->
+    <div class="modal-knapper">
+      <button id="stat-null" class="knapp">Nullstill</button>
+      <button id="stat-lukk" class="knapp">Lukk</button>
+    </div>
+  </div>
+</div>
+
 <div id="jobber" class="modal" hidden>
   <div class="modal-kort smal">
     <div class="spinner"></div>
@@ -133,12 +158,15 @@
   <div class="modal-kort smal">
     <div class="pokal">★</div>
     <h2>Løst!</h2>
+    <p id="ferdig-tid" class="ferdig-tid"></p>
+    <p id="ferdig-rekord" class="ferdig-rekord" hidden>Ny rekord på dette nivået!</p>
     <p id="ferdig-tekst" class="modal-under"></p>
     <button id="ferdig-nytt" class="knapp primaer bred">Nytt spill</button>
     <button id="ferdig-lukk" class="knapp bred">Se på brettet</button>
   </div>
 </div>
 
+<script src="js/statistikk.js"></script>
 <script src="js/core.js"></script>
 <script src="js/solver.js"></script>
 <script src="js/generator.js"></script>

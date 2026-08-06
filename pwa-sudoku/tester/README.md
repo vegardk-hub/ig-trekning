@@ -1,6 +1,6 @@
 # Prøver
 
-Femten prøver som kjører appen i en ekte nettleser og måler den. De finnes fordi
+Seksten prøver som kjører appen i en ekte nettleser og måler den. De finnes fordi
 det meste av det som har gått galt i denne appen ikke var logikk, men geometri og
 farge: en etikett som sprakk i en smal kolonne, et tall som falt under
 kontrastgrensa på flata det sto på, en knapp som lå bak et annet element og
@@ -33,6 +33,7 @@ repoet skal fortsatt kunne åpnes uten å installere noe.
 | `naboer` | Og i raden og kolonnen? |
 | `alle` | Gjelder ryddingen hele nabolaget, ikke bare det nærmeste? |
 | `konflikt` | Blir to like tall i samme rad, kolonne eller boks merket røde? |
+| `tid` | Stopper klokka når fana legges bort, overlever den en omlasting, og telles et løst brett bare én gang? |
 | `uthev` | Lyser både store tall og blyantmerker med samme siffer? |
 | `tastatur` | Fører venstre side blyant og høyre side tall når telefonen ligger? |
 | `liggende` | Står brettet i full høyde, sidene like brede, toppteksten i spalta, og lar ◐ seg trykke — på fem skjermstørrelser? |

@@ -56,8 +56,15 @@ Sudoku har prøver, som eneste app her. Kjør dem etter endringer i
 NODE_PATH=/opt/node22/lib/node_modules node pwa-sudoku/tester/kjor.js
 ```
 
-De tar 40 sekunder, starter serveren selv og trenger bare playwright.
+De tar knappe minuttet, starter serveren selv og trenger bare playwright.
 `pwa-sudoku/tester/README.md` sier hva hver av dem svarer for.
+
+Kjøres de på Windows i stedet for i skyøkta, feiler `fyllmodus` og `tema` på ett
+mål hver, med tre piksler. Det er ikke en regresjon: `system-ui` løser til Segoe
+UI med 21 px linjeboks der, mot 17 px på Linux, som tallene er kalibrert mot.
+Ikke «rett» dem lokalt — da ryker de på telefonen. Node ligger på
+`C:\Program Files\nodejs`, utenfor PATH, og `NODE_PATH` skal peke på
+`C:\Users\vegar\AppData\Roaming\npm\node_modules`.
 
 Sudoku og Fargeflasker er PWA-er. Endrer du filene de forhåndslagrer, bump
 `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen igjen hos alle som
@@ -96,6 +103,11 @@ Ikke rull noen av disse tilbake uten å vite hvorfor de står der:
   først.
 - `display: none` gir et nullrektangel, så en «får det plass»-måling består selv
   når elementet er usynlig. Mål bredden i tillegg.
+- **En lytter på `pagehide` som lagrer alt, opphever `localStorage.clear()`.**
+  Prøvene tømmer lagringen og laster om for å få et ferskt brett; `pagehide`
+  fyrer på omlastingen og skriver det gamle brettet rett tilbake, så appen
+  starter med det forrige i stedet. Lagre bare feltet du er ute etter, og bare
+  hvis posten finnes fra før — se `lagreTid()` i `app.js`.
 
 ## Sudoku
 

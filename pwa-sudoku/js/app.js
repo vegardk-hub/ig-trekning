@@ -7,6 +7,7 @@
   const C = window.SudokuCore;
   const S = window.SudokuSolver;
   const G = window.SudokuGenerator;
+  const St = window.SudokuStatistikk;
   const $ = sel => document.querySelector(sel);
 
   const LAGER = 'sudoku-v1';
@@ -26,7 +27,9 @@
     aktivtBlyant: false,             // om det aktive tallet skal bli merke eller tall
     nivaa: 'middels',
     maksNavn: '',
-    valgt: -1
+    valgt: -1,
+    tid: 0,                          // millisekunder brukt på dette brettet
+    fort: false                      // om brettet alt er ført i statistikken
   };
 
   let kandidater = new Int16Array(81);
@@ -256,6 +259,7 @@
     // smal — «Vanskelig · 45 igjen» på én linje måtte settes for smått.
     $('#side-nivaa').textContent = navn;
     $('#side-igjen').textContent = rest;
+    visTid();
   }
 
   function puls(i) {
@@ -273,6 +277,82 @@
     el.hidden = false;
   }
   function skjulMelding() { $('#melding').hidden = true; }
+
+  /* ---------- Tid ---------- */
+
+  /*
+   * Klokka måler tiden du faktisk har sittet med brettet, ikke tiden som har
+   * gått siden du fikk det. Derfor stopper den når fana legges bort: et brett
+   * du lot ligge over natta skal ikke få en tid på ni timer, for da er tallet
+   * verdiløst — og statistikken det havner i, med det.
+   *
+   * `state.tid` er det oppsamlede, `tidFra` er tidspunktet klokka sist startet.
+   * At de er to, er nettopp det som gjør at den kan stoppes og startes igjen
+   * uten å miste noe, og at det oppsamlede kan lagres som et enkelt tall.
+   */
+  let tidFra = 0;                    // 0 = klokka står
+  let tidUr = 0;
+
+  const somKlokke = ms => {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const to = n => String(n).padStart(2, '0');
+    const t = Math.floor(s / 3600);
+    return (t ? t + ':' + to(Math.floor(s / 60) % 60) : Math.floor(s / 60)) + ':' + to(s % 60);
+  };
+
+  const naaTid = () => state.tid + (tidFra ? Date.now() - tidFra : 0);
+
+  function startTid() {
+    // Et løst brett skal ikke begynne å telle igjen fordi du kom tilbake til
+    // fana for å se på det.
+    if (tidFra || state.fort || document.visibilityState === 'hidden') return;
+    tidFra = Date.now();
+    if (!tidUr) tidUr = setInterval(visTid, 1000);
+  }
+
+  function stoppTid() {
+    if (tidFra) { state.tid += Date.now() - tidFra; tidFra = 0; }
+    if (tidUr) { clearInterval(tidUr); tidUr = 0; }
+    visTid();
+  }
+
+  function visTid() {
+    const k = somKlokke(naaTid());
+    $('#meta-tid').textContent = k;
+    $('#side-tid').textContent = k;
+  }
+
+  /**
+   * Skriver tiden inn i det som alt er lagret, i stedet for å lagre alt på nytt.
+   *
+   * Forskjellen er ikke kosmetisk. Et fullt `lagre()` her ville lagt hele
+   * brettet tilbake i en lagring som nettopp var tømt — rydder du bort dataene
+   * for appen i en annen fane og lukker denne, sto brettet der igjen. Finnes det
+   * ingen post å oppdatere, er det ingenting som skal skrives.
+   */
+  function lagreTid() {
+    try {
+      const rå = localStorage.getItem(LAGER);
+      if (!rå) return;
+      const d = JSON.parse(rå);
+      d.tid = naaTid();
+      d.fort = state.fort;
+      localStorage.setItem(LAGER, JSON.stringify(d));
+    } catch (e) { /* privat modus e.l. — spill videre uten lagring */ }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') { stoppTid(); lagreTid(); }
+    else startTid();
+  });
+
+  /*
+   * pagehide i tillegg til visibilitychange, ikke i stedet for: lagringen skjer
+   * ellers bare når du gjør et trekk, så minuttene mellom siste tall og en
+   * omlasting var tapt. Og det er `pagehide` som fyrer når fana lukkes —
+   * `unload` er upålitelig i nettopp de tilfellene.
+   */
+  window.addEventListener('pagehide', () => { stoppTid(); lagreTid(); });
 
   /* ---------- Handlinger ---------- */
 
@@ -529,7 +609,23 @@
     for (let i = 0; i < 81; i++) {
       if (state.verdier[i] !== state.losning[i]) return;
     }
+
+    /*
+     * Brettet føres i statistikken én gang. `state.fort` lagres sammen med det,
+     * for uten det ville en omlasting av et løst brett ført det på nytt — og
+     * angre + skriv inn igjen ville gjort det til en tellemaskin.
+     */
+    const forste = !state.fort;
+    if (forste) {
+      stoppTid();
+      state.fort = true;
+      lagre();
+    }
+    const rekord = forste && St.registrer(state.nivaa, naaTid());
+
     const nivaa = S.NIVAAER.find(n => n.id === state.nivaa);
+    $('#ferdig-tid').textContent = somKlokke(naaTid());
+    $('#ferdig-rekord').hidden = !rekord;
     $('#ferdig-tekst').textContent = state.maksNavn
       ? 'Nivå ' + (nivaa ? nivaa.navn.toLowerCase() : '') + '. Vanskeligste teknikk som trengtes: ' +
         state.maksNavn.toLowerCase() + '.'
@@ -564,10 +660,16 @@
       state.aktivtTall = 0;          // fyllmodus er en preferanse og består, tallet ikke
       state.aktivtBlyant = false;
       if (state.merkeModus === 'manuell') state.merkeModus = 'tom';   // brettet er tømt
+      // Klokka nullstilles her, ikke i generatoren: ventetiden på et ekspertbrett
+      // er noen sekunder, og den er ikke tid du har brukt på å løse noe.
+      state.tid = 0;
+      state.fort = false;
+      tidFra = 0;
       nullstillHistorikk();
       oppdaterVerktoy();
       lagre();
       tegn();
+      startTid();
     } catch (e) {
       melding('Klarte ikke å lage et puslespill på dette nivået. Prøv igjen.');
       console.error(e);
@@ -589,7 +691,11 @@
         merkeModus: state.merkeModus,
         fyllModus: state.fyllModus,
         nivaa: state.nivaa,
-        maksNavn: state.maksNavn
+        maksNavn: state.maksNavn,
+        // Det oppsamlede, ikke det som løper: `naaTid()` her ville lagret en
+        // tid klokka ennå ikke har talt ferdig, og lagre() kalles ved hvert tall.
+        tid: state.tid + (tidFra ? Date.now() - tidFra : 0),
+        fort: state.fort
       }));
     } catch (e) { /* privat modus e.l. — spill videre uten lagring */ }
   }
@@ -613,6 +719,10 @@
       state.fyllModus = d.fyllModus === true;
       state.nivaa = d.nivaa || 'middels';
       state.maksNavn = d.maksNavn || '';
+      // Eldre lagringer har ingen tid. De starter på null i stedet for å bli
+      // NaN, som ville smittet både visningen og statistikken.
+      state.tid = Number(d.tid) > 0 ? Number(d.tid) : 0;
+      state.fort = d.fort === true;
       return true;
     } catch (e) { return false; }
   }
@@ -698,6 +808,46 @@
     tegn();
   }
 
+  /* ---------- Statistikk ---------- */
+
+  // To trykk, ikke ett: «Nullstill» sletter noe som ikke kan hentes fram igjen,
+  // og står rett ved siden av «Lukk».
+  let nullstillArmert = false;
+
+  /*
+   * Bygges hver gang panelet åpnes, ikke én gang ved oppstart: tallene endrer
+   * seg mens appen står åpen, og et panel som viser stillingen fra i går er
+   * verre enn ingen statistikk.
+   */
+  function visStatistikk() {
+    const alt = St.hent();
+    const liste = $('#statliste');
+    liste.textContent = '';
+
+    const rute = (tekst, kls) => {
+      const el = document.createElement('span');
+      el.className = kls;
+      el.textContent = tekst;
+      return el;
+    };
+
+    ['', 'Løst', 'Beste', 'Snitt'].forEach(h => liste.appendChild(rute(h, 'stathode')));
+
+    St.NIVAAER.forEach(id => {
+      const n = S.NIVAAER.find(x => x.id === id);
+      const r = alt[id];
+      liste.appendChild(rute(n ? n.navn : id, 'statnavn'));
+      liste.appendChild(rute(String(r.lost), 'stattall' + (r.lost ? '' : ' tom')));
+      liste.appendChild(rute(r.lost ? somKlokke(r.beste) : '–', 'stattall' + (r.lost ? '' : ' tom')));
+      liste.appendChild(rute(r.lost ? somKlokke(r.sum / r.lost) : '–', 'stattall' + (r.lost ? '' : ' tom')));
+    });
+
+    nullstillArmert = false;
+    $('#stat-null').textContent = 'Nullstill';
+    $('#stat-panel').hidden = false;
+    $('#stat-panel').scrollTop = 0;   // etter hidden = false: et skjult element har ingen boks å skrolle
+  }
+
   /* ---------- Hendelser ---------- */
 
   brettEl.addEventListener('click', e => {
@@ -745,7 +895,7 @@
   // Trykk på det mørke feltet rundt lukker — den vanlige gesten på telefon,
   // der det ikke finnes noen Esc-tast. #jobber står med vilje utenfor: der
   // pågår det en generering, og et bomtrykk skal ikke etterlate den halvveis.
-  ['#nytt-panel', '#ferdig', '#tema-panel'].forEach(sel => {
+  ['#nytt-panel', '#ferdig', '#tema-panel', '#stat-panel'].forEach(sel => {
     const el = $(sel);
     el.addEventListener('click', e => { if (e.target === el) el.hidden = true; });
   });
@@ -768,6 +918,21 @@
   });
 
   $('#nytt-avbryt').addEventListener('click', () => { $('#nytt-panel').hidden = true; });
+
+  // Statistikken nås derfra man likevel er på vei: «Nytt spill» er øyeblikket
+  // man lurer på hvordan det har gått til nå.
+  $('#nytt-stat').addEventListener('click', visStatistikk);
+  ['#stat-lukk', '#stat-x'].forEach(sel =>
+    $(sel).addEventListener('click', () => { $('#stat-panel').hidden = true; }));
+  $('#stat-null').addEventListener('click', () => {
+    if (!nullstillArmert) {
+      nullstillArmert = true;
+      $('#stat-null').textContent = 'Sikker?';
+      return;
+    }
+    St.nullstill();
+    visStatistikk();          // bygger lista tom igjen og avvæpner knappen
+  });
   $('#ferdig-lukk').addEventListener('click', () => { $('#ferdig').hidden = true; });
   $('#ferdig-nytt').addEventListener('click', () => {
     $('#ferdig').hidden = true;
@@ -817,7 +982,9 @@
     if (k === 'h' || k === 'H') { hintTrykk(); e.preventDefault(); return; }
     if (k === 'p' || k === 'P') { vekslBlyant(); e.preventDefault(); return; }
     if (k === 'Escape') {
-      if (!$('#tema-panel').hidden) $('#tema-panel').hidden = true;
+      // Innerst først: statistikken åpnes fra «Nytt spill» og ligger oppå den.
+      if (!$('#stat-panel').hidden) $('#stat-panel').hidden = true;
+      else if (!$('#tema-panel').hidden) $('#tema-panel').hidden = true;
       else if (!$('#nytt-panel').hidden) $('#nytt-panel').hidden = true;
       else if (hint) { lukkHint(); tegn(); }
     }
@@ -850,8 +1017,8 @@
   // «Auto» av eller «Fyll» på, og da sto knappene og løy om tilstanden.
   const varLagret = hentLagret();
   oppdaterVerktoy();
-  if (varLagret) tegn();
-  else nyttSpill('middels');
+  if (varLagret) { tegn(); startTid(); }
+  else nyttSpill('middels');   // starter klokka selv, når brettet er ferdig laget
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     // updateViaCache: 'none' — selve sw.js skal aldri hentes fra HTTP-cachen,

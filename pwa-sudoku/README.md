@@ -106,9 +106,35 @@ eier avgjørelsen om når tastaturet er delt.
 | Gjør om | **Gjør om** | `Ctrl`/`Cmd` + `Shift` + `Z`, eller `Ctrl` + `Y` |
 | Hint | **Hint** | `H` |
 | Fargeoppsett | ◐ oppe til høyre (stående) / ved appnavnet (liggende) | – |
+| Statistikk | **Nytt spill** → **Statistikk** | – |
 | Lukk hint/dialog | ✕, eller trykk utenfor | `Esc` |
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
+
+## Tid og statistikk
+
+Klokka står ved siden av nivået og telleren, og måler tiden du **faktisk har
+sittet med brettet**: den stopper når appen legges bort, og går igjen når du
+kommer tilbake. Et brett som ble liggende over natta skal ikke få en tid på ni
+timer — det tallet sier ingenting, og det ville dratt snittet i statistikken med
+seg.
+
+Tiden lagres sammen med brettet og fortsetter der den slapp etter en omlasting.
+Er brettet løst, stopper klokka for godt.
+
+Statistikken føres per nivå — antall løste brett, beste tid og snitt — og ligger
+under sin egen lagringsnøkkel, slik at den overlever at du starter et nytt spill.
+Bare brett som er løst helt, telles, og hvert brett telles **én gang**: at det er
+ført, lagres sammen med brettet, ellers ville en omlasting eller en runde med
+angre gjort «Løst!» til en tellemaskin.
+
+Statistikken nås fra **Nytt spill**, som er øyeblikket man lurer på hvordan det
+har gått til nå. Den fikk ingen egen knapp på verktøylinja: rutenettet der er
+fire brede, og en niende knapp ville gitt tre rader med én foreldreløs — og
+presset versjonsmerket ned i knappene på de laveste skjermene.
+
+**Nullstill** krever to trykk. Den sletter noe som ikke kan hentes fram igjen,
+og står rett ved siden av **Lukk**.
 
 ## Hvor tallet ellers finnes
 
@@ -351,9 +377,10 @@ seks nivåene ett bånd.
 | `js/solver.js` | De tolv løseteknikkene, forklaringene og graderingen |
 | `js/generator.js` | Lager entydige brett på ønsket nivå |
 | `js/tema.js` | Fargeoppsettene — settes før første maling |
-| `js/app.js` | Grensesnitt, tastatur, angrelogg, lagring |
+| `js/statistikk.js` | Løste brett, beste tid og snitt per nivå |
+| `js/app.js` | Grensesnitt, tastatur, angrelogg, klokke, lagring |
 | `lag_ikon.py` | Lager appikonene (krever Pillow) |
-| `tester/` | Femten prøver i ekte nettleser — `tester/README.md` |
+| `tester/` | Seksten prøver i ekte nettleser — `tester/README.md` |
 
 ### Løseteknikkene
 

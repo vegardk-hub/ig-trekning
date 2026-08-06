@@ -219,6 +219,10 @@ body {
 
 .prikk { opacity: .5; margin: 0 .3em; }
 
+/* Tabulartall: 1 er smalere enn 8 i systemfontene, så uten dem rykker teksten
+   rundt klokka sidelengs hvert sekund. */
+#meta-tid { font-variant-numeric: tabular-nums; }
+
 /* ---------- Brett ---------- */
 
 .brett {
@@ -408,7 +412,7 @@ body {
    forsvunnet stående. Tekstene skjules hver for seg, og knappen ligger utenfor
    flyten — så toppen tar fortsatt ingen plass her. */
 .sidetopp { display: contents; }
-.sidetittel, .side-nivaa, .side-igjen { display: none; }
+.sidetittel, .side-nivaa, .side-igjen, .side-tid { display: none; }
 /* .side setter display: flex — derfor .side.hoyre her, ellers avgjør
    rekkefølgen i fila hvem som vinner. */
 .side.hoyre { display: none; }
@@ -709,6 +713,57 @@ body {
 .nivaaknapp strong { font-size: 1.02rem; }
 .nivaaknapp span { font-size: .84rem; color: var(--blekk-svak); }
 
+/* To knapper på én rad. Like brede uansett hvor ulike ordene er, så raden ikke
+   ser skjev ut — «Statistikk» er dobbelt så langt som «Avbryt». */
+.modal-knapper {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* ---------- Statistikk ---------- */
+
+/* Fire spalter med fast forhold, ikke auto: tallene kommer inn etter hvert som
+   det spilles, og en auto-bredde ville flyttet spaltene under seg hver gang et
+   nivå gikk fra «–» til et klokkeslett. */
+.statliste {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 6px 12px;
+  align-items: baseline;
+  margin-bottom: 14px;
+  font-size: .9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stathode {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--blekk-svak);
+}
+
+.statnavn { font-weight: 600; color: var(--blekk); }
+.stattall { color: var(--blekk); text-align: right; }
+.stattall.tom { color: var(--blekk-svak); opacity: .6; }
+
+.ferdig-tid {
+  margin: 6px 0 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--blekk);
+  font-variant-numeric: tabular-nums;
+}
+
+.ferdig-rekord {
+  margin: 2px 0 0;
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--aksent);
+}
+
+.ferdig-rekord[hidden] { display: none; }
+
 .spinner {
   width: 34px;
   height: 34px;
@@ -863,8 +918,13 @@ body {
 
   /*
    * Fast høyde, ikke min-height: venstre topp er én linje med appnavnet,
-   * høyre er to linjer med nivå og teller. Uten en felles høyde ville
+   * høyre er to linjer med nivå, teller og tid. Uten en felles høyde ville
    * tastaturene under dem stått i hver sin høyde.
+   *
+   * Og høyden er 32, ikke mer: den er tatt rett fra brettet, som deler resten
+   * mellom tallene og verktøyene. Et forsøk på 44 for å få tiden på sin egen
+   * linje presset tallknappene ned til 30 px på 568×320 — under det man treffer
+   * med tommelen. Tiden deler derfor linje med telleren i stedet.
    */
   .sidetopp {
     display: flex;
@@ -880,8 +940,8 @@ body {
 
   /* Så stort som spalta tåler: navnet skalerer med sidepanelet i stedet for å
      stå med en fast, liten størrelse som forsvinner på en armlengdes avstand. */
-  /* Stående er de tre skjult hver for seg — her tas de fram igjen. */
-  .sidetittel, .side-nivaa, .side-igjen { display: block; }
+  /* Stående er de fire skjult hver for seg — her tas de fram igjen. */
+  .sidetittel, .side-nivaa, .side-igjen, .side-tid { display: block; }
 
   .sidetittel {
     font-size: min(1.35rem, calc(var(--side) * .125));
@@ -892,11 +952,22 @@ body {
     white-space: nowrap;
   }
 
-  /* Nivå og teller over de store tallene. To linjer: «Vanskelig · 45 igjen»
-     på én måtte settes for smått til å leses i en så smal spalte. */
-  .hoyre .sidetopp { flex-direction: column; justify-content: center; align-items: center; }
+  /* Nivå, teller og tid over de store tallene. To linjer: «Vanskelig · 45 igjen»
+     på én måtte settes for smått til å leses i en så smal spalte.
+     Nivået tar hele bredden og skyver dermed de to andre ned på hver sin linje —
+     de er korte nok til å dele en. */
+  .hoyre .sidetopp {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    align-content: center;
+    gap: 0 7px;
+  }
 
   .side-nivaa {
+    flex-basis: 100%;
+    text-align: center;
     font-size: .84rem;
     font-weight: 600;
     color: var(--blekk);
@@ -906,6 +977,15 @@ body {
   .side-igjen {
     font-size: .76rem;
     color: var(--blekk-svak);
+    white-space: nowrap;
+  }
+
+  /* Tabulartall: uten dem hopper klokka sidelengs hvert sekund, fordi 1 er
+     smalere enn 8 i Segoe UI og de fleste andre systemfontene. */
+  .side-tid {
+    font-size: .72rem;
+    color: var(--blekk-svak);
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
 
