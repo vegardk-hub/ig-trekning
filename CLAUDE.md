@@ -163,9 +163,15 @@ går gjennom resten.
 
 Vulkanen i midten er **en regel, ikke pynt**: en ferdigsortert flaske tappes
 ned i den og står igjen tom, og brettet er løst når alle flaskene er tomme.
-Det er den gjenbruken som bærer vanskegraden — fra nivå 13 er det bare én tom
-flaske, og brettet løsner først når den første fargen er i havn. Fjerner du
-tappingen, blir alt fra nivå 13 og opp uløselig.
+Det er den gjenbruken som bærer vanskegraden — fra nivå 16 er det bare én tom
+flaske, og brettet løsner først når den første flasken er i havn. Fjerner du
+tappingen, blir alt fra nivå 16 og opp uløselig.
+
+**`farger` og `fylte` er to forskjellige tall.** En farge kan fylle flere
+flasker: nivå 1 har fem farger fordelt på åtte flasker. Det var ikke slik i
+starten, og det var feilen — med én flaske per farge er brettets størrelse
+låst til fargeantallet, og fem farger ga et brett femåringen var lei etter to
+dager. Vulkanen har ett lag per **fylt flaske**, ikke per farge.
 
 `flaskespill.html` i rota er **generert**, ikke skrevet. Retter du noe i
 `pwa-flasker/`, kjør `python pwa-flasker/lag_enkeltfil.py` så enkeltfila følger

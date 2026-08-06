@@ -188,27 +188,43 @@ var Spill = (function () {
 
   /* ---------- nivåene ---------- */
 
-  // Kurven er satt etter at femåringen gikk lei: den gamle brukte tjue nivåer
-  // på å komme til fem farger. Nå er den der på nivå sju.
+  // En farge fyller flere flasker.
   //
-  // Den harde skruen er den siste tomme flasken, ikke fargene. Med to tomme
-  // kan man prøve seg fram nesten fritt; med én må hvert trekk peke mot en
-  // farge som blir ferdig, for det er tappingen som gir plassen tilbake.
-  // Under én tom flaske finnes det ingen lovlige trekk i det hele tatt.
+  // Før hadde hvert nivå én flaske per farge, og da er brettets størrelse låst
+  // til fargeantallet: fem farger ga fem fulle flasker, og det var for lite.
+  // Nå er `fylte` og `farger` uavhengige. Fem farger fordelt på åtte flasker
+  // betyr at tre av fargene skal samles fra to flasker hver — og da må man
+  // velge hvilken flaske hver farge skal ende i, i stedet for bare å rydde.
+  //
+  // Den harde skruen er fortsatt den siste tomme flasken. Med to tomme kan man
+  // prøve seg fram nesten fritt; med én må hvert trekk peke mot en flaske som
+  // blir full, for det er tappingen som gir plassen tilbake. Under én tom
+  // flaske finnes det ingen lovlige trekk i det hele tatt.
+  //
+  // `fylte` må være minst `farger`, ellers blir en farge til overs.
   function nivaaOppsett(n) {
     var t;
-    if (n <= 2)       t = { farger: 3,  kapasitet: 3, tomme: 2 };
-    else if (n <= 4)  t = { farger: 4,  kapasitet: 3, tomme: 2 };
-    else if (n <= 6)  t = { farger: 4,  kapasitet: 4, tomme: 2 };
-    else if (n <= 9)  t = { farger: 5,  kapasitet: 4, tomme: 2 };
-    else if (n <= 12) t = { farger: 6,  kapasitet: 4, tomme: 2 };
-    else if (n <= 16) t = { farger: 6,  kapasitet: 4, tomme: 1 };
-    else if (n <= 20) t = { farger: 7,  kapasitet: 4, tomme: 1 };
-    else if (n <= 25) t = { farger: 8,  kapasitet: 4, tomme: 1 };
-    else if (n <= 31) t = { farger: 9,  kapasitet: 4, tomme: 1 };
-    else if (n <= 38) t = { farger: 10, kapasitet: 4, tomme: 1 };
-    else              t = { farger: 10, kapasitet: 5, tomme: 1 };
+    if (n <= 2)       t = { farger: 5,  fylte: 8,  kapasitet: 4, tomme: 2 };
+    else if (n <= 4)  t = { farger: 6,  fylte: 9,  kapasitet: 4, tomme: 2 };
+    else if (n <= 6)  t = { farger: 6,  fylte: 10, kapasitet: 4, tomme: 2 };
+    else if (n <= 9)  t = { farger: 7,  fylte: 10, kapasitet: 4, tomme: 2 };
+    else if (n <= 12) t = { farger: 7,  fylte: 11, kapasitet: 4, tomme: 2 };
+    else if (n <= 15) t = { farger: 8,  fylte: 11, kapasitet: 4, tomme: 2 };
+    else if (n <= 18) t = { farger: 8,  fylte: 11, kapasitet: 4, tomme: 1 };
+    else if (n <= 22) t = { farger: 9,  fylte: 12, kapasitet: 4, tomme: 1 };
+    else if (n <= 26) t = { farger: 9,  fylte: 12, kapasitet: 5, tomme: 1 };
+    else if (n <= 31) t = { farger: 10, fylte: 12, kapasitet: 5, tomme: 1 };
+    else              t = { farger: 10, fylte: 13, kapasitet: 5, tomme: 1 };
     return t;
+  }
+
+  // Hvor mange flasker hver farge skal fylle. Alle får minst én, og resten
+  // deles ut på rundgang: åtte flasker på fem farger blir 2-2-2-1-1.
+  function porsjoner(farger, fylte) {
+    var ut = [];
+    for (var i = 0; i < farger; i++) ut.push(1);
+    for (var r = farger; r < fylte; r++) ut[r % farger]++;
+    return ut;
   }
 
   function lagNivaa(n) {
@@ -216,15 +232,18 @@ var Spill = (function () {
     var tilfeldig = lagTilfeldig(n * 7919 + 13);
     var reserve = null;
 
+    var deler = porsjoner(o.farger, o.fylte);
+
     for (var forsok = 0; forsok < 400; forsok++) {
       var enheter = [];
       for (var f = 0; f < o.farger; f++) {
-        for (var i = 0; i < o.kapasitet; i++) enheter.push(f);
+        // deler[f] flasker med denne fargen, altså like mange porsjoner.
+        for (var i = 0; i < deler[f] * o.kapasitet; i++) enheter.push(f);
       }
       stokk(enheter, tilfeldig);
 
       var flasker = [];
-      for (var b = 0; b < o.farger; b++) {
+      for (var b = 0; b < o.fylte; b++) {
         flasker.push(enheter.slice(b * o.kapasitet, (b + 1) * o.kapasitet));
       }
       for (var t = 0; t < o.tomme; t++) flasker.push([]);
@@ -239,16 +258,18 @@ var Spill = (function () {
 
       var fasit = loes(flasker, o.kapasitet);
       if (!fasit) continue;
+      // `lag` er hvor mange lag vulkanen rommer: én per flaske som skal tappes,
+      // ikke én per farge – en farge som fyller to flasker, tappes to ganger.
       var svar = {
-        flasker: flasker, kapasitet: o.kapasitet, farger: o.farger, fasit: fasit
+        flasker: flasker, kapasitet: o.kapasitet, lag: o.fylte, fasit: fasit
       };
       // Krev litt substans, men ta til takke med hva vi har om det drar ut.
-      if (fasit.length >= o.farger + 2) return svar;
+      if (fasit.length >= o.fylte + 4) return svar;
       if (!reserve) reserve = svar;
     }
 
     return reserve ||
-      { flasker: [[0, 1, 0], [1, 0, 1], []], kapasitet: 3, farger: 2, fasit: null };
+      { flasker: [[0, 1, 0], [1, 0, 1], []], kapasitet: 3, lag: 2, fasit: null };
   }
 
   return {

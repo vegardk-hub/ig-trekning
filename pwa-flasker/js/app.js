@@ -99,7 +99,7 @@
   var tilstand = {
     nivaa: 1,
     kapasitet: 4,
-    farger: 3,          // hvor mange lag vulkanen rommer
+    lag: 8,             // hvor mange lag vulkanen rommer = antall fylte flasker
     flasker: [],
     vulkan: [],         // fargene som er tappet ned, i rekkefølge
     start: [],
@@ -136,7 +136,7 @@
     var nivaa = Spill.lagNivaa(n);
     tilstand.nivaa = n;
     tilstand.kapasitet = nivaa.kapasitet;
-    tilstand.farger = nivaa.farger;
+    tilstand.lag = nivaa.lag;
     tilstand.flasker = Spill.kopi(nivaa.flasker);
     tilstand.start = Spill.kopi(nivaa.flasker);
     tilstand.vulkan = [];
@@ -199,7 +199,8 @@
     '</svg>';
 
   // Flaskene står rundt vulkanen: en stabel på hver side og en rad under.
-  // Sidene tar høyst fire hver, ellers blir stablene høyere enn skjermen.
+  // Sidene tar høyst fire hver – en femte gjør stablene høyere enn skjermen –
+  // så fra fjorten flasker og opp vokser bunnraden i stedet.
   function fordelFlasker(antall) {
     var side = Math.min(4, Math.floor(antall / 3));
     var bunn = antall - side * 2;
@@ -332,7 +333,7 @@
   /* ---------- tegning: vulkanen ---------- */
 
   function lagHoyde() {
-    return (FYLL_BUNN - FYLL_TOPP) / tilstand.farger;
+    return (FYLL_BUNN - FYLL_TOPP) / tilstand.lag;
   }
 
   function lagRekt(farge, nr, andel) {

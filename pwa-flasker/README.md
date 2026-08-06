@@ -27,24 +27,42 @@ Derfor er den harde skruen den siste tomme flasken, ikke antall farger. Under
 én tom flaske finnes det ingen lovlige trekk i det hele tatt — alle flasker er
 fulle, og ingenting kan helles noe sted.
 
+## En farge fyller flere flasker
+
+Dette er det som avgjør hvor stort et brett kan bli. Med én flaske per farge
+er brettets størrelse låst til fargeantallet: fem farger gir fem fulle
+flasker, og det er for lite til at et barn som har knekt spillet, orker det.
+
+Derfor er `farger` og `fylte` uavhengige. Nivå 1 har **fem farger fordelt på
+åtte flasker**, så tre av fargene skal samles fra to flasker hver. Da holder
+det ikke å rydde — man må velge hvilken flaske hver farge skal ende i, og en
+farge som er spredd på tre flasker må samles før noen av dem kan tappes.
+
+Vulkanen har ett lag per **flaske** som skal tappes, ikke per farge: en farge
+som fyller to flasker, tappes to ganger.
+
 ## Nivåene
 
-| Nivå | Farger | Lag per flaske | Tomme flasker |
-| --- | --- | --- | --- |
-| 1–2 | 3 | 3 | 2 |
-| 3–4 | 4 | 3 | 2 |
-| 5–6 | 4 | 4 | 2 |
-| 7–9 | 5 | 4 | 2 |
-| 10–12 | 6 | 4 | 2 |
-| 13–16 | 6 | 4 | **1** |
-| 17–20 | 7 | 4 | 1 |
-| 21–25 | 8 | 4 | 1 |
-| 26–31 | 9 | 4 | 1 |
-| 32–38 | 10 | 4 | 1 |
-| 39+ | 10 | **5** | 1 |
+| Nivå | Farger | Fylte flasker | Lag per flaske | Tomme | Flasker i alt |
+| --- | --- | --- | --- | --- | --- |
+| 1–2 | 5 | 8 | 4 | 2 | 10 |
+| 3–4 | 6 | 9 | 4 | 2 | 11 |
+| 5–6 | 6 | 10 | 4 | 2 | 12 |
+| 7–9 | 7 | 10 | 4 | 2 | 12 |
+| 10–12 | 7 | 11 | 4 | 2 | 13 |
+| 13–15 | 8 | 11 | 4 | 2 | 13 |
+| 16–18 | 8 | 11 | 4 | **1** | 12 |
+| 19–22 | 9 | 12 | 4 | 1 | 13 |
+| 23–26 | 9 | 12 | **5** | 1 | 13 |
+| 27–31 | 10 | 12 | 5 | 1 | 13 |
+| 32+ | 10 | 13 | 5 | 1 | 14 |
 
-Målt over nivå 1–50: alle løsbare, generering på 1,3 ms i snitt og 12 ms på
-det verste. Løsningen vokser fra 5 trekk på nivå 1 til rundt 80 på nivå 40.
+Målt over nivå 1–40: alle løsbare, generering på 0,5 ms i snitt og 4 ms på det
+verste. Løsningen vokser fra **25 trekk på nivå 1** til rundt 97 på nivå 40.
+
+`fylte` må alltid være minst `farger`, ellers blir en farge til overs. Fire
+flasker per sidestabel er taket — en femte gjør stablene høyere enn skjermen —
+så fra fjorten flasker og opp må bunnraden vokse i stedet.
 
 ## Kjøre spillet
 
