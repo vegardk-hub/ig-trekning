@@ -357,30 +357,55 @@ nøyaktig ett sted og ingen mediaspørring skal holdes i takt.
 Nivået er ikke antall ledetråder, men **den vanskeligste teknikken som faktisk
 trengs** for å komme i mål med ren logikk:
 
-| Nivå | Krever opp til |
-| --- | --- |
-| Lett | Nakne og skjulte enere |
-| Middels | Låste kandidater (peker og krav) |
-| Vanskelig | Nakne og skjulte par |
-| Ekspert | Tripler, kvadrupler, X-Wing, XY-Wing, sverdfisk |
+| Nivå | Teknikknivå | Krever opp til |
+| --- | --- | --- |
+| Lett | 0–2 | Nakne og skjulte enere |
+| Middels | 3 | Låste kandidater (peker og krav) |
+| Krevende | 4 | Nakne par |
+| Vanskelig | 5 | Skjulte par |
+| Beinhard | 6–11 | Tripler, kvadrupler, X-Wing, XY-Wing, sverdfisk |
+| Ekspert | 12–13 | XYZ-Wing, W-Wing |
+| Mester | 14 | Farging |
 
-Grensene er satt etter måling, ikke etter hvor avanserte teknikkene høres ut:
-tripler, kvadrupler og X-Wing blir sjelden *nødvendige* – noe enklere holder
-nesten alltid – mens XY-Wing er den vanlige toppteknikken. Derfor deler de siste
-seks nivåene ett bånd.
+Grensene er satt etter måling, ikke etter hvor avanserte teknikkene høres ut.
+`tester/maaling.js` graver tusenvis av brett og skriver ut hvilken teknikk som
+ble den vanskeligste hvert av dem krevde. Fordelingen er svært skjev:
+
+| Teknikk | Andel brett der den er den vanskeligste som trengs |
+| --- | --- |
+| Skjult ener | 43,1 % |
+| Låst kandidat | 12,2 % |
+| W-Wing | 6,6 % |
+| XY-Wing | 3,9 % |
+| Skjult par | 2,8 % |
+| Farging | 2,4 % |
+| Nakent par | 2,1 % |
+| Tripler | 0,6 % |
+| XYZ-Wing | 0,4 % |
+| Nakent kvadruppel, X-Wing, sverdfisk | under 0,1 % hver |
+
+Det er derfor båndene er så ujevne. Nakent kvadruppel, X-Wing og sverdfisk blir
+nesten aldri *nødvendige* — noe enklere holder — så de kan ikke bære et nivå
+alene og deler ett bånd med triplene og XY-Wing. W-Wing er derimot tett nok til
+å bære Ekspert alene.
+
+Endrer du teknikklista, må båndene måles på nytt. `tester/nivaaer.js` er
+vaktposten: den ber generatoren om brett på hvert nivå og sjekker at de faktisk
+lander i sitt eget bånd. Går et bånd tomt, bruker generatoren opp forsøkene og
+leverer stille «det nærmeste den har» — altså forrige nivå, under nytt navn.
 
 ## Under panseret
 
 | Fil | Ansvar |
 | --- | --- |
 | `js/core.js` | Rutenett, enheter, kandidater, brute force-løser med propagering |
-| `js/solver.js` | De tolv løseteknikkene, forklaringene og graderingen |
+| `js/solver.js` | De fjorten løseteknikkene, forklaringene og graderingen |
 | `js/generator.js` | Lager entydige brett på ønsket nivå |
 | `js/tema.js` | Fargeoppsettene — settes før første maling |
 | `js/statistikk.js` | Løste brett, beste tid og snitt per nivå |
 | `js/app.js` | Grensesnitt, tastatur, angrelogg, klokke, lagring |
 | `lag_ikon.py` | Lager appikonene (krever Pillow) |
-| `tester/` | Seksten prøver i ekte nettleser — `tester/README.md` |
+| `tester/` | Atten prøver — `tester/README.md` |
 
 ### Løseteknikkene
 
@@ -388,7 +413,18 @@ Prøves i stigende rekkefølge, så hintet alltid er det enkleste som finnes:
 
 1. Naken ener · 2. Skjult ener · 3. Låst kandidat (peker og krav) ·
 4. Nakent par · 5. Skjult par · 6. Nakent trippel · 7. Skjult trippel ·
-8. Nakent kvadruppel · 9. X-Wing · 10. XY-Wing · 11. Sverdfisk
+8. Nakent kvadruppel · 9. X-Wing · 10. XY-Wing · 11. Sverdfisk ·
+12. XYZ-Wing · 13. W-Wing · 14. Farging
+
+De tre siste kom til for å gi rom over Ekspert. Med elleve teknikker var en
+tredjedel av alle gravde brett uløselige for løseren — og et nivå som krever mer
+enn Ekspert måtte hente brettene sine derfra. Med fjorten er en fjerdedel igjen
+utenfor, så det finnes fortsatt rom for et nivå over Mester den dagen det trengs.
+
+**Farging** er den eneste av dem som følger en kjede i stedet for en figur: ett
+tall om gangen, gjennom enhetene der tallet bare kan stå to steder. Cellene
+deler seg i to lag der nøyaktig ett er det sanne, og det gir to slutninger uten
+at man vet hvilket lag som vinner.
 
 ### Generatoren
 

@@ -116,6 +116,13 @@ graderingen, generatoren og hintet i tre trinn. Les den før du endrer
 `solver.js` eller `generator.js`; vanskelighetsgradene er satt etter måling,
 ikke etter magefølelse, så de tåler ikke å justeres på slump.
 
+De sju nivåene hviler på en svært skjev fordeling: noen teknikker er den
+vanskeligste som trengs i 40 % av brettene, andre i under 0,1 %. Legger du til
+en teknikk, flytter du fordelingen for alle nivåene over den. Kjør
+`node pwa-sudoku/tester/maaling.js 1500`, sett båndene etter tallene, og la
+`nivaaer` bekrefte at generatoren treffer dem. Et tomt bånd gir ingen
+feilmelding — generatoren leverer stille forrige nivå under nytt navn.
+
 Appen er bygd for telefon først: `dvh`-høyder, `viewport-fit=cover`,
 `touch-action`, og én enkelt oppskalering på `@media (min-width: 480px) and
 (min-height: 760px)`. Test endringer i grensesnittet i en smal viewport.

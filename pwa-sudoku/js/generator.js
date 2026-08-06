@@ -16,20 +16,36 @@
   const S = global.SudokuSolver;
 
   // Intervaller over høyeste teknikknivå som kreves for å løse puslespillet.
+  // Målt, ikke gjettet — se kommentaren ved NIVAAER i solver.js, og
+  // tester/maaling.js, som skriver ut fordelingen båndene er hentet fra.
   const OMRAADER = {
-    lett:      { min: 0, maks: 2 },
-    middels:   { min: 3, maks: 3 },
-    vanskelig: { min: 4, maks: 5 },
-    ekspert:   { min: 6, maks: 11 }
+    lett:      { min: 0,  maks: 2 },
+    middels:   { min: 3,  maks: 3 },
+    krevende:  { min: 4,  maks: 4 },
+    vanskelig: { min: 5,  maks: 5 },
+    beinhard:  { min: 6,  maks: 11 },
+    ekspert:   { min: 12, maks: 13 },
+    mester:    { min: 14, maks: 14 }
   };
 
-  const MAKS_FORSOK = 200;
+  // De tre hardeste graves asymmetrisk: et 180°-symmetrisk brett blir grunnere,
+  // og kommer sjelden opp i teknikkene de båndene krever.
+  const ASYMMETRISK = new Set(['beinhard', 'ekspert', 'mester']);
+
+  /*
+   * 500, ikke 200: med sju nivåer er båndene smalere, og Krevende og Vanskelig
+   * er bare ett teknikknivå brede. På 200 var det forsøkstallet — ikke
+   * tidsbudsjettet — som ga opp først, og da falt generatoren tilbake på «det
+   * nærmeste den har»: et brett ett nivå for lett, i rundt 2 % av tilfellene.
+   * Ventetiden er uendret, for TIDSBUDSJETT_MS bryter fortsatt av like tidlig.
+   */
+  const MAKS_FORSOK = 500;
   const PROVER_PER_RUNDE = 8;
   const PAUSE_ETTER_MS = 30;      // gi etter til nettleseren så ofte, så spinneren går rundt
 
   // Budsjettene teller regnetid, ikke klokketid: pausene mellom forsøkene kan
   // strupes kraftig av nettleseren hvis fanen ligger i bakgrunnen.
-  const TIDSBUDSJETT_MS = 2500;   // etter dette tar vi det nærmeste vi har
+  const TIDSBUDSJETT_MS = 3500;   // etter dette tar vi det nærmeste vi har
   const JUSTER_BUDSJETT_MS = 400; // per nedstigning
 
   const pause = () => new Promise(r => setTimeout(r, 0));
@@ -97,12 +113,13 @@
 
   /**
    * Lager et puslespill på ønsket nivå.
-   * @param {string} nivaaId  lett | middels | vanskelig | ekspert
+   * @param {string} nivaaId  lett | middels | krevende | vanskelig |
+   *                          beinhard | ekspert | mester
    * @param {function} [onProgress] kalles med (forsøk, MAKS_FORSOK)
    */
   async function generate(nivaaId, onProgress) {
     const omraade = OMRAADER[nivaaId] || OMRAADER.middels;
-    const symmetric = nivaaId !== 'ekspert';
+    const symmetric = !ASYMMETRISK.has(nivaaId);
     const rng = Math.random;
     let brukt = 0, sidenPause = 0, naermest = null;
 

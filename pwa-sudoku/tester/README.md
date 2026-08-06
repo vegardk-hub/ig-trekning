@@ -1,10 +1,16 @@
 # Prøver
 
-Seksten prøver som kjører appen i en ekte nettleser og måler den. De finnes fordi
-det meste av det som har gått galt i denne appen ikke var logikk, men geometri og
+Atten prøver, i to slag.
+
+**Seksten kjører appen i en ekte nettleser** og måler den. De finnes fordi det
+meste av det som har gått galt i denne appen ikke var logikk, men geometri og
 farge: en etikett som sprakk i en smal kolonne, et tall som falt under
 kontrastgrensa på flata det sto på, en knapp som lå bak et annet element og
 derfor ikke lot seg trykke. Slikt ser man ikke i koden.
+
+**To regner bare** — `teknikker` og `nivaaer`. De trenger verken nettleser eller
+server, og går først i settet: er løseren gal eller nivåene tomme, sier resten
+ingenting. `maaling.js` er ikke en prøve, men verktøyet båndene måles med.
 
 ## Kjøring
 
@@ -12,8 +18,8 @@ derfor ikke lot seg trykke. Slikt ser man ikke i koden.
 NODE_PATH=/opt/node22/lib/node_modules node pwa-sudoku/tester/kjor.js
 ```
 
-`kjor.js` starter serveren selv og rydder etter seg. Hele settet tar rundt 40
-sekunder. Én eller flere enkeltprøver:
+`kjor.js` starter serveren selv og rydder etter seg. Hele settet tar knappe
+minuttet. Én eller flere enkeltprøver:
 
 ```
 node pwa-sudoku/tester/kjor.js tema liggende
@@ -27,6 +33,8 @@ repoet skal fortsatt kunne åpnes uten å installere noe.
 
 | Prøve | Spørsmålet den svarer på |
 | --- | --- |
+| `teknikker` | Stryker noen løseteknikk et tall som faktisk hørte hjemme der? Måles mot fasiten, steg for steg. |
+| `nivaaer` | Treffer generatoren båndet den blir bedt om — på alle sju nivåene? |
 | `fyllmodus` | Setter fire trykk inn fire like tall? Angrer den ett om gangen? Får etikettene på verktøyknappene plass på ni skjermer? |
 | `auto` | Går knappen riktig runde: fyller → manuell → tomt? |
 | `boks` | Rydder et innsatt tall bort blyantmerkene med samme tall i boksen? |
@@ -58,3 +66,11 @@ repoet skal fortsatt kunne åpnes uten å installere noe.
 - **Farger måles, ikke vurderes.** `tema` regner WCAG-kontrast og
   nyanseavstander. Skal en farge endres, kjør prøven først og se hva den sier —
   tallene i `../README.md` er hentet derfra.
+- **Vanskelighetsgradene måles også.** Legger du til en løseteknikk, flytter du
+  fordelingen for alle nivåene over den. Kjør `node tester/maaling.js 1500`, les
+  hvor brettene faktisk havner, og sett båndene deretter — så `nivaaer`. Et bånd
+  som er gått tomt, gir ingen feilmelding i appen: generatoren bruker opp
+  forsøkene sine og leverer forrige nivå under nytt navn.
+- **`nivaaer` speiler båndene med vilje.** Den leser dem ikke fra
+  `generator.js` — en prøve som henter fasiten sin fra koden den prøver, godtar
+  enhver endring i den. Endrer du OMRAADER, må du endre begge steder.

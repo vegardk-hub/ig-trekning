@@ -688,30 +688,48 @@ body {
   color: var(--blekk-svak);
 }
 
+/* Grid, ikke flex-kolonne: liggende går lista i to spalter, og da er det bare
+   grid-template-columns som skiller de to oppsettene. */
 .nivaaliste {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 14px;
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
+/*
+ * Navnet og teknikken står på samme linje, ikke under hverandre. Sju nivåer mot
+ * fire gjorde kortet 592 px høyt på 320×568, der det er 528 å ta av — og et
+ * kort som må skrolles for å nå det nederste nivået, skjuler nettopp de nye.
+ * Én linje per nivå sparer 112 px, og forklaringene får bli med videre.
+ */
 .nivaaknapp {
   font: inherit;
   text-align: left;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   background: var(--knapp);
   color: var(--blekk);
   border: 1px solid var(--knapp-kant);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   cursor: pointer;
 }
 
 .nivaaknapp:hover { border-color: var(--aksent); }
-.nivaaknapp strong { font-size: 1.02rem; }
-.nivaaknapp span { font-size: .84rem; color: var(--blekk-svak); }
+.nivaaknapp strong { font-size: .98rem; flex: none; }
+
+/* Teknikken viker først når spalta blir trang: navnet er det man velger etter. */
+.nivaaknapp span {
+  font-size: .78rem;
+  color: var(--blekk-svak);
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* To knapper på én rad. Like brede uansett hvor ulike ordene er, så raden ikke
    ser skjev ut — «Statistikk» er dobbelt så langt som «Avbryt». */
@@ -873,10 +891,37 @@ body {
   .modal-kort { padding: 14px 16px; }
   .modal-kort h2 { font-size: 1.12rem; }
   .modal-under { margin-bottom: 10px; font-size: .84rem; }
-  .nivaaliste { gap: 6px; margin-bottom: 10px; }
-  .nivaaknapp { padding: 7px 10px; }
-  .nivaaknapp strong { font-size: .95rem; }
-  .nivaaknapp span { font-size: .78rem; }
+  /* Sju nivåer under hverandre er høyere enn en liggende telefon. Skjermen er
+     bred her, så lista går i to spalter — samme grep som fargeoppsettene.
+     Mester tar begge, siden sju er et oddetall.
+     Kortet er bredere enn de andre av samme grunn: to spalter i et 380 px kort
+     ga 153 px til teksten, og «Tripler, X-Wing og XY-Wing» trenger 154. */
+  #nytt-panel .modal-kort { max-width: 460px; }
+
+  /* Innledninga viker liggende. Kortet ble 337 px i en 320 px høy skjerm med
+     sju nivåer, og hver linje tekst her koster plass de faktisk skal velge
+     mellom — nivåknappene sier selv hvilke teknikker de krever. */
+  #nytt-panel .modal-under { display: none; }
+
+  .nivaaliste {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .nivaaknapp:last-child { grid-column: 1 / -1; }
+
+  /* Tilbake til navnet over teknikken: på én linje måtte de dele en halv
+     spaltebredde, og forklaringene ble kuttet med tre prikker. To spalter har
+     alt halvert antall rader, så høyden tåler den ekstra linja. */
+  .nivaaknapp {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 4px 9px;
+    gap: 0;
+  }
+  .nivaaknapp strong { font-size: .92rem; }
+  .nivaaknapp span { font-size: .74rem; text-align: left; }
 
   /* Fem oppsett under hverandre ga et kort på 460 px — halvannen skjermhøyde
      liggende, og da måtte man skrolle for å nå ✕ igjen. Skjermen er bred her,

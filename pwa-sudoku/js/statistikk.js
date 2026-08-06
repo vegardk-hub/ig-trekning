@@ -9,7 +9,11 @@
 (function () {
 
   const LAGER = 'sudoku-stat-v1';
-  const NIVAAER = ['lett', 'middels', 'vanskelig', 'ekspert'];
+  /* Samme rekkefølge som NIVAAER i solver.js. Gamle lagringer kjenner bare
+     fire av dem; de tre nye starter på null uten at noe må skrives om, siden
+     hent() alltid bygger alle sju og fyller på med det som finnes. */
+  const NIVAAER = ['lett', 'middels', 'krevende', 'vanskelig',
+                   'beinhard', 'ekspert', 'mester'];
 
   const tom = () => ({ lost: 0, beste: 0, sum: 0 });
 

@@ -101,7 +101,7 @@ const sek = t => {
   await page.click('#nytt-stat');
   sjekk('panelet åpner fra «Nytt spill»', await page.$eval('#stat-panel', e => !e.hidden));
   const rader = await page.$$eval('#statliste > *', e => e.length);
-  sjekk('lista har hode og fire nivåer', rader === 20, rader + ' ruter, ventet 20');
+  sjekk('lista har hode og sju nivåer', rader === 32, rader + ' ruter, ventet 32');
   const middelsrad = await page.$$eval('#statliste .stattall', e => e.slice(3, 6).map(x => x.textContent));
   sjekk('middels står med ett løst brett', middelsrad[0] === '1', middelsrad.join(' / '));
 
@@ -130,19 +130,49 @@ const sek = t => {
     await page.click('#stat-x');
   }
 
-  // «Nytt spill» fikk en knapp til. Den skulle dele rad med «Avbryt», ikke
-  // legge seg under den og gjøre kortet høyere.
+  /*
+   * «Nytt spill» er den trangeste dialogen: sju nivåer, en knapp til, og
+   * liggende bare 320 px å ta av. Den måles i begge formater — en måling bare
+   * stående slapp gjennom et kort som lå 35 px utenfor liggende, der lista
+   * går i to spalter og altså har helt andre høyder.
+   */
+  await page.evaluate(() => { document.querySelector('#nytt-panel').hidden = false; });
+  for (const [w, h, navn] of [[320, 568, 'stående'], [360, 640, 'stående'],
+                              [568, 320, 'liggende'], [667, 375, 'liggende']]) {
+    await page.setViewportSize({ width: w, height: h });
+    const k = await page.evaluate(() => {
+      const e = document.querySelector('#nytt-panel .modal-kort').getBoundingClientRect();
+      return { topp: e.top, bunn: e.bottom, h: e.height, vh: window.innerHeight };
+    });
+    sjekk(`${navn} ${w}×${h}: hele «Nytt spill» er synlig`,
+          k.topp >= -0.5 && k.bunn <= k.vh + 0.5,
+          `kortet er ${k.h.toFixed(0)} px, ${k.topp.toFixed(0)}–${k.bunn.toFixed(0)} av ${k.vh}`);
+  }
+
   await page.setViewportSize({ width: 320, height: 568 });
-  const nytt = await page.evaluate(() => {
-    const e = document.querySelector('#nytt-panel .modal-kort').getBoundingClientRect();
+  const sammeRad = await page.evaluate(() => {
     const s = document.querySelector('#nytt-stat').getBoundingClientRect();
     const a = document.querySelector('#nytt-avbryt').getBoundingClientRect();
-    return { topp: e.top, bunn: e.bottom, vh: window.innerHeight, sammeRad: Math.abs(s.top - a.top) < 1 };
+    return Math.abs(s.top - a.top) < 1;
   });
-  sjekk('«Nytt spill» får fortsatt plass på 320×568',
-        nytt.topp >= -0.5 && nytt.bunn <= nytt.vh + 0.5,
-        `${nytt.topp.toFixed(0)}–${nytt.bunn.toFixed(0)} av ${nytt.vh}`);
-  sjekk('«Statistikk» og «Avbryt» står på samme rad', nytt.sammeRad);
+  sjekk('«Statistikk» og «Avbryt» står på samme rad', sammeRad);
+
+  // Alle sju nivåene skal være der, og i stigende rekkefølge.
+  const nivaaer = await page.$$eval('.nivaaknapp', els => els.map(e => e.dataset.nivaa));
+  sjekk('alle sju nivåene står i lista',
+        nivaaer.join(',') === 'lett,middels,krevende,vanskelig,beinhard,ekspert,mester',
+        nivaaer.join(', '));
+
+  // Teknikkforklaringene står på samme linje som navnet og har text-overflow:
+  // ellipsis. Blir spalta for trang, forsvinner de med tre prikker i stedet for
+  // å sprenge kortet — altså uten at noen annen måling oppdager det.
+  for (const [w, h] of [[320, 568], [360, 640], [568, 320]]) {
+    await page.setViewportSize({ width: w, height: h });
+    const kuttet = await page.$$eval('.nivaaknapp span',
+      els => els.filter(e => e.scrollWidth > Math.ceil(e.clientWidth) + 1).map(e => e.textContent));
+    sjekk(`${w}×${h}: ingen teknikkforklaring er kuttet`, kuttet.length === 0, kuttet.join(' | '));
+  }
+  await page.setViewportSize({ width: 320, height: 568 });
   await page.click('#nytt-avbryt');
 
   console.log('\n— Liggende: tiden er ikke klippet bort —');

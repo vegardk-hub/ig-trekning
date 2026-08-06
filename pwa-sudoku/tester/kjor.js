@@ -25,6 +25,10 @@ const PORT_KOPI = 8124;
  * en gang, og de tunge på layout og farger kommer etterpå.
  */
 const PROVER = [
+  // De to første trenger verken nettleser eller server — de regner. Derfor
+  // først: er løseren gal, sier resten av settet ingenting.
+  ['teknikker', 'teknikker: ingen teknikk stryker det rette tallet'],
+  ['nivaaer', 'nivaaer: generatoren treffer alle sju båndene'],
   ['fyllmodus', 'fyllmodus: tall i flere ruter, angre, etikettbredder'],
   ['auto', 'auto: fyller / manuell / tomt'],
   ['boks', 'boks: innsatt tall rydder merker i boksen'],

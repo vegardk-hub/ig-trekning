@@ -352,6 +352,198 @@
     return null;
   }
 
+  /* ---------- Teknikk 12: XYZ-Wing ---------- */
+
+  /*
+   * Som XY-Wing, men omdreiningspunktet har tre kandidater i stedet for to — og
+   * er derfor selv med på å tvinge fram tallet. Prisen er at cellene som rammes
+   * må se alle tre, ikke bare vingene.
+   */
+  function xyzWing(state) {
+    const bi = [], tri = [];
+    for (let i = 0; i < 81; i++) {
+      if (state.v[i]) continue;
+      const n = POPCOUNT[state.cand[i]];
+      if (n === 2) bi.push(i);
+      else if (n === 3) tri.push(i);
+    }
+    const erBi = new Set(bi);
+
+    for (const pivot of tri) {
+      const mp = state.cand[pivot];
+      const wings = PEERS[pivot].filter(i => erBi.has(i) && (state.cand[i] & ~mp) === 0);
+      for (const [w1, w2] of combinations(wings, 2)) {
+        const m1 = state.cand[w1], m2 = state.cand[w2];
+        if (m1 === m2) continue;
+        if ((m1 | m2) !== mp) continue;                   // vingene dekker de tre tallene
+        const shared = m1 & m2;
+        if (POPCOUNT[shared] !== 1) continue;
+        const z = firstDigit(shared);
+
+        const elim = [];
+        for (let i = 0; i < 81; i++) {
+          if (i === pivot || i === w1 || i === w2 || state.v[i]) continue;
+          if (!PEER_SETS[pivot].has(i) || !PEER_SETS[w1].has(i) || !PEER_SETS[w2].has(i)) continue;
+          if (state.cand[i] & (1 << z)) elim.push({ cell: i, digit: z });
+        }
+        if (!elim.length) continue;
+
+        return step({
+          id: 'xyz-wing', name: 'XYZ-Wing', level: 12,
+          cells: [pivot, w1, w2], digits: digitsOf(mp), eliminations: elim,
+          short: 'XYZ-Wing rundt ' + cellName(pivot) + ' fjerner ' + z + '.',
+          text: 'De tre cellene ' + cellName(pivot) + ', ' + cellName(w1) + ' og ' + cellName(w2) +
+                ' bruker bare tallene ' + listOf(digitsOf(mp)) + ' mellom seg, og ' + z +
+                ' står som mulighet i alle tre. Én av dem må bli ' + z +
+                ', så en celle som ser alle tre kan ikke være det: ' +
+                cellList(elim.map(e => e.cell)) + '.'
+        });
+      }
+    }
+    return null;
+  }
+
+  /* ---------- Teknikk 13: W-Wing ---------- */
+
+  /*
+   * To like tocifrede celler som ikke ser hverandre, bundet sammen av en sterk
+   * lenke på det ene tallet. Da må minst én av dem bli det andre tallet — uten
+   * at man vet hvilken, som er hele poenget.
+   */
+  function wWing(state) {
+    const bi = [];
+    for (let i = 0; i < 81; i++) if (!state.v[i] && POPCOUNT[state.cand[i]] === 2) bi.push(i);
+
+    for (const [a, b] of combinations(bi, 2)) {
+      if (state.cand[a] !== state.cand[b]) continue;
+      if (PEER_SETS[a].has(b)) continue;
+      const ds = digitsOf(state.cand[a]);
+
+      for (const x of ds) {
+        const y = ds[0] === x ? ds[1] : ds[0];
+        for (const u of UNITS) {
+          const spots = spotsFor(state, u.cells, x);
+          if (!spots || spots.length !== 2) continue;
+          const [p, q] = spots;
+          if (p === a || p === b || q === a || q === b) continue;
+          // Den ene enden må se den ene cella, den andre enden den andre.
+          const rett = PEER_SETS[p].has(a) && PEER_SETS[q].has(b);
+          const vendt = PEER_SETS[p].has(b) && PEER_SETS[q].has(a);
+          if (!rett && !vendt) continue;
+
+          const elim = [];
+          for (let i = 0; i < 81; i++) {
+            if (i === a || i === b || state.v[i]) continue;
+            if (!PEER_SETS[a].has(i) || !PEER_SETS[b].has(i)) continue;
+            if (state.cand[i] & (1 << y)) elim.push({ cell: i, digit: y });
+          }
+          if (!elim.length) continue;
+
+          return step({
+            id: 'w-wing', name: 'W-Wing', level: 13,
+            cells: [a, b, p, q], unitCells: u.cells, digits: [x, y], eliminations: elim,
+            short: 'W-Wing mellom ' + cellName(a) + ' og ' + cellName(b) + ' fjerner ' + y + '.',
+            text: 'Både ' + cellName(a) + ' og ' + cellName(b) + ' er enten ' + x + ' eller ' + y +
+                  '. I ' + BESTEMT[u.kind] + ' ' + (u.n + 1) + ' kan ' + x + ' bare stå i ' +
+                  cellName(p) + ' eller ' + cellName(q) + ', og de ser hver sin av dem. Blir den ene ' +
+                  x + ', tvinges den andre til ' + y + ' — så minst én av dem er ' + y +
+                  '. Celler som ser begge kan derfor ikke være ' + y + ': ' +
+                  cellList(elim.map(e => e.cell)) + '.'
+          });
+        }
+      }
+    }
+    return null;
+  }
+
+  /* ---------- Teknikk 14: Farging ---------- */
+
+  /*
+   * Ett tall om gangen. Der tallet bare kan stå to steder i en enhet, er de to
+   * bundet: blir den ene sann, blir den andre usann. Følger man de bindingene
+   * gjennom brettet, deler cellene seg i to farger der nøyaktig én farge er den
+   * sanne — og det gir to slutninger uten at man vet hvilken farge det er.
+   */
+  function farging(state) {
+    for (let d = 1; d <= 9; d++) {
+      const bit = 1 << d;
+
+      const nabo = new Map();
+      for (const u of UNITS) {
+        const spots = spotsFor(state, u.cells, d);
+        if (!spots || spots.length !== 2) continue;
+        const [p, q] = spots;
+        if (!nabo.has(p)) nabo.set(p, []);
+        if (!nabo.has(q)) nabo.set(q, []);
+        nabo.get(p).push(q);
+        nabo.get(q).push(p);
+      }
+
+      const farge = new Map();
+      for (const start of nabo.keys()) {
+        if (farge.has(start)) continue;
+
+        const komponent = [start];
+        farge.set(start, 0);
+        for (let k = 0; k < komponent.length; k++) {
+          const i = komponent[k];
+          for (const j of nabo.get(i)) {
+            if (farge.has(j)) continue;
+            farge.set(j, 1 - farge.get(i));
+            komponent.push(j);
+          }
+        }
+        // Under fire celler er det ingen kjede å følge — da sier teknikken
+        // ikke mer enn en låst kandidat allerede har sagt.
+        if (komponent.length < 4) continue;
+
+        const lag = [komponent.filter(i => farge.get(i) === 0),
+                     komponent.filter(i => farge.get(i) === 1)];
+
+        // Samme farge to ganger i én enhet: den fargen kan ikke være den sanne.
+        for (let f = 0; f < 2; f++) {
+          let par = null;
+          for (const [p, q] of combinations(lag[f], 2)) if (PEER_SETS[p].has(q)) { par = [p, q]; break; }
+          if (!par) continue;
+          const elim = lag[f].filter(i => state.cand[i] & bit).map(i => ({ cell: i, digit: d }));
+          if (!elim.length) continue;
+          return step({
+            id: 'farging', name: 'Farging', level: 14,
+            cells: lag[1 - f], digits: [d], eliminations: elim,
+            short: 'Farging på ' + d + ': den ene kjeden motsier seg selv.',
+            text: 'Følger man ' + d + ' gjennom enhetene der tallet bare kan stå to steder, ' +
+                  'deler cellene seg i to lag som veksler. Men ' + cellName(par[0]) + ' og ' +
+                  cellName(par[1]) + ' havner i samme lag og ser hverandre — to like tall i samme ' +
+                  'enhet. Det laget kan altså ikke være det sanne, og ' + d +
+                  ' stryker i hele laget: ' + cellList(elim.map(e => e.cell)) + '.'
+          });
+        }
+
+        // En celle utenfor kjeden som ser begge lag: uansett hvilket lag som er
+        // sant, står tallet et sted den ser.
+        const elim = [];
+        for (let i = 0; i < 81; i++) {
+          if (state.v[i] || farge.has(i) || !(state.cand[i] & bit)) continue;
+          if (lag[0].some(p => PEER_SETS[i].has(p)) && lag[1].some(q => PEER_SETS[i].has(q))) {
+            elim.push({ cell: i, digit: d });
+          }
+        }
+        if (elim.length) {
+          return step({
+            id: 'farging', name: 'Farging', level: 14,
+            cells: komponent, digits: [d], eliminations: elim,
+            short: 'Farging på ' + d + ': cellene ser begge lag.',
+            text: 'Følger man ' + d + ' gjennom enhetene der tallet bare kan stå to steder, ' +
+                  'deler cellene seg i to lag som veksler, og nøyaktig ett av dem er det sanne. ' +
+                  cellList(elim.map(e => e.cell)) + ' ser celler i begge lag — uansett hvilket lag ' +
+                  'som vinner, står det en ' + d + ' de ser, så de kan ikke selv være ' + d + '.'
+          });
+        }
+      }
+    }
+    return null;
+  }
+
   /* ---------- Teknikkrekkefølge ---------- */
 
   const TECHNIQUES = [
@@ -366,7 +558,10 @@
     { level: 8,  run: nakedSubset(4, 8) },
     { level: 9,  run: fish(2, 9, 'X-Wing', 'x-wing') },
     { level: 10, run: xyWing },
-    { level: 11, run: fish(3, 11, 'Sverdfisk', 'swordfish') }
+    { level: 11, run: fish(3, 11, 'Sverdfisk', 'swordfish') },
+    { level: 12, run: xyzWing },
+    { level: 13, run: wWing },
+    { level: 14, run: farging }
   ];
 
   /* ---------- Tilstand og anvendelse ---------- */
@@ -405,11 +600,23 @@
    * mens XY-Wing er den vanlige toppteknikken. Derfor deler nivå 6–11 ett
    * bånd, og «vanskelig» er par-teknikkene.
    */
+  /*
+   * Båndene er satt etter måling, ikke etter hvor avanserte teknikkene høres ut.
+   * `tester/maaling.js` skriver ut fordelingen; disse tallene er hentet derfra.
+   *
+   * Fordelingen er svært skjev. Nakent kvadruppel, X-Wing og sverdfisk blir
+   * knapt noen gang den vanskeligste teknikken et brett krever — noe enklere
+   * holder nesten alltid — så de kan ikke bære et bånd alene, og deler et med
+   * triplene og XY-Wing. W-Wing er derimot tett (6,6 %) og bærer Ekspert.
+   */
   const NIVAAER = [
     { id: 'lett',      navn: 'Lett',      maks: 2 },
     { id: 'middels',   navn: 'Middels',   maks: 3 },
+    { id: 'krevende',  navn: 'Krevende',  maks: 4 },
     { id: 'vanskelig', navn: 'Vanskelig', maks: 5 },
-    { id: 'ekspert',   navn: 'Ekspert',   maks: 11 }
+    { id: 'beinhard',  navn: 'Beinhard',  maks: 11 },
+    { id: 'ekspert',   navn: 'Ekspert',   maks: 13 },
+    { id: 'mester',    navn: 'Mester',    maks: 14 }
   ];
 
   function nivaaForMaks(maks) {
@@ -431,7 +638,10 @@
       if (tomme === 0) break;
 
       const s = findStep(state);
-      if (!s) return { solved: false, maks, maksNavn, antall, brukt, nivaa: NIVAAER[3] };
+      // Utenfor rekkevidde: da er det øverste nivået det nærmeste vi kan si.
+      // Indeksen leses fra lista, ikke skrevet som et tall — den sto som
+      // NIVAAER[3] fra da det fantes nøyaktig fire nivåer.
+      if (!s) return { solved: false, maks, maksNavn, antall, brukt, nivaa: NIVAAER[NIVAAER.length - 1] };
 
       if (s.level > maks) { maks = s.level; maksNavn = s.name; }
       antall++;
