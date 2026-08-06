@@ -114,6 +114,35 @@ Et barn liker å kjenne igjen brettet det holdt på med i går.
 Flaskene er et SVG-omriss med væsken som vanlige divs oppå, så formen skalerer
 fritt mens væsken er rektangler vi kan animere høyden på.
 
+### Plasseringen
+
+Flaskene står i en stabel på hver side av vulkanen, og de som ikke får plass
+der, står i en rad over den. Alt er bunnstilt mot samme gulvlinje, og hele
+arenaen ligger nederst i brettet — vulkanen skal stå nede, ikke sveve.
+
+Vulkanens viewBox er `320 x 215`, altså bred og lav. Den var høy og smal før,
+og da måtte den enten rage over flaskene eller krympe til en strek.
+
+`beregnMaal()` prøver alle måtene å dele midtraden på og beholder den som gir
+de bredeste flaskene. Færre flasker per rad gir bredere flasker, fordi
+midtsøyla stjeler mindre av bredden — og bredden er det knappe godet, ikke
+høyden. Flaskebredden er samtidig tatt av på 72 px: over det blir midtsøyla,
+og dermed vulkanen, for smal til å bære feiringen.
+
+### Utbruddet
+
+Tre ting skjer samtidig når vulkanen er full: den skjelver og krateret gløder,
+seks lavastrømmer tegnes nedover utsiden i nivåets egne farger, og **vulkanen
+tømmer seg** mens det står på.
+
+Den siste er ikke pynt. Uten den blir de vannrette fargelagene liggende under
+de loddrette lavastrømmene, og resultatet leser som et rutemønster i stedet
+for noe som renner ut. `settVulkanstand()` senker standen fra toppen, slik det
+ville sett ut om noe rant ut av krateret.
+
+Lavastiene har `pathLength="1"`, så én og samme dash-animasjon tegner alle seks
+uansett hvor lange de faktisk er.
+
 Vulkanen er ett SVG med en `clipPath` som holder væsken innenfor glasset.
 Lagene er `<rect>`-er som animeres med `requestAnimationFrame` og ikke med en
 CSS-overgang: høyden på et SVG-rektangel er ikke animerbar med `transition` i

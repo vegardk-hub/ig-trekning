@@ -100,35 +100,39 @@ body {
   flex: 1 1 auto;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;   /* alt hviler mot bunnen, så vulkanen står lavt */
   min-height: 0;
 }
 
-/* Flaskene står rundt vulkanen: en stabel på hver side, en rad under.
-   Kolonnebreddene er flaskebredden, så vulkanen får all plassen som blir
-   igjen i midten. Målene regnes ut i beregnMaal() i app.js. */
+/* Flaskene står på hver side av vulkanen, resten over den. Tre kolonner på
+   én rad, alt bunnstilt: da havner vulkanfoten og den nederste flasken på
+   samme gulvlinje, og vulkanen står nede i stedet for å sveve.
+   Målene regnes ut i beregnMaal() i app.js. */
 .arena {
   display: grid;
-  grid-template-columns: var(--flaskebredde) 1fr var(--flaskebredde);
-  grid-template-rows: auto auto;
+  grid-template-columns: var(--flaskebredde) auto var(--flaskebredde);
   gap: 10px;
-  align-items: end;      /* vulkanfoten og nederste flaske på samme gulvlinje */
+  align-items: end;
   justify-items: center;
 }
 
 .sidestabel {
-  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-.sidestabel.venstre { grid-column: 1; }
-.sidestabel.hoyre { grid-column: 3; }
 
-.bunnrad {
-  grid-row: 2;
-  grid-column: 1 / -1;
+.midtsoyle {
   display: flex;
+  flex-direction: column;
+  justify-content: flex-end;   /* pakk mot bunnen, sammen med vulkanen */
+  align-items: center;
+  gap: 10px;
+}
+
+.midtrad {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: flex-end;
   gap: 10px;
@@ -218,9 +222,8 @@ body {
 /* ---------- vulkanen ---------- */
 
 .vulkanboks {
-  grid-row: 1;
-  grid-column: 2;
   position: relative;
+  flex: 0 0 auto;
   width: var(--vulkanbredde);
   height: var(--vulkanhoyde);
 }
@@ -242,26 +245,52 @@ body {
   stroke-linejoin: round;
 }
 .vulkanblank { fill: rgba(255, 255, 255, 0.22); }
-.vulkanmunn { fill: rgba(10, 14, 34, 0.35); stroke: var(--glass); stroke-width: 3; }
+.vulkanmunn { fill: rgba(6, 9, 24, 0.62); stroke: var(--glass); stroke-width: 3; }
+.vulkanglod { fill: var(--gull); opacity: 0; }
 
-/* Selve utbruddet: glasset lyser opp og rister et øyeblikk. */
-.vulkan.gaar { animation: skjelv 0.5s ease-in-out 3; }
+/* Lavaen ligger klar hele tiden, men usynlig. pathLength="1" i markupen gjør
+   at én og samme dash-animasjon tegner alle seks stiene, uansett lengde. */
+.lava {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+/* Selve utbruddet */
+.vulkan.gaar { animation: skjelv 0.34s ease-in-out 5; }
 .vulkan.gaar .vulkankant {
   stroke: var(--gull);
-  filter: drop-shadow(0 0 12px var(--gull));
+  filter: drop-shadow(0 0 14px var(--gull));
 }
+.vulkan.gaar .vulkanglod { animation: glod 0.7s ease-in-out 4; }
+.vulkan.gaar .lava { animation: renn 1.9s cubic-bezier(0.3, 0.5, 0.4, 1) forwards; }
+
 @keyframes skjelv {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px) rotate(-1deg); }
-  60% { transform: translateX(4px) rotate(1deg); }
+  25% { transform: translateX(-5px) rotate(-1deg); }
+  75% { transform: translateX(5px) rotate(1deg); }
+}
+@keyframes glod {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.85; }
+}
+@keyframes renn {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  8% { opacity: 1; }
+  75% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.8; }
 }
 
-/* Gnistene spruter ut av krateret. Krateret ligger 26/320 nede i
-   viewBoxen, altså drøyt åtte prosent fra toppen av boksen. */
+/* Sprutet ut av krateret. Krateret ligger 24/215 nede i viewBoxen, altså
+   drøyt elleve prosent fra toppen av boksen. */
 .gnister {
   position: absolute;
   left: 50%;
-  top: 8.1%;
+  top: 11.2%;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -271,16 +300,14 @@ body {
   position: absolute;
   left: -5px;
   top: -5px;
-  width: 10px;
-  height: 10px;
   border-radius: 50%;
-  animation: sprut 1.4s cubic-bezier(0.2, 0.6, 0.5, 1) forwards;
+  animation: sprut 1.6s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
 }
 @keyframes sprut {
-  0% { transform: translate(0, 0) scale(0.4); opacity: 1; }
-  55% { transform: translate(calc(var(--dx) * 0.8), var(--dy)) scale(1.15); opacity: 1; }
+  0% { transform: translate(0, 0) scale(0.3); opacity: 1; }
+  50% { transform: translate(calc(var(--dx) * 0.7), var(--dy)) scale(1.2); opacity: 1; }
   100% {
-    transform: translate(var(--dx), calc(var(--dy) * -0.25 + 240px)) scale(0.4);
+    transform: translate(var(--dx), calc(var(--dy) * -0.3 + 260px)) scale(0.3);
     opacity: 0;
   }
 }
@@ -796,11 +823,14 @@ var Spill = (function () {
 
   var LAGER = 'fargeflasker';
 
-  /* Vulkanen tegnes i et 200 x 320-rutenett. Disse tallene må stemme med
-     stien i VULKAN lenger nede, ellers renner væsken utenfor glasset. */
-  var VULKAN_BREDDE = 200, VULKAN_HOYDE = 320;
-  var FYLL_TOPP = 34, FYLL_BUNN = 256;
-  var KRATER_X = 100, KRATER_Y = 26;
+  /* Vulkanen tegnes i et 320 x 190-rutenett – bred og lav. Den var høy og
+     smal før, og da måtte den enten rage over flaskene eller krympe til en
+     strek. Disse tallene må stemme med stiene i VULKAN lenger nede, ellers
+     renner væsken utenfor glasset. */
+  var VULKAN_BREDDE = 320, VULKAN_HOYDE = 215;
+  var VULKAN_FORHOLD = VULKAN_BREDDE / VULKAN_HOYDE;
+  var FYLL_TOPP = 32, FYLL_BUNN = 184;
+  var KRATER_X = 160, KRATER_Y = 24;
 
   /* ---------- lyd ---------- */
 
@@ -953,76 +983,104 @@ var Spill = (function () {
       '<path class="blank" d="M16 64 c0 -9 4 -13 7 -15 v72 c-4 -2 -7 -7 -7 -13 z"/>' +
     '</svg>';
 
-  // To etasjer i stedet for én glatt kjegle. En ren kjegle leste som en
-  // trakt eller en lampeskjerm; det er avsatsene som gjør at silhuetten blir
-  // et byggverk av glass. Venstre halvdel føres ned, bunnen krysses, og
-  // høyre halvdel er speilet (x -> 200 - x).
-  var KJEGLE =
-    'M62 26 L78 50 C78 74 48 84 48 104 L62 116 C62 160 14 200 14 262 ' +
-    'L186 262 C186 200 138 160 138 116 L152 104 C152 84 122 74 122 50 ' +
-    'L138 26 Z';
+  // Bred, lav kjegle med konkave sider: bratt ved krateret, flatere mot foten.
+  // Det er konkaviteten som gjør silhuetten til en vulkan i stedet for en
+  // trakt. Venstre halvdel føres ned, bunnen krysses, høyre er speilet.
+  // Bredt krater og tydelig konkave sider. Et smalt krater gjorde silhuetten
+  // til en kjegle med flat topp – en trakthatt, ikke en vulkan.
+  var KJEGLE = 'M118 24 C106 70 80 130 20 190 L300 190 C240 130 214 70 202 24 Z';
+
+  // Lavaen renner ned utsiden når vulkanen går. Stiene følger kjeglen og
+  // vifter utover; pathLength="1" gjør at samme dash-animasjon virker på alle
+  // seks uansett hvor lange de faktisk er.
+  // Stiene ender under kjeglefoten, så lavaen renner ut over sokkelen i
+  // stedet for å stoppe brått på kanten.
+  var LAVASTIER = [
+    'M132 28 C120 70 92 128 38 194',
+    'M138 28 C128 78 110 134 80 196',
+    'M148 30 C144 82 139 138 126 196',
+    'M172 30 C176 82 181 138 194 196',
+    'M182 28 C192 78 210 134 240 196',
+    'M188 28 C200 70 228 128 282 194'
+  ];
 
   var VULKAN =
-    '<svg class="vulkan" viewBox="0 0 200 320" aria-hidden="true">' +
+    '<svg class="vulkan" viewBox="0 0 320 215" aria-hidden="true">' +
       '<defs><clipPath id="vulkanInnside">' +
-        '<path d="M68 34 L84 54 C84 76 54 86 54 106 L68 120 C68 162 22 202 22 256 ' +
-        'L178 256 C178 202 132 162 132 120 L146 106 C146 86 116 76 116 54 ' +
-        'L132 34 Z"/>' +
+        '<path d="M124 32 C112 74 86 132 32 184 L288 184 C234 132 208 74 196 32 Z"/>' +
       '</clipPath></defs>' +
-      '<ellipse class="vulkanskygge" cx="100" cy="292" rx="94" ry="13"/>' +
-      '<rect class="vulkanfot" x="6" y="256" width="188" height="30" rx="13"/>' +
+      '<ellipse class="vulkanskygge" cx="160" cy="204" rx="152" ry="9"/>' +
+      '<rect class="vulkanfot" x="8" y="184" width="304" height="20" rx="9"/>' +
       '<path class="vulkanfyll" d="' + KJEGLE + '"/>' +
       '<g clip-path="url(#vulkanInnside)" class="vulkanlag"></g>' +
       '<path class="vulkankant" d="' + KJEGLE + '"/>' +
-      '<path class="vulkanblank" d="M30 248 C30 198 68 158 68 118 L78 118 ' +
-        'C78 158 42 198 42 248 Z"/>' +
-      '<ellipse class="vulkanmunn" cx="100" cy="26" rx="38" ry="9"/>' +
+      '<path class="vulkanblank" d="M48 182 C100 128 116 74 124 32 L136 32 ' +
+        'C128 76 112 130 62 184 Z"/>' +
+      '<g class="lavastrommer">' +
+        LAVASTIER.map(function (d) {
+          return '<path class="lava" d="' + d + '" pathLength="1"/>';
+        }).join('') +
+      '</g>' +
+      '<ellipse class="vulkanglod" cx="160" cy="24" rx="42" ry="9"/>' +
+      '<ellipse class="vulkanmunn" cx="160" cy="24" rx="42" ry="9"/>' +
     '</svg>';
 
-  // Flaskene står rundt vulkanen: en stabel på hver side og en rad under.
-  // Sidene tar høyst fire hver – en femte gjør stablene høyere enn skjermen –
-  // så fra fjorten flasker og opp vokser bunnraden i stedet.
+  // Flaskene står på hver side av vulkanen, og resten over den. Sidene tar
+  // høyst fire hver – en femte gjør stablene høyere enn skjermen.
+  //
+  // Alt bunnstilles mot samme gulvlinje, så vulkanen står nede der den hører
+  // hjemme i stedet for å sveve midt i brettet.
   function fordelFlasker(antall) {
     var side = Math.min(4, Math.floor(antall / 3));
-    var bunn = antall - side * 2;
-    while (bunn > 5 && side < 4) { side++; bunn -= 2; }
-    return { side: side, bunn: bunn };
+    var midt = antall - side * 2;
+    return { side: side, midt: midt };
   }
 
-  // Flaskebredden og vulkanhøyden settes så alt får plass uten rulling.
+  // Setter flaskebredden og vulkanmålene så alt får plass uten rulling.
   // Bredden binder som regel, men på en lav skjerm tar høyden over, og da må
-  // begge krympe i takt – derfor løkka i stedet for ett regnestykke.
+  // alt krympe i takt – derfor løkka i stedet for ett regnestykke.
   function beregnMaal(antall) {
     var W = brett.clientWidth, H = brett.clientHeight, g = 10;
     var f = fordelFlasker(antall);
 
-    var b = Math.min((W * 0.62 - 2 * g) / 2, 78);   // vulkanen får minst 38 %
-    if (f.bunn) b = Math.min(b, (W - (f.bunn - 1) * g - 4) / f.bunn);
+    // Flaskene over vulkanen kan stå på én bred rad eller flere smale. Færre
+    // per rad gir bredere flasker, for midtsøyla stjeler mindre av bredden –
+    // og bredden er det knappe godet, ikke høyden. Vi prøver alle
+    // inndelingene og beholder den som gir de største flaskene.
+    var beste = null;
+    for (var pr = Math.max(1, Math.min(f.midt, 4)); pr >= 1; pr--) {
+      var rader = f.midt ? Math.ceil(f.midt / pr) : 0;
+      // 72 px er taket på flaskebredden: over det blir midtsøyla – og dermed
+      // vulkanen – for smal til å bære feiringen.
+      var b = Math.min(72, (W - 2 * g - (pr - 1) * g) / (2 + pr));
 
-    // Krymp flaskene til sidestablene får plass over bunnraden.
-    var stabel, ledigH;
-    for (var i = 0; i < 8; i++) {
-      stabel = f.side * (2.35 * b) + Math.max(0, f.side - 1) * g;
-      ledigH = H - 2.35 * b - g;
-      if (stabel <= ledigH) break;
-      b *= 0.92;
+      for (var i = 0; i < 12; i++) {
+        var sideH = f.side * (2.35 * b) + Math.max(0, f.side - 1) * g;
+        var midtH = rader * (2.35 * b) + Math.max(0, rader - 1) * g;
+
+        // Vulkanen fyller midtsøylens bredde, men holdes lav med vilje: den
+        // skal stå ved siden av flaskene, ikke rage over dem.
+        var vulkanH = Math.min((W - 2 * b - 2 * g) / VULKAN_FORHOLD, H * 0.32);
+        var total = Math.max(sideH, midtH + (rader ? g : 0) + vulkanH);
+
+        if (total <= H || b <= 24) {
+          if (!beste || b > beste.b) {
+            beste = {
+              b: b, side: f.side, midt: f.midt, perRad: pr,
+              vulkanB: vulkanH * VULKAN_FORHOLD, vulkanH: vulkanH
+            };
+          }
+          break;
+        }
+        b *= 0.94;
+      }
     }
-    b = Math.max(24, b);
 
-    // Vulkanen tar all plassen som blir igjen. Bredde og høyde settes begge
-    // eksplisitt, i samme forhold som viewBoxen: da faller SVG-tegningen
-    // nøyaktig sammen med elementet, og kraterPunkt() treffer krateret.
-    // Med bare max-width ville nettleseren midtstilt tegningen inni en for
-    // bred boks, og strålen hadde landet ved siden av.
-    var vulkanH = Math.min(ledigH, Math.max(stabel, 3.4 * b));
-    var vulkanB = vulkanH * (VULKAN_BREDDE / VULKAN_HOYDE);
-    var ledigB = W - 2 * b - 2 * g;
-    if (vulkanB > ledigB) {
-      vulkanB = ledigB;
-      vulkanH = vulkanB * (VULKAN_HOYDE / VULKAN_BREDDE);
-    }
-
-    return { b: b, side: f.side, bunn: f.bunn, vulkanB: vulkanB, vulkanH: vulkanH };
+    // Bredde og høyde settes begge eksplisitt, i viewBoxens forhold: da faller
+    // SVG-tegningen nøyaktig sammen med elementet, og kraterPunkt() treffer
+    // krateret. Med bare max-width ville nettleseren midtstilt tegningen inni
+    // en for bred boks, og strålen hadde landet ved siden av.
+    return beste;
   }
 
   function tegn() {
@@ -1043,8 +1101,18 @@ var Spill = (function () {
     venstre.className = 'sidestabel venstre';
     var hoyre = document.createElement('div');
     hoyre.className = 'sidestabel hoyre';
-    var bunn = document.createElement('div');
-    bunn.className = 'bunnrad';
+
+    // Midtsøyla er flaskene som ikke fikk plass på sidene, med vulkanen
+    // nederst. Innholdet pakkes mot bunnen, så vulkanfoten står på samme
+    // gulvlinje som den nederste flasken i sidestablene.
+    var midtsoyle = document.createElement('div');
+    midtsoyle.className = 'midtsoyle';
+    var midtrad = document.createElement('div');
+    midtrad.className = 'midtrad';
+    // +2 px slark: uten den bryter fire flasker som akkurat går opp i
+    // bredden, til 3 + 1 på grunn av avrunding.
+    midtrad.style.maxWidth =
+      (m.perRad * m.b + (m.perRad - 1) * 10 + 2).toFixed(1) + 'px';
 
     var vulkanboks = document.createElement('div');
     vulkanboks.className = 'vulkanboks';
@@ -1053,12 +1121,13 @@ var Spill = (function () {
     var i = 0, k;
     for (k = 0; k < m.side; k++) { venstre.appendChild(lagFlaske(i)); i++; }
     for (k = 0; k < m.side; k++) { hoyre.appendChild(lagFlaske(i)); i++; }
-    for (k = 0; k < m.bunn; k++) { bunn.appendChild(lagFlaske(i)); i++; }
+    for (k = 0; k < m.midt; k++) { midtrad.appendChild(lagFlaske(i)); i++; }
 
+    midtsoyle.appendChild(midtrad);
+    midtsoyle.appendChild(vulkanboks);
     arena.appendChild(venstre);
-    arena.appendChild(vulkanboks);
+    arena.appendChild(midtsoyle);
     arena.appendChild(hoyre);
-    arena.appendChild(bunn);
     brett.appendChild(arena);
 
     elVulkan = vulkanboks.querySelector('.vulkan');
@@ -1137,6 +1206,19 @@ var Spill = (function () {
     tilstand.vulkan.forEach(function (farge, nr) {
       elLag.appendChild(lagRekt(farge, nr));
     });
+  }
+
+  // Setter væskestanden i vulkanen, målt i viewBox-enheter opp fra bunnen.
+  // Lagene beholder rekkefølgen sin; det er bare det øverste som forsvinner
+  // først, slik det ville gjort om noe rant ut av toppen.
+  function settVulkanstand(stand) {
+    if (!elLag) return;
+    var h = lagHoyde(), rekt = elLag.children;
+    for (var i = 0; i < rekt.length; i++) {
+      var synlig = Math.max(0, Math.min(h, stand - h * i));
+      rekt[i].setAttribute('height', String(synlig));
+      rekt[i].setAttribute('y', String(FYLL_BUNN - h * i - synlig));
+    }
   }
 
   // Punktet midt i krateret, i skjermkoordinater.
@@ -1363,23 +1445,46 @@ var Spill = (function () {
   /* ---------- utbrudd og seier ---------- */
 
   function utbrudd() {
+    if (!elVulkan || !tilstand.vulkan.length) { vent(400, visSeier); return; }
+    var farger = tilstand.vulkan;
+
     Lyd.utbrudd();
-    if (elVulkan) elVulkan.classList.add('gaar');
-    if (elGnister && tilstand.vulkan.length) {
-      elGnister.textContent = '';
-      for (var i = 0; i < 80; i++) {
-        var p = document.createElement('i');
-        var vinkel = (-90 + (Math.random() * 116 - 58)) * Math.PI / 180;
-        var fart = 70 + Math.random() * 190;
-        p.style.setProperty('--dx', (Math.cos(vinkel) * fart).toFixed(0) + 'px');
-        p.style.setProperty('--dy', (Math.sin(vinkel) * fart).toFixed(0) + 'px');
-        p.style.background = Spill.FARGER[tilstand.vulkan[i % tilstand.vulkan.length]].kode;
-        p.style.animationDelay = (Math.random() * 0.5).toFixed(2) + 's';
-        p.style.animationDuration = (1.1 + Math.random() * 0.9).toFixed(2) + 's';
-        elGnister.appendChild(p);
-      }
+    elVulkan.classList.add('gaar');
+
+    // Lavaen får fargene fra vulkanen, i den rekkefølgen de ble tappet, og
+    // renner ned utsiden etter tur i stedet for alle på én gang.
+    var strommer = elVulkan.querySelectorAll('.lava');
+    for (var s = 0; s < strommer.length; s++) {
+      strommer[s].style.stroke = Spill.FARGER[farger[s % farger.length]].kode;
+      strommer[s].style.animationDelay = (0.25 + s * 0.13).toFixed(2) + 's';
     }
-    vent(1500, visSeier);
+
+    // Og vulkanen tømmer seg mens det står på. Uten dette blir de vannrette
+    // lagene liggende under de loddrette lavastripene, og det leser som et
+    // rutemønster i stedet for noe som renner ut.
+    var full = lagHoyde() * farger.length;
+    vent(380, function () {
+      tween(1500, function (p) { settVulkanstand(full * (1 - p)); });
+    });
+
+    // Sprut opp av krateret. Vinkelen er smal og farten høy, så det leser som
+    // et utbrudd og ikke som konfetti.
+    elGnister.textContent = '';
+    for (var i = 0; i < 110; i++) {
+      var p = document.createElement('i');
+      var vinkel = (-90 + (Math.random() * 74 - 37)) * Math.PI / 180;
+      var fart = 90 + Math.random() * 210;
+      var stor = 5 + Math.random() * 8;
+      p.style.setProperty('--dx', (Math.cos(vinkel) * fart).toFixed(0) + 'px');
+      p.style.setProperty('--dy', (Math.sin(vinkel) * fart).toFixed(0) + 'px');
+      p.style.width = p.style.height = stor.toFixed(0) + 'px';
+      p.style.background = Spill.FARGER[farger[i % farger.length]].kode;
+      p.style.animationDelay = (Math.random() * 0.8).toFixed(2) + 's';
+      p.style.animationDuration = (1.2 + Math.random() * 1.1).toFixed(2) + 's';
+      elGnister.appendChild(p);
+    }
+
+    vent(2600, visSeier);
   }
 
   var seier = document.getElementById('seier');

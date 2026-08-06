@@ -87,35 +87,39 @@ body {
   flex: 1 1 auto;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;   /* alt hviler mot bunnen, så vulkanen står lavt */
   min-height: 0;
 }
 
-/* Flaskene står rundt vulkanen: en stabel på hver side, en rad under.
-   Kolonnebreddene er flaskebredden, så vulkanen får all plassen som blir
-   igjen i midten. Målene regnes ut i beregnMaal() i app.js. */
+/* Flaskene står på hver side av vulkanen, resten over den. Tre kolonner på
+   én rad, alt bunnstilt: da havner vulkanfoten og den nederste flasken på
+   samme gulvlinje, og vulkanen står nede i stedet for å sveve.
+   Målene regnes ut i beregnMaal() i app.js. */
 .arena {
   display: grid;
-  grid-template-columns: var(--flaskebredde) 1fr var(--flaskebredde);
-  grid-template-rows: auto auto;
+  grid-template-columns: var(--flaskebredde) auto var(--flaskebredde);
   gap: 10px;
-  align-items: end;      /* vulkanfoten og nederste flaske på samme gulvlinje */
+  align-items: end;
   justify-items: center;
 }
 
 .sidestabel {
-  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-.sidestabel.venstre { grid-column: 1; }
-.sidestabel.hoyre { grid-column: 3; }
 
-.bunnrad {
-  grid-row: 2;
-  grid-column: 1 / -1;
+.midtsoyle {
   display: flex;
+  flex-direction: column;
+  justify-content: flex-end;   /* pakk mot bunnen, sammen med vulkanen */
+  align-items: center;
+  gap: 10px;
+}
+
+.midtrad {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: flex-end;
   gap: 10px;
@@ -205,9 +209,8 @@ body {
 /* ---------- vulkanen ---------- */
 
 .vulkanboks {
-  grid-row: 1;
-  grid-column: 2;
   position: relative;
+  flex: 0 0 auto;
   width: var(--vulkanbredde);
   height: var(--vulkanhoyde);
 }
@@ -229,26 +232,52 @@ body {
   stroke-linejoin: round;
 }
 .vulkanblank { fill: rgba(255, 255, 255, 0.22); }
-.vulkanmunn { fill: rgba(10, 14, 34, 0.35); stroke: var(--glass); stroke-width: 3; }
+.vulkanmunn { fill: rgba(6, 9, 24, 0.62); stroke: var(--glass); stroke-width: 3; }
+.vulkanglod { fill: var(--gull); opacity: 0; }
 
-/* Selve utbruddet: glasset lyser opp og rister et øyeblikk. */
-.vulkan.gaar { animation: skjelv 0.5s ease-in-out 3; }
+/* Lavaen ligger klar hele tiden, men usynlig. pathLength="1" i markupen gjør
+   at én og samme dash-animasjon tegner alle seks stiene, uansett lengde. */
+.lava {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+/* Selve utbruddet */
+.vulkan.gaar { animation: skjelv 0.34s ease-in-out 5; }
 .vulkan.gaar .vulkankant {
   stroke: var(--gull);
-  filter: drop-shadow(0 0 12px var(--gull));
+  filter: drop-shadow(0 0 14px var(--gull));
 }
+.vulkan.gaar .vulkanglod { animation: glod 0.7s ease-in-out 4; }
+.vulkan.gaar .lava { animation: renn 1.9s cubic-bezier(0.3, 0.5, 0.4, 1) forwards; }
+
 @keyframes skjelv {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px) rotate(-1deg); }
-  60% { transform: translateX(4px) rotate(1deg); }
+  25% { transform: translateX(-5px) rotate(-1deg); }
+  75% { transform: translateX(5px) rotate(1deg); }
+}
+@keyframes glod {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.85; }
+}
+@keyframes renn {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  8% { opacity: 1; }
+  75% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.8; }
 }
 
-/* Gnistene spruter ut av krateret. Krateret ligger 26/320 nede i
-   viewBoxen, altså drøyt åtte prosent fra toppen av boksen. */
+/* Sprutet ut av krateret. Krateret ligger 24/215 nede i viewBoxen, altså
+   drøyt elleve prosent fra toppen av boksen. */
 .gnister {
   position: absolute;
   left: 50%;
-  top: 8.1%;
+  top: 11.2%;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -258,16 +287,14 @@ body {
   position: absolute;
   left: -5px;
   top: -5px;
-  width: 10px;
-  height: 10px;
   border-radius: 50%;
-  animation: sprut 1.4s cubic-bezier(0.2, 0.6, 0.5, 1) forwards;
+  animation: sprut 1.6s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
 }
 @keyframes sprut {
-  0% { transform: translate(0, 0) scale(0.4); opacity: 1; }
-  55% { transform: translate(calc(var(--dx) * 0.8), var(--dy)) scale(1.15); opacity: 1; }
+  0% { transform: translate(0, 0) scale(0.3); opacity: 1; }
+  50% { transform: translate(calc(var(--dx) * 0.7), var(--dy)) scale(1.2); opacity: 1; }
   100% {
-    transform: translate(var(--dx), calc(var(--dy) * -0.25 + 240px)) scale(0.4);
+    transform: translate(var(--dx), calc(var(--dy) * -0.3 + 260px)) scale(0.3);
     opacity: 0;
   }
 }
