@@ -91,10 +91,27 @@ var Spill = (function () {
     for (var i = 0; i < antall; i++) flasker[til].push(flasker[fra].pop());
   }
 
-  function erFerdig(flasker, kapasitet) {
+  // En ferdigsortert flaske renner ned i vulkanen og står igjen tom. Det er
+  // hele vrien i spillet: plassen kommer tilbake, så et brett som ser umulig
+  // trangt ut, løsner så snart den første fargen er i havn.
+  //
+  // Returnerer hva som ble tappet, slik at grensesnittet kan animere det.
+  function tapp(flasker, kapasitet) {
+    var tappet = [];
     for (var i = 0; i < flasker.length; i++) {
-      var f = flasker[i];
-      if (f.length !== 0 && !erKomplett(f, kapasitet)) return false;
+      if (erKomplett(flasker[i], kapasitet)) {
+        tappet.push({ flaske: i, farge: flasker[i][0] });
+        flasker[i] = [];
+      }
+    }
+    return tappet;
+  }
+
+  // Fordi hver ferdig farge forsvinner ned i vulkanen, er brettet løst
+  // nøyaktig når alle flaskene står tomme.
+  function erFerdig(flasker) {
+    for (var i = 0; i < flasker.length; i++) {
+      if (flasker[i].length) return false;
     }
     return true;
   }
@@ -113,7 +130,7 @@ var Spill = (function () {
     var trekk = [];
     for (var fra = 0; fra < flasker.length; fra++) {
       var a = flasker[fra];
-      if (!a.length || erKomplett(a, kapasitet)) continue;
+      if (!a.length) continue;
       for (var til = 0; til < flasker.length; til++) {
         var antall = kanHelle(flasker, fra, til, kapasitet);
         if (!antall) continue;
@@ -125,7 +142,9 @@ var Spill = (function () {
         var poeng = 0;
         if (b.length) {
           poeng += 40;                                          // fyller på riktig farge
-          if (b.length + antall === kapasitet) poeng += 60;      // gjør flasken ferdig
+          // Å fylle en flaske helt tapper den ned i vulkanen og gir plassen
+          // tilbake. Det er nesten alltid rett trekk, så det veier tyngst.
+          if (b.length + antall === kapasitet) poeng += 90;
         }
         if (antall === a.length) poeng += 15;                    // tømmer kilden
         poeng += antall;
@@ -143,7 +162,7 @@ var Spill = (function () {
     var sett = {}, sti = [], teller = 0;
 
     function sok(st) {
-      if (erFerdig(st, kapasitet)) return true;
+      if (erFerdig(st)) return true;
       if (++teller > grense) return false;
       var k = nokkel(st);
       if (sett[k]) return false;
@@ -154,6 +173,7 @@ var Spill = (function () {
         var t = trekk[i];
         var ny = kopi(st);
         helle(ny, t.fra, t.til, t.antall);
+        tapp(ny, kapasitet);      // tappingen er automatisk, altså del av trekket
         sti.push(t);
         if (sok(ny)) return true;
         sti.pop();
@@ -161,27 +181,34 @@ var Spill = (function () {
       return false;
     }
 
-    return sok(kopi(flasker)) ? sti.slice() : null;
+    var start = kopi(flasker);
+    tapp(start, kapasitet);
+    return sok(start) ? sti.slice() : null;
   }
 
   /* ---------- nivåene ---------- */
 
-  // Vanskegraden vokser med antall farger, ikke ved å ta bort de tomme
-  // flaskene. To tomme flasker hele veien gir rom for å prøve seg fram,
-  // og det er akkurat det en femåring trenger.
+  // Kurven er satt etter at femåringen gikk lei: den gamle brukte tjue nivåer
+  // på å komme til fem farger. Nå er den der på nivå sju.
+  //
+  // Den harde skruen er den siste tomme flasken, ikke fargene. Med to tomme
+  // kan man prøve seg fram nesten fritt; med én må hvert trekk peke mot en
+  // farge som blir ferdig, for det er tappingen som gir plassen tilbake.
+  // Under én tom flaske finnes det ingen lovlige trekk i det hele tatt.
   function nivaaOppsett(n) {
-    var farger;
-    if (n <= 2) farger = 2;
-    else if (n <= 5) farger = 3;
-    else if (n <= 9) farger = 4;
-    else if (n <= 13) farger = 5;
-    else if (n <= 17) farger = 6;
-    else if (n <= 22) farger = 7;
-    else if (n <= 28) farger = 8;
-    else if (n <= 35) farger = 9;
-    else farger = 10;
-    // Små flasker de første nivåene: tre lag er lettere å holde styr på.
-    return { farger: farger, kapasitet: n <= 6 ? 3 : 4, tomme: 2 };
+    var t;
+    if (n <= 2)       t = { farger: 3,  kapasitet: 3, tomme: 2 };
+    else if (n <= 4)  t = { farger: 4,  kapasitet: 3, tomme: 2 };
+    else if (n <= 6)  t = { farger: 4,  kapasitet: 4, tomme: 2 };
+    else if (n <= 9)  t = { farger: 5,  kapasitet: 4, tomme: 2 };
+    else if (n <= 12) t = { farger: 6,  kapasitet: 4, tomme: 2 };
+    else if (n <= 16) t = { farger: 6,  kapasitet: 4, tomme: 1 };
+    else if (n <= 20) t = { farger: 7,  kapasitet: 4, tomme: 1 };
+    else if (n <= 25) t = { farger: 8,  kapasitet: 4, tomme: 1 };
+    else if (n <= 31) t = { farger: 9,  kapasitet: 4, tomme: 1 };
+    else if (n <= 38) t = { farger: 10, kapasitet: 4, tomme: 1 };
+    else              t = { farger: 10, kapasitet: 5, tomme: 1 };
+    return t;
   }
 
   function lagNivaa(n) {
@@ -201,18 +228,27 @@ var Spill = (function () {
         flasker.push(enheter.slice(b * o.kapasitet, (b + 1) * o.kapasitet));
       }
       for (var t = 0; t < o.tomme; t++) flasker.push([]);
-      if (erFerdig(flasker, o.kapasitet)) continue;
+
+      // En flaske som alt er ensfarget, renner ned i vulkanen før barnet har
+      // rukket å ta i den. Det ser ut som en feil, så vi deler heller på nytt.
+      var gratis = false;
+      for (var g = 0; g < flasker.length; g++) {
+        if (erKomplett(flasker[g], o.kapasitet)) { gratis = true; break; }
+      }
+      if (gratis) continue;
 
       var fasit = loes(flasker, o.kapasitet);
       if (!fasit) continue;
+      var svar = {
+        flasker: flasker, kapasitet: o.kapasitet, farger: o.farger, fasit: fasit
+      };
       // Krev litt substans, men ta til takke med hva vi har om det drar ut.
-      if (fasit.length >= o.farger + 1) {
-        return { flasker: flasker, kapasitet: o.kapasitet, fasit: fasit };
-      }
-      if (!reserve) reserve = { flasker: flasker, kapasitet: o.kapasitet, fasit: fasit };
+      if (fasit.length >= o.farger + 2) return svar;
+      if (!reserve) reserve = svar;
     }
 
-    return reserve || { flasker: [[0, 0, 0], [0], []], kapasitet: 3, fasit: null };
+    return reserve ||
+      { flasker: [[0, 1, 0], [1, 0, 1], []], kapasitet: 3, farger: 2, fasit: null };
   }
 
   return {
@@ -224,6 +260,7 @@ var Spill = (function () {
     erKomplett: erKomplett,
     kanHelle: kanHelle,
     helle: helle,
+    tapp: tapp,
     erFerdig: erFerdig,
     loes: loes,
     nivaaOppsett: nivaaOppsett,

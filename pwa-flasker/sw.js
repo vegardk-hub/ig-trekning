@@ -5,7 +5,7 @@
  * først ville servert gammel kode i det uendelige etter en oppdatering.
  */
 
-const CACHE = 'fargeflasker-v1';
+const CACHE = 'fargeflasker-v2';
 const FILER = [
   './',
   './index.html',

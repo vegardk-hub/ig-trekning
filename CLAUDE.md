@@ -117,6 +117,13 @@ Ikke rull noen av disse tilbake uten å vite hvorfor de står der:
   først.
 - `display: none` gir et nullrektangel, så en «får det plass»-måling består selv
   når elementet er usynlig. Mål bredden i tillegg.
+- **Et hint som regnes ut på nytt hvert trykk, kan gå i ring.** Løseren i
+  Fargeflasker er et dybdesøk og gir *en* løsning, ikke den korteste. Uten
+  hukommelse mellom trykkene foreslo den å angre sitt eget forrige råd — nivå
+  25 vippet mellom to stillinger i det uendelige. Hjelp følger derfor én plan
+  (`hentPlan`/`planEtterTrekk` i `pwa-flasker/js/app.js`) så lenge brettet står
+  der planen venter. Nøkkelen må være **usortert**: planen peker på flasker med
+  indeks, så to brett med samme innhold i byttet rekkefølge er ikke samme brett.
 - **En lytter på `pagehide` som lagrer alt, opphever `localStorage.clear()`.**
   Prøvene tømmer lagringen og laster om for å få et ferskt brett; `pagehide`
   fyrer på omlastingen og skriver det gamle brettet rett tilbake, så appen
@@ -153,6 +160,12 @@ Målgruppen er en femåring, og det er ikke en detalj — det er premisset. Inge
 tidtaking, ingen måte å tape på, ubegrenset angring, og et hint som regner ut
 et trekk som faktisk fører fram i stedet for å si «prøv igjen». `pwa-flasker/README.md`
 går gjennom resten.
+
+Vulkanen i midten er **en regel, ikke pynt**: en ferdigsortert flaske tappes
+ned i den og står igjen tom, og brettet er løst når alle flaskene er tomme.
+Det er den gjenbruken som bærer vanskegraden — fra nivå 13 er det bare én tom
+flaske, og brettet løsner først når den første fargen er i havn. Fjerner du
+tappingen, blir alt fra nivå 13 og opp uløselig.
 
 `flaskespill.html` i rota er **generert**, ikke skrevet. Retter du noe i
 `pwa-flasker/`, kjør `python pwa-flasker/lag_enkeltfil.py` så enkeltfila følger
