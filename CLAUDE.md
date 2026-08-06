@@ -26,6 +26,19 @@ repoet:
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
 
+Eieren av repoet vil ha ferdig arbeid **rett på `main`**, ikke liggende på en
+gren i påvente av en gjennomgang: en gren som ikke er slått sammen, er en
+endring han ikke kan prøve på telefonen. Vanlig runde er derfor commit på
+arbeidsgrenen, så `git checkout main && git merge --ff-only <gren> && git push
+origin main`. Ingen pull request med mindre det blir bedt om.
+
+Utrullingen lar seg ikke sjekke med et oppslag mot `github.io` herfra — proxyen
+svarer 403 på CONNECT. Se på byggekjøringene i stedet: workflow-id `323690282`
+(`pages-build-deployment`) gjennom GitHub-verktøyene. Svaret er stort nok til å
+sprenge konteksten, så skriv det til fil og hent ut feltene med python. Bygget
+tar rundt et minutt, og `head_sha` i svaret kan henge etter ett commit — se på
+tidspunktet, ikke bare sha-en.
+
 ## Arbeidsflyt
 
 Ingen avhengigheter å installere, ingen linter. Skal du se en app lokalt, hold
@@ -64,6 +77,25 @@ Følg stilen i fila du er i — den er gjennomført og bevisst:
   `'use strict';` og en kommentar som sier hva fila svarer for.
 - **Kommentarer forklarer hvorfor**, ikke hva. Se `sw.js`, som begrunner
   nett-først-strategien.
+
+## Fallgruver som har kostet tid før
+
+Ikke rull noen av disse tilbake uten å vite hvorfor de står der:
+
+- `fetch()` i en service worker går gjennom HTTP-cachen, og Pages sender
+  `max-age=600`. Uten `{ cache: 'no-store' }` bakes ti minutter gammel kode inn
+  i en fersk cache og blir liggende der.
+- `matchMedia()` gir et nytt objekt hver gang. Lytteren må festes på et objekt
+  du holder på, ellers reagerer «Følg systemet» aldri.
+- `[hidden] { display: none }` er en nettleserstil. En egen `display:` i CSS slår
+  den, og elementet blir stående synlig selv om koden har skjult det. Bruk
+  `:not([hidden])`.
+- `env()` lar seg ikke emulere i en test. Det trygge området går derfor via
+  `--trygg-topp`/`--trygg-bunn`, som prøvene kan sette.
+- `scrollTop = 0` gjør ingenting på et skjult element — sett `hidden = false`
+  først.
+- `display: none` gir et nullrektangel, så en «får det plass»-måling består selv
+  når elementet er usynlig. Mål bredden i tillegg.
 
 ## Sudoku
 
