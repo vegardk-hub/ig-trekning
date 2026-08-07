@@ -10,6 +10,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `visualizer/v2/` | Prisme — én visualisering i WebGL |
 | `pwa-sudoku/` | Sudoku — PWA med hintmotor som forklarer løseteknikkene |
 | `pwa-flasker/` | Fargeflasker — sorteringsspill for de minste, PWA |
+| `pwa-poengtavle/` | Ukens poengtavle — husholdningsoppgaver med kroner, PWA |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -22,6 +23,7 @@ repoet:
 
 - Sudoku: `https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/`
 - Fargeflasker: `https://vegardk-hub.github.io/ig-trekning/pwa-flasker/`
+- Poengtavle: `https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -133,6 +135,23 @@ Ikke rull noen av disse tilbake uten å vite hvorfor de står der:
   fyrer på omlastingen og skriver det gamle brettet rett tilbake, så appen
   starter med det forrige i stedet. Lagre bare feltet du er ute etter, og bare
   hvis posten finnes fra før — se `lagreTid()` i `app.js`.
+
+## Poengtavle
+
+`pwa-poengtavle/README.md` går gjennom datamodellen og rammene eieren har
+låst. Tre ting som ser ut som detaljer og har en grunn:
+
+- **Beløpet fryses ved godkjenning**, ikke ved avkrysning. Prisendringer skal
+  ikke skrive om det som allerede er tjent.
+- **Sletting arkiverer** (`archived: true`). Historikken og pengene står igjen —
+  ellers ville en opprydding i oppgavelista krympe barnets saldo.
+- **Navn lagres slik de skrives.** Blokkbokstavene i barnemodus kommer fra
+  `text-transform` i CSS. Lagrer man versaler i stedet, ryker egennavnene når
+  foreldremodus skal vise dem normalt.
+
+Ukeskiftet er ikke en nullstilling: uken er et filter på datoene, og ruter som
+ikke er godkjent blir liggende. Ingenting i barnemodus markerer noe som *ikke*
+gjort — det er premisset, på samme måte som i Fargeflasker.
 
 ## Sudoku
 
