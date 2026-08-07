@@ -776,12 +776,25 @@
 
   function vekslBlyant() {
     state.blyantModus = !state.blyantModus;
+
+    /*
+     * I fyllmodus følger tallet du alt har plukket ut med over. `aktivtBlyant`
+     * ble satt da du valgte tallet, og ble stående etterpå: slo du av blyanten
+     * for å sette inn en stor 7, la trykkene fortsatt igjen små 7-ere, og
+     * «Blyant»-knappen sto og sa av mens den i praksis var på.
+     *
+     * Bare når tastaturet ikke er delt. Liggende er det siden du trykker på som
+     * avgjør, og der finnes ingen «Blyant»-knapp å veksle med.
+     */
+    if (state.fyllModus && !erDelt()) state.aktivtBlyant = state.blyantModus;
+
     oppdaterVerktoy();
     if (state.blyantModus && autoMerker()) {
       melding('Merkene fylles ut automatisk. Trykk «Auto» for å overta dem selv.');
     } else {
       skjulMelding();
     }
+    tegn();
   }
 
   function vekslAuto() {

@@ -83,6 +83,53 @@ const sjekk = (navn, ok, detalj) => {
   await page.click(`.celle[data-i="${mål[0]}"]`);
   sjekk('andre trykk visker ut', (await verdi(mål[0])) === '');
 
+  /*
+   * «Blyant» skal gjelde tallet du alt har plukket ut, ikke bare det neste.
+   * Feilen var at aktivtBlyant ble satt idet tallet ble valgt og så ble
+   * stående: du slo av blyanten for å sette inn et stort tall, knappen sa av,
+   * og trykkene la fortsatt igjen små tall.
+   */
+  console.log('\n— «Blyant» slår om det valgte tallet, stående —');
+  const merker = i => page.$$eval(`.celle[data-i="${i}"] .merker i`,
+    els => els.filter(e => e.className.includes('paa')).map(e => e.textContent).join(''));
+
+  // Merkene må være mine å skrive i: «Auto» sperrer blyanten.
+  await page.click('.venstre .verktoyknapp[data-verktoy="auto"]');
+  sjekk('Auto står på «Manuell»',
+        (await page.textContent('.venstre .verktoyknapp[data-verktoy="auto"] .vtekst')) === 'Manuell');
+
+  await page.click('.venstre .verktoyknapp[data-verktoy="blyant"]');
+  await page.click('.venstre .tallknapp[data-d="4"]');
+  const bm = (await tomme()).slice(0, 2);
+  await page.click(`.celle[data-i="${bm[0]}"]`);
+  sjekk('med blyant på blir 4 et merke',
+        (await merker(bm[0])).includes('4') && (await verdi(bm[0])) === '',
+        `merker «${await merker(bm[0])}», stort «${await verdi(bm[0])}»`);
+
+  // Kjernen: slå av blyanten uten å velge tallet på nytt.
+  await page.click('.venstre .verktoyknapp[data-verktoy="blyant"]');
+  sjekk('«Blyant» melder seg av',
+        await page.getAttribute('.venstre .verktoyknapp[data-verktoy="blyant"]', 'aria-pressed') === 'false');
+  await page.click(`.celle[data-i="${bm[1]}"]`);
+  sjekk('samme 4-er blir nå et stort tall', (await verdi(bm[1])) === '4',
+        `stort «${await verdi(bm[1])}», merker «${await merker(bm[1])}»`);
+
+  // Og den andre veien. Ikke ruta som alt har et 4-merke: der ville trykket
+  // skrudd merket av igjen, og prøven målt det motsatte av det den tror.
+  await page.click('.venstre .verktoyknapp[data-verktoy="blyant"]');
+  const bm2 = (await tomme()).filter(i => i !== bm[0])[0];
+  await page.click(`.celle[data-i="${bm2}"]`);
+  sjekk('blyant på igjen gir merke av samme tall',
+        (await merker(bm2)).includes('4') && (await verdi(bm2)) === '',
+        `merker «${await merker(bm2)}», stort «${await verdi(bm2)}»`);
+
+  // Rydd opp: blyant av og merkene tilbake til automatiske.
+  await page.click('.venstre .verktoyknapp[data-verktoy="blyant"]');
+  await page.click('.venstre .verktoyknapp[data-verktoy="auto"]');
+  await page.click('.venstre .verktoyknapp[data-verktoy="auto"]');
+  sjekk('Auto er tilbake',
+        (await page.textContent('.venstre .verktoyknapp[data-verktoy="auto"] .vtekst')) === 'Auto');
+
   console.log('\n— Rute først virker som før —');
   await page.click('.venstre .verktoyknapp[data-verktoy="fyll"]');
   sjekk('Fyll slås av', await page.getAttribute('.venstre .verktoyknapp[data-verktoy="fyll"]', 'aria-pressed') === 'false');

@@ -111,6 +111,11 @@ eier avgjørelsen om når tastaturet er delt.
 
 Trykker du et tall som allerede står i ruta, viskes det ut.
 
+I fyllmodus gjelder **Blyant** tallet du alt har plukket ut, ikke bare det
+neste: har du valgt en 7 og slår av blyanten, er det den samme 7-eren som nå
+settes inn som stort tall. Liggende er det siden du trykker på som avgjør, og da
+finnes ingen **Blyant**-knapp å veksle med.
+
 ## Tid og statistikk
 
 Klokka står ved siden av nivået og telleren, og måler tiden du **faktisk har
