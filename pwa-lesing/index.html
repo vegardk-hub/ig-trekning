@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14161a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Monstergiret">
+<title>Monstergiret</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- ---------- Garasjen: oversiktsbildet ---------- -->
+<section id="garasje" class="skjerm">
+  <header class="topp">
+    <h1>Garasjen</h1>
+    <button id="knapp-lyd" class="ikonknapp" type="button" aria-label="Lyd av eller på">🔊</button>
+  </header>
+
+  <div class="garasje-innhold">
+    <div class="byggeplass">
+      <h2 id="bygg-navn">Neste truck</h2>
+      <div class="rute" id="rute-bygg"></div>
+      <p id="bygg-teller" class="teller">0 av 6 brikker</p>
+    </div>
+
+    <div class="samling">
+      <h2>Truckene dine</h2>
+      <div id="samling-liste" class="samling-liste"></div>
+      <p id="samling-tom" class="tomtekst">Les den første teksten, så begynner det å komme en truck her.</p>
+    </div>
+  </div>
+
+  <footer class="bunn">
+    <button id="knapp-les" class="storknapp" type="button">Les og hent en brikke</button>
+    <button id="knapp-liste" class="tekstknapp" type="button">Alle tekstene</button>
+  </footer>
+</section>
+
+<!-- ---------- Tekstlista ---------- -->
+<section id="tekstliste" class="skjerm" hidden>
+  <header class="topp">
+    <button class="ikonknapp tilbake" type="button" data-tilbake="garasje" aria-label="Tilbake">‹</button>
+    <h1>Tekstene</h1>
+  </header>
+  <div id="liste-innhold" class="liste-innhold"></div>
+</section>
+
+<!-- ---------- Lesing ---------- -->
+<section id="lesing" class="skjerm" hidden>
+  <header class="topp">
+    <button class="ikonknapp tilbake" type="button" data-tilbake="garasje" aria-label="Tilbake">‹</button>
+    <h1 id="lese-tittel">Tekst</h1>
+    <span id="lese-teller" class="minitall"></span>
+  </header>
+
+  <div class="lese-flate">
+    <div id="lese-tekst" class="lese-tekst"></div>
+  </div>
+
+  <footer class="bunn lese-bunn">
+    <p id="lese-status" class="status">Trykk på mikrofonen og les høyt.</p>
+    <button id="knapp-mikrofon" class="mikrofon" type="button" aria-label="Start lesing">
+      <span class="mik-ikon">🎤</span>
+    </button>
+    <p class="hjelpetekst">Stopper du opp: trykk på ordet, så leses det for deg.</p>
+  </footer>
+</section>
+
+<!-- ---------- Belønning ---------- -->
+<div id="belonning" class="overlegg" hidden>
+  <div class="belonning-kort">
+    <p class="belonning-tittel" id="belonning-tittel">Bra lest!</p>
+    <div class="rute liten" id="rute-belonning"></div>
+    <p class="belonning-under" id="belonning-under">Du fikk en ny brikke.</p>
+    <button id="knapp-videre" class="storknapp" type="button">Videre</button>
+  </div>
+</div>
+
+<!-- ---------- Én ferdig truck i full størrelse ---------- -->
+<div id="truckvisning" class="overlegg" hidden>
+  <div class="truck-kort">
+    <p class="truck-navn" id="truck-navn"></p>
+    <div class="rute" id="rute-visning"></div>
+    <button id="knapp-brum" class="tekstknapp" type="button">Start motoren</button>
+    <button id="knapp-lukk" class="storknapp" type="button">Lukk</button>
+  </div>
+</div>
+
+<script src="./js/tekster.js"></script>
+<script src="./js/trucker.js"></script>
+<script src="./js/tale.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>

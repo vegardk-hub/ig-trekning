@@ -19,9 +19,15 @@
   husholdningsoppgaver for barna, med pris i kroner per oppgave, ukerute,
   godkjenning fra en voksen og utbetalingshistorikk. Digital utgave av tavla som
   hang på kjøleskapet. PWA for iPad, alt lagret lokalt.
+- **[Monstergiret](pwa-lesing/)** — `pwa-lesing/index.html`: leseapp for barn
+  som leser noenlunde flytende. Barnet leser høyt i mikrofonen, ordene blir
+  grønne etter hvert, og hver ferdig tekst gir en brikke i et puslespill som
+  til slutt blir en monstertruck. 48 tekster, åtte trucker, alle tegnet i SVG.
+  PWA for iPad.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/>, Fargeflasker på
-<https://vegardk-hub.github.io/ig-trekning/pwa-flasker/> og Poengtavla på
-<https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/>.
+<https://vegardk-hub.github.io/ig-trekning/pwa-flasker/>, Poengtavla på
+<https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/> og Monstergiret på
+<https://vegardk-hub.github.io/ig-trekning/pwa-lesing/>.

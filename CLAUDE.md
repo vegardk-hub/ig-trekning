@@ -11,6 +11,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-sudoku/` | Sudoku — PWA med hintmotor som forklarer løseteknikkene |
 | `pwa-flasker/` | Fargeflasker — sorteringsspill for de minste, PWA |
 | `pwa-poengtavle/` | Ukens poengtavle — husholdningsoppgaver med kroner, PWA |
+| `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -24,6 +25,7 @@ repoet:
 - Sudoku: `https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/`
 - Fargeflasker: `https://vegardk-hub.github.io/ig-trekning/pwa-flasker/`
 - Poengtavle: `https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/`
+- Monstergiret: `https://vegardk-hub.github.io/ig-trekning/pwa-lesing/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -75,6 +77,13 @@ NODE_PATH=/opt/node22/lib/node_modules node pwa-sudoku/tester/kjor.js
 De tar knappe minuttet, starter serveren selv og trenger bare playwright.
 `pwa-sudoku/tester/README.md` sier hva hver av dem svarer for.
 
+Monstergiret har prøver på ordmatchingen. De trenger verken nettleser eller
+server, og skal kjøres etter hver endring i `pwa-lesing/js/tale.js`:
+
+```
+node pwa-lesing/tester/match.js
+```
+
 Kjøres de på Windows i stedet for i skyøkta, feiler `fyllmodus` og `tema` på ett
 mål hver, med tre piksler. Det er ikke en regresjon: `system-ui` løser til Segoe
 UI med 21 px linjeboks der, mot 17 px på Linux, som tallene er kalibrert mot.
@@ -82,9 +91,9 @@ Ikke «rett» dem lokalt — da ryker de på telefonen. Node ligger på
 `C:\Program Files\nodejs`, utenfor PATH, og `NODE_PATH` skal peke på
 `C:\Users\vegar\AppData\Roaming\npm\node_modules`.
 
-Sudoku og Fargeflasker er PWA-er. Endrer du filene de forhåndslagrer, bump
-`CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen igjen hos alle som
-allerede har installert appen.
+Sudoku, Fargeflasker, Poengtavla og Monstergiret er PWA-er. Endrer du filene de
+forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
+igjen hos alle som allerede har installert appen.
 
 ## Konvensjoner
 
@@ -208,3 +217,36 @@ Nivåene lages ved å stokke fargene tilfeldig og la løseren bekrefte at brette
 går an. Tilfeldigheten er sådd med nivånummeret, så nivå 7 må se likt ut hver
 gang; endrer du `nivaaOppsett` eller generatoren, bytter alle brettene innhold
 for et barn som kjenner dem igjen.
+
+## Monstergiret
+
+`pwa-lesing/README.md` går gjennom ordmatchingen, puslespillet og hvordan
+truckene tegnes. Premisset er det viktigste å ha med seg:
+
+**Appen kan bekrefte, aldri avvise.** Talegjenkjenning bommer ofte på
+barnestemmer — modellene er trent på voksne som snakker sammenhengende, ikke på
+et barn som leser med pauser. En app som sier «feil», sier det derfor til barn
+som leste riktig. Ord blir bare grønne, grønt tas aldri tilbake, ingenting blir
+rødt, og det finnes ingen poengsum. Står barnet fast, trykker det på ordet: én
+gang for å få det lest opp, én gang til for å gå videre. **Et ord som ble grønt
+av et trykk, skal se nøyaktig ut som et ord som ble grønt av stemmen.**
+
+Fire ting som har kostet tid, eller som ville gjort det:
+
+- **Gjenkjenneren stopper av seg selv ved stillhet**, og et barn som leser,
+  pauser hele tiden. Uten omstarten i `onend` dør mikrofonen ved første
+  tenkepause.
+- **Foreløpige resultater skrives om.** Derfor matches hvert utsagn fra bunnen
+  av, fra der forrige sluttet — ellers telles et omskrevet ord to ganger. Det
+  er trygt å fargelegge på dem nettopp fordi posisjonen bare går framover.
+- **Korte ord må treffe eksakt.** Med én bokstavs slingring matcher «og» både
+  «om», «opp» og «i», og halve teksten blir grønn av seg selv.
+- **Talegjenkjenning i hjemskjermmodus har historisk vært upålitelig på iOS.**
+  Virker ikke mikrofonen, prøv siden i Safari før du leter i koden.
+
+Truckene er tegnet, ikke lastet ned: én SVG-tegning og en tabell med farge,
+motor og dekor. Motoren må være i metallfarge og stikke ned under panserlinja,
+og all dekor må holde seg i båndet `y=86`–`y=120` — over det ligger førerhuset,
+og et lyn tvers over vinduet ser ut som en feil. Ikonene lages med
+`python3 pwa-lesing/lag_ikon.py`, som skriver PNG-ene selv fordi Pillow ikke
+finnes i skyøkta.

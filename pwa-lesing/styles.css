@@ -1,0 +1,389 @@
+/*
+ * Mørk garasje. Fargen er ikke pynt: teksten skal være det lyseste på
+ * skjermen, slik at blikket havner der og ikke på rammene rundt.
+ *
+ * Alt av høyder går i dvh og trygt område via --trygg-topp/--trygg-bunn, så
+ * appen tåler både Safari-linja på iPad og hjemskjermmodus.
+ */
+
+:root {
+  --trygg-topp: env(safe-area-inset-top, 0px);
+  --trygg-bunn: env(safe-area-inset-bottom, 0px);
+
+  --bunnfarge: #14161a;
+  --flate: #1e2229;
+  --flate-lys: #272c35;
+  --kant: #333a45;
+  --tekst: #e9edf3;
+  --tekst-dempet: #98a2b0;
+  --lest: #5ddc82;
+  --aksent: #ff9f2e;
+  --skygge: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bunnfarge);
+  color: var(--tekst);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* [hidden] er en nettleserstil. Uten :not() her ville en egen display slått
+   den, og skjermene lagt seg oppå hverandre. */
+.skjerm { display: none; }
+.skjerm:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: calc(var(--trygg-topp) + 8px) 16px calc(var(--trygg-bunn) + 8px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ---------- topplinje ---------- */
+
+.topp {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-height: 52px;
+}
+
+.topp h1 {
+  font-size: 1.35rem;
+  margin: 0;
+  flex: 1 1 auto;
+  letter-spacing: 0.01em;
+}
+
+.minitall {
+  color: var(--tekst-dempet);
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+}
+
+.ikonknapp {
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  color: var(--tekst);
+  border-radius: 14px;
+  min-width: 46px;
+  height: 46px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.ikonknapp.tilbake { font-size: 1.9rem; line-height: 1; padding-bottom: 4px; }
+.ikonknapp:active { background: var(--flate-lys); }
+
+/* ---------- knapper ---------- */
+
+.storknapp {
+  display: block;
+  width: 100%;
+  background: var(--aksent);
+  color: #201401;
+  border: 0;
+  border-radius: 18px;
+  padding: 18px 20px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--skygge);
+}
+
+.storknapp:active { transform: translateY(2px); }
+
+.tekstknapp {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: none;
+  border: 0;
+  color: var(--tekst-dempet);
+  font-size: 1rem;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.bunn { flex: 0 0 auto; padding-top: 12px; }
+
+/* ---------- garasjen ---------- */
+
+.garasje-innhold {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 6px;
+}
+
+.byggeplass h2, .samling h2 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tekst-dempet);
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.rute {
+  position: relative;
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.rute svg { display: block; width: 100%; height: auto; }
+
+.teller {
+  margin: 10px 2px 0;
+  color: var(--tekst-dempet);
+  font-size: 1rem;
+}
+
+/* Brikkene som ikke er tjent, ligger som lokk oppå tegningen. Å avdekke er
+   da bare å ta bort et lokk — ingen oppdeling av bildet i filer. */
+.lokk {
+  fill: #262b33;
+  stroke: #14161a;
+  stroke-width: 2;
+  transition: opacity 620ms ease, transform 620ms ease;
+  transform-origin: center;
+}
+
+.lokk.borte {
+  opacity: 0;
+  transform: scale(0.72) rotate(-6deg);
+  pointer-events: none;
+}
+
+.samling-liste {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.samling-kort {
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  border-radius: 16px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.samling-kort svg { display: block; width: 100%; height: auto; }
+
+.samling-kort span {
+  display: block;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding-top: 6px;
+  color: var(--tekst);
+}
+
+.tomtekst { color: var(--tekst-dempet); font-size: 0.95rem; margin: 0; }
+.tomtekst[hidden] { display: none; }
+
+/* ---------- tekstlista ---------- */
+
+.liste-innhold {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 0 20px;
+}
+
+.liste-gruppe {
+  margin: 18px 0 8px;
+  color: var(--tekst-dempet);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.liste-rad {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  color: var(--tekst);
+  border-radius: 14px;
+  padding: 15px 16px;
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.liste-rad .merke { font-size: 1.15rem; width: 24px; flex: 0 0 auto; }
+.liste-rad.klar .merke { color: var(--lest); }
+.liste-rad.laast { opacity: 0.45; }
+
+/* ---------- lesing ---------- */
+
+.lese-flate {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 0;
+}
+
+.lese-tekst {
+  font-size: clamp(1.6rem, 4.2vw, 2.5rem);
+  line-height: 1.75;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  max-width: 22ch;
+  margin: 0 auto;
+}
+
+.linje { margin: 0 0 0.5em; }
+
+/* Ordene som ikke er lest ennå, skal være det klareste på skjermen – det er
+   dem barnet faktisk leser. Første utkast dempet dem og lot de leste være
+   lyse, og da sto teksten som var igjen å lese, svakest av alt. */
+.ord {
+  display: inline-block;
+  padding: 0 0.08em;
+  /* Liten radius og en minstebredde, ellers blir streken under et ettbokstavs
+     ord som «i» en liten bue som ser ut som en tilfeldig flekk. */
+  border-radius: 4px;
+  min-width: 0.75em;
+  text-align: center;
+  color: var(--tekst);
+  transition: color 220ms ease, background-color 220ms ease, transform 220ms ease;
+  cursor: pointer;
+}
+
+.ord.lest {
+  color: var(--lest);
+  transform: translateY(-1px);
+}
+
+/* Det ordet appen venter på. En strek under, ikke en farge — farge betyr
+   «lest», og det skal bety bare det. */
+.ord.naa {
+  box-shadow: inset 0 -4px 0 var(--aksent);
+}
+
+.lese-bunn { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+.status {
+  margin: 0;
+  color: var(--tekst-dempet);
+  font-size: 1rem;
+  min-height: 1.4em;
+  text-align: center;
+}
+
+.status.feil { color: var(--aksent); }
+
+.hjelpetekst {
+  margin: 0;
+  color: var(--tekst-dempet);
+  font-size: 0.85rem;
+  opacity: 0.75;
+  text-align: center;
+}
+
+.mikrofon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--kant);
+  background: var(--flate);
+  color: var(--tekst);
+  font-size: 2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.mikrofon.lytter {
+  border-color: var(--lest);
+  background: #1d3326;
+  animation: puls 1.6s ease-in-out infinite;
+}
+
+@keyframes puls {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(93, 220, 130, 0.45); }
+  50%      { box-shadow: 0 0 0 16px rgba(93, 220, 130, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mikrofon.lytter { animation: none; }
+  .lokk { transition: opacity 200ms ease; }
+}
+
+/* ---------- overlegg ---------- */
+
+.overlegg { display: none; }
+
+.overlegg:not([hidden]) {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 13, 0.82);
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--trygg-topp) + 16px) 16px calc(var(--trygg-bunn) + 16px);
+  z-index: 10;
+}
+
+.belonning-kort, .truck-kort {
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  border-radius: 24px;
+  padding: 22px;
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  box-shadow: var(--skygge);
+  text-align: center;
+}
+
+.belonning-tittel {
+  font-size: 1.7rem;
+  font-weight: 800;
+  margin: 0 0 14px;
+  color: var(--lest);
+}
+
+.belonning-under { color: var(--tekst-dempet); margin: 14px 0 18px; }
+
+.truck-navn {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 14px;
+}
+
+.truck-kort .storknapp { margin-top: 12px; }
+
+/* iPad i liggende format: teksten skal ikke bli en tynn stripe i midten. */
+@media (min-width: 820px) {
+  .lese-tekst { max-width: 26ch; }
+  .skjerm:not([hidden]) { padding-left: 28px; padding-right: 28px; }
+}
