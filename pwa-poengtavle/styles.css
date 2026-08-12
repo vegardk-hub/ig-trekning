@@ -22,16 +22,21 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+/* Bakgrunnen ligger kun på body, ikke på html. Da forplanter den seg til hele
+   lerretet, og gradienten i barnemodus dekker skjermen også når siden er kort. */
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  min-height: 100vh;
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 17px;
   -webkit-text-size-adjust: 100%;
   overscroll-behavior: none;
 }
+
+html { background: var(--bg); }
+body { background: transparent; }
 
 #app {
   max-width: 1180px;
@@ -112,7 +117,9 @@ input:focus, select:focus, .btn:focus-visible { outline: 3px solid var(--blue-bg
   width: 84px; height: 84px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 44px; margin: 0 auto 12px;
+  background: #fff3c4;
 }
+.avatar-sm { width: 52px; height: 52px; font-size: 28px; margin: 0; }
 .kid-name { font-size: 20px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .kid-sum { font-size: 26px; font-weight: 700; margin-top: 8px; }
 .kid-dashed { border-style: dashed; color: var(--ink-faint); }
@@ -130,8 +137,12 @@ input:focus, select:focus, .btn:focus-visible { outline: 3px solid var(--blue-bg
   display: flex; align-items: center; gap: 9px;
   font-size: 14px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
   line-height: 1.18; overflow-wrap: break-word; hyphens: auto; padding-right: 8px;
+  min-width: 0; overflow: hidden;
 }
 .task-emoji { font-size: 22px; flex: none; }
+/* Uten min-width: 0 nekter tekstbiten å bli smalere enn sitt lengste ord, og
+   «oppvaskmaskinen» skyver seg ut av pillen i stedet for å brekke. */
+.tn-tekst { min-width: 0; overflow-wrap: anywhere; }
 .task-kr { font-size: 15px; color: var(--ink-soft); text-align: right; font-variant-numeric: tabular-nums; }
 .task-sum { font-size: 16px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
 .task-sum.zero { color: var(--ink-faint); font-weight: 400; }
@@ -150,7 +161,9 @@ input:focus, select:focus, .btn:focus-visible { outline: 3px solid var(--blue-bg
 .cell.ok { background: var(--green-bg); border-color: var(--green-line); color: var(--green); }
 .cell.wait { background: var(--amber-bg); border-color: var(--amber-line); color: var(--amber); }
 .cell svg { width: 30px; height: 30px; }
-.cell.pop svg { animation: pop .45s ease; }
+.cell .mark { display: flex; align-items: center; justify-content: center; }
+.cell.pop .mark { animation: pop .45s ease; }
+.cell.arrive .mark { opacity: 0; transform: scale(.2); }
 @keyframes pop {
   0% { transform: scale(.3) rotate(-18deg); }
   55% { transform: scale(1.25) rotate(6deg); }
@@ -227,3 +240,127 @@ input:focus, select:focus, .btn:focus-visible { outline: 3px solid var(--blue-bg
 .section-title { font-size: 18px; font-weight: 600; margin: 0 0 14px; }
 .stack > * + * { margin-top: 18px; }
 .hint { font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
+
+/* ============================================================
+   Barnemodus
+
+   Alt her er scopet til body[data-mode="barn"], slik at foreldresidene
+   forblir rolige og lesbare. Fargene på radene følger radnummeret og ikke
+   barnet — Vetle og Live skal se nøyaktig det samme brettet.
+   ============================================================ */
+
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+.gnist {
+  position: fixed; font-size: 22px; line-height: 1;
+  transform: translate(-50%, -50%);
+  animation: fly .9s cubic-bezier(.2, .7, .3, 1) forwards;
+}
+@keyframes fly {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(.4); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.25) rotate(35deg); }
+}
+@keyframes tikk { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+@keyframes rist { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.12) rotate(-3deg); } 65% { transform: scale(1.08) rotate(3deg); } }
+@keyframes hopp { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+html[data-mode="barn"] {
+  background: linear-gradient(180deg, #fff6dc 0%, #ffeef4 42%, #e7f5ff 100%);
+  background-attachment: fixed;
+}
+body[data-mode="barn"] {
+  font-family: "Chalkboard SE", "Comic Sans MS", "Segoe UI Rounded", sans-serif;
+}
+
+body[data-mode="barn"] .title { font-size: 32px; letter-spacing: .06em; }
+body[data-mode="barn"] .subtle { font-size: 15px; }
+
+body[data-mode="barn"] .btn {
+  border-width: 3px; border-radius: 999px; font-weight: 700;
+  box-shadow: 0 4px 0 rgba(120, 110, 80, .13);
+}
+body[data-mode="barn"] .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(120, 110, 80, .13); }
+body[data-mode="barn"] .btn-ghost { border-color: transparent; box-shadow: none; }
+
+body[data-mode="barn"] .card {
+  border: 4px solid #fff; border-radius: 30px; padding: 20px;
+  box-shadow: 0 8px 0 rgba(120, 110, 80, .10);
+}
+
+/* --- barnevelgeren --- */
+body[data-mode="barn"] .kid {
+  position: relative; border: 4px solid #ffd166; border-radius: 32px; padding: 26px 16px;
+  box-shadow: 0 8px 0 rgba(190, 150, 40, .22);
+}
+body[data-mode="barn"] .kid:active { transform: translateY(4px); box-shadow: 0 4px 0 rgba(190, 150, 40, .22); }
+body[data-mode="barn"] .kid-dashed { border-color: var(--line-strong); box-shadow: none; }
+body[data-mode="barn"] .kid-avatar { border: 4px solid #ffd166; animation: hopp 3.5s ease-in-out infinite; }
+body[data-mode="barn"] .kid-dashed .kid-avatar { border-color: var(--line-strong); background: #fff; animation: none; }
+body[data-mode="barn"] .kid-name { font-size: 26px; }
+body[data-mode="barn"] .kid-sum {
+  font-size: 30px; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.kid-new {
+  position: absolute; top: -14px; right: -8px;
+  background: #4faf4f; color: #fff; font-size: 15px; font-weight: 700;
+  border-radius: 999px; padding: 6px 14px; border: 3px solid #fff;
+  animation: rist 1.6s ease-in-out infinite;
+}
+.coin { font-size: .9em; }
+
+/* --- ukeruta --- */
+.pengesekk {
+  display: flex; align-items: center; gap: 8px;
+  background: #fff3c4; border: 3px solid #f2b705; color: #7d5200;
+  border-radius: 999px; padding: 8px 20px; font-size: 26px; font-weight: 700;
+  font-variant-numeric: tabular-nums; margin-left: 6px;
+}
+.pengesekk.rister { animation: rist .6s ease; }
+
+body[data-mode="barn"] .board { gap: 7px; }
+body[data-mode="barn"] .board-head {
+  font-size: 14px; color: var(--ink); background: #fff;
+  border: 2px solid var(--line-strong); border-radius: 999px; padding: 5px 0; margin-bottom: 4px;
+}
+body[data-mode="barn"] .board-head.today { background: #ff8c42; border-color: #ff8c42; color: #fff; }
+
+body[data-mode="barn"] .task-name {
+  background: var(--bg); color: var(--ink); border-radius: 22px;
+  padding: 9px 12px; font-size: 13px; font-weight: 700; letter-spacing: 0; gap: 7px;
+}
+body[data-mode="barn"] .task-emoji { font-size: 23px; }
+body[data-mode="barn"] .task-kr {
+  background: #fff; border: 2px solid var(--line); color: var(--ink);
+  border-radius: 999px; text-align: center; padding: 5px 0; font-size: 15px; font-weight: 700;
+}
+body[data-mode="barn"] .task-sum {
+  background: var(--bg); border: 2px solid var(--line); color: var(--ink);
+  border-radius: 999px; padding: 6px 0; font-size: 16px;
+}
+body[data-mode="barn"] .task-sum.zero { background: transparent; border-color: transparent; color: #c3c1b8; }
+
+body[data-mode="barn"] .cell {
+  height: 62px; border: 3px dashed rgba(90, 85, 65, .18); border-radius: 20px;
+}
+body[data-mode="barn"] .cell.today { background: #fffcf2; }
+body[data-mode="barn"] .cell.ok {
+  background: var(--line); border: 3px solid var(--line); color: #fff;
+}
+body[data-mode="barn"] .cell.wait {
+  background: #fff6d8; border: 3px solid #f2b705; color: #8a5a00;
+}
+body[data-mode="barn"] .cell.wait .mark { animation: tikk 2.2s ease-in-out infinite; }
+body[data-mode="barn"] .cell svg { width: 36px; height: 36px; }
+body[data-mode="barn"] .cell:active { transform: scale(.9); }
+
+body[data-mode="barn"] .legend { gap: 12px; flex-wrap: wrap; font-size: 14px; margin-top: 18px; }
+body[data-mode="barn"] .legend span {
+  background: #fff; border: 2px solid var(--line-strong); border-radius: 999px; padding: 6px 14px;
+}
+.lg-ok { color: #245d1e; border-color: #4faf4f !important; }
+.lg-wait { color: #8a5a00; border-color: #f2b705 !important; }
+.lg-heia { margin-left: auto; color: #8c2a4c; border-color: #ea6b98 !important; font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gnist, .kid-new, body[data-mode="barn"] .kid-avatar,
+  body[data-mode="barn"] .cell.wait .mark, .pengesekk.rister { animation: none; }
+}

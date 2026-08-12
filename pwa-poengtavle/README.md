@@ -50,6 +50,42 @@ Oppgaver med pris `null` vises som `?` — beløpet settes av den voksne ved
 godkjenning. Det er «passe på eller leke med Live» fra arket, der forhandlingen
 er en del av opplegget.
 
+## Barnemodus
+
+Alt utseende for barna er scopet til `[data-mode="barn"]`, som `render()` setter
+på `html` og `body`. Foreldresidene beholder det rolige, nøkterne uttrykket —
+det er to grensesnitt i samme skall, og det er meningen.
+
+**Brettet er identisk for alle barna.** Radfargene følger *radnummeret*, ikke
+barnet. Vetle og Live sammenligner tavlene sine, og en forskjell i farge blir en
+sak ved frokostbordet. Det eneste som skiller dem er navnet, ikonet de har valgt
+selv, og beløpene. Derfor finnes det heller ingen fargevelger per barn lenger —
+den var en felle.
+
+Radfargen brukes tre steder i samme rad: pillen med oppgavenavnet, fyllet i en
+godkjent rute og sum-merket ytterst. Det gir et barn som ikke leser ennå en måte
+å følge sin egen rad bortover uken.
+
+Feiringen er delt i to:
+
+- **Ved avkrysning** spretter det gnister ut av ruta og det spilles to toner.
+  Det er kvitteringen på at trykket ble registrert.
+- **Ved godkjenning** skjer det ingenting der og da — barnet er sjelden til
+  stede. Feiringen spares til neste gang tavla åpnes: hver nyoppdaget rute
+  lander med gnister og en tone, én om gangen, og pengesekken teller seg opp til
+  den nye summen. Godkjenninger fra uker barnet ikke ser på, merkes som sett uten
+  feiring (`settSett()`) — ellers blir «nye!»-merket på forsiden stående for
+  alltid.
+
+Lyden er ren WebAudio uten lydfiler, og kan slås av i innstillingene.
+`prefers-reduced-motion` slår av alt som beveger seg av seg selv.
+
+En detalj som kostet tid: **bakgrunnen ligger på `html`, ikke på `body`.** Et
+`body` med bare innholdets høyde gir en gradient som stopper midt på skjermen.
+Og i en flex-boks nekter en naken tekstnode å bli smalere enn sitt lengste ord —
+derfor ligger oppgavenavnet i `.tn-tekst` med `min-width: 0`, ellers skyver
+«oppvaskmaskinen» seg ut av pillen sin.
+
 ## Navn og blokkbokstaver
 
 Navn lagres slik de skrives («Leke med Live»). Barnesidene roper dem ut med

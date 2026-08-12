@@ -157,6 +157,9 @@ låst. Tre ting som ser ut som detaljer og har en grunn:
 - **Navn lagres slik de skrives.** Blokkbokstavene i barnemodus kommer fra
   `text-transform` i CSS. Lagrer man versaler i stedet, ryker egennavnene når
   foreldremodus skal vise dem normalt.
+- **Barnas tavler skal være identiske.** Radfargene følger radnummeret, ikke
+  barnet. Søsknene sammenligner, og en farge som er «hennes» og ikke «hans»
+  blir en sak. Ikke innfør tema, farge eller pynt per barn.
 
 Ukeskiftet er ikke en nullstilling: uken er et filter på datoene, og ruter som
 ikke er godkjent blir liggende. Ingenting i barnemodus markerer noe som *ikke*

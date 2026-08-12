@@ -2,7 +2,18 @@ const KEY = 'poengtavle-v1';
 const DAY_LABELS = ['MAN', 'TIR', 'ONS', 'TOR', 'FRE', 'LØR', 'SØN'];
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
 const EMOJIS = ['⭐', '😴', '🛁', '🛏️', '🍽️', '🗑️', '🧸', '🐕', '👕', '🪴', '🦷', '📚', '🎒', '🧹', '🚲', '🍎', '✏️', '🧦', '🚿', '🧺', '🥣', '🎹'];
-const COLORS = { blue: '#e6f1fb', pink: '#fbeaf0', green: '#eaf3de', amber: '#faeeda', purple: '#eeedfe', teal: '#e1f5ee' };
+/* Radfargene følger radnummeret, ikke barnet. Vetle og Live skal se nøyaktig
+   det samme brettet — de sammenligner, og en forskjell i farge blir en sak. */
+const ROWS = [
+  { bg: '#fff1c9', line: '#eaa800', ink: '#7d5200' },
+  { bg: '#dcf3d2', line: '#4faf4f', ink: '#245d1e' },
+  { bg: '#d9ecff', line: '#3d97e8', ink: '#0f4a80' },
+  { bg: '#ffdde9', line: '#ea6b98', ink: '#8c2a4c' },
+  { bg: '#e7ddff', line: '#8b6be0', ink: '#452a85' },
+  { bg: '#ffe0cc', line: '#ef7f3c', ink: '#8c3d0d' },
+  { bg: '#cdf2ed', line: '#2fb5a3', ink: '#0d5c53' }
+];
+const SPARKS = ['⭐', '🌟', '✨', '🎉', '💫'];
 
 const SMILEY = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8.8" cy="10" r="1.3" fill="currentColor"/><circle cx="15.2" cy="10" r="1.3" fill="currentColor"/><path d="M7.6 14.2c1.1 1.7 2.6 2.5 4.4 2.5s3.3-.8 4.4-2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 const CLOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5.4l3.4 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -18,9 +29,10 @@ function defaults() {
     version: 1,
     pin: '0418',
     lastBackup: null,
+    sound: true,
     children: [
-      { id: 'c1', name: 'Vetle', emoji: '🚀', color: 'blue' },
-      { id: 'c2', name: 'Live', emoji: '🌸', color: 'pink' }
+      { id: 'c1', name: 'Vetle', emoji: '🚀' },
+      { id: 'c2', name: 'Live', emoji: '🌸' }
     ],
     tasks: [
       t('😴', 'Sove i egen seng', 10),
@@ -144,20 +156,28 @@ function render() {
   else if (ui.view === 'board') html = viewBoard();
   else if (ui.view === 'pin') html = viewPin();
   else html = viewParent();
+  const modus = (ui.view === 'home' || ui.view === 'board') ? 'barn' : 'voksen';
+  document.documentElement.dataset.mode = modus;
+  document.body.dataset.mode = modus;
   app.innerHTML = html;
   if (ui.view === 'parent' && ui.tab === 'tasks') bindDrag();
+  if (ui.view === 'board') feiring();
   ui.popCell = null;
 }
 
 function viewHome() {
   const n = pending().length;
-  const kids = S.children.map(c => `
+  const kids = S.children.map(c => {
+    const nye = S.events.filter(e => e.childId === c.id && e.status === 'approved' && !e.seen).length;
+    return `
     <button class="kid" data-act="child" data-id="${c.id}">
-      <div class="kid-avatar" style="background:${COLORS[c.color] || COLORS.blue}">${c.emoji}</div>
+      ${nye ? `<div class="kid-new">${nye} ny${nye === 1 ? '' : 'e'}! 🎉</div>` : ''}
+      <div class="kid-avatar">${c.emoji}</div>
       <div class="kid-name">${esc(c.name)}</div>
-      <div class="kid-sum">${kr(balance(c.id))}</div>
+      <div class="kid-sum"><span class="coin">🪙</span>${kr(balance(c.id))}</div>
       <div class="subtle">spart opp</div>
-    </button>`).join('');
+    </button>`;
+  }).join('');
   return `
     <div class="topbar">
       <h1 class="title">HVEM ER DU?</h1>
@@ -166,7 +186,7 @@ function viewHome() {
     <div class="kids">
       ${kids}
       <button class="kid kid-dashed" data-act="parent" data-goto="settings">
-        <div class="kid-avatar" style="background:var(--bg)">＋</div>
+        <div class="kid-avatar">＋</div>
         <div>Legg til barn</div>
       </button>
     </div>`;
@@ -186,37 +206,44 @@ function viewBoard() {
     dates.map((d, i) => `<div class="board-head${keys[i] === today ? ' today' : ''}">${DAY_LABELS[i]}</div>`).join('') +
     `<div class="board-head">SUM</div>`;
 
-  const rows = list.map(t => {
+  let nye = 0;
+  const rows = list.map((t, i) => {
+    const col = ROWS[i % ROWS.length];
+    const v = `--bg:${col.bg};--line:${col.line};--ink:${col.ink}`;
     const cells = keys.map(k => {
       const e = eventAt(c.id, t.id, k);
       const st = e ? (e.status === 'approved' ? 'ok' : 'wait') : '';
-      const mark = e ? (e.status === 'approved' ? SMILEY : CLOCK) : '';
+      const fersk = e && e.status === 'approved' && !e.seen;
+      if (fersk) nye++;
+      const mark = e ? `<span class="mark">${e.status === 'approved' ? SMILEY : CLOCK}</span>` : '';
       const pop = ui.popCell === c.id + t.id + k ? ' pop' : '';
       const label = t.name + ' ' + dayName(k) + (e ? (e.status === 'approved' ? ' – godkjent' : ' – venter') : ' – ikke gjort');
-      return `<button class="cell ${st}${k === today ? ' today' : ''}${pop}" data-act="cell" data-task="${t.id}" data-date="${k}" aria-label="${esc(label)}">${mark}</button>`;
+      return `<button class="cell ${st}${k === today ? ' today' : ''}${pop}${fersk ? ' arrive' : ''}" style="${v}" data-act="cell" data-task="${t.id}" data-date="${k}" aria-label="${esc(label)}">${mark}</button>`;
     }).join('');
     const sum = keys.reduce((s, k) => {
       const e = eventAt(c.id, t.id, k);
       return s + (e && e.status === 'approved' ? (e.amount || 0) : 0);
     }, 0);
-    return `<div class="task-name"><span class="task-emoji">${t.emoji}</span>${esc(t.name)}</div>
-      <div class="task-kr">${t.price === null ? '?' : t.price}</div>
+    return `<div class="task-name" style="${v}"><span class="task-emoji">${t.emoji}</span><span class="tn-tekst">${esc(t.name)}</span></div>
+      <div class="task-kr" style="${v}">${t.price === null ? '?' : t.price}</div>
       ${cells}
-      <div class="task-sum${sum ? '' : ' zero'}">${sum}</div>`;
+      <div class="task-sum${sum ? '' : ' zero'}" style="${v}">${sum}</div>`;
   }).join('');
 
   const weekSum = earnedBetween(c.id, keys[0], keys[6]);
+  ui.nyeKroner = nye ? weekSum - S.events.filter(e => e.childId === c.id && e.status === 'approved' && !e.seen && e.date >= keys[0] && e.date <= keys[6]).reduce((s, e) => s + (e.amount || 0), 0) : null;
   const label = ui.weekOffset === 0 ? 'Denne uken' : 'Uke ' + weekNumber(dates[0]);
 
   return `
     <div class="topbar">
       <div class="topbar-left">
         <button class="btn btn-ghost" data-act="home" aria-label="Tilbake">←</button>
-        <div class="kid-avatar" style="width:48px;height:48px;font-size:26px;margin:0;background:${COLORS[c.color] || COLORS.blue}">${c.emoji}</div>
+        <div class="kid-avatar avatar-sm">${c.emoji}</div>
         <div>
-          <div class="kid-name" style="font-size:19px">${esc(c.name)}</div>
+          <div class="kid-name" style="font-size:24px">${esc(c.name)}</div>
           <div class="subtle">Uke ${weekNumber(dates[0])}</div>
         </div>
+        <div class="pengesekk"><span class="coin">🪙</span><span id="ukesum">${weekSum}</span> kr</div>
       </div>
       <div class="week-nav">
         <button class="btn btn-icon" data-act="week" data-d="-1" aria-label="Forrige uke">◀</button>
@@ -226,14 +253,14 @@ function viewBoard() {
       </div>
     </div>
     <div class="card">
-      <div class="board" style="grid-template-columns:minmax(150px,2fr) 40px repeat(7,minmax(46px,1fr)) 54px">
+      <div class="board" style="grid-template-columns:minmax(168px,2.4fr) 42px repeat(7,minmax(46px,1fr)) 56px">
         ${head}${rows}
       </div>
       ${list.length ? '' : '<div class="empty">Ingen oppgaver ennå. En voksen kan legge dem til.</div>'}
       <div class="legend">
-        <span>${SMILEY} Godkjent</span>
-        <span>${CLOCK} Venter på mamma eller pappa</span>
-        <span style="margin-left:auto;font-size:16px;color:var(--ink)">Denne uken: <strong>${kr(weekSum)}</strong></span>
+        <span class="lg-ok">${SMILEY} Godkjent</span>
+        <span class="lg-wait">${CLOCK} Venter på mamma eller pappa</span>
+        <span class="lg-heia">Hver innsats teller! 💪</span>
       </div>
     </div>`;
 }
@@ -389,7 +416,7 @@ function tabSettings() {
           <input type="text" value="${esc(c.name)}" data-cname="${c.id}" style="max-width:190px">
         </div>
         <div class="row-left" style="flex:none;gap:8px">
-          <select data-ccolor="${c.id}" aria-label="Farge">${Object.keys(COLORS).map(k => `<option value="${k}"${c.color === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
+          <input type="text" value="${esc(c.emoji)}" data-cemoji="${c.id}" style="width:56px;text-align:center" aria-label="Ikon">
           <button class="btn btn-sm btn-icon" data-act="delchild" data-id="${c.id}" aria-label="Fjern barn">🗑</button>
         </div>
       </div>`).join('')}
@@ -398,6 +425,10 @@ function tabSettings() {
         <input type="text" id="childname" placeholder="Nytt barn" style="flex:1;min-width:140px">
         <button class="btn btn-primary" data-act="addchild">Legg til barn</button>
       </div>
+    </div>
+    <div>
+      <div class="section-title">Lyd</div>
+      <div class="checks"><label><input type="checkbox" data-sound${S.sound === false ? '' : ' checked'}> Spill en liten lyd når barnet krysser av</label></div>
     </div>
     <div>
       <div class="section-title">Sikkerhetskopi</div>
@@ -420,6 +451,92 @@ function tabSettings() {
 
 /* ---------- handlinger ---------- */
 
+/* ---------- moro ---------- */
+
+/* Gnister skytes ut fra midten av ruta. De ligger i sitt eget lag over alt
+   annet, så de kan fly utenfor ruta uten å dytte på rutenettet. */
+function gnister(el, antall) {
+  const r = el.getBoundingClientRect();
+  const fx = document.getElementById('fx');
+  for (let i = 0; i < antall; i++) {
+    const s = document.createElement('span');
+    s.className = 'gnist';
+    s.textContent = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+    s.style.left = (r.left + r.width / 2) + 'px';
+    s.style.top = (r.top + r.height / 2) + 'px';
+    const v = (Math.PI * 2 * i) / antall + Math.random() * 0.6;
+    const d = 45 + Math.random() * 55;
+    s.style.setProperty('--dx', Math.round(Math.cos(v) * d) + 'px');
+    s.style.setProperty('--dy', Math.round(Math.sin(v) * d - 25) + 'px');
+    fx.appendChild(s);
+    setTimeout(() => s.remove(), 950);
+  }
+}
+
+let lydkontekst = null;
+function lyd(toner) {
+  if (S.sound === false || !window.AudioContext) return;
+  try {
+    lydkontekst = lydkontekst || new AudioContext();
+    toner.forEach((hz, i) => {
+      const o = lydkontekst.createOscillator(), g = lydkontekst.createGain();
+      const t = lydkontekst.currentTime + i * 0.09;
+      o.type = 'triangle';
+      o.frequency.value = hz;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+      o.connect(g).connect(lydkontekst.destination);
+      o.start(t);
+      o.stop(t + 0.3);
+    });
+  } catch (e) { /* lyd er pynt — den skal aldri stoppe appen */ }
+}
+
+/* Barnet ser ikke selv godkjenningen skje. Feiringen spares derfor til neste
+   gang han eller hun åpner tavla, og kjøres én rute om gangen. */
+function feiring() {
+  const ruter = document.querySelectorAll('.cell.arrive');
+  if (!ruter.length) { settSett(); return; }
+  const teller = document.getElementById('ukesum');
+  const fra = ui.nyeKroner, til = teller ? +teller.textContent : 0;
+
+  ruter.forEach((rute, i) => setTimeout(() => {
+    rute.classList.remove('arrive');
+    rute.classList.add('pop');
+    gnister(rute, 10);
+    lyd([523 + i * 60, 784 + i * 60]);
+  }, 400 + i * 550));
+
+  if (teller && fra != null && fra !== til) {
+    teller.textContent = fra;
+    const slutt = 400 + ruter.length * 550;
+    setTimeout(() => tellOpp(teller, fra, til), slutt - 300);
+  }
+  setTimeout(settSett, 400 + ruter.length * 550 + 400);
+}
+
+/* Godkjenninger fra uker barnet ikke ser på, feires ikke — men de må likevel
+   merkes som sett, ellers blir «nye!»-merket på forsiden stående for alltid. */
+function settSett() {
+  let endret = false;
+  S.events.forEach(e => {
+    if (e.childId === ui.childId && e.status === 'approved' && !e.seen) { e.seen = true; endret = true; }
+  });
+  if (endret) save();
+}
+
+function tellOpp(el, fra, til) {
+  const start = performance.now(), lengde = 900;
+  el.parentElement.classList.add('rister');
+  (function steg(na) {
+    const p = Math.min(1, (na - start) / lengde);
+    el.textContent = Math.round(fra + (til - fra) * p);
+    if (p < 1) requestAnimationFrame(steg);
+    else setTimeout(() => el.parentElement.classList.remove('rister'), 400);
+  })(start);
+}
+
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -434,6 +551,9 @@ function onCell(taskId, date) {
   if (!e) {
     S.events.push({ id: uid(), childId: ui.childId, taskId: taskId, date: date, status: 'pending', amount: t.price });
     ui.popCell = ui.childId + taskId + date;
+    const rute = document.querySelector('[data-task="' + taskId + '"][data-date="' + date + '"]');
+    if (rute) gnister(rute, 6);
+    lyd([660, 880]);
   } else if (e.status === 'pending') {
     S.events = S.events.filter(x => x !== e);
   } else if (ui.parent) {
@@ -607,9 +727,13 @@ document.addEventListener('change', ev => {
   } else if (el.dataset.cname) {
     child(el.dataset.cname).name = el.value.trim() || 'Barn';
     save();
-  } else if (el.dataset.ccolor) {
-    child(el.dataset.ccolor).color = el.value;
+  } else if (el.dataset.cemoji) {
+    child(el.dataset.cemoji).emoji = el.value.trim().slice(0, 4) || '🙂';
     save(); render();
+  } else if (el.hasAttribute('data-sound')) {
+    S.sound = el.checked;
+    save();
+    if (el.checked) lyd([660, 880]);
   } else if (el.id === 'restorefile' && el.files[0]) {
     const r = new FileReader();
     r.onload = () => {
