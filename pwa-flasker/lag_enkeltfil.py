@@ -21,7 +21,9 @@ def les(navn):
 def bygg():
     html = les("index.html")
     css = les("styles.css")
-    js = les("js/spill.js") + "\n" + les("js/app.js")
+    # Samme rekkefølge som i index.html: app.js leser både Spill og Figurer
+    # ved oppstart, så de to må være definert først.
+    js = les("js/spill.js") + "\n" + les("js/figurer.js") + "\n" + les("js/app.js")
 
     # Service worker-registreringen gir bare en 404 uten sw.js ved siden av.
     js = re.sub(r"[ \t]*/\* enkeltfil: start.*?enkeltfil: slutt \*/\n",
@@ -40,6 +42,7 @@ def bygg():
     html = html.replace('<link rel="stylesheet" href="styles.css">',
                         "<style>\n%s</style>" % css)
     html = html.replace('<script src="js/spill.js"></script>\n'
+                        '<script src="js/figurer.js"></script>\n'
                         '<script src="js/app.js"></script>',
                         "<script>\n%s</script>" % js)
 

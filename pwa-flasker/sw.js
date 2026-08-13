@@ -5,13 +5,14 @@
  * først ville servert gammel kode i det uendelige etter en oppdatering.
  */
 
-const CACHE = 'fargeflasker-v2';
+const CACHE = 'fargeflasker-v3';
 const FILER = [
   './',
   './index.html',
   './styles.css',
   './manifest.json',
   './js/spill.js',
+  './js/figurer.js',
   './js/app.js',
   './icon-192.png',
   './icon-512.png'

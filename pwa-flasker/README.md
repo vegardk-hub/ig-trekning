@@ -1,9 +1,10 @@
 # Fargeflasker
 
-Et sorteringsspill for de aller minste. Flaskene står rundt en stor
-glassvulkan. Får du en flaske ensfarget, begynner den å lyse — og da kan du
-trykke på den og så på vulkanen, så flyr den bort, tømmer seg nedi og står
-igjen **tom**. Er vulkanen full, går den i utbrudd, og nivået er løst.
+Et sorteringsspill for de aller minste. Flaskene står rundt en stor glassfigur
+— **en ny for hvert nivå**: vulkan, rakett, hus, bil, kanin, bjørn. Får du en
+flaske ensfarget, begynner den å lyse, og da kan du trykke på den og så på
+figuren, så flyr den bort, tømmer seg nedi og står igjen **tom**. Er figuren
+full, går den i utbrudd, og nivået er løst.
 
 **Tappingen skjer ikke av seg selv.** Den gjorde det først, og da var
 belønningen noe som bare hendte. Nå er det barnet som utfører den: full
@@ -94,6 +95,7 @@ med eget ikon.
 | `index.html` | Selve siden – bare struktur, ingen logikk |
 | `styles.css` | Utseende. Flaskene er et SVG-omriss med væske som vanlige divs oppå |
 | `js/spill.js` | Reglene, nivågeneratoren og løseren. Rene funksjoner, ingen DOM |
+| `js/figurer.js` | Figurene som skal fylles – én per nivå, på rundgang |
 | `js/app.js` | Grensesnittet: trykk, animasjoner, vulkanen, lyd, lagring |
 | `sw.js` | Service worker – nett først, hurtiglager som reserve |
 | `lag_ikon.py` | Lager ikonene med Pillow: `python lag_ikon.py` |
@@ -149,6 +151,42 @@ de bredeste flaskene. Færre flasker per rad gir bredere flasker, fordi
 midtsøyla stjeler mindre av bredden — og bredden er det knappe godet, ikke
 høyden. Flaskebredden er samtidig tatt av på 72 px: over det blir midtsøyla,
 og dermed vulkanen, for smal til å bære feiringen.
+
+### Figurene
+
+`js/figurer.js` har én oppføring per figur, og nivå *n* bruker nummer
+`(n-1) % antall`. Skal du legge til en, trenger du bare fire ting:
+
+```js
+{
+  navn: 'kaninen', kort: 'Kanin', tegn: '🐰',
+  b: 320, h: 250,              // viewBox
+  omriss: '...',               // silhuetten
+  fyll: [4, 234],              // [toppY, bunnY] for væsken
+  apning: [160, 52]            // der flaskene helles nedi
+}
+```
+
+**Omrisset kan bestå av flere delstier.** En kanin er kropp + hode + to ører
+lagt oppå hverandre i samme `d`, og fyllregelen slår dem sammen. Det er langt
+enklere enn å føre pennen rundt hele silhuetten i én strek, og det er derfor
+`ell()`-hjelperen finnes: den skriver en ellipse som sti.
+
+Samme omriss brukes tre steder — bakgrunnsfyll, `clipPath` for væsken, og
+konturen oppå. Da kan de ikke komme i utakt med hverandre.
+
+`apning` sitter ulikt på hver figur: pipa på huset er langt til venstre, mens
+vulkanens krater er midt på. Både flaskens flybane og sprutet regnes derfor ut
+fra figuren, ikke fra en fast prosent. Det er også grunnen til at
+`beregnMaal()` setter bredde og høyde i **figurens** forhold og ikke i et fast
+et — treffer ikke boksen viewBoxen nøyaktig, lander strålen ved siden av
+åpningen.
+
+Detaljer som øyne, vinduer og hjulnav tegnes *oppå* væsken. Ellers mister
+kaninen blikket i det den fylles.
+
+Strømmene som renner nedover under feiringen regnes ut fra apningen i stedet
+for å tegnes for hånd, så en ny figur ikke krever seks nye stier.
 
 ### Utbruddet
 

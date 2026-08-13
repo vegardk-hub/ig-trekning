@@ -196,7 +196,14 @@ tidtaking, ingen måte å tape på, ubegrenset angring, og et hint som regner ut
 et trekk som faktisk fører fram i stedet for å si «prøv igjen». `pwa-flasker/README.md`
 går gjennom resten.
 
-Vulkanen i midten er **en regel, ikke pynt**: en ferdigsortert flaske tappes
+Figuren i midten skifter for hvert nivå — vulkan, rakett, hus, bil, kanin,
+bjørn — og ligger i `pwa-flasker/js/figurer.js`. **Ingen av målene er
+hardkodet i `app.js`**, nettopp fordi de skifter: `apning` sitter på pipa hos
+huset og midt på hos vulkanen, og `beregnMaal()` setter boksen i figurens eget
+viewBox-forhold. Treffer ikke boksen viewBoxen nøyaktig, lander strålen ved
+siden av åpningen.
+
+Figuren er **en regel, ikke pynt**: en ferdigsortert flaske tappes
 ned i den og står igjen tom, og brettet er løst når alle flaskene er tomme.
 **Tappingen er barnets trekk, ikke noe som skjer av seg selv** — flasken lyser,
 vulkanen lyser når den kan ta imot, og først et trykk utløser det. Løseren

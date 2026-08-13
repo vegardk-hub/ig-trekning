@@ -105,7 +105,7 @@ body {
 }
 
 /* Flaskene står på hver side av vulkanen, resten over den. Tre kolonner på
-   én rad, alt bunnstilt: da havner vulkanfoten og den nederste flasken på
+   én rad, alt bunnstilt: da havner figurfoten og den nederste flasken på
    samme gulvlinje, og vulkanen står nede i stedet for å sveve.
    Målene regnes ut i beregnMaal() i app.js. */
 .arena {
@@ -234,33 +234,33 @@ body {
   transition: height 0.12s linear, opacity 0.15s ease;
 }
 
-/* ---------- vulkanen ---------- */
+/* ---------- figuren som fylles ---------- */
 
-.vulkanboks {
+.figurboks {
   position: relative;
   flex: 0 0 auto;
-  width: var(--vulkanbredde);
-  height: var(--vulkanhoyde);
+  width: var(--figurbredde);
+  height: var(--figurhoyde);
   cursor: pointer;
 }
 
 /* Vulkanen tar imot: lys opp kanten så det er tydelig hvor flasken skal. */
-.vulkanboks.klar .vulkankant {
+.figurboks.klar .figurkant {
   stroke: var(--gull);
   filter: drop-shadow(0 0 10px var(--gull));
 }
-.vulkanboks.klar .vulkanmunn { stroke: var(--gull); }
+.figurboks.klar .figurmunn { stroke: var(--gull); }
 /* Egen puls: den vanlige `puls` senker opasiteten til 0,25, og det ville
    gjort selve vulkanen nesten usynlig i stedet for å fremheve den. */
-.vulkanboks.klar { animation: vulkanpuls 1.1s ease-in-out infinite; }
-@keyframes vulkanpuls {
+.figurboks.klar { animation: figurpuls 1.1s ease-in-out infinite; }
+@keyframes figurpuls {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.035); }
 }
 
-.vulkanboks.rist { animation: rist 0.32s ease; }
+.figurboks.rist { animation: rist 0.32s ease; }
 
-.vulkanboks.peker::after {
+.figurboks.peker::after {
   content: "";
   position: absolute;
   inset: -10px -8px;
@@ -269,25 +269,30 @@ body {
   animation: puls 0.9s ease-in-out 5;
 }
 
-.vulkan {
+.figur {
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
 }
 
-.vulkanskygge { fill: rgba(0, 0, 0, 0.28); }
-.vulkanfot { fill: rgba(255, 255, 255, 0.10); stroke: var(--glass); stroke-width: 3; }
-.vulkanfyll { fill: rgba(255, 255, 255, 0.06); }
-.vulkankant {
+.figurskygge { fill: rgba(0, 0, 0, 0.28); }
+.figurfot { fill: rgba(255, 255, 255, 0.10); stroke: var(--glass); stroke-width: 3; }
+.figurfyll { fill: rgba(255, 255, 255, 0.06); }
+.figurkant {
   fill: none;
   stroke: var(--glass);
   stroke-width: 3.5;
   stroke-linejoin: round;
 }
-.vulkanblank { fill: rgba(255, 255, 255, 0.22); }
-.vulkanmunn { fill: rgba(6, 9, 24, 0.62); stroke: var(--glass); stroke-width: 3; }
-.vulkanglod { fill: var(--gull); opacity: 0; }
+.figurblank { fill: rgba(255, 255, 255, 0.22); }
+.figurmunn { fill: rgba(6, 9, 24, 0.62); stroke: var(--glass); stroke-width: 3; }
+.figurglod { fill: var(--gull); opacity: 0; }
+
+/* Detaljer som gjør figuren gjenkjennelig – øyne, vinduer, hjulnav. De
+   tegnes oppå væsken, ellers ville kaninen mistet blikket idet den fylles. */
+.detalj-mork { fill: rgba(6, 9, 24, 0.62); stroke: var(--glass); stroke-width: 2.5; }
+.detalj-lys { fill: rgba(255, 255, 255, 0.30); stroke: var(--glass); stroke-width: 2.5; }
 
 /* Lavaen ligger klar hele tiden, men usynlig. pathLength="1" i markupen gjør
    at én og samme dash-animasjon tegner alle seks stiene, uansett lengde. */
@@ -302,13 +307,13 @@ body {
 }
 
 /* Selve utbruddet */
-.vulkan.gaar { animation: skjelv 0.34s ease-in-out 5; }
-.vulkan.gaar .vulkankant {
+.figur.gaar { animation: skjelv 0.34s ease-in-out 5; }
+.figur.gaar .figurkant {
   stroke: var(--gull);
   filter: drop-shadow(0 0 14px var(--gull));
 }
-.vulkan.gaar .vulkanglod { animation: glod 0.7s ease-in-out 4; }
-.vulkan.gaar .lava { animation: renn 1.9s cubic-bezier(0.3, 0.5, 0.4, 1) forwards; }
+.figur.gaar .figurglod { animation: glod 0.7s ease-in-out 4; }
+.figur.gaar .lava { animation: renn 1.9s cubic-bezier(0.3, 0.5, 0.4, 1) forwards; }
 
 @keyframes skjelv {
   0%, 100% { transform: translateX(0); }
@@ -538,7 +543,7 @@ body {
 <div id="seier" class="overlegg skjult" role="dialog" aria-modal="true" aria-labelledby="seierTittel">
   <div id="konfetti" class="konfetti" aria-hidden="true"></div>
   <div class="kort">
-    <div class="stjerner" aria-hidden="true">🌋⭐️🌋</div>
+    <div class="stjerner" aria-hidden="true"><span id="seierFigur">🌋</span>⭐️</div>
     <h2 id="seierTittel">Bra jobba!</h2>
     <p id="seierTekst">Vulkanen er full!</p>
     <button id="knappNeste" class="storknapp">Neste nivå ▶</button>
@@ -848,6 +853,140 @@ var Spill = (function () {
 })();
 
 /*
+ * Figurene som skal fylles – én per nivå, på rundgang.
+ *
+ * Hver figur er ett omriss som både tegnes og brukes som clipPath for væsken.
+ * Omrisset kan bestå av flere delstier: en kanin er kropp + hode + to ører,
+ * lagt oppå hverandre i samme `d`. Det er langt enklere enn å føre pennen
+ * rundt hele silhuetten i én strek, og fyllregelen slår dem sammen for oss.
+ *
+ * Skal du legge til en figur, trenger du bare:
+ *   b, h      – viewBox
+ *   omriss    – silhuetten
+ *   fyll      – [toppY, bunnY] for væsken
+ *   apning    – [x, y] der flaskene helles nedi
+ * Resten har fornuftige standardverdier, og strømmene under feiringen
+ * regnes ut fra apningen, så de slipper å tegnes for hånd.
+ */
+'use strict';
+
+var Figurer = (function () {
+
+  // Ellipse som sti, så den kan inngå i et omriss sammen med andre former.
+  function ell(cx, cy, rx, ry) {
+    return 'M' + (cx - rx) + ' ' + cy +
+      ' a' + rx + ' ' + ry + ' 0 1 0 ' + (2 * rx) + ' 0' +
+      ' a' + rx + ' ' + ry + ' 0 1 0 ' + (-2 * rx) + ' 0 Z';
+  }
+
+  var LISTE = [
+    {
+      navn: 'vulkanen', kort: 'Vulkan', tegn: '🌋',
+      b: 320, h: 215,
+      omriss: 'M118 24 C106 70 80 130 20 190 L300 190 C240 130 214 70 202 24 Z',
+      fyll: [32, 184], apning: [160, 24], munn: [42, 9],
+      under: '<ellipse class="figurskygge" cx="160" cy="204" rx="152" ry="9"/>' +
+             '<rect class="figurfot" x="8" y="184" width="304" height="20" rx="9"/>',
+      blank: 'M48 182 C100 128 116 74 124 32 L136 32 C128 76 112 130 62 184 Z'
+    },
+    {
+      navn: 'raketten', kort: 'Rakett', tegn: '🚀',
+      b: 320, h: 250,
+      omriss: 'M160 14 C134 54 110 88 110 118 L110 196 L62 234 L62 242 ' +
+              'L110 232 L110 242 L210 242 L210 232 L258 242 L258 234 ' +
+              'L210 196 L210 118 C210 88 186 54 160 14 Z',
+      fyll: [22, 240], apning: [160, 16], munn: [22, 7],
+      under: '<ellipse class="figurskygge" cx="160" cy="246" rx="120" ry="8"/>',
+      detaljer: '<circle class="detalj-mork" cx="160" cy="132" r="28"/>' +
+                '<path class="detalj-lys" d="M138 176 L182 176 L182 186 L138 186 Z"/>'
+    },
+    {
+      // Intetkjønn: «huset er fullt», ikke «full». Eneste av figurene så langt.
+      navn: 'huset', kort: 'Hus', tegn: '🏠', intetkjonn: true,
+      b: 320, h: 250,
+      omriss: 'M160 22 L96 70 L96 34 L68 34 L68 91 L38 114 L38 232 ' +
+              'L282 232 L282 114 Z',
+      fyll: [30, 232], apning: [82, 34], munn: [16, 6],
+      under: '<ellipse class="figurskygge" cx="160" cy="240" rx="136" ry="8"/>',
+      detaljer: '<rect class="detalj-mork" x="140" y="164" width="44" height="68" rx="9"/>' +
+                '<rect class="detalj-lys" x="66" y="146" width="44" height="40" rx="7"/>' +
+                '<rect class="detalj-lys" x="214" y="146" width="44" height="40" rx="7"/>'
+    },
+    {
+      navn: 'bilen', kort: 'Bil', tegn: '🚗',
+      b: 320, h: 230,
+      omriss: 'M34 190 L34 134 C34 124 42 118 54 116 L92 112 L124 72 ' +
+              'C130 64 138 60 148 60 L208 60 C218 60 226 64 232 72 L260 112 ' +
+              'L290 118 C300 120 304 128 304 138 L304 190 Z' +
+              ell(90, 192, 30, 30) + ell(232, 192, 30, 30),
+      fyll: [60, 222], apning: [168, 60], munn: [24, 7],
+      under: '<ellipse class="figurskygge" cx="160" cy="226" rx="140" ry="8"/>',
+      detaljer: '<path class="detalj-lys" d="M132 78 L154 78 L154 110 L106 110 Z"/>' +
+                '<path class="detalj-lys" d="M166 78 L204 78 L228 110 L166 110 Z"/>' +
+                '<circle class="detalj-mork" cx="90" cy="192" r="11"/>' +
+                '<circle class="detalj-mork" cx="232" cy="192" r="11"/>'
+    },
+    {
+      navn: 'kaninen', kort: 'Kanin', tegn: '🐰',
+      b: 320, h: 250,
+      omriss: ell(160, 172, 78, 62) + ell(160, 98, 54, 48) +
+              ell(132, 44, 16, 40) + ell(188, 44, 16, 40),
+      fyll: [4, 234], apning: [160, 52], munn: [18, 6],
+      under: '<ellipse class="figurskygge" cx="160" cy="240" rx="92" ry="8"/>',
+      detaljer: '<circle class="detalj-mork" cx="140" cy="96" r="7"/>' +
+                '<circle class="detalj-mork" cx="180" cy="96" r="7"/>' +
+                '<ellipse class="detalj-mork" cx="160" cy="118" rx="9" ry="6"/>'
+    },
+    {
+      navn: 'bjørnen', kort: 'Bjørn', tegn: '🐻',
+      b: 320, h: 250,
+      omriss: ell(160, 176, 82, 58) + ell(160, 98, 58, 52) +
+              ell(114, 52, 23, 23) + ell(206, 52, 23, 23),
+      fyll: [28, 236], apning: [160, 46], munn: [20, 6],
+      under: '<ellipse class="figurskygge" cx="160" cy="240" rx="96" ry="8"/>',
+      detaljer: '<circle class="detalj-mork" cx="138" cy="92" r="7"/>' +
+                '<circle class="detalj-mork" cx="182" cy="92" r="7"/>' +
+                '<ellipse class="detalj-lys" cx="160" cy="122" rx="26" ry="19"/>' +
+                '<ellipse class="detalj-mork" cx="160" cy="114" rx="10" ry="7"/>'
+    }
+  ];
+
+  function forNivaa(n) {
+    return LISTE[((n - 1) % LISTE.length + LISTE.length) % LISTE.length];
+  }
+
+  // Strømmene som renner nedover figuren under feiringen vifter ut fra
+  // apningen. De regnes ut i stedet for å tegnes, så en ny figur ikke krever
+  // seks nye stier – og litt utenfor silhuetten gjør ingenting, det leser
+  // like godt som noe som renner over.
+  function stromer(f) {
+    var ut = [];
+    var ax = f.apning[0], ay = f.apning[1];
+    var fall = f.fyll[1] - ay;
+    var slutt = ay + fall * 1.04;
+    for (var i = 0; i < 6; i++) {
+      var t = (i / 5) * 2 - 1;                 // -1 .. 1
+      // Enden holdes innenfor figuren. Sitter apningen ute på siden – pipa på
+      // huset – ville en vifte sentrert på den sendt halve lavaen ut i lufta
+      // til venstre for veggen.
+      var mot = f.b * (0.5 + t * 0.42);
+      var dx = mot - ax;
+      ut.push('M' + (ax + dx * 0.06).toFixed(0) + ' ' + (ay + 4) +
+        ' C' + (ax + dx * 0.28).toFixed(0) + ' ' + (ay + fall * 0.34).toFixed(0) +
+        ' ' + (ax + dx * 0.70).toFixed(0) + ' ' + (ay + fall * 0.70).toFixed(0) +
+        ' ' + mot.toFixed(0) + ' ' + slutt.toFixed(0));
+    }
+    return ut;
+  }
+
+  function stor(navn) {
+    return navn.charAt(0).toUpperCase() + navn.slice(1);
+  }
+
+  return { LISTE: LISTE, forNivaa: forNivaa, stromer: stromer, stor: stor };
+})();
+
+/*
  * Fargeflasker – grensesnittet.
  *
  * Målgruppen er en femåring, så tre ting styrer valgene her: ingen tidtaking,
@@ -864,14 +1003,9 @@ var Spill = (function () {
 
   var LAGER = 'fargeflasker';
 
-  /* Vulkanen tegnes i et 320 x 190-rutenett – bred og lav. Den var høy og
-     smal før, og da måtte den enten rage over flaskene eller krympe til en
-     strek. Disse tallene må stemme med stiene i VULKAN lenger nede, ellers
-     renner væsken utenfor glasset. */
-  var VULKAN_BREDDE = 320, VULKAN_HOYDE = 215;
-  var VULKAN_FORHOLD = VULKAN_BREDDE / VULKAN_HOYDE;
-  var FYLL_TOPP = 32, FYLL_BUNN = 184;
-  var KRATER_X = 160, KRATER_Y = 24;
+  /* Figuren som skal fylles skifter for hvert nivå – vulkan, rakett, hus,
+     bil, kanin, bjørn. Målene ligger i figurer.js; her leses de ut av
+     tilstand.figur. Ingen av dem er hardkodet, nettopp fordi de skifter. */
 
   /* ---------- lyd ---------- */
 
@@ -951,7 +1085,8 @@ var Spill = (function () {
   var tilstand = {
     nivaa: 1,
     kapasitet: 4,
-    lag: 8,             // hvor mange lag vulkanen rommer = antall fylte flasker
+    lag: 8,             // hvor mange lag figuren rommer = antall fylte flasker
+    figur: null,        // hvilken figur som skal fylles på dette nivået
     flasker: [],
     vulkan: [],         // fargene som er tappet ned, i rekkefølge
     start: [],
@@ -990,6 +1125,7 @@ var Spill = (function () {
     tilstand.nivaa = n;
     tilstand.kapasitet = nivaa.kapasitet;
     tilstand.lag = nivaa.lag;
+    tilstand.figur = Figurer.forNivaa(n);
     tilstand.flasker = Spill.kopi(nivaa.flasker);
     tilstand.start = Spill.kopi(nivaa.flasker);
     tilstand.vulkan = [];
@@ -1000,7 +1136,7 @@ var Spill = (function () {
     data.sisteNivaa = n;
     lagreData();
     document.getElementById('nivaaTall').textContent = n;
-    visTips(n === 1 ? 'Fyll vulkanen! Trykk på en flaske, så på en annen 👆' : '');
+    visTips('Fyll ' + tilstand.figur.navn + '! ' + tilstand.figur.tegn);
     tegn();
   }
 
@@ -1025,47 +1161,28 @@ var Spill = (function () {
       '<path class="blank" d="M16 64 c0 -9 4 -13 7 -15 v72 c-4 -2 -7 -7 -7 -13 z"/>' +
     '</svg>';
 
-  // Bred, lav kjegle med konkave sider: bratt ved krateret, flatere mot foten.
-  // Det er konkaviteten som gjør silhuetten til en vulkan i stedet for en
-  // trakt. Venstre halvdel føres ned, bunnen krysses, høyre er speilet.
-  // Bredt krater og tydelig konkave sider. Et smalt krater gjorde silhuetten
-  // til en kjegle med flat topp – en trakthatt, ikke en vulkan.
-  var KJEGLE = 'M118 24 C106 70 80 130 20 190 L300 190 C240 130 214 70 202 24 Z';
+  // Omrisset brukes tre ganger: som bakgrunnsfyll, som clipPath for væsken,
+  // og som kontur oppå. Da kan det ikke komme i utakt med seg selv.
+  function figurSvg(f) {
+    var stromer = Figurer.stromer(f).map(function (d) {
+      return '<path class="lava" d="' + d + '" pathLength="1"/>';
+    }).join('');
 
-  // Lavaen renner ned utsiden når vulkanen går. Stiene følger kjeglen og
-  // vifter utover; pathLength="1" gjør at samme dash-animasjon virker på alle
-  // seks uansett hvor lange de faktisk er.
-  // Stiene ender under kjeglefoten, så lavaen renner ut over sokkelen i
-  // stedet for å stoppe brått på kanten.
-  var LAVASTIER = [
-    'M132 28 C120 70 92 128 38 194',
-    'M138 28 C128 78 110 134 80 196',
-    'M148 30 C144 82 139 138 126 196',
-    'M172 30 C176 82 181 138 194 196',
-    'M182 28 C192 78 210 134 240 196',
-    'M188 28 C200 70 228 128 282 194'
-  ];
-
-  var VULKAN =
-    '<svg class="vulkan" viewBox="0 0 320 215" aria-hidden="true">' +
-      '<defs><clipPath id="vulkanInnside">' +
-        '<path d="M124 32 C112 74 86 132 32 184 L288 184 C234 132 208 74 196 32 Z"/>' +
-      '</clipPath></defs>' +
-      '<ellipse class="vulkanskygge" cx="160" cy="204" rx="152" ry="9"/>' +
-      '<rect class="vulkanfot" x="8" y="184" width="304" height="20" rx="9"/>' +
-      '<path class="vulkanfyll" d="' + KJEGLE + '"/>' +
-      '<g clip-path="url(#vulkanInnside)" class="vulkanlag"></g>' +
-      '<path class="vulkankant" d="' + KJEGLE + '"/>' +
-      '<path class="vulkanblank" d="M48 182 C100 128 116 74 124 32 L136 32 ' +
-        'C128 76 112 130 62 184 Z"/>' +
-      '<g class="lavastrommer">' +
-        LAVASTIER.map(function (d) {
-          return '<path class="lava" d="' + d + '" pathLength="1"/>';
-        }).join('') +
-      '</g>' +
-      '<ellipse class="vulkanglod" cx="160" cy="24" rx="42" ry="9"/>' +
-      '<ellipse class="vulkanmunn" cx="160" cy="24" rx="42" ry="9"/>' +
+    return '<svg class="figur" viewBox="0 0 ' + f.b + ' ' + f.h + '" aria-hidden="true">' +
+      '<defs><clipPath id="figurInnside"><path d="' + f.omriss + '"/></clipPath></defs>' +
+      (f.under || '') +
+      '<path class="figurfyll" d="' + f.omriss + '"/>' +
+      '<g clip-path="url(#figurInnside)" class="figurlag"></g>' +
+      '<path class="figurkant" d="' + f.omriss + '"/>' +
+      (f.blank ? '<path class="figurblank" d="' + f.blank + '"/>' : '') +
+      (f.detaljer || '') +
+      '<g class="lavastrommer">' + stromer + '</g>' +
+      '<ellipse class="figurglod" cx="' + f.apning[0] + '" cy="' + f.apning[1] +
+        '" rx="' + f.munn[0] + '" ry="' + f.munn[1] + '"/>' +
+      '<ellipse class="figurmunn" cx="' + f.apning[0] + '" cy="' + f.apning[1] +
+        '" rx="' + f.munn[0] + '" ry="' + f.munn[1] + '"/>' +
     '</svg>';
+  }
 
   // Flaskene står på hver side av vulkanen, og resten over den. Sidene tar
   // høyst fire hver – en femte gjør stablene høyere enn skjermen.
@@ -1100,16 +1217,17 @@ var Spill = (function () {
         var sideH = f.side * (2.35 * b) + Math.max(0, f.side - 1) * g;
         var midtH = rader * (2.35 * b) + Math.max(0, rader - 1) * g;
 
-        // Vulkanen fyller midtsøylens bredde, men holdes lav med vilje: den
+        // Figuren fyller midtsøylens bredde, men holdes lav med vilje: den
         // skal stå ved siden av flaskene, ikke rage over dem.
-        var vulkanH = Math.min((W - 2 * b - 2 * g) / VULKAN_FORHOLD, H * 0.32);
+        var forhold = tilstand.figur.b / tilstand.figur.h;
+        var vulkanH = Math.min((W - 2 * b - 2 * g) / forhold, H * 0.34);
         var total = Math.max(sideH, midtH + (rader ? g : 0) + vulkanH);
 
         if (total <= H || b <= 24) {
           if (!beste || b > beste.b) {
             beste = {
               b: b, side: f.side, midt: f.midt, perRad: pr,
-              vulkanB: vulkanH * VULKAN_FORHOLD, vulkanH: vulkanH
+              vulkanB: vulkanH * forhold, vulkanH: vulkanH
             };
           }
           break;
@@ -1130,8 +1248,8 @@ var Spill = (function () {
     var m = beregnMaal(tilstand.flasker.length);
     var rot = document.documentElement.style;
     rot.setProperty('--flaskebredde', m.b.toFixed(1) + 'px');
-    rot.setProperty('--vulkanbredde', m.vulkanB.toFixed(1) + 'px');
-    rot.setProperty('--vulkanhoyde', m.vulkanH.toFixed(1) + 'px');
+    rot.setProperty('--figurbredde', m.vulkanB.toFixed(1) + 'px');
+    rot.setProperty('--figurhoyde', m.vulkanH.toFixed(1) + 'px');
 
     elFlasker = [];
     elVaeske = [];
@@ -1145,7 +1263,7 @@ var Spill = (function () {
     hoyre.className = 'sidestabel hoyre';
 
     // Midtsøyla er flaskene som ikke fikk plass på sidene, med vulkanen
-    // nederst. Innholdet pakkes mot bunnen, så vulkanfoten står på samme
+    // nederst. Innholdet pakkes mot bunnen, så figurfoten står på samme
     // gulvlinje som den nederste flasken i sidestablene.
     var midtsoyle = document.createElement('div');
     midtsoyle.className = 'midtsoyle';
@@ -1156,21 +1274,21 @@ var Spill = (function () {
     midtrad.style.maxWidth =
       (m.perRad * m.b + (m.perRad - 1) * 10 + 2).toFixed(1) + 'px';
 
-    var vulkanboks = document.createElement('div');
-    vulkanboks.className = 'vulkanboks';
-    vulkanboks.innerHTML = VULKAN + '<div class="gnister"></div>';
-    vulkanboks.setAttribute('role', 'button');
-    vulkanboks.setAttribute('tabindex', '0');
-    vulkanboks.setAttribute('aria-label',
-      'Vulkanen, ' + tilstand.vulkan.length + ' av ' + tilstand.lag + ' fylt');
-    vulkanboks.addEventListener('click', klikkVulkan);
-    vulkanboks.addEventListener('keydown', function (e) {
+    var figurboks = document.createElement('div');
+    figurboks.className = 'figurboks';
+    figurboks.innerHTML = figurSvg(tilstand.figur) + '<div class="gnister"></div>';
+    figurboks.setAttribute('role', 'button');
+    figurboks.setAttribute('tabindex', '0');
+    figurboks.setAttribute('aria-label', Figurer.stor(tilstand.figur.navn) +
+      ', ' + tilstand.vulkan.length + ' av ' + tilstand.lag + ' fylt');
+    figurboks.addEventListener('click', klikkVulkan);
+    figurboks.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); klikkVulkan(); }
     });
     // Lys opp når en full flaske er valgt, så det er tydelig hvor den skal.
     if (tilstand.valgt !== null &&
         Spill.erKomplett(tilstand.flasker[tilstand.valgt], tilstand.kapasitet)) {
-      vulkanboks.classList.add('klar');
+      figurboks.classList.add('klar');
     }
 
     var i = 0, k;
@@ -1179,16 +1297,20 @@ var Spill = (function () {
     for (k = 0; k < m.midt; k++) { midtrad.appendChild(lagFlaske(i)); i++; }
 
     midtsoyle.appendChild(midtrad);
-    midtsoyle.appendChild(vulkanboks);
+    midtsoyle.appendChild(figurboks);
     arena.appendChild(venstre);
     arena.appendChild(midtsoyle);
     arena.appendChild(hoyre);
     brett.appendChild(arena);
 
-    elVulkanboks = vulkanboks;
-    elVulkan = vulkanboks.querySelector('.vulkan');
-    elLag = vulkanboks.querySelector('.vulkanlag');
-    elGnister = vulkanboks.querySelector('.gnister');
+    elVulkanboks = figurboks;
+    elVulkan = figurboks.querySelector('.figur');
+    elLag = figurboks.querySelector('.figurlag');
+    elGnister = figurboks.querySelector('.gnister');
+    // Apningen sitter ulikt på hver figur – pipa på huset, taket på bilen –
+    // så sprutet må plasseres etter figuren og ikke etter en fast prosent.
+    elGnister.style.left = (tilstand.figur.apning[0] / tilstand.figur.b * 100) + '%';
+    elGnister.style.top = (tilstand.figur.apning[1] / tilstand.figur.h * 100) + '%';
     tegnVulkanlag();
   }
 
@@ -1241,16 +1363,17 @@ var Spill = (function () {
   /* ---------- tegning: vulkanen ---------- */
 
   function lagHoyde() {
-    return (FYLL_BUNN - FYLL_TOPP) / tilstand.lag;
+    var f = tilstand.figur;
+    return (f.fyll[1] - f.fyll[0]) / tilstand.lag;
   }
 
   function lagRekt(farge, nr, andel) {
     var full = lagHoyde();
     var h = full * (andel === undefined ? 1 : andel);
-    var bunnY = FYLL_BUNN - full * nr;
+    var bunnY = tilstand.figur.fyll[1] - full * nr;
     var r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     r.setAttribute('x', '0');
-    r.setAttribute('width', String(VULKAN_BREDDE));
+    r.setAttribute('width', String(tilstand.figur.b));
     r.setAttribute('y', String(bunnY - h));
     r.setAttribute('height', String(Math.max(0, h)));
     r.setAttribute('fill', Spill.FARGER[farge].kode);
@@ -1271,20 +1394,20 @@ var Spill = (function () {
   // først, slik det ville gjort om noe rant ut av toppen.
   function settVulkanstand(stand) {
     if (!elLag) return;
-    var h = lagHoyde(), rekt = elLag.children;
+    var h = lagHoyde(), bunn = tilstand.figur.fyll[1], rekt = elLag.children;
     for (var i = 0; i < rekt.length; i++) {
       var synlig = Math.max(0, Math.min(h, stand - h * i));
       rekt[i].setAttribute('height', String(synlig));
-      rekt[i].setAttribute('y', String(FYLL_BUNN - h * i - synlig));
+      rekt[i].setAttribute('y', String(bunn - h * i - synlig));
     }
   }
 
-  // Punktet midt i krateret, i skjermkoordinater.
+  // Punktet der flaskene helles nedi, i skjermkoordinater.
   function kraterPunkt() {
-    var r = elVulkan.getBoundingClientRect();
+    var f = tilstand.figur, r = elVulkan.getBoundingClientRect();
     return {
-      x: r.left + r.width * (KRATER_X / VULKAN_BREDDE),
-      y: r.top + r.height * (KRATER_Y / VULKAN_HOYDE)
+      x: r.left + r.width * (f.apning[0] / f.b),
+      y: r.top + r.height * (f.apning[1] / f.h)
     };
   }
 
@@ -1308,7 +1431,7 @@ var Spill = (function () {
       elFlasker[i].classList.add('valgt');
       Lyd.plukk();
       oppdaterVulkanlys();
-      if (Spill.erKomplett(flasker[i], tilstand.kapasitet)) visTips('Og så på vulkanen 🌋');
+      if (Spill.erKomplett(flasker[i], tilstand.kapasitet)) visTips('Og så på ' + tilstand.figur.navn + '! ' + tilstand.figur.tegn);
       else skjulTips();
       return;
     }
@@ -1452,7 +1575,7 @@ var Spill = (function () {
     planEtterTrekk(fra, til, antall);
     tilstand.laast = false;
     oppdaterKnapper();
-    if (finnKomplett() !== -1) visTips('Trykk på den fulle flasken, og så på vulkanen 🌋');
+    if (finnKomplett() !== -1) visTips('Trykk på den fulle flasken, og så på ' + tilstand.figur.navn + ' ' + tilstand.figur.tegn);
   }
 
   function finnKomplett() {
@@ -1475,7 +1598,7 @@ var Spill = (function () {
       void boks.offsetWidth;
       boks.classList.add('rist');
       vent(340, function () { boks.classList.remove('rist'); });
-      visTips('Bare en flaske med én farge kan i vulkanen 🙂');
+      visTips('Bare en flaske med én farge kan oppi 🙂');
       return;
     }
     tappFlaske(i);
@@ -1510,7 +1633,7 @@ var Spill = (function () {
       var plass = tilstand.vulkan.length;
       var rekt = lagRekt(farge, plass, 0);
       elLag.appendChild(rekt);
-      var h = lagHoyde(), bunnY = FYLL_BUNN - h * plass;
+      var h = lagHoyde(), bunnY = tilstand.figur.fyll[1] - h * plass;
       tween(460, function (p) {
         rekt.setAttribute('height', String(h * p));
         rekt.setAttribute('y', String(bunnY - h * p));
@@ -1527,7 +1650,7 @@ var Spill = (function () {
           else {
             tilstand.laast = false;
             oppdaterKnapper();
-            if (finnKomplett() !== -1) visTips('Én til! Trykk på den og så på vulkanen 🌋');
+            if (finnKomplett() !== -1) visTips('Én til! Trykk på den og så på ' + tilstand.figur.navn + ' ' + tilstand.figur.tegn);
           }
         });
       });
@@ -1584,8 +1707,15 @@ var Spill = (function () {
   function visSeier() {
     if (tilstand.nivaa + 1 > data.opplaast) data.opplaast = tilstand.nivaa + 1;
     lagreData();
+    var neste = Figurer.forNivaa(tilstand.nivaa + 1);
     document.getElementById('seierTekst').textContent =
-      'Vulkanen er full! Nivå ' + tilstand.nivaa + ' er ferdig.';
+      Figurer.stor(tilstand.figur.navn) + ' er full' +
+      (tilstand.figur.intetkjonn ? 't' : '') +
+      '! Nivå ' + tilstand.nivaa + ' er ferdig.';
+    // Hva som venter er halve gleden – vis det på knappen til neste nivå.
+    document.getElementById('knappNeste').textContent =
+      'Neste: ' + neste.kort + ' ' + neste.tegn + ' ▶';
+    document.getElementById('seierFigur').textContent = tilstand.figur.tegn;
     seier.classList.remove('skjult');
     konfetti();
   }
@@ -1687,7 +1817,7 @@ var Spill = (function () {
         elVulkanboks.classList.add('peker');
         vent(4600, function () { elVulkanboks.classList.remove('peker'); });
       }
-      visTips('Tøm den fulle flasken i vulkanen 🌋');
+      visTips('Tøm den fulle flasken i ' + tilstand.figur.navn + ' ' + tilstand.figur.tegn);
       return;
     }
 
