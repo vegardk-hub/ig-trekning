@@ -281,18 +281,6 @@ body {
 .detalj-mork { fill: rgba(6, 9, 24, 0.62); stroke: var(--glass); stroke-width: 2.5; }
 .detalj-lys { fill: rgba(255, 255, 255, 0.30); stroke: var(--glass); stroke-width: 2.5; }
 
-/* Lavaen ligger klar hele tiden, men usynlig. pathLength="1" i markupen gjør
-   at én og samme dash-animasjon tegner alle seks stiene, uansett lengde. */
-.lava {
-  fill: none;
-  stroke-width: 7;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  opacity: 0;
-  filter: drop-shadow(0 0 5px currentColor);
-}
-
 /* Selve utbruddet */
 .figur.gaar { animation: skjelv 0.34s ease-in-out 5; }
 .figur.gaar .figurkant {
@@ -300,7 +288,6 @@ body {
   filter: drop-shadow(0 0 14px var(--gull));
 }
 .figur.gaar .figurglod { animation: glod 0.7s ease-in-out 4; }
-.figur.gaar .lava { animation: renn 1.9s cubic-bezier(0.3, 0.5, 0.4, 1) forwards; }
 
 @keyframes skjelv {
   0%, 100% { transform: translateX(0); }
@@ -311,15 +298,9 @@ body {
   0%, 100% { opacity: 0.15; }
   50% { opacity: 0.85; }
 }
-@keyframes renn {
-  0% { stroke-dashoffset: 1; opacity: 0; }
-  8% { opacity: 1; }
-  75% { stroke-dashoffset: 0; opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0.8; }
-}
 
-/* Sprutet ut av krateret. Krateret ligger 24/215 nede i viewBoxen, altså
-   drøyt elleve prosent fra toppen av boksen. */
+/* Sprutet ut av åpningen. Plasseringen settes i app.js, for åpningen sitter
+   ulikt på hver figur – pipa på huset, nesetuppen på raketten. */
 .gnister {
   position: absolute;
   left: 50%;

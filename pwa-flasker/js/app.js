@@ -176,10 +176,6 @@
   // Omrisset brukes tre ganger: som bakgrunnsfyll, som clipPath for væsken,
   // og som kontur oppå. Da kan det ikke komme i utakt med seg selv.
   function figurSvg(f) {
-    var stromer = Figurer.stromer(f).map(function (d) {
-      return '<path class="lava" d="' + d + '" pathLength="1"/>';
-    }).join('');
-
     return '<svg class="figur" viewBox="0 0 ' + f.b + ' ' + f.h + '" aria-hidden="true">' +
       '<defs><clipPath id="figurInnside"><path d="' + f.omriss + '"/></clipPath></defs>' +
       (f.under || '') +
@@ -188,7 +184,6 @@
       '<path class="figurkant" d="' + f.omriss + '"/>' +
       (f.blank ? '<path class="figurblank" d="' + f.blank + '"/>' : '') +
       (f.detaljer || '') +
-      '<g class="lavastrommer">' + stromer + '</g>' +
       '<ellipse class="figurglod" cx="' + f.apning[0] + '" cy="' + f.apning[1] +
         '" rx="' + f.munn[0] + '" ry="' + f.munn[1] + '"/>' +
       '<ellipse class="figurmunn" cx="' + f.apning[0] + '" cy="' + f.apning[1] +
@@ -678,23 +673,15 @@
     Lyd.utbrudd();
     elVulkan.classList.add('gaar');
 
-    // Lavaen får fargene fra vulkanen, i den rekkefølgen de ble tappet, og
-    // renner ned utsiden etter tur i stedet for alle på én gang.
-    var strommer = elVulkan.querySelectorAll('.lava');
-    for (var s = 0; s < strommer.length; s++) {
-      strommer[s].style.stroke = Spill.FARGER[farger[s % farger.length]].kode;
-      strommer[s].style.animationDelay = (0.25 + s * 0.13).toFixed(2) + 's';
-    }
-
-    // Og vulkanen tømmer seg mens det står på. Uten dette blir de vannrette
-    // lagene liggende under de loddrette lavastripene, og det leser som et
-    // rutemønster i stedet for noe som renner ut.
+    // Figuren tømmer seg mens sprutet står. De to hører sammen: sprutet er
+    // det synlige beviset på hvor innholdet tar veien, og uten det ser
+    // tømmingen ut som at belønningen blir tatt bort igjen.
     var full = lagHoyde() * farger.length;
     vent(380, function () {
       tween(1500, function (p) { settVulkanstand(full * (1 - p)); });
     });
 
-    // Sprut opp av krateret. Vinkelen er smal og farten høy, så det leser som
+    // Sprut opp av åpningen. Vinkelen er smal og farten høy, så det leser som
     // et utbrudd og ikke som konfetti.
     elGnister.textContent = '';
     for (var i = 0; i < 110; i++) {

@@ -185,22 +185,18 @@ et — treffer ikke boksen viewBoxen nøyaktig, lander strålen ved siden av
 Detaljer som øyne, vinduer og hjulnav tegnes *oppå* væsken. Ellers mister
 kaninen blikket i det den fylles.
 
-Strømmene som renner nedover under feiringen regnes ut fra apningen i stedet
-for å tegnes for hånd, så en ny figur ikke krever seks nye stier.
-
 ### Utbruddet
 
-Tre ting skjer samtidig når vulkanen er full: den skjelver og krateret gløder,
-seks lavastrømmer tegnes nedover utsiden i nivåets egne farger, og **vulkanen
-tømmer seg** mens det står på.
+Tre ting skjer når figuren er full: den skjelver og åpningen gløder, fargene
+spruter opp av åpningen, og **figuren tømmer seg** mens det står på.
 
-Den siste er ikke pynt. Uten den blir de vannrette fargelagene liggende under
-de loddrette lavastrømmene, og resultatet leser som et rutemønster i stedet
-for noe som renner ut. `settVulkanstand()` senker standen fra toppen, slik det
-ville sett ut om noe rant ut av krateret.
+De to siste hører sammen og skal ikke skilles: sprutet er det synlige beviset
+på hvor innholdet tar veien. Uten det ser tømmingen ut som at belønningen blir
+tatt bort igjen. `settVulkanstand()` senker standen fra toppen, slik det ville
+sett ut om noe rant ut av åpningen.
 
-Lavastiene har `pathLength="1"`, så én og samme dash-animasjon tegner alle seks
-uansett hvor lange de faktisk er.
+Det rant også seks lavastrømmer nedover utsiden en periode. De ble tatt bort —
+det ble for mye på én gang ved siden av konfettien på seierskortet.
 
 Vulkanen er ett SVG med en `clipPath` som holder væsken innenfor glasset.
 Lagene er `<rect>`-er som animeres med `requestAnimationFrame` og ikke med en

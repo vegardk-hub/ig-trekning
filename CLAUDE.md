@@ -128,10 +128,11 @@ Ikke rull noen av disse tilbake uten å vite hvorfor de står der:
   først.
 - `display: none` gir et nullrektangel, så en «får det plass»-måling består selv
   når elementet er usynlig. Mål bredden i tillegg.
-- **Vulkanen må tømme seg under utbruddet.** `settVulkanstand()` senker
-  standen mens lavaen renner. Uten det blir de vannrette fargelagene liggende
-  under de loddrette lavastrømmene, og feiringen leser som et rutemønster i
-  stedet for noe som renner ut. Det så riktig ut i koden og feil på skjermen.
+- **Figuren tømmer seg under utbruddet, og sprutet forklarer hvorfor.**
+  `settVulkanstand()` senker standen mens fargene spruter opp av åpningen. De
+  to hører sammen: fjerner du sprutet, ser tømmingen ut som at belønningen blir
+  tatt bort igjen. Eieren har bedt om at det ikke renner farge nedover utsiden
+  i tillegg — det ble for mye ved siden av konfettien på seierskortet.
 - **Et hint som regnes ut på nytt hvert trykk, kan gå i ring.** Løseren i
   Fargeflasker er et dybdesøk og gir *en* løsning, ikke den korteste. Uten
   hukommelse mellom trykkene foreslo den å angre sitt eget forrige råd — nivå

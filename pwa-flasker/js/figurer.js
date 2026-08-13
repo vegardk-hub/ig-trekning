@@ -11,8 +11,7 @@
  *   omriss    – silhuetten
  *   fyll      – [toppY, bunnY] for væsken
  *   apning    – [x, y] der flaskene helles nedi
- * Resten har fornuftige standardverdier, og strømmene under feiringen
- * regnes ut fra apningen, så de slipper å tegnes for hånd.
+ * Resten har fornuftige standardverdier.
  */
 'use strict';
 
@@ -101,33 +100,9 @@ var Figurer = (function () {
     return LISTE[((n - 1) % LISTE.length + LISTE.length) % LISTE.length];
   }
 
-  // Strømmene som renner nedover figuren under feiringen vifter ut fra
-  // apningen. De regnes ut i stedet for å tegnes, så en ny figur ikke krever
-  // seks nye stier – og litt utenfor silhuetten gjør ingenting, det leser
-  // like godt som noe som renner over.
-  function stromer(f) {
-    var ut = [];
-    var ax = f.apning[0], ay = f.apning[1];
-    var fall = f.fyll[1] - ay;
-    var slutt = ay + fall * 1.04;
-    for (var i = 0; i < 6; i++) {
-      var t = (i / 5) * 2 - 1;                 // -1 .. 1
-      // Enden holdes innenfor figuren. Sitter apningen ute på siden – pipa på
-      // huset – ville en vifte sentrert på den sendt halve lavaen ut i lufta
-      // til venstre for veggen.
-      var mot = f.b * (0.5 + t * 0.42);
-      var dx = mot - ax;
-      ut.push('M' + (ax + dx * 0.06).toFixed(0) + ' ' + (ay + 4) +
-        ' C' + (ax + dx * 0.28).toFixed(0) + ' ' + (ay + fall * 0.34).toFixed(0) +
-        ' ' + (ax + dx * 0.70).toFixed(0) + ' ' + (ay + fall * 0.70).toFixed(0) +
-        ' ' + mot.toFixed(0) + ' ' + slutt.toFixed(0));
-    }
-    return ut;
-  }
-
   function stor(navn) {
     return navn.charAt(0).toUpperCase() + navn.slice(1);
   }
 
-  return { LISTE: LISTE, forNivaa: forNivaa, stromer: stromer, stor: stor };
+  return { LISTE: LISTE, forNivaa: forNivaa, stor: stor };
 })();
