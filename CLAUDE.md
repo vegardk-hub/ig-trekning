@@ -197,6 +197,12 @@ tidtaking, ingen måte å tape på, ubegrenset angring, og et hint som regner ut
 et trekk som faktisk fører fram i stedet for å si «prøv igjen». `pwa-flasker/README.md`
 går gjennom resten.
 
+**Oppstillingen av flaskene er ikke fast.** `beregnMaal()` prøver alle
+fordelingene – antall i sidestablene, antall per rad over figuren – og velger
+den som gir de bredeste flaskene. Det er dette som gjør at spillet virker både
+stående og liggende uten et eget oppsett for hver; lås den til en fast
+fordeling, og liggende gir 20 px brede flasker.
+
 Figuren i midten skifter for hvert nivå — vulkan, rakett, hus, bil, kanin,
 bjørn — og ligger i `pwa-flasker/js/figurer.js`. **Ingen av målene er
 hardkodet i `app.js`**, nettopp fordi de skifter: `apning` sitter på pipa hos

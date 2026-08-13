@@ -95,13 +95,17 @@ body {
    én rad, alt bunnstilt: da havner figurfoten og den nederste flasken på
    samme gulvlinje, og vulkanen står nede i stedet for å sveve.
    Målene regnes ut i beregnMaal() i app.js. */
+/* Kolonnene er `auto` og ikke flaskebredden: står det ingen flasker på
+   sidene – noe layouten velger på en liggende skjerm – skal de kolonnene
+   falle bort helt i stedet for å reservere plass. */
 .arena {
   display: grid;
-  grid-template-columns: var(--flaskebredde) auto var(--flaskebredde);
+  grid-template-columns: auto auto auto;
   gap: 10px;
   align-items: end;
   justify-items: center;
 }
+.sidestabel:empty { display: none; }
 
 .sidestabel {
   display: flex;
@@ -468,6 +472,53 @@ body {
 @keyframes dal {
   from { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
   to { transform: translateY(110vh) rotate(760deg); opacity: 0.9; }
+}
+
+/* ---------- liggende ---------- */
+
+/* Ligger telefonen, er høyde det knappe godet. Verktøyknappene flytter derfor
+   ut i en søyle til høyre, så brettet får hele høyden under topplinja – og
+   tipsteksten legger seg over den tomme plassen øverst i stedet for å spise
+   av den. Selve oppstillingen av flaskene ordner beregnMaal() selv. */
+@media (orientation: landscape) and (max-height: 620px) {
+  .app {
+    max-width: none;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto 1fr;
+    gap: 8px;
+  }
+
+  .topp { grid-column: 1 / -1; grid-row: 1; }
+  .brett { grid-column: 1; grid-row: 2; }
+
+  .verktoy {
+    grid-column: 2;
+    grid-row: 2;
+    flex-direction: column;
+    justify-content: center;
+    width: 108px;
+    gap: 8px;
+  }
+  .verktoyknapp {
+    max-width: none;
+    width: 100%;
+    min-height: 52px;
+    flex: 0 0 auto;
+  }
+
+  /* Ligger oppå brettet, som er bunnstilt og har ledig plass i toppen. */
+  .tips {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    margin: 0;
+    pointer-events: none;
+  }
+
+  .rundknapp { width: 42px; height: 42px; font-size: 19px; }
+  .nivaamerke { padding: 5px 4px; font-size: 17px; }
+  .nivaamerke strong { font-size: 19px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

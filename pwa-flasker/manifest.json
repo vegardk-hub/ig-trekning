@@ -1,13 +1,13 @@
 {
   "name": "Fargeflasker",
   "short_name": "Fargeflasker",
-  "description": "Rolig sorteringsspill for de minste: hell fargene sammen til hver flaske har sin egen farge.",
+  "description": "Sorteringsspill for de minste: fyll figuren i midten ved å samle én farge per flaske.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#1b2450",
   "theme_color": "#1b2450",
-  "orientation": "portrait",
+  "orientation": "any",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

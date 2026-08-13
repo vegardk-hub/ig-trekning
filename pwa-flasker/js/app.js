@@ -196,56 +196,61 @@
   //
   // Alt bunnstilles mot samme gulvlinje, så vulkanen står nede der den hører
   // hjemme i stedet for å sveve midt i brettet.
-  function fordelFlasker(antall) {
-    var side = Math.min(4, Math.floor(antall / 3));
-    var midt = antall - side * 2;
-    return { side: side, midt: midt };
-  }
-
-  // Setter flaskebredden og vulkanmålene så alt får plass uten rulling.
-  // Bredden binder som regel, men på en lav skjerm tar høyden over, og da må
-  // alt krympe i takt – derfor løkka i stedet for ett regnestykke.
+  // Finner den beste oppstillingen av flaskene ved å prøve dem alle: hvor
+  // mange som står i stablene på hver side, og hvor mange som står per rad
+  // over figuren. Den som gir de bredeste flaskene vinner.
+  //
+  // Det er dette som gjør at spillet virker både stående og liggende uten et
+  // eget oppsett for hver. Stående er høyden rikelig og bredden knapp, så
+  // søket lander på høye sidestabler; liggende er det motsatt, og da vinner
+  // få i stablene og mange per rad. En fast fordeling – tre per side – ga
+  // 20 px brede flasker på en liggende telefon.
   function beregnMaal(antall) {
     var W = brett.clientWidth, H = brett.clientHeight, g = 10;
-    var f = fordelFlasker(antall);
-
-    // Flaskene over vulkanen kan stå på én bred rad eller flere smale. Færre
-    // per rad gir bredere flasker, for midtsøyla stjeler mindre av bredden –
-    // og bredden er det knappe godet, ikke høyden. Vi prøver alle
-    // inndelingene og beholder den som gir de største flaskene.
+    var forhold = tilstand.figur.b / tilstand.figur.h;
     var beste = null;
-    for (var pr = Math.max(1, Math.min(f.midt, 4)); pr >= 1; pr--) {
-      var rader = f.midt ? Math.ceil(f.midt / pr) : 0;
-      // 72 px er taket på flaskebredden: over det blir midtsøyla – og dermed
-      // vulkanen – for smal til å bære feiringen.
-      var b = Math.min(72, (W - 2 * g - (pr - 1) * g) / (2 + pr));
 
-      for (var i = 0; i < 12; i++) {
-        var sideH = f.side * (2.35 * b) + Math.max(0, f.side - 1) * g;
-        var midtH = rader * (2.35 * b) + Math.max(0, rader - 1) * g;
+    for (var side = 0; side * 2 <= antall && side <= 4; side++) {
+      var midt = antall - side * 2;
+      var maksRad = Math.max(1, Math.min(midt, 7));
 
-        // Figuren fyller midtsøylens bredde, men holdes lav med vilje: den
-        // skal stå ved siden av flaskene, ikke rage over dem.
-        var forhold = tilstand.figur.b / tilstand.figur.h;
-        var vulkanH = Math.min((W - 2 * b - 2 * g) / forhold, H * 0.34);
-        var total = Math.max(sideH, midtH + (rader ? g : 0) + vulkanH);
+      for (var pr = 1; pr <= maksRad; pr++) {
+        var rader = midt ? Math.ceil(midt / pr) : 0;
 
-        if (total <= H || b <= 24) {
-          if (!beste || b > beste.b) {
-            beste = {
-              b: b, side: f.side, midt: f.midt, perRad: pr,
-              vulkanB: vulkanH * forhold, vulkanH: vulkanH
-            };
-          }
-          break;
+        // Bredden: to sidestabler pluss den bredeste raden i midten. 72 px er
+        // taket – over det blir midtsøyla, og dermed figuren, for smal.
+        var b = side
+          ? (W - 2 * g - (pr - 1) * g) / (pr + 2)
+          : (W - (pr - 1) * g) / pr;
+        b = Math.min(72, b);
+
+        var sideH, midtH, figurH, ledigB;
+        for (var i = 0; i < 16; i++) {
+          sideH = side ? side * (2.35 * b) + (side - 1) * g : 0;
+          midtH = rader ? rader * (2.35 * b) + (rader - 1) * g : 0;
+          ledigB = W - (side ? 2 * b + 2 * g : 0);
+          // Figuren holdes lav med vilje: den skal stå ved siden av flaskene,
+          // ikke rage over dem.
+          figurH = Math.min(ledigB / forhold, H * 0.34);
+          if (Math.max(sideH, midtH + (rader ? g : 0) + figurH) <= H) break;
+          if (b <= 22) break;
+          b *= 0.94;
         }
-        b *= 0.94;
+
+        // Like brede flasker? Ta den som gir størst figur.
+        if (!beste || b > beste.b + 0.5 ||
+            (Math.abs(b - beste.b) <= 0.5 && figurH > beste.vulkanH)) {
+          beste = {
+            b: b, side: side, midt: midt, perRad: pr,
+            vulkanB: figurH * forhold, vulkanH: figurH
+          };
+        }
       }
     }
 
     // Bredde og høyde settes begge eksplisitt, i viewBoxens forhold: da faller
     // SVG-tegningen nøyaktig sammen med elementet, og kraterPunkt() treffer
-    // krateret. Med bare max-width ville nettleseren midtstilt tegningen inni
+    // åpningen. Med bare max-width ville nettleseren midtstilt tegningen inni
     // en for bred boks, og strålen hadde landet ved siden av.
     return beste;
   }

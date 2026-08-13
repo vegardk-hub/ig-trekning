@@ -146,11 +146,31 @@ arenaen ligger nederst i brettet — vulkanen skal stå nede, ikke sveve.
 Vulkanens viewBox er `320 x 215`, altså bred og lav. Den var høy og smal før,
 og da måtte den enten rage over flaskene eller krympe til en strek.
 
-`beregnMaal()` prøver alle måtene å dele midtraden på og beholder den som gir
-de bredeste flaskene. Færre flasker per rad gir bredere flasker, fordi
-midtsøyla stjeler mindre av bredden — og bredden er det knappe godet, ikke
-høyden. Flaskebredden er samtidig tatt av på 72 px: over det blir midtsøyla,
-og dermed vulkanen, for smal til å bære feiringen.
+`beregnMaal()` prøver **alle** oppstillingene — hvor mange flasker som står i
+stablene på hver side, og hvor mange per rad over figuren — og beholder den
+som gir de bredeste flaskene. Står to like brede, vinner den med størst figur.
+Flaskebredden er tatt av på 72 px: over det blir midtsøyla, og dermed figuren,
+for smal til å bære feiringen.
+
+Det er dette søket som gjør at spillet virker både stående og liggende uten et
+eget oppsett for hver. Stående er høyden rikelig og bredden knapp, så søket
+lander på høye sidestabler; liggende er det motsatt, og da vinner få i
+stablene og mange per rad:
+
+| Skjerm | Nivå | Oppstilling | Flaskebredde |
+| --- | --- | --- | --- |
+| 375 × 812 (stående) | 1 | 3 + 3 + 4 | 72 px |
+| 375 × 812 (stående) | 40 | 4 + 4 + 6 | 64 px |
+| 812 × 375 (liggende) | 1 | 2 + 2 + 6 | 60 px |
+| 812 × 375 (liggende) | 40 | 1 + 1 + 12 | 38 px |
+
+En fast fordeling – tre per side – ga 20 px brede flasker på en liggende
+telefon. Det var uspillelig.
+
+Liggende flytter i tillegg verktøyknappene ut i en søyle til høyre, så brettet
+får hele høyden under topplinja, og tipsteksten legger seg over den tomme
+plassen øverst i stedet for å spise av den. Brettet gikk fra ~210 til ~300 px
+høyde av det alene.
 
 ### Figurene
 
