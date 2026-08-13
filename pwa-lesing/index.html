@@ -64,9 +64,17 @@
 
   <footer class="bunn lese-bunn">
     <p id="lese-status" class="status">Trykk på mikrofonen og les høyt.</p>
-    <button id="knapp-mikrofon" class="mikrofon" type="button" aria-label="Start lesing">
-      <span class="mik-ikon">🎤</span>
-    </button>
+    <div class="knapperad">
+      <button id="knapp-store" class="sideknapp" type="button" aria-label="Bytt til store bokstaver">
+        <span id="store-ikon">AA</span>
+      </button>
+      <button id="knapp-mikrofon" class="mikrofon" type="button" aria-label="Start lesing">
+        <span class="mik-ikon">🎤</span>
+      </button>
+      <button id="knapp-opplesing" class="sideknapp" type="button" aria-label="Les teksten høyt for meg">
+        <span id="opplesing-ikon">🔊</span>
+      </button>
+    </div>
     <p class="hjelpetekst">Stopper du opp: trykk på ordet, så leses det for deg.</p>
   </footer>
 </section>

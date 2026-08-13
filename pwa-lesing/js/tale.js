@@ -186,6 +186,55 @@
 
   var aktivLytter = null;
 
+  // Leser en hel tekst, én linje om gangen, og sier fra hvilken linje som
+  // holder på. Linje for linje, ikke ord for ord: `onboundary` er den eneste
+  // veien til ordnøyaktig følging, og den er ikke til å stole på i Safari.
+  // En linje som lyser er uansett det barnet trenger for å finne plassen.
+  //
+  // Mikrofonen settes på pause én gang for hele opplesingen, ikke per linje.
+  function lesOppLinjer(linjer, paaLinje, ferdig) {
+    var lytter = aktivLytter;
+    var avbrutt = false;
+    var i = 0;
+
+    function slutt() {
+      if (lytter) lytter.fortsett();
+      if (paaLinje) paaLinje(-1);
+      if (ferdig) ferdig();
+    }
+
+    function neste() {
+      if (avbrutt) return;
+      if (i >= linjer.length) { slutt(); return; }
+      var nr = i++;
+      if (paaLinje) paaLinje(nr);
+      var y = new SpeechSynthesisUtterance(linjer[nr]);
+      var s = finnStemme();
+      if (s) y.voice = s;
+      y.lang = 'nb-NO';
+      y.rate = 0.8;   // saktere enn vanlig tale: dette er lesestøtte
+      y.onend = neste;
+      y.onerror = neste;
+      window.speechSynthesis.speak(y);
+    }
+
+    if (!window.speechSynthesis) { if (ferdig) ferdig(); return { stopp: function () {} }; }
+    if (lytter) lytter.pause();
+    window.speechSynthesis.cancel();
+    neste();
+
+    return {
+      stopp: function () {
+        if (avbrutt) return;
+        avbrutt = true;
+        // cancel() fyrer onend på den linja som går. Uten flagget over ville
+        // det startet neste linje i stedet for å stoppe.
+        window.speechSynthesis.cancel();
+        slutt();
+      }
+    };
+  }
+
   function lesOpp(tekst, ferdig) {
     if (!window.speechSynthesis) { if (ferdig) ferdig(); return; }
     // Appen skal ikke høre seg selv lese. Mikrofonen står på pause så lenge
@@ -316,6 +365,7 @@
     lik: lik,
     lagMatcher: lagMatcher,
     lesOpp: lesOpp,
+    lesOppLinjer: lesOppLinjer,
     lytt: lytt
   };
 })();

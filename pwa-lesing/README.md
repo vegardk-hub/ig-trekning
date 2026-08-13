@@ -36,6 +36,39 @@ være ubrukelig på akkurat dette barnet, er dette fortsatt en fungerende
 leseapp der man trykker seg gjennom teksten og får truckene. Mikrofonen er
 motoren, men den er ikke det eneste som holder appen oppe.
 
+## De tre knappene under teksten
+
+Mikrofonen i midten, og to støtteknapper som begge er der for barn som synes
+lesingen er tung.
+
+**`AA` — store bokstaver.** Bytter teksten til blokkbokstaver, som mange synes
+er lettere å kjenne igjen. Valget huskes. **Store bokstaver er bare en
+visning** — de kommer fra `text-transform` i CSS, og teksten under ligger
+urørt. Skrev vi om selve ordene, ville både matchingen og opplesingen fått
+versaler å jobbe med, og en stemme som får «ILDKULEN» kan finne på å stave det
+bokstav for bokstav. Samme lærdom som navnene i Poengtavla.
+
+Versaler er bredere enn minusker, så visningen har sin egen linjelengde —
+ellers brekker setninger som sto samlet i små bokstaver.
+
+**Høyttaleren — les teksten for meg.** Leser hele teksten høyt, én linje om
+gangen, og linja som leses lyser opp så barnet finner plassen.
+
+* **Linje for linje, ikke ord for ord.** `onboundary` er den eneste veien til
+  ordnøyaktig følging, og den er ikke til å stole på i Safari. En linje som
+  lyser er uansett nok til å holde plassen.
+* **Linja som leses har sin egen farge, ikke grønn.** Grønn betyr «du leste
+  dette», og det å bli lest for er ikke det samme.
+* **Opplesingen gjør ingenting grønt.** Det er et bevisst valg: en knapp som
+  farget hele teksten ville gjort brikken til noe man trykker seg til. Barnet
+  hører teksten først og leser den selv etterpå — det er hele poenget. Står
+  det fast på ett enkelt ord, er det trykk-på-ordet som er veien videre.
+* **Mikrofon og opplesing kan ikke gå samtidig.** Mikrofonen settes på pause
+  for hele opplesingen — én gang, ikke per linje — og trykk på mikrofonen
+  eller på et ord stopper opplesingen først. Ellers hører appen seg selv.
+* `cancel()` fyrer `onend` på linja som går, så stoppen har et eget flagg.
+  Uten det ville et stopptrykk startet neste linje i stedet.
+
 ## Ordmatchingen
 
 Ligger i `js/tale.js`, uavhengig av resten, og er med vilje rundhåndet. En
@@ -178,6 +211,18 @@ Kjør dem etter hver endring i `js/tale.js`. Skruen som justeres oftest, er hvor
 rundhåndet matchingen skal være, og de to siste bolkene er de som holder den i
 sjakk: helt feil tekst skal ikke farge noe, og overspranget skal stoppe etter
 to ord.
+
+Opplesingen har egne prøver, som trenger playwright:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
+```
+
+De bytter ut `speechSynthesis` med en falsk som lar prøven gå én linje om
+gangen — i skyøkta finnes ingen stemmer, så ekte tale er ferdig før den har
+begynt. Merk at `speechSynthesis` er en getter på `window`: vanlig tilordning
+feiler stille, og da kjører prøven mot den ekte uten å si fra. Bruk
+`Object.defineProperty`.
 
 Ikonene genereres:
 

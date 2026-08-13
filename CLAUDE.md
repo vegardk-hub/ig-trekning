@@ -84,6 +84,12 @@ server, og skal kjøres etter hver endring i `pwa-lesing/js/tale.js`:
 node pwa-lesing/tester/match.js
 ```
 
+Opplesingen har egne prøver, som trenger playwright:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
+```
+
 Kjøres de på Windows i stedet for i skyøkta, feiler `fyllmodus` og `tema` på ett
 mål hver, med tre piksler. Det er ikke en regresjon: `system-ui` løser til Segoe
 UI med 21 px linjeboks der, mot 17 px på Linux, som tallene er kalibrert mot.
@@ -260,6 +266,16 @@ Fire ting som har kostet tid, eller som ville gjort det:
   «om», «opp» og «i», og halve teksten blir grønn av seg selv.
 - **Talegjenkjenning i hjemskjermmodus har historisk vært upålitelig på iOS.**
   Virker ikke mikrofonen, prøv siden i Safari før du leter i koden.
+- **Store bokstaver er `text-transform`, ikke omskrevet tekst.** Samme lærdom
+  som navnene i Poengtavla: skriver du om ordene, får både matchingen og
+  opplesingen versaler å jobbe med, og en stemme som får «ILDKULEN» kan finne
+  på å stave det. Versalvisningen trenger sin egen linjelengde, for versaler er
+  bredere og brekker setninger som ellers sto samlet.
+- **`speechSynthesis` er en getter på `window`.** Vanlig tilordning i en prøve
+  feiler stille, og prøven kjører videre mot den ekte — som ikke har stemmer i
+  skyøkta, så opplesingen er «ferdig» før den har begynt. Bruk
+  `Object.defineProperty`. `cancel()` fyrer dessuten `onend` på det som spilles,
+  så en stopp må ha et eget flagg for ikke å starte neste linje.
 
 Truckene er tegnet, ikke lastet ned: én SVG-tegning og en tabell med farge,
 motor og dekor. Motoren må være i metallfarge og stikke ned under panserlinja,

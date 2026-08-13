@@ -258,7 +258,27 @@ body {
   margin: 0 auto;
 }
 
-.linje { margin: 0 0 0.5em; }
+.linje {
+  margin: 0 0 0.5em;
+  padding: 0.05em 0.25em;
+  border-radius: 12px;
+  transition: background-color 260ms ease;
+}
+
+/* Linja appen leser høyt nå. Egen farge, ikke grønn: grønn betyr «du leste
+   dette», og det å bli lest for er ikke det samme. */
+.linje.leses { background: rgba(255, 159, 46, 0.16); }
+
+/* Store bokstaver er bare en visning. Teksten under ligger urørt, slik at
+   både matchingen og opplesingen får ordene slik de er skrevet — en stemme
+   som får «ILDKULEN», kan finne på å stave det. */
+/* Versaler er bredere enn minusker, så samme linjelengde i `ch` gir færre ord
+   per linje og brekker setninger som ellers sto samlet. Bredere ramme her
+   holder like mange ord på linja i begge visningene. */
+.lese-tekst.store {
+  text-transform: uppercase;
+  max-width: 30ch;
+}
 
 /* Ordene som ikke er lest ennå, skal være det klareste på skjermen – det er
    dem barnet faktisk leser. Første utkast dempet dem og lot de leste være
@@ -307,7 +327,36 @@ body {
   text-align: center;
 }
 
-.mikrofon {
+.knapperad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.sideknapp {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 2px solid var(--kant);
+  background: var(--flate);
+  color: var(--tekst);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+  display: none;
+}
+
+.sideknapp:not([hidden]) { display: flex; align-items: center; justify-content: center; }
+.sideknapp:active { background: var(--flate-lys); }
+.sideknapp.paa { border-color: var(--aksent); color: var(--aksent); }
+
+/* display: flex ville slått nettleserens [hidden]-stil, og knappen blitt
+   stående synlig i en nettleser uten talegjenkjenning. */
+.mikrofon { display: none; }
+
+.mikrofon:not([hidden]) {
   width: 88px;
   height: 88px;
   border-radius: 50%;
@@ -385,5 +434,6 @@ body {
 /* iPad i liggende format: teksten skal ikke bli en tynn stripe i midten. */
 @media (min-width: 820px) {
   .lese-tekst { max-width: 26ch; }
+  .lese-tekst.store { max-width: 34ch; }
   .skjerm:not([hidden]) { padding-left: 28px; padding-right: 28px; }
 }

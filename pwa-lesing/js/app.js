@@ -100,7 +100,7 @@
   /* ---------- lagring ---------- */
 
   var NOKKEL = 'lesing-v1';
-  var data = { fullforte: [], lyd: true };
+  var data = { fullforte: [], lyd: true, store: false };
 
   function last() {
     try {
@@ -109,6 +109,7 @@
       var d = JSON.parse(r);
       if (d && Array.isArray(d.fullforte)) data.fullforte = d.fullforte;
       if (d) data.lyd = d.lyd !== false;
+      if (d) data.store = d.store === true;
     } catch (f) {}
   }
 
@@ -278,7 +279,9 @@
       linjeFeiret: [],
       hjulpet: -1,
       matcher: Tale.lagMatcher(ordListe.map(function (o) { return o.rå; })),
-      lytter: null
+      lytter: null,
+      linjeElementer: [],
+      opplesing: null
     };
 
     e('lese-tittel').textContent = tekst.tittel;
@@ -293,6 +296,7 @@
       flate.appendChild(p);
       linjer.push(p);
     });
+    okt.linjeElementer = linjer;
 
     ordListe.forEach(function (o, i) {
       var s = document.createElement('span');
@@ -311,8 +315,65 @@
       : 'Mikrofonen virker ikke her. Trykk på ordene for å lese teksten.', false);
     e('knapp-mikrofon').hidden = !Tale.stottes();
     e('knapp-mikrofon').classList.remove('lytter');
+    e('knapp-opplesing').hidden = !Tale.kanLeseOpp();
+    e('knapp-opplesing').classList.remove('paa');
+    settStore(data.store);
     merkNaa();
     vis('lesing');
+  }
+
+  /* ---------- store bokstaver ---------- */
+
+  // Blokkbokstaver kommer fra CSS, ikke fra teksten. Skrev vi om selve ordene,
+  // ville både matchingen og opplesingen fått versaler å jobbe med, og en
+  // stemme som får «ILDKULEN» kan finne på å stave det bokstav for bokstav.
+  function settStore(paa) {
+    e('lese-tekst').classList.toggle('store', paa);
+    var k = e('knapp-store');
+    k.classList.toggle('paa', paa);
+    e('store-ikon').textContent = paa ? 'aa' : 'AA';
+    k.setAttribute('aria-label', paa ? 'Bytt til små bokstaver' : 'Bytt til store bokstaver');
+  }
+
+  /* ---------- opplesing av hele teksten ---------- */
+
+  function stoppOpplesing() {
+    if (okt && okt.opplesing) { okt.opplesing.stopp(); okt.opplesing = null; }
+    var k = e('knapp-opplesing');
+    if (k) k.classList.remove('paa');
+    if (okt) okt.linjeElementer.forEach(function (p) { p.classList.remove('leses'); });
+  }
+
+  // Opplesingen gjør ingenting grønt. Å bli lest for er en annen ting enn å
+  // lese selv, og en knapp som farget hele teksten ville gjort brikken til
+  // noe man trykker seg til. Barnet leser etterpå — det er hele poenget med
+  // å høre teksten først.
+  function vekslOpplesing() {
+    if (!okt || !Tale.kanLeseOpp()) return;
+    Lyd.vekk();
+
+    if (okt.opplesing) {
+      stoppOpplesing();
+      settStatus('Trykk på mikrofonen og les høyt.', false);
+      return;
+    }
+
+    e('knapp-opplesing').classList.add('paa');
+    settStatus('Hør på teksten. Så kan du lese den selv.', false);
+
+    okt.opplesing = Tale.lesOppLinjer(
+      okt.tekst.linjer,
+      function (nr) {
+        if (!okt) return;
+        okt.linjeElementer.forEach(function (p, i) { p.classList.toggle('leses', i === nr); });
+      },
+      function () {
+        if (!okt) return;
+        okt.opplesing = null;
+        e('knapp-opplesing').classList.remove('paa');
+        settStatus('Nå kan du lese den selv.', false);
+      }
+    );
   }
 
   function settStatus(tekst, feil) {
@@ -365,6 +426,7 @@
   }
 
   function stoppOkt() {
+    stoppOpplesing();
     if (okt && okt.lytter) { okt.lytter.stopp(); okt.lytter = null; }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     var m = e('knapp-mikrofon');
@@ -374,6 +436,8 @@
   function vekslMikrofon() {
     if (!okt || !Tale.stottes()) return;
     Lyd.vekk();
+    // Mikrofon og opplesing kan ikke gå samtidig – da hører appen seg selv.
+    stoppOpplesing();
 
     if (okt.lytter && okt.lytter.i_gang()) {
       okt.lytter.stopp();
@@ -406,6 +470,7 @@
   function trykkOrd(indeks) {
     if (!okt) return;
     Lyd.vekk();
+    stoppOpplesing();
     var ord = okt.ord[indeks].rå;
 
     if (okt.lest[indeks]) { Tale.lesOpp(ord); return; }
@@ -517,6 +582,13 @@
     });
 
     e('knapp-mikrofon').addEventListener('click', vekslMikrofon);
+    e('knapp-opplesing').addEventListener('click', vekslOpplesing);
+
+    e('knapp-store').addEventListener('click', function () {
+      data.store = !data.store;
+      lagre();
+      settStore(data.store);
+    });
 
     e('lese-tekst').addEventListener('click', function (ev) {
       var s = ev.target.closest ? ev.target.closest('.ord') : null;
