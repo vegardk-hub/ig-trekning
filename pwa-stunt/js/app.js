@@ -46,6 +46,14 @@
         s.beste = lagret.beste || 0;
         s.turer = lagret.turer || 0;
         if (lagret.valgt) for (var k in s.valgt) if (lagret.valgt[k]) s.valgt[k] = lagret.valgt[k];
+
+        // Dekor var én valgt del før, og er nå en liste. En lagring fra den
+        // gamle utgaven skal ikke tømme bilen for pynt – eller krasje på en
+        // streng der koden venter en liste.
+        if (typeof s.valgt.dekor === 'string') {
+          s.valgt.dekor = (s.valgt.dekor && s.valgt.dekor !== 'ingen') ? [s.valgt.dekor] : [];
+        }
+        if (!Array.isArray(s.valgt.dekor)) s.valgt.dekor = [];
         if (lagret.oppg) for (var o in s.oppg) if (typeof lagret.oppg[o] === 'number') s.oppg[o] = lagret.oppg[o];
       }
     } catch (f) { /* ødelagt lagring skal ikke stoppe spillet */ }
@@ -113,7 +121,9 @@
     e.valgene.innerHTML = '';
     kat.liste.forEach(function (del) {
       var har = eier(kat.id, del.id);
-      var valgt = stat.valgt[kat.id] === del.id;
+      var valgt = kat.flere
+        ? stat.valgt[kat.id].indexOf(del.id) >= 0
+        : stat.valgt[kat.id] === del.id;
       var raad = stat.penger >= del.pris;
 
       var k = document.createElement('button');
@@ -132,7 +142,7 @@
       }
 
       var under = har
-        ? (valgt ? '<span class="paa">På bilen</span>' : '<span class="eid">Eier</span>')
+        ? (valgt ? '<span class="paa">✓ På bilen</span>' : '<span class="eid">Eier</span>')
         : '<span class="pris">$' + del.pris + '</span>';
 
       k.innerHTML = merke + '<span class="valgnavn">' + del.navn + '</span>' + under +
@@ -143,13 +153,23 @@
     });
 
     var b = Bil.bonus(stat.valgt);
-    e.stilLinje.innerHTML = 'Stil <strong>' + Bil.stil(stat.valgt) + '</strong> gir <strong class="gronn">×' +
+    e.stilLinje.innerHTML = (kat.flere ? 'Sett på så mange du vil! ' : '') +
+      'Stil <strong>' + Bil.stil(stat.valgt) + '</strong> gir <strong class="gronn">×' +
       b.toFixed(2) + '</strong> på alt du tjener i løypa';
   }
 
   function velgDel(kat, del) {
     if (eier(kat.id, del.id)) {
-      stat.valgt[kat.id] = del.id;
+      if (kat.flere) {
+        // Dekor slås av og på. Et trykk på noe som allerede står på tar det
+        // av igjen – ellers ville barnet ikke hatt noen vei tilbake fra en
+        // pynt det ble lei av, uten en egen «fjern»-knapp.
+        var pa = stat.valgt[kat.id];
+        var n = pa.indexOf(del.id);
+        if (n >= 0) pa.splice(n, 1); else pa.push(del.id);
+      } else {
+        stat.valgt[kat.id] = del.id;
+      }
       lagre();
       tegnVerksted();
       return;
@@ -161,7 +181,8 @@
     spor('Kjøpe ' + del.navn + '?', 'Det koster $' + del.pris + '. Du har ' + penger() + '.', function () {
       stat.penger -= del.pris;
       stat.eid[kat.id].push(del.id);
-      stat.valgt[kat.id] = del.id;
+      if (kat.flere) stat.valgt[kat.id].push(del.id);
+      else stat.valgt[kat.id] = del.id;
       lagre();
       tegnVerksted();
     });

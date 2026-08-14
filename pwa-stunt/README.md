@@ -56,7 +56,7 @@ Eieren ba om **én pott** — samme penger til både oppgraderinger og pynt. Den
 får det en tregere bil, og angrer på noe det syntes var gøy.
 
 Løsningen er at **designdelene gir stilpoeng, og stilpoengene ganger opp alt
-man tjener i løypa**. En naken bil ligger på ×1,05; alt kjøpt gir ×2,07. Da er
+man tjener i løypa**. En naken bil ligger på ×1,04; alt kjøpt gir ×2,07. Da er
 glitter en investering som betaler seg over noen turer, ikke en utgift som
 gjør bilen dårligere. Det oppfyller også ønsket om «mer penger når man designer
 mer avansert» — men som en sats per tur, ikke en engangssum man kan hente ut om
@@ -67,9 +67,15 @@ Tallene er kalibrert slik:
 | | |
 | --- | --- |
 | Startkapital | $250 |
-| Umodifisert bil, én tur | ~$391 |
+| Umodifisert bil, én tur | ~$389 |
 | Fullt utstyrt bil, én tur | ~$832 |
-| Alt i katalogen | ~$4000 |
+| Hele designkatalogen | $4580 |
+| Alle oppgraderinger | $3240 |
+
+Nakne bilen ligger på ×1,04 i stilbonus, en bil med alt på ×2,07. Nevneren i
+`Bil.bonus()` er satt etter det taket: legger du til en dekortype, øker maks
+stil, og nevneren må følge etter — ellers vokser inntekten i løypa uten at noe
+annet er endret.
 
 Det gir en ny del hver eller annenhver tur i starten — ofte nok til at det
 skjer noe, sjelden nok til at det er noe igjen å glede seg til. Endrer du en
@@ -91,8 +97,42 @@ og mister mynter underveis. Det er en tilsiktet motvekt, ikke en feil.
 ## Bilen tegnes, den lastes ikke ned
 
 Som truckene i Monstergiret: én tegnerutine og en tabell. Fem kategorier som
-kan settes sammen fritt — form, lakk, hjul, dekor, spoiler — gir 4 × 9 × 5 × 7
-× 5 = 6300 forskjellige biler uten en eneste bildefil.
+kan settes sammen fritt — form, lakk, hjul, dekor, spoiler. Fire former, ni
+lakker, fem hjul, seks dekortyper som kan stå på i hvilken som helst
+kombinasjon (2⁶ = 64) og fem spoilere gir 4 × 9 × 5 × 64 × 5 = 57 600
+forskjellige biler uten en eneste bildefil.
+
+## Dekor er den eneste kategorien der flere kan stå på samtidig
+
+Det var det ikke fra starten, og det var feil: et barn som satte på stjerner,
+mistet lynet det nettopp hadde kjøpt. Pynt man har betalt for skal bli
+værende. `valgt.dekor` er derfor en **liste**, ikke én id, og et trykk i
+verkstedet slår en dekor av eller på i stedet for å bytte den ut.
+
+For at seks ting skal få plass uten å bli en grøt, har hver type sin egen
+**sone** — en andel av formens `dekorboks`. De fire figurene står på rekke
+bakfra og fram, striper rammer inn over- og underkanten, og glitteret ligger
+over alt:
+
+| | |
+| --- | --- |
+| striper | hele lengden, bånd langs over- og underkant |
+| stjerner, lyn, flammer, tenner | hver sin fjerdedel, bakfra og fram |
+| glitter | hele flata, oppå de andre |
+
+Sonene er **andeler**, ikke faste mål, nettopp fordi hver form har sin egen
+`dekorboks` — en monsterbil har mye høyere side enn en racer. Figurene tegnes i
+enhetskoordinater innenfor sonen sin, så en ny dekortype er en `switch`-gren
+uten et eneste mål å regne ut på nytt.
+
+To ting det er verdt å vite hvis du endrer dette:
+
+* **Et første forsøk stablet dem i tre rader oppå hverandre.** Det virket, men
+  en bilside er lang og lav, og en tredjedels høyde gjorde flammene til en gul
+  flekk. På rekke får hver figur en nesten kvadratisk plass.
+* **Lagrekkefølgen er katalogens, ikke trykkerekkefølgen.** `valgtDekor()`
+  filtrerer `DEKOR` i stedet for å lese lista barnet bygde, så striper alltid
+  ligger nederst og glitter øverst uansett hva som ble kjøpt først.
 
 **Formen eier alle målene.** `dekorboks` og `spoilerfeste` ligger på hver form,
 ikke i tegnerutinene, for et lyn skal sitte på siden av karosseriet enten det
@@ -131,6 +171,9 @@ Ting som har kostet tid her, og som ikke bør rulles tilbake:
 * **Glitteret bruker et fast mønster, ikke tilfeldige tall.** Bilen tegnes både
   som SVG i garasjen og som bilde i løypa; med `Math.random()` ville de to vært
   forskjellige biler.
+* **Bussens dekorbånd er smalere enn på de andre.** Det ligger lavt, mellom
+  vinduene og terskelen, og hjulene dekker begge ender av en boks i full
+  bredde — stjernene bakerst forsvant bak bakhjulet.
 * **Gradientene har en id-forstavelse per tegning.** To biler på samme side med
   samme gradient-id gir den ene feil farge.
 

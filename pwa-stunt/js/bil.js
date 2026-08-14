@@ -28,7 +28,7 @@ var Bil = (function () {
       id: 'racer', navn: 'Racer', pris: 0, stil: 2,
       tegn: '🏎️',
       hjul: [{ x: 98, y: BAKKE - 32, r: 32 }, { x: 300, y: BAKKE - 32, r: 32 }],
-      dekorboks: { x: 78, y: 116, b: 216, h: 30 },
+      dekorboks: { x: 70, y: 108, b: 230, h: 42 },
       spoilerfeste: { x: 60, y: 114 },
       /*
        * Bilen kjører mot høyre, og da må det lange panseret ligge til høyre
@@ -48,7 +48,7 @@ var Bil = (function () {
       id: 'buggy', navn: 'Buggy', pris: 120, stil: 5,
       tegn: '🛺',
       hjul: [{ x: 100, y: BAKKE - 40, r: 40 }, { x: 302, y: BAKKE - 40, r: 40 }],
-      dekorboks: { x: 96, y: 108, b: 210, h: 28 },
+      dekorboks: { x: 84, y: 100, b: 220, h: 40 },
       spoilerfeste: { x: 66, y: 102 },
       kropp: 'M38 142 L46 112 Q52 100 76 98 L300 98 Q332 98 346 112 L368 142 Z',
       // Rullebur i mørk lakk. Tegnes som streker oppå kroppen.
@@ -66,7 +66,7 @@ var Bil = (function () {
       id: 'monster', navn: 'Monsterbil', pris: 320, stil: 9,
       tegn: '🚙',
       hjul: [{ x: 110, y: BAKKE - 52, r: 52 }, { x: 298, y: BAKKE - 52, r: 52 }],
-      dekorboks: { x: 98, y: 62, b: 204, h: 32 },
+      dekorboks: { x: 88, y: 52, b: 220, h: 48 },
       spoilerfeste: { x: 74, y: 70 },
       // Karosseriet sitter høyt over hjulene, med et understell imellom.
       // Det er den store høyden som gjør at man ser hvilken bil det er –
@@ -84,7 +84,9 @@ var Bil = (function () {
       id: 'buss', navn: 'Stuntbussen', pris: 260, stil: 7,
       tegn: '🚐',
       hjul: [{ x: 104, y: BAKKE - 34, r: 34 }, { x: 302, y: BAKKE - 34, r: 34 }],
-      dekorboks: { x: 60, y: 116, b: 210, h: 28 },
+      // Smalere enn på de andre: bussens dekorbånd ligger lavt, mellom
+      // vinduene og terskelen, og hjulene dekker begge ender av det.
+      dekorboks: { x: 132, y: 112, b: 172, h: 34 },
       spoilerfeste: { x: 58, y: 64 },
       kropp: 'M38 148 L38 70 Q38 58 54 58 L242 58 Q254 58 260 66 L292 100 ' +
              'L356 106 Q374 108 374 126 L374 148 Z',
@@ -124,14 +126,42 @@ var Bil = (function () {
 
   /* ---------- dekor ---------- */
 
+  /*
+   * Dekor er den eneste kategorien der flere deler kan stå på samtidig, og
+   * det er hele poenget: et barn som setter på stjerner skal ikke miste lynet
+   * det nettopp kjøpte. Derfor er `valgt.dekor` en liste, ikke én id.
+   *
+   * For at det skal gå an, har hver type sin egen `sone` – en andel av
+   * formens `dekorboks`. De fire figurene står på rekke bakfra og fram:
+   *
+   *     striper  langs over- og underkanten, hele lengden
+   *     stjerner | lyn | flammer | tenner
+   *     glitter  over alt
+   *
+   * Et første forsøk stablet dem i tre rader oppå hverandre. Det virket, men
+   * en bilside er lang og lav, og en tredjedels høyde gjorde flammene til en
+   * gul flekk. På rekke får hver figur en nesten kvadratisk plass, og med
+   * alle på er bilen dekket fra bak til front.
+   *
+   * Glitteret ligger over alt og er med vilje unntaket: gnister skal kunne
+   * falle oppå det andre.
+   *
+   * Stilverdiene er lavere enn da bare én kunne stå på – de legges nå sammen,
+   * og seks deler à 10 ville sprengt stilbonusen.
+   */
   var DEKOR = [
-    { id: 'ingen',    navn: 'Ingen',     pris: 0,   stil: 0,  tegn: '⬜' },
-    { id: 'striper',  navn: 'Striper',   pris: 50,  stil: 3,  tegn: '➖' },
-    { id: 'lyn',      navn: 'Lyn',       pris: 120, stil: 6,  tegn: '⚡' },
-    { id: 'flammer',  navn: 'Flammer',   pris: 180, stil: 8,  tegn: '🔥' },
-    { id: 'stjerner', navn: 'Stjerner',  pris: 150, stil: 7,  tegn: '⭐' },
-    { id: 'glitter',  navn: 'Glitter',   pris: 260, stil: 11, tegn: '✨' },
-    { id: 'tenner',   navn: 'Tenner',    pris: 220, stil: 10, tegn: '🦈' }
+    { id: 'striper',  navn: 'Striper',   pris: 40,  stil: 2, tegn: '➖',
+      sone: { x0: 0.00, x1: 1.00, y0: 0.00, y1: 1.00 } },
+    { id: 'stjerner', navn: 'Stjerner',  pris: 110, stil: 4, tegn: '⭐',
+      sone: { x0: 0.01, x1: 0.25, y0: 0.18, y1: 0.84 } },
+    { id: 'lyn',      navn: 'Lyn',       pris: 90,  stil: 4, tegn: '⚡',
+      sone: { x0: 0.26, x1: 0.50, y0: 0.18, y1: 0.84 } },
+    { id: 'flammer',  navn: 'Flammer',   pris: 130, stil: 5, tegn: '🔥',
+      sone: { x0: 0.51, x1: 0.75, y0: 0.18, y1: 0.84 } },
+    { id: 'tenner',   navn: 'Tenner',    pris: 160, stil: 5, tegn: '🦈',
+      sone: { x0: 0.76, x1: 0.99, y0: 0.18, y1: 0.84 } },
+    { id: 'glitter',  navn: 'Glitter',   pris: 190, stil: 6, tegn: '✨',
+      sone: { x0: 0.00, x1: 1.00, y0: 0.00, y1: 1.00 } }
   ];
 
   /* ---------- spoiler ---------- */
@@ -148,7 +178,7 @@ var Bil = (function () {
     { id: 'form',    navn: 'Form',    tegn: '🚗', liste: FORMER },
     { id: 'lakk',    navn: 'Lakk',    tegn: '🎨', liste: LAKKER },
     { id: 'hjul',    navn: 'Hjul',    tegn: '🛞', liste: HJUL },
-    { id: 'dekor',   navn: 'Dekor',   tegn: '✨', liste: DEKOR },
+    { id: 'dekor',   navn: 'Dekor',   tegn: '✨', liste: DEKOR, flere: true },
     { id: 'spoiler', navn: 'Spoiler', tegn: '🪽', liste: SPOILERE }
   ];
 
@@ -157,12 +187,20 @@ var Bil = (function () {
     return liste[0];
   }
 
+  // Dekoren returneres i katalogens rekkefølge, ikke i den rekkefølgen barnet
+  // trykket. Da er lagdelingen fast: striper nederst, glitter øverst, uansett
+  // hva som ble kjøpt først.
+  function valgtDekor(valgt) {
+    var pa = valgt.dekor || [];
+    return DEKOR.filter(function (d) { return pa.indexOf(d.id) >= 0; });
+  }
+
   function deler(valgt) {
     return {
       form: finn(FORMER, valgt.form),
       lakk: finn(LAKKER, valgt.lakk),
       hjul: finn(HJUL, valgt.hjul),
-      dekor: finn(DEKOR, valgt.dekor),
+      dekor: valgtDekor(valgt),
       spoiler: finn(SPOILERE, valgt.spoiler)
     };
   }
@@ -172,11 +210,16 @@ var Bil = (function () {
   // dobbelt så mye per mynt som en helt naken bil.
   function stil(valgt) {
     var d = deler(valgt);
-    return d.form.stil + d.lakk.stil + d.hjul.stil + d.dekor.stil + d.spoiler.stil;
+    var sum = d.form.stil + d.lakk.stil + d.hjul.stil + d.spoiler.stil;
+    for (var i = 0; i < d.dekor.length; i++) sum += d.dekor[i].stil;
+    return sum;
   }
 
+  // Nevneren er satt slik at en fullt pyntet bil lander rundt ×2,1. Legger du
+  // til en dekortype, øker maks stil, og nevneren må følge etter – ellers
+  // vokser inntekten i løypa uten at noe annet er endret.
   function bonus(valgt) {
-    return 1 + stil(valgt) / 56;
+    return 1 + stil(valgt) / 70;
   }
 
   /* ---------- tegning ---------- */
@@ -214,83 +257,106 @@ var Bil = (function () {
     return g + '</g>';
   }
 
+  // Fra andeler av formens dekorboks til en ekte boks i tegningens
+  // koordinater. Sonene er andeler nettopp fordi hver form har sin egen
+  // dekorboks – en monsterbil har mye høyere side enn en racer.
+  function sone(boks, s) {
+    return {
+      x: boks.x + boks.b * s.x0,
+      y: boks.y + boks.h * s.y0,
+      b: boks.b * (s.x1 - s.x0),
+      h: boks.h * (s.y1 - s.y0)
+    };
+  }
+
+  /*
+   * Hver figur tegnes i enhetskoordinater innenfor sin egen sone: u og v går
+   * fra 0 til 1. Da fyller den plassen sin uansett hvilken form bilen har og
+   * hvor stor sonen er, og en ny dekortype er en `switch`-gren uten et eneste
+   * mål å regne ut på nytt.
+   */
   function dekorTegning(id, boks, lakk) {
-    var x = boks.x, y = boks.y, b = boks.b, h = boks.h, s = '', i;
-    var lys = lakk.pynt, mork = lakk.mork;
+    var lys = lakk.pynt, mork = lakk.mork, s = '', i;
+
+    function X(u) { return (boks.x + boks.b * u).toFixed(1); }
+    function Y(v) { return (boks.y + boks.h * v).toFixed(1); }
 
     switch (id) {
+      // Striper er ikke en figur, men en ramme: to bånd langs over- og
+      // underkanten av hele flata, med midten fri til de andre.
       case 'striper':
-        s += '<rect x="' + x + '" y="' + (y + 4) + '" width="' + b + '" height="' + (h * 0.28).toFixed(1) +
-             '" rx="4" fill="' + lys + '"/>';
-        s += '<rect x="' + x + '" y="' + (y + h * 0.55).toFixed(1) + '" width="' + (b * 0.7).toFixed(1) +
-             '" height="' + (h * 0.2).toFixed(1) + '" rx="4" fill="' + mork + '"/>';
-        return s;
-
-      case 'lyn':
-        // Ett stort lyn midt på siden, med et lite foran.
-        var lx = x + b * 0.28, ly = y;
-        s += '<path d="M' + (lx + 40) + ' ' + ly + ' L' + (lx - 6) + ' ' + (ly + h * 0.6) +
-             ' L' + (lx + 16) + ' ' + (ly + h * 0.6) + ' L' + (lx - 4) + ' ' + (ly + h) +
-             ' L' + (lx + 52) + ' ' + (ly + h * 0.42) + ' L' + (lx + 28) + ' ' + (ly + h * 0.42) +
-             ' L' + (lx + 56) + ' ' + ly + ' Z" fill="' + lys + '"/>';
-        s += '<path d="M' + (x + b * 0.78) + ' ' + ly + ' L' + (x + b * 0.68) + ' ' + (ly + h * 0.6) +
-             ' L' + (x + b * 0.76) + ' ' + (ly + h * 0.6) + ' L' + (x + b * 0.7) + ' ' + (ly + h) +
-             ' L' + (x + b * 0.88) + ' ' + (ly + h * 0.4) + ' L' + (x + b * 0.79) + ' ' + (ly + h * 0.4) +
-             ' L' + (x + b * 0.9) + ' ' + ly + ' Z" fill="' + lys + '" opacity="0.9"/>';
-        return s;
-
-      case 'flammer':
-        // Én tunge per flamme: opp langs venstre side til en spiss, og ned
-        // igjen på høyre. Første forsøk brukte to korte kurver og ga fem
-        // bobler langs underkanten i stedet for ild.
-        var bunn = y + h;
-        var bredde = b / 4.6;
-        for (i = 0; i < 5; i++) {
-          var fx = x + i * (b / 5.2);
-          var hoy = h * (1.0 - (i % 2) * 0.3);
-          s += '<path d="M' + fx.toFixed(1) + ' ' + bunn.toFixed(1) +
-               ' C' + (fx + bredde * 0.08).toFixed(1) + ' ' + (bunn - hoy * 0.55).toFixed(1) +
-               ' ' + (fx + bredde * 0.52).toFixed(1) + ' ' + (bunn - hoy * 0.45).toFixed(1) +
-               ' ' + (fx + bredde * 0.60).toFixed(1) + ' ' + (bunn - hoy).toFixed(1) +
-               ' C' + (fx + bredde * 0.80).toFixed(1) + ' ' + (bunn - hoy * 0.42).toFixed(1) +
-               ' ' + (fx + bredde).toFixed(1) + ' ' + (bunn - hoy * 0.38).toFixed(1) +
-               ' ' + (fx + bredde).toFixed(1) + ' ' + bunn.toFixed(1) +
-               ' Z" fill="' + (i % 2 ? '#ffd24a' : lys) + '"/>';
-        }
-        return s;
+        return '<rect x="' + X(0) + '" y="' + Y(0.02) + '" width="' + boks.b.toFixed(1) +
+               '" height="' + (boks.h * 0.13).toFixed(1) + '" rx="3" fill="' + lys + '"/>' +
+               '<rect x="' + X(0) + '" y="' + Y(0.88) + '" width="' + boks.b.toFixed(1) +
+               '" height="' + (boks.h * 0.10).toFixed(1) + '" rx="3" fill="' + mork + '"/>';
 
       case 'stjerner':
-        for (i = 0; i < 6; i++) {
-          var sx = x + 14 + i * (b - 28) / 5;
-          var sy = y + (i % 2 ? h * 0.62 : h * 0.22);
-          var r = i % 2 ? h * 0.24 : h * 0.34;
-          s += stjerne(sx, sy, r, lys);
+        var plasser = [[0.22, 0.26, 0.30], [0.68, 0.22, 0.20], [0.46, 0.62, 0.34], [0.86, 0.70, 0.22]];
+        for (i = 0; i < plasser.length; i++) {
+          s += stjerne(boks.x + boks.b * plasser[i][0],
+                       boks.y + boks.h * plasser[i][1],
+                       boks.h * plasser[i][2], lys);
         }
         return s;
 
-      case 'glitter':
-        for (i = 0; i < 16; i++) {
-          // Fast mønster, ikke tilfeldig: bilen skal se lik ut hver gang den
-          // tegnes, ellers flimrer den mellom garasje og løype.
-          var gx = x + ((i * 37) % (b - 10)) + 5;
-          var gy = y + ((i * 23) % (h - 6)) + 3;
-          var gr = 3 + (i % 3) * 2;
-          s += '<path d="M' + gx + ' ' + (gy - gr) + ' L' + (gx + gr * 0.34) + ' ' + (gy - gr * 0.34) +
-               ' L' + (gx + gr) + ' ' + gy + ' L' + (gx + gr * 0.34) + ' ' + (gy + gr * 0.34) +
-               ' L' + gx + ' ' + (gy + gr) + ' L' + (gx - gr * 0.34) + ' ' + (gy + gr * 0.34) +
-               ' L' + (gx - gr) + ' ' + gy + ' L' + (gx - gr * 0.34) + ' ' + (gy - gr * 0.34) +
-               ' Z" fill="#ffffff" opacity="' + (0.55 + (i % 4) * 0.15).toFixed(2) + '"/>';
+      // Ett lyn som fyller sonen. To lyn ville krevd halve bredden hver, og
+      // da leser ingen av dem som et lyn.
+      case 'lyn':
+        return '<path d="M' + X(0.68) + ' ' + Y(0) +
+               ' L' + X(0.10) + ' ' + Y(0.56) +
+               ' L' + X(0.42) + ' ' + Y(0.56) +
+               ' L' + X(0.16) + ' ' + Y(1) +
+               ' L' + X(0.92) + ' ' + Y(0.40) +
+               ' L' + X(0.56) + ' ' + Y(0.40) +
+               ' L' + X(1.00) + ' ' + Y(0) +
+               ' Z" fill="' + lys + '"/>';
+
+      // Tre tunger som fyller høyden. Hver går opp langs venstre side til en
+      // spiss og ned igjen på høyre – to korte kurver ga bobler, ikke ild.
+      case 'flammer':
+        for (i = 0; i < 3; i++) {
+          var u0 = i / 3, ub = 1 / 3;
+          var hoy = i === 1 ? 1.0 : 0.74;
+          s += '<path d="M' + X(u0) + ' ' + Y(1) +
+               ' C' + X(u0 + ub * 0.08) + ' ' + Y(1 - hoy * 0.55) +
+               ' ' + X(u0 + ub * 0.52) + ' ' + Y(1 - hoy * 0.45) +
+               ' ' + X(u0 + ub * 0.60) + ' ' + Y(1 - hoy) +
+               ' C' + X(u0 + ub * 0.80) + ' ' + Y(1 - hoy * 0.42) +
+               ' ' + X(u0 + ub) + ' ' + Y(1 - hoy * 0.38) +
+               ' ' + X(u0 + ub) + ' ' + Y(1) +
+               ' Z" fill="' + (i === 1 ? '#ffd24a' : lys) + '"/>';
         }
         return s;
 
+      // En munn: mørkt bånd med hvite tenner som biter nedover.
       case 'tenner':
-        s += '<rect x="' + x + '" y="' + y + '" width="' + b + '" height="' + (h * 0.62).toFixed(1) +
-             '" rx="6" fill="' + mork + '"/>';
-        for (i = 0; i < 9; i++) {
-          var tx = x + 6 + i * (b - 12) / 9;
-          var tb = (b - 12) / 9 - 3;
-          s += '<path d="M' + tx + ' ' + y + ' L' + (tx + tb) + ' ' + y +
-               ' L' + (tx + tb / 2) + ' ' + (y + h * 0.6) + ' Z" fill="#ffffff"/>';
+        s += '<rect x="' + X(0) + '" y="' + Y(0.04) + '" width="' + boks.b.toFixed(1) +
+             '" height="' + (boks.h * 0.52).toFixed(1) + '" rx="4" fill="' + mork + '"/>';
+        for (i = 0; i < 5; i++) {
+          var t0 = 0.03 + i * 0.194, tb = 0.16;
+          s += '<path d="M' + X(t0) + ' ' + Y(0.06) +
+               ' L' + X(t0 + tb) + ' ' + Y(0.06) +
+               ' L' + X(t0 + tb / 2) + ' ' + Y(0.86) + ' Z" fill="#ffffff"/>';
+        }
+        return s;
+
+      // Fast mønster, ikke tilfeldige tall: bilen tegnes både som SVG i
+      // garasjen og som bilde i løypa, og de to må bli like.
+      case 'glitter':
+        for (i = 0; i < 22; i++) {
+          var gu = ((i * 37) % 97) / 97;
+          var gv = ((i * 61) % 89) / 89;
+          var gr = boks.h * (0.07 + (i % 3) * 0.05);
+          var gx = boks.x + boks.b * gu, gy = boks.y + boks.h * gv;
+          s += '<path d="M' + gx.toFixed(1) + ' ' + (gy - gr).toFixed(1) +
+               ' L' + (gx + gr * 0.34).toFixed(1) + ' ' + (gy - gr * 0.34).toFixed(1) +
+               ' L' + (gx + gr).toFixed(1) + ' ' + gy.toFixed(1) +
+               ' L' + (gx + gr * 0.34).toFixed(1) + ' ' + (gy + gr * 0.34).toFixed(1) +
+               ' L' + gx.toFixed(1) + ' ' + (gy + gr).toFixed(1) +
+               ' L' + (gx - gr * 0.34).toFixed(1) + ' ' + (gy + gr * 0.34).toFixed(1) +
+               ' L' + (gx - gr).toFixed(1) + ' ' + gy.toFixed(1) +
+               ' L' + (gx - gr * 0.34).toFixed(1) + ' ' + (gy - gr * 0.34).toFixed(1) +
+               ' Z" fill="#ffffff" opacity="' + (0.5 + (i % 4) * 0.15).toFixed(2) + '"/>';
         }
         return s;
     }
@@ -387,8 +453,11 @@ var Bil = (function () {
 
     if (f.understell) s += '<path d="' + f.understell + '" fill="' + lakk.mork + '"/>';
     s += '<path d="' + f.kropp + '" fill="' + fyll + '"/>';
-    s += '<g clip-path="url(#' + pre + 'kropp)">' +
-         dekorTegning(d.dekor.id, f.dekorboks, lakk) + '</g>';
+    var pynt = '';
+    for (var n = 0; n < d.dekor.length; n++) {
+      pynt += dekorTegning(d.dekor[n].id, sone(f.dekorboks, d.dekor[n].sone), lakk);
+    }
+    s += '<g clip-path="url(#' + pre + 'kropp)">' + pynt + '</g>';
     s += '<path d="' + f.kropp + '" fill="none" stroke="' + lakk.mork + '" stroke-width="4"/>';
 
     if (f.rute) s += baner(f.rute, 'fill="#8fd0e8" opacity="0.92"');
@@ -465,7 +534,7 @@ var Bil = (function () {
   }
 
   function standard() {
-    return { form: 'racer', lakk: 'rod', hjul: 'standard', dekor: 'ingen', spoiler: 'ingen' };
+    return { form: 'racer', lakk: 'rod', hjul: 'standard', dekor: [], spoiler: 'ingen' };
   }
 
   return {

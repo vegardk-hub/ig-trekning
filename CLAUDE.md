@@ -220,6 +220,10 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **Gassen har lavgir, og det er ikke pynt.** Den bratteste rampa er 45 grader
   og koster mer enn en umodifisert motor gir. Uten lavgiret blir bilen stående,
   og appen ser ut som den har hengt seg midt i en app som ikke kan tapes.
+- **Dekor kan stå på flere om gangen, og har soner.** `valgt.dekor` er en
+  liste. Gjør du den om til én id igjen, mister barnet pynt det har betalt
+  for hver gang det setter på noe nytt. Sonene er det som gjør at seks ting
+  får plass på en bilside uten å legge seg oppå hverandre.
 - **Jorda brytes ved hopp, ikke ved looper.** Bryter man på loop-punktene,
   får bakken et loddrett hull i loopens bredde og man ser himmelen gjennom
   jorda.
