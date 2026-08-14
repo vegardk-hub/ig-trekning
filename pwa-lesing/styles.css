@@ -402,6 +402,60 @@ body {
   z-index: 10;
 }
 
+.innstilling-kort {
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  border-radius: 24px;
+  padding: 22px;
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  box-shadow: var(--skygge);
+}
+
+.kort-tittel { font-size: 1.35rem; font-weight: 800; margin: 0 0 18px; }
+
+.felt { display: block; margin-bottom: 16px; }
+
+.felt > span {
+  display: block;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tekst-dempet);
+  margin-bottom: 7px;
+}
+
+.felt select, .felt input[type="range"] {
+  width: 100%;
+  font-size: 1rem;
+  color: var(--tekst);
+  background: var(--flate-lys);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.felt input[type="range"] { padding: 8px 12px; accent-color: var(--aksent); }
+
+.avkryss {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 8px;
+  color: var(--tekst-dempet);
+  font-size: 0.95rem;
+}
+
+.avkryss input { width: 22px; height: 22px; accent-color: var(--aksent); }
+
+.minitekst {
+  margin: 0 0 12px;
+  color: var(--tekst-dempet);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .belonning-kort, .truck-kort {
   background: var(--flate);
   border: 1px solid var(--kant);

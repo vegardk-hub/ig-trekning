@@ -100,7 +100,7 @@
   /* ---------- lagring ---------- */
 
   var NOKKEL = 'lesing-v1';
-  var data = { fullforte: [], lyd: true, store: false };
+  var data = { fullforte: [], lyd: true, store: false, stemme: null, fart: 0.8, alleStemmer: false };
 
   function last() {
     try {
@@ -110,6 +110,9 @@
       if (d && Array.isArray(d.fullforte)) data.fullforte = d.fullforte;
       if (d) data.lyd = d.lyd !== false;
       if (d) data.store = d.store === true;
+      if (d && typeof d.stemme === 'string') data.stemme = d.stemme;
+      if (d && typeof d.fart === 'number') data.fart = d.fart;
+      if (d) data.alleStemmer = d.alleStemmer === true;
     } catch (f) {}
   }
 
@@ -547,6 +550,77 @@
     e('truckvisning').hidden = false;
   }
 
+  /* ---------- innstillinger for stemmen ---------- */
+
+  var PROVESETNING = 'Ildkulen står midt i hallen. Motoren våkner med et brøl.';
+
+  function fyllStemmer() {
+    var velger = e('valg-stemme');
+    var alle = Tale.alleStemmer();
+    var vis = data.alleStemmer ? alle : alle.filter(function (s) { return Tale.erNorsk(s.lang); });
+
+    // Er den valgte stemmen filtrert bort, tas den med likevel – ellers ville
+    // velgeren stille byttet stemme bak ryggen på den som valgte den.
+    if (data.stemme && !vis.some(function (s) { return s.uri === data.stemme; })) {
+      var valgt = alle.filter(function (s) { return s.uri === data.stemme; });
+      vis = valgt.concat(vis);
+    }
+
+    velger.innerHTML = '';
+    if (!vis.length) {
+      var tom = document.createElement('option');
+      tom.textContent = alle.length ? 'Ingen norske stemmer' : 'Fant ingen stemmer';
+      tom.value = '';
+      velger.appendChild(tom);
+    }
+    vis.forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s.uri;
+      o.textContent = s.navn + ' (' + s.lang + ')' + (s.lokal ? '' : ' – nett');
+      if (s.uri === data.stemme) o.selected = true;
+      velger.appendChild(o);
+    });
+    if (!data.stemme) {
+      var naa = Tale.naavaerendeStemme();
+      if (naa) velger.value = naa;
+    }
+
+    oppdaterFasit(alle);
+  }
+
+  // Fasiten er hele grunnen til at denne skjermen finnes: den viser nøyaktig
+  // hva Safari rapporterer på denne iPaden. Personlig stemme fra iOS ligger
+  // bak en native tillatelse i AVSpeechSynthesis, og så vidt vi vet slipper
+  // ikke Safari den ut til nettsider — men det er bedre å se etter på enheten
+  // enn å tro.
+  function oppdaterFasit(alle) {
+    var norske = alle.filter(function (s) { return Tale.erNorsk(s.lang); }).length;
+    var t = 'Safari melder om ' + alle.length + ' stemme' + (alle.length === 1 ? '' : 'r') +
+            ' på denne enheten, ' + norske + ' av dem norske.';
+    if (alle.length && !data.alleStemmer) {
+      t += ' Kryss av over for å se hele lista — er den personlige stemmen din tilgjengelig for nettsider, dukker den opp der, og da kan du velge den.';
+    }
+    e('stemme-fasit').textContent = t;
+  }
+
+  function settFart(f) {
+    data.fart = f;
+    Tale.settFart(f);
+    e('valg-fart').value = String(f);
+    e('fart-verdi').textContent = f < 0.7 ? 'Sakte' : (f > 0.95 ? 'Rask' : 'Vanlig');
+  }
+
+  function visInnstillinger() {
+    Lyd.vekk();
+    e('valg-alle').checked = data.alleStemmer;
+    settFart(data.fart);
+    fyllStemmer();
+    e('innstillinger').hidden = false;
+    // Første kall til getVoices() er ofte tomt. speak() på et gyldig trykk får
+    // iOS til å laste lista, og voiceschanged fyller velgeren rett etterpå.
+    if (!Tale.alleStemmer().length) Tale.lesOpp(' ');
+  }
+
   /* ---------- hendelser ---------- */
 
   function koble() {
@@ -608,6 +682,44 @@
 
     e('knapp-brum').addEventListener('click', function () { Lyd.brum(); });
 
+    e('knapp-innstillinger').addEventListener('click', visInnstillinger);
+
+    e('knapp-lukk-innstillinger').addEventListener('click', function () {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      e('innstillinger').hidden = true;
+    });
+
+    e('valg-stemme').addEventListener('change', function () {
+      data.stemme = e('valg-stemme').value || null;
+      Tale.settStemme(data.stemme);
+      lagre();
+      Tale.lesOpp(PROVESETNING);
+    });
+
+    e('valg-fart').addEventListener('change', function () {
+      settFart(parseFloat(e('valg-fart').value));
+      lagre();
+      Tale.lesOpp(PROVESETNING);
+    });
+
+    e('valg-fart').addEventListener('input', function () {
+      settFart(parseFloat(e('valg-fart').value));
+    });
+
+    e('valg-alle').addEventListener('change', function () {
+      data.alleStemmer = e('valg-alle').checked;
+      lagre();
+      fyllStemmer();
+    });
+
+    e('knapp-prov').addEventListener('click', function () { Tale.lesOpp(PROVESETNING); });
+
+    // Stemmelista kommer ofte etter at siden er lastet. Står velgeren åpen,
+    // skal den fylle seg selv i stedet for å bli stående tom.
+    Tale.naarStemmerKommer(function () {
+      if (!e('innstillinger').hidden) fyllStemmer();
+    });
+
     e('knapp-lyd').addEventListener('click', function () {
       data.lyd = !data.lyd;
       lagre();
@@ -625,6 +737,8 @@
 
   last();
   koble();
+  Tale.settStemme(data.stemme);
+  Tale.settFart(data.fart);
   e('knapp-lyd').textContent = data.lyd ? '🔊' : '🔇';
   tegnGarasje();
   vis('garasje');

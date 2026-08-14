@@ -69,6 +69,38 @@ gangen, og linja som leses lyser opp så barnet finner plassen.
 * `cancel()` fyrer `onend` på linja som går, så stoppen har et eget flagg.
   Uten det ville et stopptrykk startet neste linje i stedet.
 
+## Stemmen som leser
+
+Tannhjulet i garasjen åpner et valg av stemme og lesefart. Valget lagres og
+brukes både til hele tekster og til enkeltord.
+
+**Om iOS' personlige stemme.** Eieren spurte om opplesingen kunne bruke hans
+egen stemme via Personlig stemme i iOS 17. Så vidt vi vet, går ikke det:
+Personlig stemme ligger i `AVSpeechSynthesis` bak en egen native tillatelse
+(`requestPersonalVoiceAuthorization`), og Safari eksponerer den ikke til
+`speechSynthesis` på nettsider. Å nå den ville kreve en ekte iOS-app i Swift.
+
+Derfor er stemmevelgeren bygget slik at den **viser nøyaktig det systemet
+melder om**, ikke bare det vi tror finnes:
+
+* Lista er filtrert til norske stemmer, men avkryssingen «vis alle stemmer»
+  tar bort filteret helt. Dukker en personlig stemme opp for nettsider en dag,
+  ser man den der og kan velge den.
+* En valgt stemme vinner over språkfilteret, også når den ikke er norsk — en
+  personlig stemme kan godt være merket med en annen språkkode.
+* **Språkkoden på utsagnet følger stemmen.** Tvinger man `nb-NO` på en stemme
+  merket med noe annet, kan systemet bytte stemme bak ryggen på valget.
+* Telleren nederst sier hvor mange stemmer enheten melder om. Den er der for å
+  gjøre spørsmålet etterprøvbart på enheten i stedet for å gjette.
+
+`getVoices()` er tom til systemet har lastet lista, så velgeren fyller seg selv
+på `voiceschanged`. Første åpning sender også et tomt utsagn, som er det som
+får iOS til å laste lista i det hele tatt.
+
+Vil man virkelig ha en forelders stemme, er veien å **spille den inn** — lese
+inn tekstene linje for linje og lagre lydklippene — ikke å klone den. Det er
+ikke bygget.
+
 ## Ordmatchingen
 
 Ligger i `js/tale.js`, uavhengig av resten, og er med vilje rundhåndet. En
@@ -218,7 +250,13 @@ Opplesingen har egne prøver, som trenger playwright:
 NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
 ```
 
-De bytter ut `speechSynthesis` med en falsk som lar prøven gå én linje om
+Stemmevelgeren har også prøver, med en falsk stemmeliste:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/stemmer.js
+```
+
+Begge bytter ut `speechSynthesis` med en falsk som lar prøven gå én linje om
 gangen — i skyøkta finnes ingen stemmer, så ekte tale er ferdig før den har
 begynt. Merk at `speechSynthesis` er en getter på `window`: vanlig tilordning
 feiler stille, og da kjører prøven mot den ekte uten å si fra. Bruk

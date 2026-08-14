@@ -18,6 +18,7 @@
 <section id="garasje" class="skjerm">
   <header class="topp">
     <h1>Garasjen</h1>
+    <button id="knapp-innstillinger" class="ikonknapp" type="button" aria-label="Innstillinger">⚙</button>
     <button id="knapp-lyd" class="ikonknapp" type="button" aria-label="Lyd av eller på">🔊</button>
   </header>
 
@@ -86,6 +87,34 @@
     <div class="rute liten" id="rute-belonning"></div>
     <p class="belonning-under" id="belonning-under">Du fikk en ny brikke.</p>
     <button id="knapp-videre" class="storknapp" type="button">Videre</button>
+  </div>
+</div>
+
+<!-- ---------- Innstillinger for opplesingen ---------- -->
+<div id="innstillinger" class="overlegg" hidden>
+  <div class="innstilling-kort">
+    <p class="kort-tittel">Stemmen som leser</p>
+
+    <label class="felt">
+      <span>Stemme</span>
+      <select id="valg-stemme"></select>
+    </label>
+
+    <label class="felt">
+      <span>Lesefart</span>
+      <input id="valg-fart" type="range" min="0.5" max="1.2" step="0.05">
+    </label>
+    <p id="fart-verdi" class="minitekst"></p>
+
+    <button id="knapp-prov" class="tekstknapp">Prøv stemmen</button>
+
+    <label class="avkryss">
+      <input id="valg-alle" type="checkbox">
+      <span>Vis alle stemmer, ikke bare de norske</span>
+    </label>
+    <p id="stemme-fasit" class="minitekst"></p>
+
+    <button id="knapp-lukk-innstillinger" class="storknapp" type="button">Ferdig</button>
   </div>
 </div>
 

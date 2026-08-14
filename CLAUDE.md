@@ -88,6 +88,7 @@ Opplesingen har egne prøver, som trenger playwright:
 
 ```
 NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/stemmer.js
 ```
 
 Kjøres de på Windows i stedet for i skyøkta, feiler `fyllmodus` og `tema` på ett
@@ -271,6 +272,13 @@ Fire ting som har kostet tid, eller som ville gjort det:
   opplesingen versaler å jobbe med, og en stemme som får «ILDKULEN» kan finne
   på å stave det. Versalvisningen trenger sin egen linjelengde, for versaler er
   bredere og brekker setninger som ellers sto samlet.
+- **iOS' personlige stemme er ikke tilgjengelig for nettsider.** Den ligger i
+  `AVSpeechSynthesis` bak en native tillatelse, og Safari slipper den ikke ut
+  til `speechSynthesis`. Eieren har spurt om det, så svaret er verdt å ha:
+  det ville krevd en ekte iOS-app i Swift. Stemmevelgeren viser derfor alt
+  systemet melder om, med et filter man kan slå av — så spørsmålet kan
+  etterprøves på enheten i stedet for å gjettes på. En valgt stemme må vinne
+  over språkfilteret, og utsagnets språkkode må følge stemmen.
 - **`speechSynthesis` er en getter på `window`.** Vanlig tilordning i en prøve
   feiler stille, og prøven kjører videre mot den ekte — som ikke har stemmer i
   skyøkta, så opplesingen er «ferdig» før den har begynt. Bruk

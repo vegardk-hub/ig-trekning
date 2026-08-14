@@ -9,7 +9,7 @@
  * opplesingen av enkeltord, og det er hele appen minus mikrofonen.
  */
 
-const CACHE = 'monstergiret-v2';
+const CACHE = 'monstergiret-v3';
 const FILER = [
   './',
   './index.html',

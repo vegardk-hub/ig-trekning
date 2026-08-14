@@ -165,24 +165,53 @@
   /* ---------- opplesing ---------- */
 
   var stemme = null;
+  var valgtStemme = null;   // voiceURI valgt av brukeren, hvis noen
+  var fart = 0.8;
+
+  function alleStemmer() {
+    if (!window.speechSynthesis) return [];
+    return (window.speechSynthesis.getVoices() || []).map(function (s) {
+      return { navn: s.navn || s.name, lang: s.lang, uri: s.voiceURI, lokal: s.localService !== false };
+    });
+  }
+
+  function norsk(lang) {
+    var l = (lang || '').toLowerCase();
+    return l.indexOf('nb') === 0 || l.indexOf('no') === 0 || l.indexOf('nn') === 0;
+  }
 
   function finnStemme() {
     if (!window.speechSynthesis) return null;
     if (stemme) return stemme;
     var alle = window.speechSynthesis.getVoices() || [];
-    for (var i = 0; i < alle.length; i++) {
-      var l = (alle[i].lang || '').toLowerCase();
-      if (l === 'nb-no' || l === 'no-no' || l.indexOf('nb') === 0 || l.indexOf('no') === 0) {
-        stemme = alle[i];
-        return stemme;
+    var i;
+    // Har brukeren valgt en stemme selv, vinner den – uansett språkkode. En
+    // personlig stemme kan godt være merket med noe annet enn nb-NO.
+    if (valgtStemme) {
+      for (i = 0; i < alle.length; i++) {
+        if (alle[i].voiceURI === valgtStemme || alle[i].name === valgtStemme) {
+          stemme = alle[i];
+          return stemme;
+        }
       }
+    }
+    for (i = 0; i < alle.length; i++) {
+      if (norsk(alle[i].lang)) { stemme = alle[i]; return stemme; }
     }
     return null;
   }
 
   if (window.speechSynthesis) {
-    window.speechSynthesis.addEventListener('voiceschanged', function () { stemme = null; finnStemme(); });
+    // getVoices() er tom til systemet har lastet lista. Uten denne lytteren
+    // ville en stemmevelger sett tom ut første gang den åpnes.
+    window.speechSynthesis.addEventListener('voiceschanged', function () {
+      stemme = null;
+      finnStemme();
+      if (paaNyeStemmer) paaNyeStemmer();
+    });
   }
+
+  var paaNyeStemmer = null;
 
   var aktivLytter = null;
 
@@ -210,9 +239,11 @@
       if (paaLinje) paaLinje(nr);
       var y = new SpeechSynthesisUtterance(linjer[nr]);
       var s = finnStemme();
-      if (s) y.voice = s;
-      y.lang = 'nb-NO';
-      y.rate = 0.8;   // saktere enn vanlig tale: dette er lesestøtte
+      // Språkkoden følger stemmen når vi har en. Tvinger vi nb-NO på en stemme
+      // som er merket med noe annet, kan systemet velge om stemmen bak ryggen
+      // på oss.
+      if (s) { y.voice = s; y.lang = s.lang || 'nb-NO'; } else { y.lang = 'nb-NO'; }
+      y.rate = fart;
       y.onend = neste;
       y.onerror = neste;
       window.speechSynthesis.speak(y);
@@ -244,9 +275,8 @@
     window.speechSynthesis.cancel();
     var y = new SpeechSynthesisUtterance(tekst);
     var s = finnStemme();
-    if (s) y.voice = s;
-    y.lang = 'nb-NO';
-    y.rate = 0.85;
+    if (s) { y.voice = s; y.lang = s.lang || 'nb-NO'; } else { y.lang = 'nb-NO'; }
+    y.rate = fart;
     function slutt() {
       if (lytter) lytter.fortsett();
       if (ferdig) ferdig();
@@ -366,6 +396,13 @@
     lagMatcher: lagMatcher,
     lesOpp: lesOpp,
     lesOppLinjer: lesOppLinjer,
+    alleStemmer: alleStemmer,
+    erNorsk: norsk,
+    naavaerendeStemme: function () { var s = finnStemme(); return s ? s.voiceURI : null; },
+    settStemme: function (uri) { valgtStemme = uri || null; stemme = null; finnStemme(); },
+    settFart: function (f) { fart = f; },
+    fart: function () { return fart; },
+    naarStemmerKommer: function (fn) { paaNyeStemmer = fn; },
     lytt: lytt
   };
 })();
