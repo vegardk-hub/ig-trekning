@@ -97,9 +97,32 @@ melder om**, ikke bare det vi tror finnes:
 på `voiceschanged`. Første åpning sender også et tomt utsagn, som er det som
 får iOS til å laste lista i det hele tatt.
 
-Vil man virkelig ha en forelders stemme, er veien å **spille den inn** — lese
-inn tekstene linje for linje og lagre lydklippene — ikke å klone den. Det er
-ikke bygget.
+## Din egen stemme
+
+Siden Personlig stemme ikke er tilgjengelig, er veien til en forelders stemme
+å **spille den inn** — ikke å klone den. Innstillinger → «Spill inn tekster»
+gir en liste over alle tekstene, og hver tekst kan leses inn linje for linje.
+
+Det bærende valget er at **innspillingen er per linje og helt frivillig**. En
+tekst kan være halvveis lest inn; linjer uten opptak faller tilbake på den
+syntetiske stemmen. Det gjør at man kan lese inn den ene teksten barnet står
+på i kveld, uten å binde seg til alle 48. Hadde opptaket vært alt-eller-intet
+per tekst, ville terskelen blitt et prosjekt i stedet for et halvminutt.
+
+* **Opptakene ligger i IndexedDB**, ikke i `localStorage` — det siste tar bare
+  strenger og har en grense rundt fem megabyte. Nøkkelen er tekst-id pluss
+  linjenummer.
+* **Alt ligger på enheten.** Ingen backend, så tømmer man nettleserdata, må
+  tekstene leses inn på nytt.
+* **Mikrofonen slippes med en gang opptaket er ferdig** (`track.stop()`).
+  Uten det blir opptaksmerket stående i statuslinja så lenge siden er åpen.
+* **Ett `Audio`-element gjenbrukes for alle linjene.** iOS krever et ekte
+  trykk for å slippe lyd gjennom, men sperren sitter på elementet: er det
+  først låst opp av et trykk, kan de neste linjene spilles fra en
+  `ended`-lytter, som ikke er noe trykk. Et nytt element per linje ville blitt
+  stoppet fra og med linje to.
+* Et opptak som ikke lar seg spille, hopper videre i stedet for å stoppe hele
+  opplesingen.
 
 ## Ordmatchingen
 
@@ -250,11 +273,21 @@ Opplesingen har egne prøver, som trenger playwright:
 NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
 ```
 
-Stemmevelgeren har også prøver, med en falsk stemmeliste:
+Stemmevelgeren og innspillingen har også prøver:
 
 ```
 NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/stemmer.js
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/innspilling.js
 ```
+
+Innspillingsprøven stubber selve opptaket. **Skyøkta har ingen lydinngang, og
+Chromiums `--use-fake-device-for-media-capture` hjelper ikke** — getUserMedia
+svarer `NotFoundError` uansett flaggkombinasjon. Ikke bruk tid på å få den
+ekte veien til å virke der. Hvordan MediaRecorder oppfører seg i Safari, kan
+uansett ingen prøve på Linux svare på; det prøven svarer for, er tilstandene i
+skjermen, at opptaket havner i IndexedDB og overlever omlasting, og at
+høyttaleren spiller opptaket på de innleste linjene og lar maskinstemmen ta
+resten.
 
 Begge bytter ut `speechSynthesis` med en falsk som lar prøven gå én linje om
 gangen — i skyøkta finnes ingen stemmer, så ekte tale er ferdig før den har

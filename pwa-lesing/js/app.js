@@ -184,7 +184,7 @@
 
   /* ---------- skjermer ---------- */
 
-  var skjermer = ['garasje', 'tekstliste', 'lesing'];
+  var skjermer = ['garasje', 'tekstliste', 'lesing', 'innspilling', 'opptak'];
 
   function vis(navn) {
     skjermer.forEach(function (n) {
@@ -284,8 +284,18 @@
       matcher: Tale.lagMatcher(ordListe.map(function (o) { return o.rå; })),
       lytter: null,
       linjeElementer: [],
-      opplesing: null
+      opplesing: null,
+      opptak: []
     };
+
+    // Opptakene hentes i bakgrunnen. Rekker de det ikke før høyttaleren
+    // trykkes, leser maskinstemmen den gangen – bedre enn å la barnet vente.
+    var denne = okt;
+    if (Opptak.stottes()) {
+      Opptak.forTekst(tekst.id, tekst.linjer.length).then(function (b) {
+        if (okt === denne) okt.opptak = b;
+      }, function () {});
+    }
 
     e('lese-tittel').textContent = tekst.tittel;
     e('lese-teller').textContent = (T.indeksFor(tekstId) + 1) + '/' + T.tekster.length;
@@ -375,7 +385,8 @@
         okt.opplesing = null;
         e('knapp-opplesing').classList.remove('paa');
         settStatus('Nå kan du lese den selv.', false);
-      }
+      },
+      function (nr) { return okt && okt.opptak ? okt.opptak[nr] : null; }
     );
   }
 
@@ -550,6 +561,103 @@
     e('truckvisning').hidden = false;
   }
 
+  /* ---------- innspilling av egen stemme ---------- */
+
+  var Opptak = window.LeseOpptak;
+  var opptakFor = null;    // tekst-id som er åpen i opptaksskjermen
+  var opptaker = null;     // { mr, strom, linje }
+
+  function visInnspilling() {
+    e('innstillinger').hidden = true;
+    Opptak.tellinger().then(function (tall) {
+      var boks = e('innspilling-liste');
+      boks.innerHTML = '';
+      T.tekster.forEach(function (tekst, i) {
+        if (i % PER_TRUCK === 0) {
+          var t = document.createElement('p');
+          t.className = 'liste-gruppe';
+          t.textContent = 'Truck ' + (T.truckFor(i) + 1);
+          boks.appendChild(t);
+        }
+        var har = tall[tekst.id] || 0;
+        var alle = har >= tekst.linjer.length;
+        var rad = document.createElement('button');
+        rad.type = 'button';
+        rad.className = 'liste-rad' + (alle ? ' har-opptak' : '');
+        rad.dataset.tekst = tekst.id;
+        rad.innerHTML = '<span class="merke">' + (alle ? '✓' : '▸') + '</span>' +
+                        '<span>' + tekst.tittel + '</span>' +
+                        '<span class="status-merke">' + har + '/' + tekst.linjer.length + '</span>';
+        boks.appendChild(rad);
+      });
+      vis('innspilling');
+    });
+  }
+
+  function visOpptak(tekstId) {
+    var tekst = T.finn(tekstId);
+    if (!tekst) return;
+    opptakFor = tekstId;
+    e('opptak-tittel').textContent = tekst.tittel;
+    tegnOpptakslinjer();
+    vis('opptak');
+  }
+
+  function tegnOpptakslinjer() {
+    var tekst = T.finn(opptakFor);
+    Opptak.forTekst(opptakFor, tekst.linjer.length).then(function (blober) {
+      var boks = e('opptak-linjer');
+      boks.innerHTML = '';
+      tekst.linjer.forEach(function (linje, i) {
+        var kort = document.createElement('div');
+        kort.className = 'opptak-linje';
+        var tar = opptaker && opptaker.linje === i;
+        var knapper;
+        if (tar) {
+          knapper = '<button class="smaaknapp tar-opp" data-stopp="' + i + '">■ Stopp</button>';
+        } else if (blober[i]) {
+          knapper = '<button class="smaaknapp" data-hor="' + i + '">▶ Hør</button>' +
+                    '<button class="smaaknapp" data-ta="' + i + '">● Ta opp på nytt</button>' +
+                    '<button class="smaaknapp" data-slett="' + i + '">Slett</button>';
+        } else {
+          knapper = '<button class="smaaknapp" data-ta="' + i + '">● Spill inn</button>';
+        }
+        kort.innerHTML = '<p>' + linje + '</p><div class="opptak-knapper">' + knapper + '</div>';
+        boks.appendChild(kort);
+      });
+    });
+  }
+
+  function taOpp(linje) {
+    if (opptaker) return;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (strom) {
+      var mr = new MediaRecorder(strom);
+      var biter = [];
+      mr.ondataavailable = function (ev) { if (ev.data && ev.data.size) biter.push(ev.data); };
+      mr.onstop = function () {
+        // Slipp mikrofonen med en gang. Uten dette blir opptaksmerket stående
+        // i statuslinja så lenge siden er åpen.
+        strom.getTracks().forEach(function (s) { s.stop(); });
+        opptaker = null;
+        if (!biter.length) { tegnOpptakslinjer(); return; }
+        var type = mr.mimeType || biter[0].type || 'audio/mp4';
+        Opptak.lagre(opptakFor, linje, new Blob(biter, { type: type }))
+          .then(tegnOpptakslinjer, tegnOpptakslinjer);
+      };
+      opptaker = { mr: mr, strom: strom, linje: linje };
+      mr.start();
+      tegnOpptakslinjer();
+    }).catch(function () {
+      opptaker = null;
+      alert('Fikk ikke tilgang til mikrofonen. Åpne siden i Safari og si ja til mikrofon.');
+    });
+  }
+
+  function stoppOpptaker() {
+    if (opptaker && opptaker.mr.state !== 'inactive') opptaker.mr.stop();
+    else if (opptaker) { opptaker = null; tegnOpptakslinjer(); }
+  }
+
   /* ---------- innstillinger for stemmen ---------- */
 
   var PROVESETNING = 'Ildkulen står midt i hallen. Motoren våkner med et brøl.';
@@ -639,7 +747,12 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-tilbake]'), function (b) {
       b.addEventListener('click', function () {
         stoppOkt();
+        stoppOpptaker();
+        Tale.stoppLyd();
         okt = null;
+        // Tilbake fra en tekst til innspillingslista: tallene har endret seg,
+        // så lista må tegnes på nytt og ikke bare vises igjen.
+        if (b.dataset.tilbake === 'innspilling') { visInnspilling(); return; }
         tegnGarasje();
         vis(b.dataset.tilbake);
       });
@@ -713,6 +826,33 @@
     });
 
     e('knapp-prov').addEventListener('click', function () { Tale.lesOpp(PROVESETNING); });
+
+    e('knapp-innspilling').hidden = !Opptak.stottes();
+    e('opptak-mangler').hidden = Opptak.stottes();
+    e('knapp-innspilling').addEventListener('click', visInnspilling);
+
+    e('innspilling-liste').addEventListener('click', function (ev) {
+      var rad = ev.target.closest ? ev.target.closest('.liste-rad') : null;
+      if (rad) visOpptak(rad.dataset.tekst);
+    });
+
+    e('opptak-linjer').addEventListener('click', function (ev) {
+      var k = ev.target.closest ? ev.target.closest('.smaaknapp') : null;
+      if (!k) return;
+      var d = k.dataset;
+      if (d.ta !== undefined) { Tale.stoppLyd(); taOpp(parseInt(d.ta, 10)); }
+      else if (d.stopp !== undefined) stoppOpptaker();
+      else if (d.hor !== undefined) {
+        var nr = parseInt(d.hor, 10);
+        var tekst = T.finn(opptakFor);
+        Opptak.forTekst(opptakFor, tekst.linjer.length).then(function (b) {
+          if (b[nr]) Tale.spillBlob(b[nr], function () {});
+        });
+      } else if (d.slett !== undefined) {
+        Tale.stoppLyd();
+        Opptak.slett(opptakFor, parseInt(d.slett, 10)).then(tegnOpptakslinjer);
+      }
+    });
 
     // Stemmelista kommer ofte etter at siden er lastet. Står velgeren åpen,
     // skal den fylle seg selv i stedet for å bli stående tom.

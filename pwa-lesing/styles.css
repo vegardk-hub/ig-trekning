@@ -387,6 +387,70 @@ body {
   .lokk { transition: opacity 200ms ease; }
 }
 
+/* ---------- innspilling ---------- */
+
+.ingress {
+  color: var(--tekst-dempet);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin: 4px 0 10px;
+  flex: 0 0 auto;
+}
+
+.skille { border: 0; border-top: 1px solid var(--kant); margin: 20px 0 16px; }
+.kort-tittel.liten { font-size: 1.05rem; margin-bottom: 8px; }
+
+.opptak-linje {
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.opptak-linje p {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.opptak-knapper { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.smaaknapp {
+  background: var(--flate-lys);
+  border: 1px solid var(--kant);
+  color: var(--tekst);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 46px;
+}
+
+.smaaknapp:active { background: var(--kant); }
+.smaaknapp.tar-opp { background: #4a1d1d; border-color: #b3453d; color: #ffb9b3; }
+.smaaknapp.tar-opp { animation: puls-rod 1.4s ease-in-out infinite; }
+
+@keyframes puls-rod {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(190, 70, 60, 0.5); }
+  50%      { box-shadow: 0 0 0 12px rgba(190, 70, 60, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smaaknapp.tar-opp { animation: none; }
+}
+
+.liste-rad .status-merke {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--tekst-dempet);
+  flex: 0 0 auto;
+}
+
+.liste-rad.har-opptak .status-merke { color: var(--lest); }
+
 /* ---------- overlegg ---------- */
 
 .overlegg { display: none; }

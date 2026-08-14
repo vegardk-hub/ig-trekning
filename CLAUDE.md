@@ -89,7 +89,13 @@ Opplesingen har egne prøver, som trenger playwright:
 ```
 NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
 NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/stemmer.js
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/innspilling.js
 ```
+
+Innspillingsprøven stubber selve opptaket, og det skal den. **Skyøkta har
+ingen lydinngang**, og `--use-fake-device-for-media-capture` hjelper ikke —
+getUserMedia svarer `NotFoundError` uansett flaggkombinasjon. Ikke bruk tid på
+å få den ekte veien til å virke der.
 
 Kjøres de på Windows i stedet for i skyøkta, feiler `fyllmodus` og `tema` på ett
 mål hver, med tre piksler. Det er ikke en regresjon: `system-ui` løser til Segoe
@@ -272,6 +278,13 @@ Fire ting som har kostet tid, eller som ville gjort det:
   opplesingen versaler å jobbe med, og en stemme som får «ILDKULEN» kan finne
   på å stave det. Versalvisningen trenger sin egen linjelengde, for versaler er
   bredere og brekker setninger som ellers sto samlet.
+- **Opptak av forelderens stemme er per linje, ikke per tekst.** En tekst kan
+  være halvveis lest inn, og hullene faller tilbake på maskinstemmen. Det er
+  det som gjør at man kan lese inn kveldens tekst uten å binde seg til alle 48
+  — alt-eller-intet ville gjort det til et prosjekt i stedet for et halvminutt.
+  Opptakene ligger i IndexedDB, for `localStorage` tar ikke blobs. Ett
+  `Audio`-element må gjenbrukes for alle linjene: iOS' sperre sitter på
+  elementet, så et nytt element per linje blir stoppet fra og med linje to.
 - **iOS' personlige stemme er ikke tilgjengelig for nettsider.** Den ligger i
   `AVSpeechSynthesis` bak en native tillatelse, og Safari slipper den ikke ut
   til `speechSynthesis`. Eieren har spurt om det, så svaret er verdt å ha:

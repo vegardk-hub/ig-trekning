@@ -80,6 +80,27 @@
   </footer>
 </section>
 
+<!-- ---------- Innspilling: velg tekst ---------- -->
+<section id="innspilling" class="skjerm" hidden>
+  <header class="topp">
+    <button class="ikonknapp tilbake" type="button" data-tilbake="garasje" aria-label="Tilbake">‹</button>
+    <h1>Din egen stemme</h1>
+  </header>
+  <p class="ingress">Les inn en tekst, så er det du som leser den for barnet. Du
+    trenger ikke gjøre alle — tekster du ikke har lest inn, leses av
+    maskinstemmen som før.</p>
+  <div id="innspilling-liste" class="liste-innhold"></div>
+</section>
+
+<!-- ---------- Innspilling: én tekst, linje for linje ---------- -->
+<section id="opptak" class="skjerm" hidden>
+  <header class="topp">
+    <button class="ikonknapp tilbake" type="button" data-tilbake="innspilling" aria-label="Tilbake">‹</button>
+    <h1 id="opptak-tittel">Spill inn</h1>
+  </header>
+  <div id="opptak-linjer" class="liste-innhold"></div>
+</section>
+
 <!-- ---------- Belønning ---------- -->
 <div id="belonning" class="overlegg" hidden>
   <div class="belonning-kort">
@@ -114,6 +135,14 @@
     </label>
     <p id="stemme-fasit" class="minitekst"></p>
 
+    <hr class="skille">
+    <p class="kort-tittel liten">Din egen stemme</p>
+    <p class="minitekst">Les inn tekstene selv, så er det din stemme barnet
+      hører. Opptakene ligger bare på denne enheten.</p>
+    <button id="knapp-innspilling" class="tekstknapp">Spill inn tekster</button>
+    <p id="opptak-mangler" class="minitekst" hidden>Denne enheten kan ikke ta
+      opp lyd i nettleseren.</p>
+
     <button id="knapp-lukk-innstillinger" class="storknapp" type="button">Ferdig</button>
   </div>
 </div>
@@ -130,6 +159,7 @@
 
 <script src="./js/tekster.js"></script>
 <script src="./js/trucker.js"></script>
+<script src="./js/opptak.js"></script>
 <script src="./js/tale.js"></script>
 <script src="./js/app.js"></script>
 </body>

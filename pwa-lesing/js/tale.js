@@ -215,18 +215,46 @@
 
   var aktivLytter = null;
 
+  /* ---------- avspilling av opptak ---------- */
+
+  // Ett Audio-element som gjenbrukes for alle linjene. iOS krever et ekte
+  // trykk for å slippe lyd gjennom, men bare på elementet — er det først låst
+  // opp av et trykk, kan de neste linjene spilles fra en `ended`-lytter, som
+  // ikke er noe trykk. Et nytt element per linje ville blitt stoppet fra og
+  // med linje to.
+  var lyd = null;
+  var lydUrl = null;
+
+  function stoppLyd() {
+    if (lyd) { lyd.pause(); lyd.onended = null; lyd.onerror = null; }
+    if (lydUrl) { URL.revokeObjectURL(lydUrl); lydUrl = null; }
+  }
+
+  function spillBlob(blob, ferdig) {
+    stoppLyd();
+    if (!lyd) lyd = new Audio();
+    lydUrl = URL.createObjectURL(blob);
+    lyd.src = lydUrl;
+    // Et opptak som ikke lar seg spille, skal ikke stoppe hele opplesingen.
+    lyd.onended = ferdig;
+    lyd.onerror = ferdig;
+    var p = lyd.play();
+    if (p && p.catch) p.catch(function () { ferdig(); });
+  }
+
   // Leser en hel tekst, én linje om gangen, og sier fra hvilken linje som
   // holder på. Linje for linje, ikke ord for ord: `onboundary` er den eneste
   // veien til ordnøyaktig følging, og den er ikke til å stole på i Safari.
   // En linje som lyser er uansett det barnet trenger for å finne plassen.
   //
   // Mikrofonen settes på pause én gang for hele opplesingen, ikke per linje.
-  function lesOppLinjer(linjer, paaLinje, ferdig) {
+  function lesOppLinjer(linjer, paaLinje, ferdig, lydFor) {
     var lytter = aktivLytter;
     var avbrutt = false;
     var i = 0;
 
     function slutt() {
+      stoppLyd();
       if (lytter) lytter.fortsett();
       if (paaLinje) paaLinje(-1);
       if (ferdig) ferdig();
@@ -237,6 +265,12 @@
       if (i >= linjer.length) { slutt(); return; }
       var nr = i++;
       if (paaLinje) paaLinje(nr);
+
+      // Er linja lest inn av en forelder, spilles den i stedet for å leses av
+      // maskinen. Hull i opptaket faller tilbake på den syntetiske stemmen, så
+      // en halvferdig innspilling er fullt brukbar.
+      var opptak = lydFor ? lydFor(nr) : null;
+      if (opptak) { spillBlob(opptak, neste); return; }
       var y = new SpeechSynthesisUtterance(linjer[nr]);
       var s = finnStemme();
       // Språkkoden følger stemmen når vi har en. Tvinger vi nb-NO på en stemme
@@ -258,6 +292,7 @@
       stopp: function () {
         if (avbrutt) return;
         avbrutt = true;
+        stoppLyd();
         // cancel() fyrer onend på den linja som går. Uten flagget over ville
         // det startet neste linje i stedet for å stoppe.
         window.speechSynthesis.cancel();
@@ -403,6 +438,8 @@
     settFart: function (f) { fart = f; },
     fart: function () { return fart; },
     naarStemmerKommer: function (fn) { paaNyeStemmer = fn; },
+    spillBlob: spillBlob,
+    stoppLyd: stoppLyd,
     lytt: lytt
   };
 })();

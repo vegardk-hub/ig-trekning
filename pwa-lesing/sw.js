@@ -9,7 +9,7 @@
  * opplesingen av enkeltord, og det er hele appen minus mikrofonen.
  */
 
-const CACHE = 'monstergiret-v3';
+const CACHE = 'monstergiret-v4';
 const FILER = [
   './',
   './index.html',
@@ -17,6 +17,7 @@ const FILER = [
   './manifest.json',
   './js/tekster.js',
   './js/trucker.js',
+  './js/opptak.js',
   './js/tale.js',
   './js/app.js',
   './icons/icon-192.png',
