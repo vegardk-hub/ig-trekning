@@ -196,14 +196,17 @@ body {
   text-align: center;
 }
 
+/* Seks faner på en smal telefon. Navnene må krympe litt for at «Spoiler»
+   skal få plass uten å brytes. */
 .faner {
   flex: 0 0 auto;
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .fane {
   flex: 1 1 0;
+  min-width: 0;
   border: 2px solid transparent;
   background: var(--panel);
   color: var(--dempet);
@@ -218,7 +221,7 @@ body {
 
 .fane.valgt { border-color: var(--gull); color: var(--tekst); background: rgba(255, 198, 26, 0.15); }
 .fanetegn { font-size: 20px; }
-.fanenavn { font-size: 12px; font-weight: 700; }
+.fanenavn { font-size: 11px; font-weight: 700; white-space: nowrap; }
 
 .valgrutenett {
   flex: 1 1 auto;

@@ -48,10 +48,12 @@ var NAKEN = { motor: 0, gir: 0, dekk: 0 };
 var MAKS = { motor: 6, gir: 6, dekk: 6 };
 
 var BONUS_NAKEN = Bil.bonus(Bil.standard());
-var BONUS_MAKS = Bil.bonus({
+var ALT = {
   form: 'monster', lakk: 'regnbue', hjul: 'ild', spoiler: 'rakett',
-  dekor: ['striper', 'stjerner', 'lyn', 'flammer', 'tenner', 'glitter']
-});
+  dekor: ['striper', 'stjerner', 'lyn', 'flammer', 'tenner', 'glitter'],
+  ekstra: ['koffert', 'surfebrett', 'lysboyle', 'sirene', 'ballonger', 'eksos', 'and', 'vimpel']
+};
+var BONUS_MAKS = Bil.bonus(ALT);
 
 function tur(oppg, bonus, gass) {
   return Fysikk.simuler(Lope.bygg(Fysikk.G), oppg, bonus, gass);
@@ -197,6 +199,11 @@ console.log('  naken: ' + naken.mynter + ' mynter, ' + naken.looper + ' looper, 
             naken.hopp + ' hopp, lengste ' + naken.lengsteHopp);
 console.log('  maks:  ' + maks.mynter + ' mynter, ' + maks.looper + ' looper, ' +
             maks.hopp + ' hopp, lengste ' + maks.lengsteHopp);
+
+// Stilbonusen skal ligge rundt x2,1 med alt på. Legger noen til en kategori
+// uten å justere nevneren i Bil.bonus(), vokser inntekten i løypa av seg selv.
+krev(BONUS_MAKS > 1.95 && BONUS_MAKS < 2.25,
+     'stilbonusen med alt på har drevet vekk fra x2,1', '×' + BONUS_MAKS.toFixed(2));
 
 krev(naken.penger > 500 && naken.penger < 900,
      'en umodifisert tur ligger utenfor det README-en lover', naken.penger);

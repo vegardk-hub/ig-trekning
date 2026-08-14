@@ -54,6 +54,7 @@
           s.valgt.dekor = (s.valgt.dekor && s.valgt.dekor !== 'ingen') ? [s.valgt.dekor] : [];
         }
         if (!Array.isArray(s.valgt.dekor)) s.valgt.dekor = [];
+        if (!Array.isArray(s.valgt.ekstra)) s.valgt.ekstra = [];
         if (lagret.oppg) for (var o in s.oppg) if (typeof lagret.oppg[o] === 'number') s.oppg[o] = lagret.oppg[o];
       }
     } catch (f) { /* ødelagt lagring skal ikke stoppe spillet */ }

@@ -228,6 +228,11 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **Gassen har lavgir, og det er ikke pynt.** Den bratteste rampa er 45 grader
   og koster mer enn en umodifisert motor gir. Uten lavgiret blir bilen stående,
   og appen ser ut som den har hengt seg midt i en app som ikke kan tapes.
+- **Tilbehøret på taket stables etter hvor mye som allerede ligger der.**
+  Faste lag ga en sirene som hang i lufta hvis kofferten under ikke var
+  kjøpt. `TAK`-marginen i viewBoxen hører sammen med dette: uten den blir
+  toppen av tårnet klippet bort, og endrer du den, må `Bil.tegninger()`
+  flytte både `bakke` og hjulplasseringene like mye.
 - **Dekor kan stå på flere om gangen, og har soner.** `valgt.dekor` er en
   liste. Gjør du den om til én id igjen, mister barnet pynt det har betalt
   for hver gang det setter på noe nytt. Sonene er det som gjør at seks ting

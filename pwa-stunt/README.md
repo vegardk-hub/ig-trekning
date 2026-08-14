@@ -67,9 +67,9 @@ Tallene er kalibrert slik:
 | | |
 | --- | --- |
 | Startkapital | $250 |
-| Umodifisert bil, én tur | ~$805 |
-| Fullt utstyrt bil, én tur | ~$2017 |
-| Hele designkatalogen | $4580 |
+| Umodifisert bil, én tur | ~$798 |
+| Fullt utstyrt bil, én tur | ~$2002 |
+| Hele designkatalogen | $5790 |
 | Alle oppgraderinger | $17 050 |
 
 Tallene måles av `tester/lope.js`, som feiler hvis de driver utenfor rammene.
@@ -110,10 +110,10 @@ nettleseren gir nøyaktig de samme tallene.
 
 ## Bilen tegnes, den lastes ikke ned
 
-Som truckene i Monstergiret: én tegnerutine og en tabell. Fem kategorier som
-kan settes sammen fritt — form, lakk, hjul, dekor, spoiler. Fire former, ni
-lakker, fem hjul, seks dekortyper som kan stå på i hvilken som helst
-kombinasjon (2⁶ = 64) og fem spoilere gir 4 × 9 × 5 × 64 × 5 = 57 600
+Som truckene i Monstergiret: én tegnerutine og en tabell. Seks kategorier som
+kan settes sammen fritt — form, lakk, hjul, dekor, spoiler, ekstra. To av dem
+er lister der hvilken som helst kombinasjon kan stå på: seks dekortyper (2⁶)
+og åtte tilbehør (2⁸). Til sammen 4 × 9 × 5 × 64 × 5 × 256 = **14,7 millioner**
 forskjellige biler uten en eneste bildefil.
 
 ## Dekor er den eneste kategorien der flere kan stå på samtidig
@@ -148,7 +148,37 @@ To ting det er verdt å vite hvis du endrer dette:
   filtrerer `DEKOR` i stedet for å lese lista barnet bygde, så striper alltid
   ligger nederst og glitter øverst uansett hva som ble kjøpt først.
 
-**Formen eier alle målene.** `dekorboks` og `spoilerfeste` ligger på hver form,
+## Ekstra: tilbehør som sitter *på* bilen
+
+Dekor er mønstre malt på siden. **Ekstra** er gjenstander — takkoffert,
+lysbøyle, surfebrett, sirene, ballonger, eksosrør, gummiand og vimpel. Som
+dekor kan flere stå på samtidig, og `valgt.ekstra` er en liste.
+
+Hver del har en `plass` som sier hvilket festepunkt på formen den henger i:
+`tak`, `bakluke`, `panser` eller `eksosfeste`. Alt tegnes i **faste mål**, ikke
+skalert til formen — en takkoffert er like stor på en racer som på en buss,
+akkurat som i virkeligheten, og at et surfebrett henger godt utenfor et lite
+tak er nettopp poenget.
+
+**Takdelene stables.** Hver av dem har en `hoyde`, og neste del legger seg oppå
+den forrige. Det er det som gjør at ett valg ligger pent nedpå taket mens fire
+blir et komisk tårn. Faste lag var det åpenbare alternativet, men da hang
+sirenen i lufta hvis kofferten under ikke var kjøpt. Rekkefølgen i `EKSTRA` er
+stableorden nedenfra.
+
+To ting som kostet tid:
+
+* **`TAK`-marginen i viewBoxen.** Fire ting stablet på en lav racer rekker godt
+  over der karosseriet slutter, og uten 46 enheter ekstra luft ble sirenen på
+  toppen klippet bort. Marginen går også inn i `Bil.tegninger()`, som må flytte
+  både `bakke` og hjulplasseringene like mye ned — ellers står bilen 46 enheter
+  under asfalten i løypa.
+* **Ballongene stiger så høyt det er plass til**, ikke en fast avstand. En
+  monsterbil har bakluka nesten oppe i viewBoxens tak, og med fast høyde
+  forsvant ballongene ut av bildet på akkurat den formen.
+
+**Formen eier alle målene.** `dekorboks`, `spoilerfeste`, `tak`, `bakluke`,
+`panser` og `eksosfeste` ligger på hver form,
 ikke i tegnerutinene, for et lyn skal sitte på siden av karosseriet enten det
 er en racer eller en monsterbil. Samme lærdom som `apning` på figurene i
 Fargeflasker: hardkodede mål slutter å stemme i det øyeblikket formen skifter.
@@ -192,8 +222,8 @@ Ting som har kostet tid her, og som ikke bør rulles tilbake:
   samme gradient-id gir den ene feil farge.
 
 Skal du legge til en del, er det én rad i en tabell. Skal du legge til en
-**form**, trenger den `kropp`, `hjul`, `dekorboks`, `spoilerfeste` og `lykt`,
-og den må vende mot høyre —
+**form**, trenger den `kropp`, `hjul`, `dekorboks`, `spoilerfeste`, `lykt`,
+`tak`, `bakluke`, `panser` og `eksosfeste`, og den må vende mot høyre —
 og da er det verdt å rendre hele arket av form × spoiler og form × dekor og se
 på det, for det er der feilene sitter.
 
