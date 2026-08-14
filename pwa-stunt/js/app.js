@@ -21,7 +21,7 @@
   var stat = last();
   var lope = Lope.bygg();
   var lop = null;          // aktiv kjøring
-  var bilbilde = null;
+  var bilbilde = null;      // karosseri + hjul som bilder, til løypa
   var aktivKategori = 'form';
 
   var e = {};
@@ -257,10 +257,10 @@
     vis('skjermLop');
     passLerret();
 
-    Bil.bilde(stat.valgt, function (img) {
-      bilbilde = img;
+    Bil.tegninger(stat.valgt, function (bilder) {
+      bilbilde = bilder;
       lope = Lope.bygg();
-      lop = Kjoring.lag(e.lerret, lope, bilbilde, stat.oppg, Bil.bonus(stat.valgt));
+      lop = Kjoring.lag(e.lerret, lope, bilder, stat.oppg, Bil.bonus(stat.valgt));
       lop.start(ferdigLop);
       oppdaterHud();
     });

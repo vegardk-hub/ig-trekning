@@ -54,7 +54,7 @@ var Kjoring = (function () {
     { id: 'dekk', data: DEKK }
   ];
 
-  function lag(lerret, lope, bilbilde, oppg, bonus) {
+  function lag(lerret, lope, bilder, oppg, bonus) {
     var ctx = lerret.getContext('2d');
 
     var b = {
@@ -70,6 +70,26 @@ var Kjoring = (function () {
     var popper = [];
     var tid = 0, rest = 0, sistTid = 0, staarTid = 0;
     var kjorer = false, ferdigKalt = null;
+
+    // Hjulet skal snurre like fort som bilen ruller: dθ = v·dt / r. Med en
+    // fast nevner (det første forsøket delte på 26) snurrer et lite hjul for
+    // sakte og et monsterhjul for fort, og bilen ser ut til å skli.
+    var bilskala = BILBREDDE / bilder.bredde;
+    var hjulradius = bilder.plasser[0].r * bilskala;
+
+    /*
+     * ...men bare opp til et tak. Et femeikers hjul gjentar seg hver 72.
+     * grad, og passerer det mer enn halvparten av det mellom to bilderuter,
+     * ser det ut til å snurre bakover – samme vognhjuleffekt som på film.
+     * Ekte fart ville gitt over 40 grader per rute på toppfart. Taket ligger
+     * godt under halve eikeavstanden, så hjulet alltid går rett vei; under
+     * det er snurringen nøyaktig.
+     */
+    var MAKSSNURR = 16;   // radianer per sekund
+
+    function snurr(fart, dt) {
+      b.hjulsnurr += Math.min(Math.abs(fart) / hjulradius, MAKSSNURR) * dt;
+    }
 
     var toppfart = MOTOR.verdier[oppg.motor];
     var kraft = GIR.verdier[oppg.gir];
@@ -132,7 +152,7 @@ var Kjoring = (function () {
 
       b.s += b.v * DT;
       b.vinkel = pkt.vinkel;
-      b.hjulsnurr += b.v * DT / 26;
+      snurr(b.v, DT);
 
       if (loop && !loop.betalt && b.s > loop.til - 30) {
         loop.betalt = true;
@@ -176,7 +196,7 @@ var Kjoring = (function () {
       b.fx += b.fvx * DT;
       b.fy += b.fvy * DT;
       b.hoppTid += DT;
-      b.hjulsnurr += b.fvx * DT / 26;
+      snurr(b.fvx, DT);
 
       // Nesen følger farten. Bilen roterer altså aldri feil vei, og lander
       // alltid på hjulene – det er den samme regelen som at ingenting kan
@@ -426,12 +446,26 @@ var Kjoring = (function () {
     }
 
     function tegnBil(pos) {
-      if (!bilbilde) return;
-      var h = BILBREDDE * bilbilde.height / bilbilde.width;
+      if (!bilder) return;
       ctx.save();
       ctx.translate(pos.x, pos.y);
       ctx.rotate(b.vinkel);
-      ctx.drawImage(bilbilde, -BILBREDDE * 0.5, -h + 8, BILBREDDE, h);
+
+      // Tegningens `bakke`-linje legges på selve løypa, så hjulene står på
+      // asfalten i stedet for et stykke over eller under den.
+      var topp = -bilder.bakke * bilskala;
+      ctx.drawImage(bilder.kropp, -BILBREDDE * 0.5, topp, BILBREDDE, bilder.hoyde * bilskala);
+
+      for (var i = 0; i < bilder.plasser.length; i++) {
+        var p = bilder.plasser[i];
+        var r = p.r * bilskala * bilder.hjulboks;
+        ctx.save();
+        ctx.translate(-BILBREDDE * 0.5 + p.x * bilskala, topp + p.y * bilskala);
+        ctx.rotate(b.hjulsnurr);
+        ctx.drawImage(bilder.hjul, -r, -r, r * 2, r * 2);
+        ctx.restore();
+      }
+
       ctx.restore();
     }
 

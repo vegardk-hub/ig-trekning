@@ -101,6 +101,25 @@ Fargeflasker: hardkodede mål slutter å stemme i det øyeblikket formen skifter
 
 Ting som har kostet tid her, og som ikke bør rulles tilbake:
 
+* **Bilen kjører mot høyre, så panseret må ligge til høyre.** Den første
+  utgaven hadde frontlykta riktig plassert på høyre side, men karosseriet
+  speilvendt — langt panser bak, kupé foran — og da leste hele bilen som at
+  den kjørte baklengs med lykta bak. Toppkanten på et karosseri skal gå
+  bakfra og fram: kort bagasjeluke, bakrute opp, tak, frontrute ned, langt
+  panser. Buggyen har buret bak midten av samme grunn; uten det er formen
+  symmetrisk og sier ingenting om kjøreretningen.
+* **Hjulene er et eget bilde, ikke en del av karosseriet.** Det er det som
+  lar dem snurre: i løypa tegnes karosseriet én gang per bilderute og hjulet
+  to ganger, rotert etter hvor langt bilen har rullet. `Bil.tegninger()`
+  leverer begge, sammen med hjulplasseringene fra formen.
+* **Hjulboksen er 110 enheter rundt et hjul med radius 50**, så mønsteret på
+  de grove dekkene ikke klippes. Tegner man med hele boksen mot radien i
+  stedet for halve, blir hjulet dobbelt så stort som bilen og henger under
+  asfalten.
+* **Snurringen har et tak på 16 rad/s.** Et femeikers hjul gjentar seg hver
+  72. grad, og ekte fart ville gitt over 40 grader per bilderute på toppfart —
+  da ser hjulet ut til å gå bakover, samme vognhjuleffekt som på film. Under
+  taket er snurringen nøyaktig `v/r`.
 * **Spoilerstagene går 26 enheter *under* festepunktet.** De tegnes før
   karosseriet og skjules av det, og det er nettopp overlappen som gjør at
   vingen ser fastskrudd ut. Rekker de bare akkurat ned, får den formen som har
@@ -116,7 +135,8 @@ Ting som har kostet tid her, og som ikke bør rulles tilbake:
   samme gradient-id gir den ene feil farge.
 
 Skal du legge til en del, er det én rad i en tabell. Skal du legge til en
-**form**, trenger den `kropp`, `hjul`, `dekorboks`, `spoilerfeste` og `lykt` —
+**form**, trenger den `kropp`, `hjul`, `dekorboks`, `spoilerfeste` og `lykt`,
+og den må vende mot høyre —
 og da er det verdt å rendre hele arket av form × spoiler og form × dekor og se
 på det, for det er der feilene sitter.
 

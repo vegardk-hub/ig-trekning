@@ -28,15 +28,20 @@ var Bil = (function () {
       id: 'racer', navn: 'Racer', pris: 0, stil: 2,
       tegn: '🏎️',
       hjul: [{ x: 98, y: BAKKE - 32, r: 32 }, { x: 300, y: BAKKE - 32, r: 32 }],
-      dekorboks: { x: 84, y: 116, b: 210, h: 32 },
-      spoilerfeste: { x: 60, y: 120 },
-      // Lav og lang kile. Taket ligger med vilje under monsterbilens panser:
-      // to former som bare er «litt ulike» leses som samme bil av et barn.
-      kropp: 'M34 152 L40 126 Q46 116 68 112 L156 104 L200 78 Q208 70 226 70 ' +
-             'L268 70 Q284 70 292 80 L316 108 L358 114 Q374 118 374 134 L374 152 Z',
-      rute: 'M164 103 L204 82 Q210 76 222 76 L248 76 L248 100 Z' +
-            '~M260 76 L268 76 Q280 76 285 84 L299 101 L260 101 Z',
-      strek: 'M40 126 L374 134',
+      dekorboks: { x: 78, y: 116, b: 216, h: 30 },
+      spoilerfeste: { x: 60, y: 114 },
+      /*
+       * Bilen kjører mot høyre, og da må det lange panseret ligge til høyre
+       * og kupeen bakover. Første utgave hadde det motsatt: frontlykta satt
+       * riktig på høyre side, men karosseriet leste som en bil som kjørte
+       * mot venstre med lykta bak. Toppkanten går derfor bakfra og fram:
+       * kort bagasjeluke, bakrute opp, tak, frontrute ned, langt panser.
+       */
+      kropp: 'M34 152 L38 126 Q44 114 66 110 L106 106 L144 76 Q152 68 170 68 ' +
+             'L214 68 Q230 68 238 78 L270 106 L348 112 Q374 116 374 134 L374 152 Z',
+      rute: 'M126 102 L150 78 Q156 72 168 72 L182 72 L182 102 Z' +
+            '~M196 72 L210 72 Q226 72 232 80 L250 102 L196 102 Z',
+      strek: 'M38 126 L374 134',
       lykt: { x: 366, y: 126 }
     },
     {
@@ -47,10 +52,12 @@ var Bil = (function () {
       spoilerfeste: { x: 66, y: 102 },
       kropp: 'M38 142 L46 112 Q52 100 76 98 L300 98 Q332 98 346 112 L368 142 Z',
       // Rullebur i mørk lakk. Tegnes som streker oppå kroppen.
-      bur: 'M104 98 L146 48 L266 48 L302 98',
+      bur: 'M92 98 L134 48 L246 48 L280 98',
       // Ett stag, ikke fire. Med diagonaler i begge ender ble buret et
-      // gitter man ikke leste som et bur.
-      burstag: 'M146 48 L146 98~M266 48 L266 98',
+      // gitter man ikke leste som et bur. Buret sitter bak midten, slik at
+      // det står igjen et panser foran – ellers er formen symmetrisk og
+      // sier ikke hvilken vei bilen kjører.
+      burstag: 'M134 48 L134 98~M246 48 L246 98',
       rute: '',
       strek: 'M46 120 L360 120',
       lykt: { x: 356, y: 112 }
@@ -59,18 +66,19 @@ var Bil = (function () {
       id: 'monster', navn: 'Monsterbil', pris: 320, stil: 9,
       tegn: '🚙',
       hjul: [{ x: 110, y: BAKKE - 52, r: 52 }, { x: 298, y: BAKKE - 52, r: 52 }],
-      dekorboks: { x: 106, y: 66, b: 194, h: 32 },
-      spoilerfeste: { x: 78, y: 76 },
+      dekorboks: { x: 98, y: 62, b: 204, h: 32 },
+      spoilerfeste: { x: 74, y: 70 },
       // Karosseriet sitter høyt over hjulene, med et understell imellom.
       // Det er den store høyden som gjør at man ser hvilken bil det er –
-      // ikke at hjulene er noen piksler større.
-      understell: 'M84 100 L332 100 L332 130 L84 130 Z',
-      kropp: 'M56 108 L66 70 Q74 56 98 54 L168 50 L198 22 Q206 14 224 14 ' +
-             'L284 14 Q300 14 306 24 L326 50 L354 56 Q374 60 374 82 L374 108 Z',
-      rute: 'M174 50 L204 24 Q210 18 222 18 L248 18 L248 50 Z' +
-            '~M260 18 L282 18 Q292 18 296 26 L308 50 L260 50 Z',
-      strek: 'M66 78 L374 82',
-      lykt: { x: 364, y: 74 }
+      // ikke at hjulene er noen piksler større. Vendt samme vei som raceren:
+      // panseret fram, kupeen bak.
+      understell: 'M84 96 L332 96 L332 130 L84 130 Z',
+      kropp: 'M56 104 L60 66 Q68 52 90 50 L134 46 L172 18 Q180 10 198 10 ' +
+             'L254 10 Q270 10 278 20 L306 46 L348 52 Q374 56 374 78 L374 104 Z',
+      rute: 'M142 44 L172 20 Q178 14 190 14 L200 14 L200 44 Z' +
+            '~M214 14 L252 14 Q264 14 270 22 L286 44 L214 44 Z',
+      strek: 'M60 72 L374 78',
+      lykt: { x: 364, y: 70 }
     },
     {
       id: 'buss', navn: 'Stuntbussen', pris: 260, stil: 7,
@@ -339,8 +347,14 @@ var Bil = (function () {
    * Bygger hele bilen som SVG-innhold. `pre` er en unik id-forstavelse:
    * regnbuelakken bruker en gradient, og to biler på samme side med samme
    * gradient-id gir en av dem feil farge.
+   *
+   * `opts.utenHjul` og `opts.utenSkygge` brukes til utgaven som kjører i
+   * løypa: der tegnes hjulene for seg så de kan snurre, og skyggen skal ikke
+   * være med i det hele tatt – den følger bilen når den roterer, og en skygge
+   * som ligger *over* bilen i toppen av en loop ser ut som en flekk.
    */
-  function tegning(valgt, pre) {
+  function tegning(valgt, pre, opts) {
+    opts = opts || {};
     var d = deler(valgt);
     var f = d.form, lakk = d.lakk;
     var defs = '', fyll = lakk.farge;
@@ -364,7 +378,9 @@ var Bil = (function () {
 
     var s = '<defs>' + defs + '</defs>';
 
-    s += '<ellipse cx="200" cy="' + (BAKKE + 14) + '" rx="168" ry="10" fill="rgba(0,0,0,0.28)"/>';
+    if (!opts.utenSkygge) {
+      s += '<ellipse cx="200" cy="' + (BAKKE + 14) + '" rx="168" ry="10" fill="rgba(0,0,0,0.28)"/>';
+    }
 
     // Spoileren bak karosseriet, ellers ser stagene ut som de er limt utenpå.
     s += spoilerTegning(d.spoiler.id, f.spoilerfeste, lakk);
@@ -384,7 +400,9 @@ var Bil = (function () {
     s += '<circle cx="' + f.lykt.x + '" cy="' + f.lykt.y + '" r="9" fill="#fff6c9"/>';
     s += '<circle cx="' + f.lykt.x + '" cy="' + f.lykt.y + '" r="4" fill="#ffffff"/>';
 
-    for (var i = 0; i < f.hjul.length; i++) s += hjulTegning(f.hjul[i], d.hjul, i);
+    if (!opts.utenHjul) {
+      for (var i = 0; i < f.hjul.length; i++) s += hjulTegning(f.hjul[i], d.hjul, i);
+    }
 
     return s;
   }
@@ -402,15 +420,48 @@ var Bil = (function () {
            '" xmlns="http://www.w3.org/2000/svg">' + tegning(valgt, pre) + '</svg>';
   }
 
-  // Til canvas: samme tegning, men som en frittstående fil vi kan laste inn
-  // som bilde. Bilen tegnes én gang når designet endres – å serialisere den
-  // per bilderute ville drept bildefrekvensen på telefon.
-  function bilde(valgt, klar) {
-    var kilde = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (B * 2) + '" height="' + ((H + 10) * 2) +
-                '" viewBox="0 0 ' + B + ' ' + (H + 10) + '">' + tegning(valgt, 'c') + '</svg>';
-    var img = new Image();
-    img.onload = function () { klar(img); };
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(kilde);
+  /*
+   * Til canvas. Bilen deles i to bilder: karosseriet uten hjul, og ett hjul
+   * for seg. I løypa tegnes karosseriet én gang per bilderute og hjulet to
+   * ganger, rotert etter hvor langt bilen har kjørt – det er hele
+   * hjulsnurringen, og den koster to ekstra drawImage per rute.
+   *
+   * Begge lages én gang når designet endres. Å serialisere SVG-en per
+   * bilderute ville drept bildefrekvensen på telefon.
+   *
+   * Hjulboksen er litt større enn hjulet (55 mot 50), for mønsteret på de
+   * grove dekkene stikker noen enheter utenfor radien og ville blitt klippet.
+   */
+  var HJULBOKS = 110, HJULRADIUS = 50;
+
+  function tegninger(valgt, klar) {
+    var f = finn(FORMER, valgt.form);
+    var hj = finn(HJUL, valgt.hjul);
+
+    var kropp = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (B * 2) + '" height="' + ((H + 10) * 2) +
+                '" viewBox="0 0 ' + B + ' ' + (H + 10) + '">' +
+                tegning(valgt, 'c', { utenHjul: true, utenSkygge: true }) + '</svg>';
+
+    var hjulsvg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (HJULBOKS * 2) + '" height="' + (HJULBOKS * 2) +
+                  '" viewBox="0 0 ' + HJULBOKS + ' ' + HJULBOKS + '">' +
+                  hjulTegning({ x: HJULBOKS / 2, y: HJULBOKS / 2, r: HJULRADIUS }, hj, 0) + '</svg>';
+
+    // Forholdet mellom bildets *halve* bredde og hjulets radius. Tegner man
+    // med hele boksen mot radien, blir hjulet dobbelt så stort som resten av
+    // bilen og henger under asfalten.
+    var margin = (HJULBOKS / 2) / HJULRADIUS;
+
+    var igjen = 2, ut = { plasser: f.hjul, bredde: B, hoyde: H + 10, bakke: BAKKE, hjulboks: margin };
+
+    function ferdig() { if (--igjen === 0) klar(ut); }
+
+    ut.kropp = new Image();
+    ut.kropp.onload = ferdig;
+    ut.kropp.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(kropp);
+
+    ut.hjul = new Image();
+    ut.hjul.onload = ferdig;
+    ut.hjul.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(hjulsvg);
   }
 
   function standard() {
@@ -429,7 +480,7 @@ var Bil = (function () {
     bonus: bonus,
     svg: svg,
     miniHjul: miniHjul,
-    bilde: bilde,
+    tegninger: tegninger,
     standard: standard
   };
 })();
