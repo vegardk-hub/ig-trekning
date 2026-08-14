@@ -24,10 +24,16 @@
   grønne etter hvert, og hver ferdig tekst gir en brikke i et puslespill som
   til slutt blir en monstertruck. 48 tekster, åtte trucker, alle tegnet i SVG.
   PWA for iPad.
+- **[Stuntgarasjen](pwa-stunt/)** — `pwa-stunt/index.html`: bygg og design en
+  stuntbil, og kjør den gjennom en løype med looper og hopp. Penger man tjener
+  underveis går til motor, dekk og girkasse — eller til lakk, lyn og glitter,
+  som ganger opp det man tjener neste tur. Bilen er tegnet i SVG, og
+  fysikken er bilen som et punkt på en kurve. Ingen måte å tape på. PWA.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/>, Fargeflasker på
 <https://vegardk-hub.github.io/ig-trekning/pwa-flasker/>, Poengtavla på
-<https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/> og Monstergiret på
-<https://vegardk-hub.github.io/ig-trekning/pwa-lesing/>.
+<https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/>, Monstergiret på
+<https://vegardk-hub.github.io/ig-trekning/pwa-lesing/> og Stuntgarasjen på
+<https://vegardk-hub.github.io/ig-trekning/pwa-stunt/>.

@@ -1,0 +1,501 @@
+/*
+ * Stuntgarasjen – utseende.
+ *
+ * Én skjerm om gangen fyller hele flata. Skjermene skjules med [hidden], og
+ * derfor står regelen `.skjerm:not([hidden])` og ikke en egen klasse: en
+ * `display:` på .skjerm ville slått nettleserens egen [hidden]-stil, og
+ * skjermene ville ligget oppå hverandre. Samme fella som i Fargeflasker.
+ */
+
+:root {
+  --bak1: #1e2740;
+  --bak2: #10131f;
+  --tekst: #f2f5ff;
+  --dempet: #a3adcc;
+  --panel: rgba(255, 255, 255, 0.08);
+  --panel-kant: rgba(255, 255, 255, 0.18);
+  --gronn: #4dfc9a;
+  --gull: #ffc61a;
+  --rod: #ff5a52;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  background: radial-gradient(120% 90% at 50% 0%, var(--bak1) 0%, var(--bak2) 100%) fixed;
+  color: var(--tekst);
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.skjerm:not([hidden]) {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: max(10px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+}
+
+/* ---------- topplinje ---------- */
+
+.topp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.tittel {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  flex: 1 1 auto;
+}
+
+.rundknapp {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border-radius: 15px;
+  border: 2px solid var(--panel-kant);
+  background: var(--panel);
+  color: var(--tekst);
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.rundknapp.mork { background: rgba(0, 0, 0, 0.45); border-color: rgba(255, 255, 255, 0.3); }
+
+.pengemerke {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--gronn);
+  background: rgba(77, 252, 154, 0.12);
+  border: 2px solid rgba(77, 252, 154, 0.35);
+  border-radius: 13px;
+  padding: 7px 13px;
+}
+
+.rister { animation: rist 0.4s; }
+@keyframes rist {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+}
+
+/* ---------- bilen ---------- */
+
+.bilscene {
+  flex: 1 1 auto;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 2px solid var(--panel-kant);
+  border-radius: 22px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.bilscene.liten { flex: 0 0 auto; height: 132px; }
+
+.bilbilde { width: 100%; height: 100%; }
+
+.nokkeltall {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+}
+
+.tall {
+  flex: 1 1 0;
+  background: var(--panel);
+  border: 2px solid var(--panel-kant);
+  border-radius: 15px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.talletikett { color: var(--dempet); font-size: 14px; }
+.tall strong { font-size: 19px; }
+.gronn { color: var(--gronn); }
+
+/* ---------- knapper ---------- */
+
+.hovedvalg {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+}
+
+.valgknapp {
+  flex: 1 1 0;
+  border: 2px solid var(--panel-kant);
+  background: var(--panel);
+  color: var(--tekst);
+  border-radius: 17px;
+  padding: 12px 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.valgknapp .ikon { font-size: 24px; }
+
+.storknapp {
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 19px;
+  padding: 17px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #10131f;
+  background: linear-gradient(180deg, #ffd45a, var(--gull));
+  box-shadow: 0 5px 0 #b98700;
+  cursor: pointer;
+}
+
+.storknapp:active { transform: translateY(3px); box-shadow: 0 2px 0 #b98700; }
+
+.tekstknapp {
+  border: none;
+  background: none;
+  color: var(--dempet);
+  font-size: 15px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.hjelpetekst { margin: 0; color: var(--dempet); font-size: 15px; }
+
+/* ---------- verkstedet ---------- */
+
+.stillinje {
+  margin: 0;
+  font-size: 14px;
+  color: var(--dempet);
+  text-align: center;
+}
+
+.faner {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+}
+
+.fane {
+  flex: 1 1 0;
+  border: 2px solid transparent;
+  background: var(--panel);
+  color: var(--dempet);
+  border-radius: 14px;
+  padding: 7px 2px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.fane.valgt { border-color: var(--gull); color: var(--tekst); background: rgba(255, 198, 26, 0.15); }
+.fanetegn { font-size: 20px; }
+.fanenavn { font-size: 12px; font-weight: 700; }
+
+.valgrutenett {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  align-content: start;
+  padding-bottom: 4px;
+}
+
+.valg {
+  border: 2px solid var(--panel-kant);
+  background: var(--panel);
+  color: var(--tekst);
+  border-radius: 16px;
+  padding: 10px 6px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 106px;
+}
+
+.valg.valgt { border-color: var(--gronn); background: rgba(77, 252, 154, 0.12); }
+.valg.dyr { opacity: 0.55; }
+
+.valgtegn { font-size: 24px; line-height: 1; }
+
+.lakkprikk {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+}
+
+.hjulprove { display: flex; width: 30px; height: 30px; }
+.hjulprove svg { width: 100%; height: 100%; }
+
+.valgnavn { font-size: 13px; font-weight: 700; text-align: center; line-height: 1.15; }
+.pris { font-size: 14px; font-weight: 800; color: var(--gull); }
+.eid { font-size: 13px; color: var(--dempet); }
+.paa { font-size: 13px; font-weight: 700; color: var(--gronn); }
+.stilmerke { font-size: 11px; color: var(--dempet); min-height: 13px; }
+
+/* ---------- oppgraderinger ---------- */
+
+.delliste {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delrad {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 2px solid var(--panel-kant);
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.deltegn { font-size: 26px; }
+
+.delnavn {
+  flex: 1 1 auto;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+}
+
+.delnavn small { font-weight: 400; color: var(--dempet); font-size: 13px; }
+
+.pipper { display: flex; gap: 4px; }
+
+.pip {
+  width: 13px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.pip.fylt { background: var(--gronn); }
+
+.kjopknapp {
+  border: none;
+  border-radius: 13px;
+  padding: 11px 15px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #10131f;
+  background: linear-gradient(180deg, #ffd45a, var(--gull));
+  cursor: pointer;
+}
+
+.fullt { font-size: 13px; color: var(--gronn); font-weight: 700; }
+
+/* ---------- løypa ---------- */
+
+.skjerm.lop:not([hidden]) { padding: 0; max-width: none; }
+
+.lerret { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.hud {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hudpenger {
+  margin-left: auto;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--gronn);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.75);
+}
+
+.hudfart {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 11px;
+  padding: 6px 10px;
+}
+
+.hudhint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 150px);
+  margin: 0;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #10131f;
+  animation: puls 1s ease-in-out infinite;
+}
+
+.hudhint:not([hidden]) { display: block; }
+
+.hudhint::before {
+  content: '';
+  position: absolute;
+  inset: -6px 22% -6px 22%;
+  background: var(--gull);
+  border-radius: 13px;
+  z-index: -1;
+}
+
+@keyframes puls {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+
+.framdriftsspor {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 118px);
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.framdrift { height: 100%; width: 0; background: var(--gull); border-radius: 4px; }
+
+.pedaler {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  gap: 12px;
+}
+
+.pedal {
+  border: none;
+  border-radius: 22px;
+  padding: 16px 8px;
+  font-size: 30px;
+  font-weight: 800;
+  color: #10131f;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  touch-action: none;
+}
+
+.pedalnavn { font-size: 14px; font-weight: 800; letter-spacing: 0.5px; }
+
+.pedal.gass {
+  flex: 2 1 0;
+  background: linear-gradient(180deg, #ffd45a, var(--gull));
+  box-shadow: 0 5px 0 #b98700;
+}
+
+.pedal.brems {
+  flex: 1 1 0;
+  background: linear-gradient(180deg, #ff8f88, var(--rod));
+  box-shadow: 0 5px 0 #a92b25;
+}
+
+.pedal.trykket { transform: translateY(3px); box-shadow: none; }
+
+/* ---------- resultat ---------- */
+
+.sumkort {
+  flex: 0 0 auto;
+  text-align: center;
+  background: rgba(77, 252, 154, 0.1);
+  border: 2px solid rgba(77, 252, 154, 0.35);
+  border-radius: 22px;
+  padding: 16px;
+}
+
+.sumetikett { color: var(--dempet); font-size: 15px; }
+.sum { font-size: 50px; font-weight: 800; color: var(--gronn); line-height: 1.1; }
+.rekord { font-size: 15px; color: var(--dempet); }
+
+.detaljer {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.detaljlinje {
+  background: var(--panel);
+  border-radius: 13px;
+  padding: 9px 11px;
+  font-size: 14px;
+}
+
+/* ---------- overlegg ---------- */
+
+.overlegg:not([hidden]) {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 18, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  z-index: 10;
+}
+
+.kort {
+  background: linear-gradient(180deg, #2a3355, #1a2038);
+  border: 2px solid var(--panel-kant);
+  border-radius: 26px;
+  padding: 22px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kort h2 { margin: 0; font-size: 22px; }
+.kort p { margin: 0; color: var(--dempet); font-size: 15px; }
+
+/* Én oppskalering på store skjermer, som i Sudoku. */
+@media (min-width: 480px) and (min-height: 760px) {
+  body { font-size: 18px; }
+  .tittel { font-size: 24px; }
+  .sum { font-size: 58px; }
+}

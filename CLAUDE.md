@@ -12,6 +12,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-flasker/` | Fargeflasker — sorteringsspill for de minste, PWA |
 | `pwa-poengtavle/` | Ukens poengtavle — husholdningsoppgaver med kroner, PWA |
 | `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
+| `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den i looper og hopp, PWA |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -26,6 +27,7 @@ repoet:
 - Fargeflasker: `https://vegardk-hub.github.io/ig-trekning/pwa-flasker/`
 - Poengtavle: `https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/`
 - Monstergiret: `https://vegardk-hub.github.io/ig-trekning/pwa-lesing/`
+- Stuntgarasjen: `https://vegardk-hub.github.io/ig-trekning/pwa-stunt/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -104,7 +106,7 @@ Ikke «rett» dem lokalt — da ryker de på telefonen. Node ligger på
 `C:\Program Files\nodejs`, utenfor PATH, og `NODE_PATH` skal peke på
 `C:\Users\vegar\AppData\Roaming\npm\node_modules`.
 
-Sudoku, Fargeflasker, Poengtavla og Monstergiret er PWA-er. Endrer du filene de
+Sudoku, Fargeflasker, Poengtavla, Monstergiret og Stuntgarasjen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
 igjen hos alle som allerede har installert appen.
 
@@ -202,6 +204,30 @@ nyanseavstanden mellom rollene, bredden på hver etikett i den smaleste kolonnen
 Tallene står i `pwa-sudoku/README.md`, og kravene som prøver i `tester/tema.js`
 og `tester/liggende.js`. Endrer du en farge eller en skriftstørrelse, kjør dem
 og les hva de sier før du velger.
+
+## Stuntgarasjen
+
+`pwa-stunt/README.md` går gjennom fysikken, økonomien og tegningen av bilen.
+Fire ting som ser ut som detaljer og har en grunn:
+
+- **Bilen er et punkt på en kurve, ikke et stivt legeme.** Det er derfor
+  loopene alltid virker. Bytter du til ekte kollisjonsfysikk, trenger du et
+  bibliotek repoet ikke har, og looper som ryker når bildefrekvensen dipper.
+- **Pynt ganger opp inntekten.** Eieren ba om én pengepott til både
+  oppgraderinger og design, og uten stilbonusen ville glitter gjort bilen
+  tregere — barnet ville angret på et valg det syntes var gøy. Fjerner du
+  bonusen, må du dele opp potten i stedet.
+- **Gassen har lavgir, og det er ikke pynt.** Den bratteste rampa er 45 grader
+  og koster mer enn en umodifisert motor gir. Uten lavgiret blir bilen stående,
+  og appen ser ut som den har hengt seg midt i en app som ikke kan tapes.
+- **Jorda brytes ved hopp, ikke ved looper.** Bryter man på loop-punktene,
+  får bakken et loddrett hull i loopens bredde og man ser himmelen gjennom
+  jorda.
+
+Endrer du priser eller utbetalinger, kjør både en umodifisert og en fullt
+utstyrt bil gjennom løypa og se at summene ligger der tabellen i
+`pwa-stunt/README.md` sier. De to henger sammen: en sterk bil flyr over
+strekninger og mister mynter, så den tjener ikke proporsjonalt mer.
 
 ## Fargeflasker
 
