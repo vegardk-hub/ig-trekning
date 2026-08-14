@@ -106,6 +106,14 @@ Ikke «rett» dem lokalt — da ryker de på telefonen. Node ligger på
 `C:\Program Files\nodejs`, utenfor PATH, og `NODE_PATH` skal peke på
 `C:\Users\vegar\AppData\Roaming\npm\node_modules`.
 
+Stuntgarasjen har prøver på løypa og økonomien. De trenger verken nettleser
+eller server, og skal kjøres etter hver endring i `pwa-stunt/js/lope.js` eller
+`pwa-stunt/js/fysikk.js`:
+
+```
+node pwa-stunt/tester/lope.js
+```
+
 Sudoku, Fargeflasker, Poengtavla, Monstergiret og Stuntgarasjen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
 igjen hos alle som allerede har installert appen.
@@ -227,6 +235,13 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **Jorda brytes ved hopp, ikke ved looper.** Bryter man på loop-punktene,
   får bakken et loddrett hull i loopens bredde og man ser himmelen gjennom
   jorda.
+- **Fysikken ligger i `fysikk.js`, uten et eneste piksel.** Det er det som
+  gjør at `tester/lope.js` kan svare på hvor langt bilen flyr og om en
+  maksbil når målet, på et sekund. Slår du den sammen med tegnekoden igjen,
+  må hvert slikt spørsmål måles med en nettleser i sanntid.
+- **Ingen loop må ligge innenfor rekkevidden til et hopp.** Bilen lander bare
+  på fast grunn, så en loop i flybanen blir noe den seiler tvers gjennom.
+  Derfor ligger alle loopene før det første hoppet. Prøven sier fra.
 
 Endrer du priser eller utbetalinger, kjør både en umodifisert og en fullt
 utstyrt bil gjennom løypa og se at summene ligger der tabellen i

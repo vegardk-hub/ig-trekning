@@ -31,7 +31,7 @@ med tyngdekraft til den treffer bakken igjen.
 
 ### Tre steder vi hjelper bilen med vilje
 
-Alle tre står i `js/kjoring.js` med tall man kan se, ikke som skjulte
+Alle tre står i `js/fysikk.js` med tall man kan se, ikke som skjulte
 unntak:
 
 * **I looper er tyngdekraften dempet til 45 %, og farten har et gulv på 170.**
@@ -67,10 +67,14 @@ Tallene er kalibrert slik:
 | | |
 | --- | --- |
 | Startkapital | $250 |
-| Umodifisert bil, én tur | ~$389 |
-| Fullt utstyrt bil, én tur | ~$832 |
+| Umodifisert bil, én tur | ~$805 |
+| Fullt utstyrt bil, én tur | ~$2017 |
 | Hele designkatalogen | $4580 |
-| Alle oppgraderinger | $3240 |
+| Alle oppgraderinger | $17 050 |
+
+Tallene måles av `tester/lope.js`, som feiler hvis de driver utenfor rammene.
+Å eie alt tar rundt tjue turer, og de siste oppgraderingstrinnene er noe man
+sparer til over flere økter — det er meningen.
 
 Nakne bilen ligger på ×1,04 i stilbonus, en bil med alt på ×2,07. Nevneren i
 `Bil.bonus()` er satt etter det taket: legger du til en dekortype, øker maks
@@ -91,8 +95,18 @@ og mister mynter underveis. Det er en tilsiktet motvekt, ikke en feil.
 | --- | --- |
 | `js/bil.js` | Delekatalogen og tegningen av bilen |
 | `js/lope.js` | Løypa: punktlista, myntene, oppslag langs kurven |
-| `js/kjoring.js` | Fysikk, kamera, tegning av løypa, oppgraderinger |
+| `js/fysikk.js` | Simuleringen: fart, hopp, mynter, penger, oppgraderinger |
+| `js/kjoring.js` | Kamera og tegning av løypa |
 | `js/app.js` | De fem skjermene, butikken, lagringen |
+
+**Fysikken ligger for seg selv, uten et eneste piksel.** Den ble skilt ut fra
+`kjoring.js` fordi løypa må stemmes av mot tall bare simuleringen kjenner:
+hvor fort bilen forlater hver rampe, hvor langt den flyr, om en maksbil
+rekker fra siste hopp til mål. Så lenge fysikken satt inne i tegnekoden,
+måtte hvert slikt spørsmål besvares ved å instrumentere koden med en
+`console.log`, starte en nettleser og kjøre løypa i sanntid — flere minutter
+per svar. Nå svarer `tester/lope.js` på alt sammen på et sekund, og
+nettleseren gir nøyaktig de samme tallene.
 
 ## Bilen tegnes, den lastes ikke ned
 
@@ -186,7 +200,27 @@ på det, for det er der feilene sitter.
 ## Løypa
 
 Bygges av segmenter i `Lope.bygg()`: `flat`, `kul`, `trapp`, `bolger`, `loop`,
-`rampe` og `gap`. Én løype foreløpig, med to looper og to hopp.
+`rampe` og `gap`. Én løype, rundt 19 600 enheter lang: fire looper, fire hopp
+og bakker opp og ned hele veien. En umodifisert bil bruker vel 30 sekunder.
+
+### To regler for hvor ting kan ligge
+
+Begge følger av at **bilen bare kan lande på fast grunn**, og begge
+kontrolleres av `tester/lope.js`:
+
+1. **Ingen loop innenfor rekkevidden til et hopp.** En loop i flybanen er
+   ikke noe bilen treffer — den seiler tvers gjennom asfalten i lufta. En
+   fullt oppgradert bil flyr over 3000 enheter, så alle fire loopene ligger
+   før den første rampa.
+2. **Minst 3400 enheter mellom to rampekanter.** Ellers flyr en maksbil over
+   den neste rampa og hopper aldri fra den.
+
+Det siste hoppet bryter regel 2 med vilje: alt etter den siste rampekanten er
+kortere enn en maksbils rekkevidde, så **en ferdig utbygd bil flyr fra siste
+avsprang og helt over målstreken**. En umodifisert bil lander etter 650
+enheter og kjører de siste 2300. Det er belønningen for å ha bygd bilen
+ferdig, og prøven passer på begge halvdelene: at maksbilen når fram, og at den
+nakne ikke gjør det.
 
 * **Loopen driver litt mot høyre** mens den går rundt, så inn- og utgang ikke
   ligger oppå hverandre. Ellers ser løypa ut til å ha en knekk der den
@@ -221,18 +255,22 @@ Bygges av segmenter i `Lope.bygg()`: `flat`, `kul`, `trapp`, `bolger`, `loop`,
 
 ## Prøving
 
-Ingen prøvefiler her ennå. Etter endringer i fysikk eller priser er det verdt
-å kjøre appen med en umodifisert bil og med en fullt utstyrt bil, og se at
-begge kommer i mål og at de to summene ligger omtrent der tabellen over sier.
-Sjekk også en bil som aldri får gass: den skal bli stående med hintet synlig,
-ikke låse skjermen.
+Løypa og økonomien har prøver som verken trenger nettleser eller server:
 
-**Endrer du motor, girkasse eller rampene, må `REFERANSEFART` i `js/lope.js`
-måles på nytt**, ellers slutter myntbuene å følge bilen. Legg midlertidig en
-`console.log` i `start_hopp()` i `js/kjoring.js` som skriver ut `b.v` og
-avsprangsvinkelen, kjør en umodifisert bil gjennom løypa, og bruk farten på det
-første hoppet. Gapene bør samtidig ligge et godt stykke innenfor den målte
-rekkevidden — de skal klares med margin, ikke reddes av kanten.
+```
+node pwa-stunt/tester/lope.js
+```
+
+De kjører hele turen for en umodifisert og en fullt oppgradert bil og krever
+blant annet at begge kommer i mål, at alle fire gapene klares med margin, at
+ingen loop ligger i en flybane, at maksbilen når målet fra siste hopp og at
+den nakne ikke gjør det. **Kjør dem etter hver endring i `lope.js` eller
+`fysikk.js`** — priser, rampevinkler og motorverdier henger sammen på måter
+det ikke går an å se på koden.
+
+Feiler prøven på `REFERANSEFART`, er det myntbuene som har sluttet å følge
+bilen: buene regnes ut av den farten, og feilmeldingen sier hva den faktiske
+avsprangsfarten ble. Sett `REFERANSEFART` i `js/lope.js` til det tallet.
 
 Hoppene er lettest å vurdere som en bildeserie: skyt skjermbilder gjennom hele
 svevet og se om bilen ligger *på* myntene. Gjør den det, stemmer både vinkelen,

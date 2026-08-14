@@ -5,7 +5,7 @@
  * først ville servert gammel kode i det uendelige etter en oppdatering.
  */
 
-const CACHE = 'stuntgarasjen-v4';
+const CACHE = 'stuntgarasjen-v5';
 const FILER = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const FILER = [
   './manifest.json',
   './js/bil.js',
   './js/lope.js',
+  './js/fysikk.js',
   './js/kjoring.js',
   './js/app.js',
   './icons/icon-192.png',

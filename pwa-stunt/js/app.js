@@ -19,7 +19,7 @@
   var STARTPENGER = 250;
 
   var stat = last();
-  var lope = Lope.bygg(Kjoring.G);
+  var lope = Lope.bygg(Fysikk.G);
   var lop = null;          // aktiv kjøring
   var bilbilde = null;      // karosseri + hjul som bilder, til løypa
   var aktivKategori = 'form';
@@ -194,7 +194,7 @@
     e.delerPenger.textContent = penger();
     e.delerListe.innerHTML = '';
 
-    Kjoring.OPPGRADERINGER.forEach(function (o) {
+    Fysikk.OPPGRADERINGER.forEach(function (o) {
       var niva = stat.oppg[o.id];
       var maks = o.data.priser.length - 1;
       var rad = document.createElement('div');
@@ -224,7 +224,7 @@
 
   function kjopOppgradering(id) {
     var o = null;
-    Kjoring.OPPGRADERINGER.forEach(function (x) { if (x.id === id) o = x; });
+    Fysikk.OPPGRADERINGER.forEach(function (x) { if (x.id === id) o = x; });
     var niva = stat.oppg[id], neste = niva + 1;
     if (neste >= o.data.priser.length) return;
     var pris = o.data.priser[neste];
@@ -280,7 +280,7 @@
 
     Bil.tegninger(stat.valgt, function (bilder) {
       bilbilde = bilder;
-      lope = Lope.bygg(Kjoring.G);
+      lope = Lope.bygg(Fysikk.G);
       lop = Kjoring.lag(e.lerret, lope, bilder, stat.oppg, Bil.bonus(stat.valgt));
       lop.start(ferdigLop);
       oppdaterHud();

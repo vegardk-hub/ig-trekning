@@ -1,30 +1,20 @@
 /*
- * Kjøringen: fysikk, kamera og tegning av løypa.
+ * Kjøringen: kamera, bakgrunn og tegning av løypa.
  *
- * Fysikken er bevisst liten. Bilen har to tall – hvor langt den har kommet
- * langs kurven (`s`) og hvor fort den går (`v`) – og tyngdekraften virker
- * langs kurvens helning. Det er nok til at bakker koster fart, utforbakker
- * gir fart, og looper krever at man har fart med seg inn. Alt annet ville
- * vært et fysikkbibliotek.
+ * Selve fysikken ligger i `fysikk.js`. Den ble skilt ut fordi løypa må
+ * stemmes av mot tall bare simuleringen kjenner – avsprangsfart, hopplengde,
+ * om en maksbil rekker fra siste hopp til mål – og de spørsmålene skal kunne
+ * besvares av en prøve i node på et sekund, ikke av en nettleser som kjører
+ * løypa i sanntid.
  *
- * Bilen slipper kurven bare ett sted: på et hopp. Da er den et kast med
- * tyngdekraft til den treffer bakken igjen.
- *
- * To steder hjelper vi bilen med vilje, fordi appen ikke skal kunne tapes:
- * i looper er tyngdekraften dempet og farten har et gulv, og et hopp som
- * ikke helt rekker over, får lande på kanten i stedet for å falle ned i
- * hullet. Begge er synlige i tallene under, ikke gjemt i en spesialregel.
+ * Det som er igjen her, er utseende: hvor kameraet står, hvordan asfalten,
+ * jorda og åsene tegnes, og hvor fort hjulene snurrer.
  */
 'use strict';
 
 var Kjoring = (function () {
 
-  var G = 900;               // tyngdekraft i spillenheter per sekund²
-  var DT = 1 / 120;          // fast tidssteg – variabelt steg gir looper som
-                             // oppfører seg ulikt på 60 og 120 Hz
   var BILBREDDE = 168;
-  var LOOPSTOTTE = 0.45;     // hvor mye av tyngdekraften som virker i en loop
-  var LOOPGULV = 170;        // laveste fart inne i en loop
 
   // Hvor mye av verden som får plass. Skalaen tar den strengeste av bredde
   // og høyde, så bilen er like stor stående som liggende – uten det blir den
@@ -32,43 +22,16 @@ var Kjoring = (function () {
   var SYNSBREDDE = 1000;
   var SYNSHOYDE = 1150;
 
-  var MOTOR = {
-    navn: 'Motor', tegn: '🔧', hva: 'Toppfart',
-    priser: [0, 150, 350, 650],
-    verdier: [700, 830, 960, 1100]
-  };
-  var GIR = {
-    navn: 'Girkasse', tegn: '⚙️', hva: 'Akselerasjon',
-    priser: [0, 120, 300, 600],
-    verdier: [620, 790, 960, 1150]
-  };
-  var DEKK = {
-    navn: 'Dekk', tegn: '🛞', hva: 'Grep i landing',
-    priser: [0, 130, 320, 620],
-    verdier: [0.45, 0.32, 0.20, 0.10]   // hvor mye fart en skjev landing spiser
-  };
-
-  var OPPGRADERINGER = [
-    { id: 'motor', data: MOTOR },
-    { id: 'gir', data: GIR },
-    { id: 'dekk', data: DEKK }
-  ];
-
   function lag(lerret, lope, bilder, oppg, bonus) {
     var ctx = lerret.getContext('2d');
 
-    var b = {
-      s: 0, v: 0,
-      flyr: false, fx: 0, fy: 0, fvx: 0, fvy: 0,
-      vinkel: 0, hjulsnurr: 0,
-      hoppFra: 0, hoppStart: 0, hoppTid: 0,
-      ferdig: false
-    };
+    // All tilstand om bilen eies av fysikken. Tegningen leser den, den
+    // skriver aldri til den.
+    var fys = Fysikk.lag(lope, oppg, bonus);
+    var b = fys.bil;
+    var popper = fys.popper;
 
-    var inn = { gass: false, brems: false };
-    var penger = 0, mynter = 0, looper = 0, hopp = 0, lengsteHopp = 0;
-    var popper = [];
-    var tid = 0, rest = 0, sistTid = 0, staarTid = 0;
+    var tid = 0, rest = 0, sistTid = 0;
     var kjorer = false, ferdigKalt = null;
 
     // Hjulet skal snurre like fort som bilen ruller: dθ = v·dt / r. Med en
@@ -76,6 +39,7 @@ var Kjoring = (function () {
     // sakte og et monsterhjul for fort, og bilen ser ut til å skli.
     var bilskala = BILBREDDE / bilder.bredde;
     var hjulradius = bilder.plasser[0].r * bilskala;
+    var hjulsnurr = 0;
 
     /*
      * ...men bare opp til et tak. Et femeikers hjul gjentar seg hver 72.
@@ -87,186 +51,14 @@ var Kjoring = (function () {
      */
     var MAKSSNURR = 16;   // radianer per sekund
 
-    function snurr(fart, dt) {
-      b.hjulsnurr += Math.min(Math.abs(fart) / hjulradius, MAKSSNURR) * dt;
-    }
-
-    var toppfart = MOTOR.verdier[oppg.motor];
-    var kraft = GIR.verdier[oppg.gir];
-    var landingstap = DEKK.verdier[oppg.dekk];
-
-    for (var i = 0; i < lope.mynter.length; i++) lope.mynter[i].tatt = false;
-    for (i = 0; i < lope.looper.length; i++) lope.looper[i].betalt = false;
-
-    /* ---------- penger ---------- */
-
-    /*
-     * Alle beløp går gjennom her, og alle ganges med stilbonusen. Tallene er
-     * satt slik at en helt umodifisert bil kjører inn rundt $350 på en tur,
-     * mot rundt $4000 for å eie alt. Det gir en ny del hver eller annenhver
-     * tur i starten – ofte nok til at det skjer noe, sjelden nok til at det
-     * er noe igjen å glede seg til.
-     */
-    function betal(sum, tekst, x, y, stor) {
-      var belop = Math.max(1, Math.round(sum * bonus));
-      penger += belop;
-      popper.push({ x: x, y: y, tekst: tekst, belop: belop, alder: 0, stor: !!stor });
-    }
-
-    /* ---------- fysikk ---------- */
-
-    function stegBakke() {
-      var pkt = Lope.ved(lope, b.s);
-      var loop = Lope.iLoop(lope, b.s);
-      var a = 0;
-
-      /*
-       * Lavgir: gassen tar hardest når bilen står nesten stille, og ebber ut
-       * mot toppfarten. Uten dette kunne en umodifisert bil bli stående på
-       * den bratteste rampa – 45 grader koster mer enn motoren gir – og da
-       * sto barnet fast i en app som ikke skal kunne tapes, uten noe å
-       * trykke på som hjalp. Med lavgiret kommer enhver bil opp overalt,
-       * bare langsomt hvis den er svak.
-       */
-      if (inn.gass) a += kraft * (1 + 1.3 * (1 - Math.min(1, b.v / toppfart)));
-      if (inn.brems) a -= b.v > 0 ? kraft * 1.4 : 0;
-
-      // Positiv vinkel = løypa peker nedover på skjermen, og da drar
-      // tyngdekraften bilen framover.
-      a += G * Math.sin(pkt.vinkel) * (loop ? LOOPSTOTTE : 1);
-      a -= b.v * 0.30;
-
-      b.v += a * DT;
-
-      // Toppfarten er ikke et hardt tak: en bratt utforbakke skal kunne gi
-      // mer, den skal bare ebbe ut igjen.
-      if (b.v > toppfart) b.v -= (b.v - toppfart) * 2.2 * DT;
-      if (loop && b.v < LOOPGULV) b.v = LOOPGULV;
-      if (b.v < 0) b.v = 0;
-
-      // Står bilen nesten stille uten at det trykkes gass, skal det si fra.
-      // En bil som er blitt stående i en motbakke ser ut som en app som har
-      // hengt seg, og det er den eneste måten dette spillet kan se ut som
-      // det er slutt uten å være det.
-      staarTid = (b.v < 45 && !inn.gass) ? staarTid + DT : 0;
-
-      b.s += b.v * DT;
-      b.vinkel = pkt.vinkel;
-      snurr(b.v, DT);
-
-      if (loop && !loop.betalt && b.s > loop.til - 30) {
-        loop.betalt = true;
-        looper++;
-        betal(35, 'LOOP!', pkt.x, pkt.y, true);
-      }
-
-      if (b.s >= lope.lengde) {
-        b.s = lope.lengde;
-        avslutt();
-        return;
-      }
-
-      var p = lope.punkter[pkt.i];
-      if (p && p.hopp && b.v > 40) start_hopp(pkt);
-    }
-
-    function start_hopp(pkt) {
-      b.flyr = true;
-      b.fx = pkt.x;
-      b.fy = pkt.y;
-      b.fvx = Math.cos(pkt.vinkel) * b.v;
-      b.fvy = Math.sin(pkt.vinkel) * b.v;
-      b.hoppFra = pkt.x;
-      b.hoppStart = pkt.i;
-      b.hoppTid = 0;
-    }
-
-    // Første faste punkt foran bilen. Loop-punkter hoppes over: de ligger i
-    // lufta, og en bil på vei ned skal ikke lande midt i en loop.
-    function bakkePunkt(fra, x) {
-      var p = lope.punkter;
-      for (var i = fra; i < p.length; i++) {
-        if (p[i].bakke && p[i].x >= x) return p[i];
-      }
-      return p[p.length - 1];
-    }
-
-    function stegLuft() {
-      b.fvy += G * DT;
-      b.fx += b.fvx * DT;
-      b.fy += b.fvy * DT;
-      b.hoppTid += DT;
-      snurr(b.fvx, DT);
-
-      // Nesen følger farten. Bilen roterer altså aldri feil vei, og lander
-      // alltid på hjulene – det er den samme regelen som at ingenting kan
-      // gå galt i en loop.
-      var mal = Math.atan2(b.fvy, b.fvx);
-      b.vinkel += Lope.vinkeldiff(mal, b.vinkel) * Math.min(1, 4 * DT);
-
-      var mark = bakkePunkt(b.hoppStart, b.fx);
-
-      // Rekker ikke bilen over, får den kanten. Alternativet er en bil som
-      // synker ned i hullet, og det er en måte å tape på.
-      var kortet = b.fx < mark.x && b.fy > mark.y;
-
-      if (b.fy >= mark.y || kortet) {
-        land(mark);
-      }
-    }
-
-    function land(mark) {
-      var lengde = Math.round(b.fx - b.hoppFra);
-      if (lengde > lengsteHopp) lengsteHopp = lengde;
-      hopp++;
-
-      var fart = Math.hypot(b.fvx, b.fvy);
-      var diff = Math.abs(Lope.vinkeldiff(Math.atan2(b.fvy, b.fvx), mark.vinkel));
-      // En landing rett ned i en flat bakke koster fart. Bedre dekk koster
-      // mindre. Full stopp finnes ikke.
-      b.v = Math.max(120, fart * (1 - landingstap * Math.min(1, diff / (Math.PI / 2))));
-
-      b.s = mark.s;
-      b.vinkel = mark.vinkel;
-      b.flyr = false;
-
-      betal(8 + lengde / 28 + b.hoppTid * 14, 'HOPP ' + lengde, mark.x, mark.y - 90, true);
-    }
-
-    function taMynter() {
-      var x = b.flyr ? b.fx : Lope.ved(lope, b.s).x;
-      var y = b.flyr ? b.fy : Lope.ved(lope, b.s).y;
-      for (var i = 0; i < lope.mynter.length; i++) {
-        var m = lope.mynter[i];
-        if (m.tatt) continue;
-        if (Math.abs(m.x - x) < 62 && Math.abs(m.y - (y - 40)) < 66) {
-          m.tatt = true;
-          mynter++;
-          betal(4, '', m.x, m.y);
-        }
-      }
-    }
-
-    function avslutt() {
-      if (b.ferdig) return;
-      b.ferdig = true;
-      kjorer = false;
-      betal(30, 'I MÅL!', Lope.ved(lope, lope.lengde).x, Lope.ved(lope, lope.lengde).y - 90, true);
-      if (ferdigKalt) {
-        ferdigKalt({
-          penger: penger, mynter: mynter, looper: looper,
-          hopp: hopp, lengsteHopp: lengsteHopp, tid: tid
-        });
-      }
+    function snurr(dt) {
+      var fart = Math.abs(b.flyr ? b.fvx : b.v);
+      hjulsnurr += Math.min(fart / hjulradius, MAKSSNURR) * dt;
     }
 
     /* ---------- tegning ---------- */
 
-    function bilPos() {
-      if (b.flyr) return { x: b.fx, y: b.fy };
-      var p = Lope.ved(lope, b.s);
-      return { x: p.x, y: p.y };
-    }
+    var bilPos = fys.posisjon;
 
     function tegn() {
       var bredde = lerret.width, hoyde = lerret.height;
@@ -461,7 +253,7 @@ var Kjoring = (function () {
         var r = p.r * bilskala * bilder.hjulboks;
         ctx.save();
         ctx.translate(-BILBREDDE * 0.5 + p.x * bilskala, topp + p.y * bilskala);
-        ctx.rotate(b.hjulsnurr);
+        ctx.rotate(hjulsnurr);
         ctx.drawImage(bilder.hjul, -r, -r, r * 2, r * 2);
         ctx.restore();
       }
@@ -491,7 +283,6 @@ var Kjoring = (function () {
       }
       ctx.globalAlpha = 1;
     }
-
     /* ---------- sløyfe ---------- */
 
     function bilderute(na) {
@@ -502,13 +293,13 @@ var Kjoring = (function () {
       sistTid = na;
       tid += dt;
       rest += dt;
+      snurr(dt);
 
       var vakt = 0;
-      while (rest >= DT && vakt++ < 40) {
-        rest -= DT;
-        if (b.flyr) stegLuft(); else stegBakke();
-        taMynter();
-        if (b.ferdig) break;
+      while (rest >= Fysikk.DT && vakt++ < 40) {
+        rest -= Fysikk.DT;
+        fys.steg();
+        if (fys.ferdig()) break;
       }
 
       for (var i = popper.length - 1; i >= 0; i--) {
@@ -517,7 +308,13 @@ var Kjoring = (function () {
       }
 
       tegn();
-      if (kjorer) requestAnimationFrame(bilderute);
+
+      if (fys.ferdig()) {
+        kjorer = false;
+        if (ferdigKalt) ferdigKalt(fys.resultat());
+        return;
+      }
+      requestAnimationFrame(bilderute);
     }
 
     return {
@@ -528,19 +325,11 @@ var Kjoring = (function () {
         requestAnimationFrame(bilderute);
       },
       stopp: function () { kjorer = false; },
-      sett: function (hva, pa) { inn[hva] = pa; },
-      tilstand: function () {
-        return {
-          penger: penger,
-          fart: Math.round((b.flyr ? Math.hypot(b.fvx, b.fvy) : b.v) / 8),
-          andel: Math.min(1, b.s / lope.lengde),
-          flyr: b.flyr,
-          staar: staarTid > 1.2 && !b.ferdig
-        };
-      },
+      sett: fys.sett,
+      tilstand: fys.tilstand,
       tegnEn: tegn
     };
   }
 
-  return { lag: lag, G: G, OPPGRADERINGER: OPPGRADERINGER, MOTOR: MOTOR, GIR: GIR, DEKK: DEKK };
+  return { lag: lag };
 })();

@@ -20,7 +20,7 @@
 var Lope = (function () {
 
   var STEG = 7;          // avstand mellom punktene, i spillenheter
-  var MYNTAVSTAND = 240; // hvor tett myntene ligger langs løypa
+  var MYNTAVSTAND = 300; // hvor tett myntene ligger langs løypa
 
   /*
    * Tyngdekraften kommer utenfra fordi myntbuene over hoppene *er* bilens
@@ -97,40 +97,88 @@ var Lope = (function () {
     /* ---------- Stuntløypa ---------- */
 
     /*
-     * Begge loopene ligger før begge hoppene, og det er ikke tilfeldig.
-     * En fullt utstyrt bil flyr nesten 2000 enheter. Lå en loop innenfor den
-     * rekkevidden, ville bilen seile tvers gjennom loopens asfalt i lufta –
-     * den kan bare lande på fast grunn, så loopen er ikke noe den treffer,
-     * bare noe den klipper gjennom. Rekkefølgen her holder all flyging over
-     * åpent terreng.
+     * Løypa er delt i to: først bakker og looper, så hoppene. Rekkefølgen er
+     * ikke smak, den er et krav.
      *
-     * Gapene er satt etter målt rekkevidde: en umodifisert bil forlater den
-     * første rampa i 44 grader med rundt 750 i fart. Gapene ligger godt
-     * innenfor det, så bilen klarer dem med margin i stedet for å måtte
-     * reddes av kanten.
+     * Bilen kan bare lande på fast grunn. En loop som ligger innenfor
+     * rekkevidden til et hopp, er derfor ikke noe bilen treffer – den seiler
+     * tvers gjennom loopens asfalt i lufta. En fullt oppgradert bil flyr over
+     * 3000 enheter, så alle fire loopene ligger før den første rampa.
+     *
+     * Av samme grunn er det minst 3400 enheter mellom to rampekanter: ellers
+     * flyr en maksbil over den neste rampa og hopper aldri fra den. Det siste
+     * hoppet er unntaket med vilje – der *skal* den fly hele veien i mål.
+     *
+     * `tester/lope.js` kontrollerer begge deler, og sier fra med tall hvis en
+     * justering bryter dem.
      */
-    flat(420);
-    kul(420, 90);
-    flat(180);
-    loop(95, 70);                 // første loop, den lille
+
+    /* --- første del: bakker opp og ned, og fire looper --- */
+
+    flat(380);
+    kul(400, 90);
+    flat(140);
+    loop(95, 70);                 // liten loop
+    kul(360, 120);
+    bolger(540, 2, 70);
+    flat(160);
+    loop(115, 78);
+    trapp(280, -80);              // opp et platå
+    kul(420, 140);
+    bolger(600, 3, 80);
+    flat(160);
+    loop(105, 74);
+    trapp(320, 90);               // ned igjen
+    kul(400, 110);
+    flat(160);
+    loop(130, 86);                // den største
+    trapp(280, -60);
+    kul(380, 100);
     flat(220);
-    bolger(560, 2, 70);
-    flat(220);
-    loop(120, 80);                // stor loop
-    trapp(240, -50);
-    kul(360, 70);
+
+    /* --- andre del: fire hopp, med bakker imellom --- */
+
     rampe(300, 150);
-    gap(480, 40);                 // første hopp
-    trapp(240, 50);
-    bolger(560, 2, 60);
-    kul(340, 70);
-    rampe(360, 210);
-    gap(520, 110);                // det lange hoppet: 49 grader
+    gap(520, 40);                 // hopp 1
     trapp(260, 60);
-    kul(300, 50);
-    // Lang utrulling: en maksbil lander nesten 1900 enheter etter den siste
-    // rampa, og skal rekke å komme ned før målstreken i stedet for å fly forbi.
-    flat(1000);
+    bolger(640, 2, 70);
+    kul(460, 130);
+    bolger(600, 3, 70);
+    kul(420, 100);
+    flat(260);
+
+    rampe(320, 160);
+    gap(540, 50);                 // hopp 2
+    trapp(280, 70);
+    kul(480, 140);
+    bolger(660, 3, 80);
+    kul(440, 110);
+    bolger(580, 2, 60);
+    flat(280);
+
+    rampe(340, 180);
+    gap(560, 70);                 // hopp 3
+    trapp(300, 80);
+    bolger(620, 2, 75);
+    kul(500, 150);
+    bolger(640, 3, 70);
+    kul(460, 120);
+    flat(300);
+
+    /*
+     * Det siste hoppet. Alt etter denne rampekanten er kortere enn en
+     * maksbils rekkevidde, så en ferdig utbygd bil flyr fra avspranget og
+     * helt over målstreken. En umodifisert bil lander tidlig og kjører
+     * resten – det er belønningen for å ha bygd bilen ferdig, og den er
+     * verdt å beholde.
+     */
+    rampe(380, 220);
+    gap(540, 120);                // hopp 4, det siste
+    trapp(300, 80);
+    kul(460, 120);
+    bolger(560, 2, 60);
+    kul(420, 90);
+    flat(600);                    // utrulling og mål
 
     /* ---------- etterarbeid ---------- */
 
