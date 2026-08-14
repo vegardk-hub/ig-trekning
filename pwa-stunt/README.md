@@ -67,8 +67,8 @@ Tallene er kalibrert slik:
 | | |
 | --- | --- |
 | Startkapital | $250 |
-| Umodifisert bil, én tur | ~$326 |
-| Fullt utstyrt bil, én tur | ~$679 |
+| Umodifisert bil, én tur | ~$391 |
+| Fullt utstyrt bil, én tur | ~$832 |
 | Alt i katalogen | ~$4000 |
 
 Det gir en ny del hver eller annenhver tur i starten — ofte nok til at det
@@ -156,6 +156,25 @@ Bygges av segmenter i `Lope.bygg()`: `flat`, `kul`, `trapp`, `bolger`, `loop`,
 * **Myntene ligger langs normalen, som peker innover i en loop.** Det er det
   som gjør at en loop lønner seg: man plukker et dusin mynter på en runde man
   uansett skulle kjørt.
+* **Tangenten regnes ensidig på hver side av et gap.** Dette var den verste
+  feilen i løypa. Naboen på den andre siden av et hopp ligger flere hundre
+  enheter unna og lavere, så snittet over gapet gjorde tangenten på en
+  45-graders rampe til noen få grader *nedover* — bilen forlot rampa med nesa
+  ned og datt ut i hullet i stedet for å bli kastet opp. Hoppene så livløse ut
+  uten at det var åpenbart hvorfor.
+* **Myntbuen over et hopp er den ekte kastebanen.** Den regnes ut av
+  avsprangsvinkelen, referansefarten og *samme tyngdekraft som fysikken
+  bruker* — derfor tar `Lope.bygg()` imot `Kjoring.G` i stedet for å ha sin
+  egen konstant. Første utgave var en tegnet sinusbue med topp 170 over gapet,
+  mens bilen i praksis nådde 154 og landet flere hundre enheter forbi der buen
+  sluttet. Myntene hang både for høyt og på feil sted, og hoppet så ut som om
+  bilen ignorerte dem.
+* **Begge loopene ligger før begge hoppene.** En fullt utstyrt bil flyr nesten
+  2000 enheter. Lå en loop innenfor den rekkevidden, seilte bilen tvers gjennom
+  loopens asfalt i lufta — den kan bare lande på fast grunn, så loopen er ikke
+  noe den treffer, bare noe den klipper gjennom.
+* **Utrullingen er lang med vilje.** En maksbil lander nesten 1900 enheter
+  etter den siste rampa og skal rekke ned før målstreken.
 
 ## Prøving
 
@@ -164,6 +183,17 @@ Ingen prøvefiler her ennå. Etter endringer i fysikk eller priser er det verdt
 begge kommer i mål og at de to summene ligger omtrent der tabellen over sier.
 Sjekk også en bil som aldri får gass: den skal bli stående med hintet synlig,
 ikke låse skjermen.
+
+**Endrer du motor, girkasse eller rampene, må `REFERANSEFART` i `js/lope.js`
+måles på nytt**, ellers slutter myntbuene å følge bilen. Legg midlertidig en
+`console.log` i `start_hopp()` i `js/kjoring.js` som skriver ut `b.v` og
+avsprangsvinkelen, kjør en umodifisert bil gjennom løypa, og bruk farten på det
+første hoppet. Gapene bør samtidig ligge et godt stykke innenfor den målte
+rekkevidden — de skal klares med margin, ikke reddes av kanten.
+
+Hoppene er lettest å vurdere som en bildeserie: skyt skjermbilder gjennom hele
+svevet og se om bilen ligger *på* myntene. Gjør den det, stemmer både vinkelen,
+farten og buen.
 
 Løypa skal virke både stående og liggende. Skalaen tar den strengeste av
 bredde og høyde nettopp derfor — uten det blir bilen et frimerke i portrett og

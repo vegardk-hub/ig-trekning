@@ -19,7 +19,7 @@
   var STARTPENGER = 250;
 
   var stat = last();
-  var lope = Lope.bygg();
+  var lope = Lope.bygg(Kjoring.G);
   var lop = null;          // aktiv kjøring
   var bilbilde = null;      // karosseri + hjul som bilder, til løypa
   var aktivKategori = 'form';
@@ -259,7 +259,7 @@
 
     Bil.tegninger(stat.valgt, function (bilder) {
       bilbilde = bilder;
-      lope = Lope.bygg();
+      lope = Lope.bygg(Kjoring.G);
       lop = Kjoring.lag(e.lerret, lope, bilder, stat.oppg, Bil.bonus(stat.valgt));
       lop.start(ferdigLop);
       oppdaterHud();

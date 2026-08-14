@@ -230,7 +230,7 @@ var Kjoring = (function () {
       b.vinkel = mark.vinkel;
       b.flyr = false;
 
-      betal(10 + lengde / 10 + b.hoppTid * 25, 'HOPP ' + lengde, mark.x, mark.y - 90, true);
+      betal(8 + lengde / 28 + b.hoppTid * 14, 'HOPP ' + lengde, mark.x, mark.y - 90, true);
     }
 
     function taMynter() {
@@ -542,5 +542,5 @@ var Kjoring = (function () {
     };
   }
 
-  return { lag: lag, OPPGRADERINGER: OPPGRADERINGER, MOTOR: MOTOR, GIR: GIR, DEKK: DEKK };
+  return { lag: lag, G: G, OPPGRADERINGER: OPPGRADERINGER, MOTOR: MOTOR, GIR: GIR, DEKK: DEKK };
 })();

@@ -20,9 +20,16 @@
 var Lope = (function () {
 
   var STEG = 7;          // avstand mellom punktene, i spillenheter
-  var MYNTAVSTAND = 200; // hvor tett myntene ligger langs løypa
+  var MYNTAVSTAND = 240; // hvor tett myntene ligger langs løypa
 
-  function bygg() {
+  /*
+   * Tyngdekraften kommer utenfra fordi myntbuene over hoppene *er* bilens
+   * kastebane. Regnet buene med sin egen konstant, ville de sluttet å stemme
+   * i samme øyeblikk som noen justerte fysikken – og det er nettopp det å
+   * ikke stemme som var feilen med den forrige buen.
+   */
+  function bygg(tyngde) {
+    var G = tyngde || 900;
     var p = [];
     var x = 0, y = 0;
 
@@ -89,25 +96,41 @@ var Lope = (function () {
 
     /* ---------- Stuntløypa ---------- */
 
+    /*
+     * Begge loopene ligger før begge hoppene, og det er ikke tilfeldig.
+     * En fullt utstyrt bil flyr nesten 2000 enheter. Lå en loop innenfor den
+     * rekkevidden, ville bilen seile tvers gjennom loopens asfalt i lufta –
+     * den kan bare lande på fast grunn, så loopen er ikke noe den treffer,
+     * bare noe den klipper gjennom. Rekkefølgen her holder all flyging over
+     * åpent terreng.
+     *
+     * Gapene er satt etter målt rekkevidde: en umodifisert bil forlater den
+     * første rampa i 44 grader med rundt 750 i fart. Gapene ligger godt
+     * innenfor det, så bilen klarer dem med margin i stedet for å måtte
+     * reddes av kanten.
+     */
     flat(420);
     kul(420, 90);
     flat(180);
     loop(95, 70);                 // første loop, den lille
-    flat(240);
-    kul(340, 60);
-    rampe(300, 150);
-    gap(300, 30);                 // første hopp
-    trapp(220, 40);
-    bolger(620, 3, 70);
-    flat(200);
+    flat(220);
+    bolger(560, 2, 70);
+    flat(220);
     loop(120, 80);                // stor loop
-    trapp(260, -60);
-    kul(360, 80);
+    trapp(240, -50);
+    kul(360, 70);
+    rampe(300, 150);
+    gap(480, 40);                 // første hopp
+    trapp(240, 50);
+    bolger(560, 2, 60);
+    kul(340, 70);
     rampe(360, 210);
-    gap(430, 90);                 // det lange hoppet
+    gap(520, 110);                // det lange hoppet: 49 grader
     trapp(260, 60);
     kul(300, 50);
-    flat(560);                    // utrulling og mål
+    // Lang utrulling: en maksbil lander nesten 1900 enheter etter den siste
+    // rampa, og skal rekke å komme ned før målstreken i stedet for å fly forbi.
+    flat(1000);
 
     /* ---------- etterarbeid ---------- */
 
@@ -117,9 +140,22 @@ var Lope = (function () {
     for (var i = 1; i < p.length; i++) {
       p[i].s = p[i - 1].s + Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
     }
+    /*
+     * Tangenten er snittet av naboene – bortsett fra på hver side av et gap,
+     * der den må regnes ensidig.
+     *
+     * Naboen på den andre siden av et hopp ligger flere hundre enheter unna
+     * og som regel lavere. Tar man snittet over gapet, blir tangenten på en
+     * 45-graders rampe til noen få grader *nedover*, og bilen forlater rampa
+     * med nesa ned i stedet for å bli kastet opp. Landingspunktet fikk samme
+     * behandling motsatt vei.
+     */
     for (i = 0; i < p.length; i++) {
-      var a = p[Math.max(0, i - 1)], b = p[Math.min(p.length - 1, i + 1)];
-      p[i].vinkel = Math.atan2(b.y - a.y, b.x - a.x);
+      var fra = Math.max(0, i - 1), til = Math.min(p.length - 1, i + 1);
+      if (p[i].hopp) til = i;                     // avsprang: bare bakover
+      else if (i > 0 && p[i - 1].hopp) fra = i;   // landing: bare framover
+      if (fra === til) { fra = Math.max(0, i - 1); til = Math.min(p.length - 1, i + 1); }
+      p[i].vinkel = Math.atan2(p[til].y - p[fra].y, p[til].x - p[fra].x);
     }
 
     // Looper markeres som strekninger, så kjøringen vet når den skal hjelpe
@@ -148,9 +184,15 @@ var Lope = (function () {
       if (p[i].y > lope.lavest) lope.lavest = p[i].y;
     }
 
-    leggMynter(lope);
+    leggMynter(lope, G);
     return lope;
   }
+
+  // Målt avsprangsfart for en umodifisert bil. Buene tegnes for den, ikke
+  // for en fullt utstyrt: den svakeste bilen skal treffe myntene, de sterke
+  // flyr over og bytter mynter mot lengde. Endrer du motor eller ramper, mål
+  // på nytt – det står i README-en hvordan.
+  var REFERANSEFART = 750;
 
   /*
    * Myntene ligger et stykke over løypa, langs normalen. I en loop peker
@@ -158,7 +200,7 @@ var Lope = (function () {
    * kjører. Det er også det som gjør at en loop lønner seg: du plukker et
    * dusin mynter på en runde du uansett skulle kjørt.
    */
-  function leggMynter(lope) {
+  function leggMynter(lope, G) {
     var p = lope.punkter, neste = 260;
     for (var i = 1; i < p.length - 1; i++) {
       if (p[i].s < neste) continue;
@@ -168,17 +210,31 @@ var Lope = (function () {
       lope.mynter.push({ x: p[i].x + nx * 52, y: p[i].y + ny * 52, tatt: false });
     }
 
-    // Over hvert hopp henger en bue med mynter. De er den eneste grunnen til
-    // å hoppe langt i tillegg til bonusen, og de viser hvor bilen skal.
+    /*
+     * Over hvert hopp henger en bue med mynter, og den buen er den ekte
+     * kastebanen – ikke en tegnet halvsirkel.
+     *
+     * Første utgave var en fast sinusbue med topp 170 enheter over gapet.
+     * Bilen nådde i praksis 154 og landet flere hundre enheter forbi der
+     * buen sluttet, så myntene hang både for høyt og på feil sted, og hoppet
+     * så ut som om bilen ignorerte dem. Nå settes de rett på banen: samme
+     * avsprangsvinkel, samme tyngdekraft, og den målte referansefarten.
+     */
     for (i = 0; i < p.length - 1; i++) {
       if (!p[i].hopp) continue;
-      var a = p[i], b = p[i + 1];
-      var lengde = b.x - a.x;
-      for (var k = 1; k <= 6; k++) {
-        var tt = k / 7;
+      var a = p[i], mal = p[i + 1];
+      var vx = Math.cos(a.vinkel) * REFERANSEFART;
+      var vy = Math.sin(a.vinkel) * REFERANSEFART;
+      var dy = mal.y - a.y;
+      // Tiden til banen er tilbake på landingshøyden.
+      var flytid = (-vy + Math.sqrt(Math.max(0, vy * vy + 2 * G * dy))) / G;
+      for (var k = 1; k <= 7; k++) {
+        var t = flytid * k / 8;
         lope.mynter.push({
-          x: a.x + lengde * tt,
-          y: a.y + (b.y - a.y) * tt - 130 * Math.sin(Math.PI * tt) - 40,
+          // De 40 enhetene er den samme forskyvningen som plukkingen måler
+          // mot, så mynten står midt på bilen og ikke under hjulene.
+          x: a.x + vx * t,
+          y: a.y + vy * t + 0.5 * G * t * t - 40,
           tatt: false
         });
       }
