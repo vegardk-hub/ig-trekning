@@ -796,6 +796,9 @@ var Bil = (function () {
     stil: stil,
     bonus: bonus,
     svg: svg,
+    // Selve tegningen uten <svg> rundt, så garasjen kan legge bilen inn i
+    // sin egen koordinatverden med en transform.
+    innhold: tegning,
     miniHjul: miniHjul,
     tegninger: tegninger,
     standard: standard

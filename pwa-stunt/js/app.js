@@ -92,7 +92,9 @@
   /* ---------- garasje ---------- */
 
   function tegnGarasje() {
-    e.garasjeBil.innerHTML = Bil.svg(stat.valgt, 'g', 'bilbilde');
+    // Garasjen tegner bilen inni seg, i sin egen koordinatverden – derfor
+    // ikke `Bil.svg()` her.
+    e.garasjeBil.innerHTML = Garasje.svg(stat.valgt, 'g');
     e.garasjePenger.textContent = penger();
     var b = Bil.bonus(stat.valgt);
     e.garasjeStil.textContent = '×' + b.toFixed(2);
@@ -357,7 +359,12 @@
 
   document.getElementById('knappVerksted').onclick = function () { vis('skjermVerksted'); };
   document.getElementById('knappDeler').onclick = function () { vis('skjermDeler'); };
-  document.getElementById('knappKjor').onclick = startLop;
+  // KJØR-knappen finnes på tre skjermer: garasjen, verkstedet og delene.
+  // Uten den på de to siste måtte barnet tilbake til garasjen bare for å
+  // starte, og det er ett trykk for mye midt i «prøve den nye motoren».
+  Array.prototype.forEach.call(document.querySelectorAll('.kjorknapp'), function (k) {
+    k.onclick = startLop;
+  });
   document.getElementById('knappTilbakeVerksted').onclick = function () { vis('skjermGarasje'); };
   document.getElementById('knappTilbakeDeler').onclick = function () { vis('skjermGarasje'); };
   document.getElementById('knappAvbryt').onclick = avbryt;

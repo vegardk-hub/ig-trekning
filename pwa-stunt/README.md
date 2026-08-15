@@ -94,6 +94,7 @@ og mister mynter underveis. Det er en tilsiktet motvekt, ikke en feil.
 | Fil | Svarer for |
 | --- | --- |
 | `js/bil.js` | Delekatalogen og tegningen av bilen |
+| `js/garasje.js` | Rommet bilen står i på garasjeskjermen |
 | `js/lope.js` | Løypa: punktlista, myntene, oppslag langs kurven |
 | `js/fysikk.js` | Simuleringen: fart, hopp, mynter, penger, oppgraderinger |
 | `js/kjoring.js` | Kamera og tegning av løypa |
@@ -147,6 +148,39 @@ To ting det er verdt å vite hvis du endrer dette:
 * **Lagrekkefølgen er katalogens, ikke trykkerekkefølgen.** `valgtDekor()`
   filtrerer `DEKOR` i stedet for å lese lista barnet bygde, så striper alltid
   ligger nederst og glitter øverst uansett hva som ble kjøpt først.
+
+## Garasjen
+
+Garasjeskjermen viser bilen i et rom: port, vegg, gulv med fliser, to lamper
+med lyskjegler, vimpler, verktøytavle, hylle, verktøykasse og en dekkstabel.
+Alt ligger i `js/garasje.js` — `bil.js` svarer for bilen og ingenting annet.
+
+**Bilen tegnes inni garasjens SVG, ikke ved siden av.** `Bil.innhold()` gir
+tegningen uten `<svg>` rundt, og garasjen legger den inn med en `transform`.
+Da er det én koordinatverden: alle formene har hjulene på `Bil.BAKKE`, og én
+skalering setter den linja rett på gulvet. Legges de to som separate
+elementer oppå hverandre, må plasseringen finstemmes på nytt hver gang en
+form endrer høyde.
+
+Tre ting det er verdt å vite:
+
+* **Rommet er høyere enn det er bredt.** Ruta bilen står i er høy og smal på
+  en telefon, og et første forsøk med en bred scene (480 × 300) ble liggende
+  som et frimerke med tomrom over og under.
+* **`preserveAspectRatio` står på standard «meet», ikke «slice».** I liggende
+  format er ruta lav og bred, og «slice» ville da skåret bort både tak og
+  gulv — altså nettopp bilen. Luften som blir til overs, dekkes i stedet av at
+  `#garasjeBil` har samme mørke bakgrunn som rommets dypeste flate.
+* **I liggende legges garasjeskjermen om til to kolonner.** Rommet får hele
+  høyden på venstre side, og tallene og knappene står ved siden av. Uten det
+  blir ruta så lav at rommet krymper uansett hva `preserveAspectRatio` gjør.
+
+## KJØR-knappen finnes på tre skjermer
+
+Garasjen, verkstedet og delene. Uten den på de to siste måtte barnet tilbake
+til garasjen bare for å starte, og det er ett trykk for mye midt i «prøve den
+nye motoren». Alle tre har klassen `kjorknapp` og kobles i én sløyfe;
+garasjens har i tillegg `id="knappKjor"`, som prøvene peker på.
 
 ## Ekstra: tilbehør som sitter *på* bilen
 
