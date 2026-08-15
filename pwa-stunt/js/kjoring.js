@@ -51,6 +51,14 @@ var Kjoring = (function () {
      */
     var MAKSSNURR = 16;   // radianer per sekund
 
+    /*
+     * Blinkefasen. Bilen er et bilde her, og et bilde animerer ikke – så
+     * `Bil.tegninger()` har laget ett bilde per fase, og vi bytter mellom
+     * dem i takt med klokka. Takten er den samme som CSS-animasjonen i
+     * garasjen, så lysene blinker likt begge steder.
+     */
+    var BLINKTAKT = 0.45;   // sekunder per fase
+
     function snurr(dt) {
       var fart = Math.abs(b.flyr ? b.fvx : b.v);
       hjulsnurr += Math.min(fart / hjulradius, MAKSSNURR) * dt;
@@ -246,7 +254,9 @@ var Kjoring = (function () {
       // Tegningens `bakke`-linje legges på selve løypa, så hjulene står på
       // asfalten i stedet for et stykke over eller under den.
       var topp = -bilder.bakke * bilskala;
-      ctx.drawImage(bilder.kropp, -BILBREDDE * 0.5, topp, BILBREDDE, bilder.hoyde * bilskala);
+      var fase = Math.floor(tid / BLINKTAKT) % bilder.kropp.length;
+
+      ctx.drawImage(bilder.kropp[fase], -BILBREDDE * 0.5, topp, BILBREDDE, bilder.hoyde * bilskala);
 
       for (var i = 0; i < bilder.plasser.length; i++) {
         var p = bilder.plasser[i];
@@ -254,7 +264,7 @@ var Kjoring = (function () {
         ctx.save();
         ctx.translate(-BILBREDDE * 0.5 + p.x * bilskala, topp + p.y * bilskala);
         ctx.rotate(hjulsnurr);
-        ctx.drawImage(bilder.hjul, -r, -r, r * 2, r * 2);
+        ctx.drawImage(bilder.hjul[fase], -r, -r, r * 2, r * 2);
         ctx.restore();
       }
 
@@ -289,7 +299,14 @@ var Kjoring = (function () {
       if (!kjorer && b.ferdig) { tegn(); return; }
       if (!kjorer) return;
 
-      var dt = Math.min(0.1, (na - sistTid) / 1000 || 0);
+      /*
+       * Tidsstemplet fra requestAnimationFrame kan ligge *bak* den
+       * `performance.now()` vi leste rett før vi ba om ruta, og da blir dt
+       * negativ på første bilderute. Det ga en `tid` under null, og
+       * `Math.floor(-0.6) % 2` er -1 i JavaScript – ikke 1 – så blinkefasen
+       * pekte på `kropp[-1]` og hele kjøringen stoppet med en tom drawImage.
+       */
+      var dt = Math.max(0, Math.min(0.1, (na - sistTid) / 1000 || 0));
       sistTid = na;
       tid += dt;
       rest += dt;

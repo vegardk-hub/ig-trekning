@@ -94,6 +94,31 @@ body {
   75% { transform: translateX(7px); }
 }
 
+/* ---------- blinkende deler på bilen ---------- */
+
+/*
+ * Lys, lyn, gnister og flammer blinker i to grupper som veksler i motfase:
+ * mens A lyser, er B dempet. Deles de ikke i to, ser bilen ut som den slår
+ * seg av og på i stedet for å tindre.
+ *
+ * `steps(1, end)` gir et hardt skifte, ikke en mykt pulserende overgang –
+ * et blålys blinker, det toner ikke.
+ *
+ * Dette gjelder bilen som SVG i garasjen og verkstedet. I løypa er bilen et
+ * bilde på et canvas, og der bakes fasen inn i to ferdige bilder i stedet.
+ * Takten er den samme begge steder: 0,45 sekund per fase.
+ */
+@keyframes blinkA { 0%, 49.9% { opacity: 1; } 50%, 100% { opacity: 0.28; } }
+@keyframes blinkB { 0%, 49.9% { opacity: 0.28; } 50%, 100% { opacity: 1; } }
+
+.blink-a { animation: blinkA 0.9s steps(1, end) infinite; }
+.blink-b { animation: blinkB 0.9s steps(1, end) infinite; }
+
+/* Blinkende lys er en av de tingene som bør kunne slås av. */
+@media (prefers-reduced-motion: reduce) {
+  .blink-a, .blink-b { animation: none; opacity: 1; }
+}
+
 /* ---------- bilen ---------- */
 
 .bilscene {

@@ -166,6 +166,28 @@ blir et komisk tårn. Faste lag var det åpenbare alternativet, men da hang
 sirenen i lufta hvis kofferten under ikke var kjøpt. Rekkefølgen i `EKSTRA` er
 stableorden nedenfra.
 
+### Lysene blinker to steder på hver sin måte
+
+Lamper, blålys, lyn, gnister, stjerner, flammer og neonhjul blinker. To
+grupper veksler i motfase: mens A lyser, er B dempet, og lampene i lysbøylen
+ligger annenhver i hver gruppe så de løper i stedet for å slå seg av samlet.
+
+Bilen tegnes to helt ulike steder, og de trenger hver sin mekanisme:
+
+* **Garasjen og verkstedet** — bilen er en SVG i DOM-en. Delen får en klasse
+  (`blink-a`/`blink-b`), og `styles.css` animerer den. `steps(1, end)` gir et
+  hardt skifte; et blålys blinker, det toner ikke.
+* **Løypa** — bilen er et bilde tegnet på canvas, og et bilde animerer ikke.
+  Der bakes fasen inn: `Bil.tegninger()` lager ett bilde per fase, og
+  kjøringen bytter mellom dem i takt med klokka.
+
+Begge veier har nøyaktig de samme to tilstandene og samme takt (0,45 s per
+fase), så bilen blinker likt begge steder. `Bil.blink()` er det ene stedet
+valget mellom klasse og innbakt verdi tas.
+
+Bildene lages bare når designet endres, så to faser koster to ekstra
+serialiseringer i det øyeblikket man trykker KJØR — ingenting per bilderute.
+
 To ting som kostet tid:
 
 * **`TAK`-marginen i viewBoxen.** Fire ting stablet på en lav racer rekker godt
@@ -176,6 +198,12 @@ To ting som kostet tid:
 * **Ballongene stiger så høyt det er plass til**, ikke en fast avstand. En
   monsterbil har bakluka nesten oppe i viewBoxens tak, og med fast høyde
   forsvant ballongene ut av bildet på akkurat den formen.
+* **Vimpelen blåser bakover.** Bilen kjører mot høyre, så flagget skal ligge
+  mot venstre. Første utgave lot det peke forover, og da så det ut som om det
+  blåste kraftig imot i stedet for at bilen kjørte fort.
+* **`blink()` skriver ut `opacity` når fasen er bakt inn.** Har elementet
+  allerede et `opacity`-attributt, blir SVG-en ugyldig og bildet laster ikke i
+  det hele tatt. Frontlyktas glød bruker derfor `fill-opacity`.
 
 **Formen eier alle målene.** `dekorboks`, `spoilerfeste`, `tak`, `bakluke`,
 `panser` og `eksosfeste` ligger på hver form,

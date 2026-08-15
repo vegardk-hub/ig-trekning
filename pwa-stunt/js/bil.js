@@ -29,6 +29,31 @@ var Bil = (function () {
    */
   var TAK = 46;
 
+  /*
+   * Blinking. To grupper som veksler i motfase: mens A lyser, er B dempet.
+   * Lamper, gnister og stjerner deles mellom de to, så det alltid lyser noe
+   * – blinker alt i takt, ser bilen ut som den slår seg av og på.
+   *
+   * Det finnes to helt ulike steder bilen tegnes, og de trenger hver sin vei:
+   *
+   *   Garasjen og verkstedet – bilen er en SVG i DOM-en, og da gjør CSS
+   *   jobben. Delen får en klasse, og `styles.css` animerer den.
+   *
+   *   Løypa – bilen er et bilde tegnet på canvas, og et bilde animerer ikke.
+   *   Der bakes fasen inn: `Bil.tegninger()` lager ett bilde per fase, og
+   *   kjøringen bytter mellom dem i takt med klokka.
+   *
+   * Begge veier har nøyaktig de samme to tilstandene, så bilen blinker likt
+   * i garasjen og i løypa.
+   */
+  var FASER = 2;
+
+  function blink(gruppe, fase) {
+    if (fase === undefined) return ' class="blink-' + gruppe + '"';
+    var lyser = (gruppe === 'a') === (fase === 0);
+    return ' opacity="' + (lyser ? 1 : 0.28) + '"';
+  }
+
   /* ---------- former ---------- */
 
   var FORMER = [
@@ -285,7 +310,7 @@ var Bil = (function () {
     return ut;
   }
 
-  function hjulTegning(h, hj, i) {
+  function hjulTegning(h, hj, i, fase) {
     var g = '<g>';
     g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + h.r + '" fill="' + hj.dekk + '"/>';
     if (hj.grov) {
@@ -304,7 +329,7 @@ var Bil = (function () {
     g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.17).toFixed(1) + '" fill="' + hj.dekk + '"/>';
     if (hj.glod) {
       g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.78).toFixed(1) +
-           '" fill="none" stroke="' + hj.glod + '" stroke-width="3" opacity="0.85"/>';
+           '" fill="none" stroke="' + hj.glod + '" stroke-width="3"' + blink('a', fase) + '/>';
     }
     return g + '</g>';
   }
@@ -327,7 +352,7 @@ var Bil = (function () {
    * hvor stor sonen er, og en ny dekortype er en `switch`-gren uten et eneste
    * mål å regne ut på nytt.
    */
-  function dekorTegning(id, boks, lakk) {
+  function dekorTegning(id, boks, lakk, fase) {
     var lys = lakk.pynt, mork = lakk.mork, s = '', i;
 
     function X(u) { return (boks.x + boks.b * u).toFixed(1); }
@@ -345,16 +370,18 @@ var Bil = (function () {
       case 'stjerner':
         var plasser = [[0.22, 0.26, 0.30], [0.68, 0.22, 0.20], [0.46, 0.62, 0.34], [0.86, 0.70, 0.22]];
         for (i = 0; i < plasser.length; i++) {
+          // Annenhver stjerne i hver gruppe, så de tindrer i stedet for å
+          // slå seg av og på samlet.
           s += stjerne(boks.x + boks.b * plasser[i][0],
                        boks.y + boks.h * plasser[i][1],
-                       boks.h * plasser[i][2], lys);
+                       boks.h * plasser[i][2], lys, i % 2 ? 'b' : 'a', fase);
         }
         return s;
 
       // Ett lyn som fyller sonen. To lyn ville krevd halve bredden hver, og
       // da leser ingen av dem som et lyn.
       case 'lyn':
-        return '<path d="M' + X(0.68) + ' ' + Y(0) +
+        return '<path' + blink('a', fase) + ' d="M' + X(0.68) + ' ' + Y(0) +
                ' L' + X(0.10) + ' ' + Y(0.56) +
                ' L' + X(0.42) + ' ' + Y(0.56) +
                ' L' + X(0.16) + ' ' + Y(1) +
@@ -408,21 +435,22 @@ var Bil = (function () {
                ' L' + (gx - gr * 0.34).toFixed(1) + ' ' + (gy + gr * 0.34).toFixed(1) +
                ' L' + (gx - gr).toFixed(1) + ' ' + gy.toFixed(1) +
                ' L' + (gx - gr * 0.34).toFixed(1) + ' ' + (gy - gr * 0.34).toFixed(1) +
-               ' Z" fill="#ffffff" opacity="' + (0.5 + (i % 4) * 0.15).toFixed(2) + '"/>';
+               ' Z" fill="#ffffff"' + blink(i % 2 ? 'b' : 'a', fase) + '/>';
         }
         return s;
     }
     return '';
   }
 
-  function stjerne(cx, cy, r, farge) {
+  function stjerne(cx, cy, r, farge, gruppe, fase) {
     var d = '', i;
     for (i = 0; i < 10; i++) {
       var rr = i % 2 ? r * 0.45 : r;
       var v = (i * 36 - 90) * Math.PI / 180;
       d += (i ? ' L' : 'M') + (cx + Math.cos(v) * rr).toFixed(1) + ' ' + (cy + Math.sin(v) * rr).toFixed(1);
     }
-    return '<path d="' + d + ' Z" fill="' + farge + '"/>';
+    return '<path d="' + d + ' Z" fill="' + farge + '"' +
+           (gruppe ? blink(gruppe, fase) : '') + '/>';
   }
 
   /*
@@ -433,7 +461,7 @@ var Bil = (function () {
    * `t` er toppen delen skal stå på – for takdelene flyttes den oppover for
    * hver del som allerede ligger der.
    */
-  function ekstraTegning(id, f, t, lakk) {
+  function ekstraTegning(id, f, t, lakk, fase) {
     var x = f.x, y = t, i, s = '';
     var METALL = '#48505c', METALL_MORK = '#2f3540';
 
@@ -470,16 +498,21 @@ var Bil = (function () {
             '<rect x="' + (x + 19) + '" y="' + (y - 3) + '" width="7" height="5" fill="' + METALL_MORK + '"/>';
         for (i = 0; i < 4; i++) {
           var lx = x - 24 + i * 16;
-          s += '<circle cx="' + lx + '" cy="' + (y - 17) + '" r="7" fill="#fff6c9"/>' +
-               '<circle cx="' + lx + '" cy="' + (y - 17) + '" r="3" fill="#ffffff"/>';
+          var g = i % 2 ? 'b' : 'a';
+          s += '<g' + blink(g, fase) + '>' +
+               '<circle cx="' + lx + '" cy="' + (y - 17) + '" r="7" fill="#fff6c9"/>' +
+               '<circle cx="' + lx + '" cy="' + (y - 17) + '" r="3" fill="#ffffff"/></g>';
         }
         return s;
 
       case 'sirene':
+        // Rødt og blått veksler, som et ekte blålys.
         return '<rect x="' + (x - 20) + '" y="' + (y - 6) + '" width="40" height="7" rx="3" fill="' +
                  METALL_MORK + '"/>' +
-               '<path d="M' + (x - 17) + ' ' + (y - 6) + ' q0 -12 17 -12 q17 0 17 12 Z" fill="#ff4d4d"/>' +
-               '<path d="M' + x + ' ' + (y - 18) + ' q17 0 17 12 L' + x + ' ' + (y - 6) + ' Z" fill="#3aa8ff"/>' +
+               '<path d="M' + (x - 17) + ' ' + (y - 6) + ' q0 -12 17 -12 q17 0 17 12 Z" fill="#ff4d4d"' +
+                 blink('a', fase) + '/>' +
+               '<path d="M' + x + ' ' + (y - 18) + ' q17 0 17 12 L' + x + ' ' + (y - 6) + ' Z" fill="#3aa8ff"' +
+                 blink('b', fase) + '/>' +
                '<circle cx="' + x + '" cy="' + (y - 20) + '" r="3" fill="#ffffff"/>';
 
       /* --- bakluka --- */
@@ -512,8 +545,10 @@ var Bil = (function () {
                '<rect x="' + (x - 34) + '" y="' + (ey + 14) + '" width="42" height="11" rx="5" fill="' + METALL + '"/>' +
                '<circle cx="' + (x - 33) + '" cy="' + (ey + 5) + '" r="7" fill="' + METALL_MORK + '"/>' +
                '<circle cx="' + (x - 33) + '" cy="' + (ey + 19) + '" r="7" fill="' + METALL_MORK + '"/>' +
-               '<path d="M' + (x - 40) + ' ' + (ey + 5) + ' l-22 -6 l10 6 l-10 6 z" fill="#ff8a1e"/>' +
-               '<path d="M' + (x - 40) + ' ' + (ey + 19) + ' l-18 -5 l8 5 l-8 5 z" fill="#ffd24a"/>';
+               '<path d="M' + (x - 40) + ' ' + (ey + 5) + ' l-22 -6 l10 6 l-10 6 z" fill="#ff8a1e"' +
+                 blink('a', fase) + '/>' +
+               '<path d="M' + (x - 40) + ' ' + (ey + 19) + ' l-18 -5 l8 5 l-8 5 z" fill="#ffd24a"' +
+                 blink('b', fase) + '/>';
 
       /* --- panseret --- */
 
@@ -526,18 +561,21 @@ var Bil = (function () {
                '<path d="M' + (ax - 12) + ' ' + (ay - 2) + ' q-9 -6 -2 -11" stroke="#f0b300" stroke-width="3" fill="none"/>';
 
       case 'vimpel':
-        var vx = x + 30;
+        // Flagget blåser *bakover*, altså mot venstre: bilen kjører mot
+        // høyre. Første utgave lot vimpelen peke forover, og da så det ut
+        // som om det blåste kraftig imot i stedet for at bilen kjørte fort.
+        var vx = x + 34;
         return '<rect x="' + (vx - 2) + '" y="' + (y - 54) + '" width="4" height="56" rx="2" fill="' +
                  METALL_MORK + '"/>' +
-               '<path d="M' + (vx + 2) + ' ' + (y - 52) + ' L' + (vx + 44) + ' ' + (y - 42) +
-                 ' L' + (vx + 2) + ' ' + (y - 30) + ' Z" fill="#ff4d6d"/>' +
-               '<path d="M' + (vx + 2) + ' ' + (y - 46) + ' L' + (vx + 26) + ' ' + (y - 42) +
-                 ' L' + (vx + 2) + ' ' + (y - 37) + ' Z" fill="#fff3d0"/>';
+               '<path d="M' + (vx - 2) + ' ' + (y - 52) + ' L' + (vx - 44) + ' ' + (y - 42) +
+                 ' L' + (vx - 2) + ' ' + (y - 30) + ' Z" fill="#ff4d6d"/>' +
+               '<path d="M' + (vx - 2) + ' ' + (y - 46) + ' L' + (vx - 26) + ' ' + (y - 42) +
+                 ' L' + (vx - 2) + ' ' + (y - 37) + ' Z" fill="#fff3d0"/>';
     }
     return '';
   }
 
-  function spoilerTegning(id, feste, lakk) {
+  function spoilerTegning(id, feste, lakk, fase) {
     var x = feste.x, y = feste.y;
     var f = lakk.farge, m = lakk.mork, p = lakk.pynt;
     switch (id) {
@@ -568,7 +606,8 @@ var Bil = (function () {
                '<rect x="' + (x + 10) + '" y="' + (y - 12) + '" width="10" height="34" rx="4" fill="#2f3540"/>' +
                '<rect x="' + (x + 46) + '" y="' + (y - 12) + '" width="10" height="34" rx="4" fill="#2f3540"/>' +
                '<path d="M' + (x - 12) + ' ' + (y - 40) + ' l-16 5 l0 22 l16 5 z" fill="#2f3540"/>' +
-               '<path d="M' + (x - 28) + ' ' + (y - 32) + ' l-28 8 l28 8 z" fill="#ff8a1e" opacity="0.9"/>';
+               '<path d="M' + (x - 28) + ' ' + (y - 32) + ' l-28 8 l28 8 z" fill="#ff8a1e"' +
+                 blink('a', fase) + '/>';
     }
     return '';
   }
@@ -613,13 +652,13 @@ var Bil = (function () {
     }
 
     // Spoileren bak karosseriet, ellers ser stagene ut som de er limt utenpå.
-    s += spoilerTegning(d.spoiler.id, f.spoilerfeste, lakk);
+    s += spoilerTegning(d.spoiler.id, f.spoilerfeste, lakk, opts.fase);
 
     if (f.understell) s += '<path d="' + f.understell + '" fill="' + lakk.mork + '"/>';
     s += '<path d="' + f.kropp + '" fill="' + fyll + '"/>';
     var pynt = '';
     for (var n = 0; n < d.dekor.length; n++) {
-      pynt += dekorTegning(d.dekor[n].id, sone(f.dekorboks, d.dekor[n].sone), lakk);
+      pynt += dekorTegning(d.dekor[n].id, sone(f.dekorboks, d.dekor[n].sone), lakk, opts.fase);
     }
     s += '<g clip-path="url(#' + pre + 'kropp)">' + pynt + '</g>';
     s += '<path d="' + f.kropp + '" fill="none" stroke="' + lakk.mork + '" stroke-width="4"/>';
@@ -640,15 +679,17 @@ var Bil = (function () {
       var del = d.ekstra[e];
       var feste = f[del.plass] || f.tak;
       var toppen = del.plass === 'tak' ? feste.y - takhoyde : feste.y;
-      s += ekstraTegning(del.id, feste, toppen, lakk);
+      s += ekstraTegning(del.id, feste, toppen, lakk, opts.fase);
       if (del.plass === 'tak') takhoyde += del.hoyde;
     }
 
     s += '<circle cx="' + f.lykt.x + '" cy="' + f.lykt.y + '" r="9" fill="#fff6c9"/>';
     s += '<circle cx="' + f.lykt.x + '" cy="' + f.lykt.y + '" r="4" fill="#ffffff"/>';
+    s += '<circle cx="' + f.lykt.x + '" cy="' + f.lykt.y + '" r="13" fill="#fff6c9"' +
+         ' fill-opacity="0.4"' + blink('b', opts.fase) + '/>';
 
     if (!opts.utenHjul) {
-      for (var i = 0; i < f.hjul.length; i++) s += hjulTegning(f.hjul[i], d.hjul, i);
+      for (var i = 0; i < f.hjul.length; i++) s += hjulTegning(f.hjul[i], d.hjul, i, opts.fase);
     }
 
     return s;
@@ -686,13 +727,18 @@ var Bil = (function () {
     var hj = finn(HJUL, valgt.hjul);
 
     var full = H + 10 + TAK;
-    var kropp = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (B * 2) + '" height="' + (full * 2) +
-                '" viewBox="0 ' + (-TAK) + ' ' + B + ' ' + full + '">' +
-                tegning(valgt, 'c', { utenHjul: true, utenSkygge: true }) + '</svg>';
 
-    var hjulsvg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (HJULBOKS * 2) + '" height="' + (HJULBOKS * 2) +
-                  '" viewBox="0 0 ' + HJULBOKS + ' ' + HJULBOKS + '">' +
-                  hjulTegning({ x: HJULBOKS / 2, y: HJULBOKS / 2, r: HJULRADIUS }, hj, 0) + '</svg>';
+    function kroppSvg(fase) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (B * 2) + '" height="' + (full * 2) +
+             '" viewBox="0 ' + (-TAK) + ' ' + B + ' ' + full + '">' +
+             tegning(valgt, 'c' + fase, { utenHjul: true, utenSkygge: true, fase: fase }) + '</svg>';
+    }
+
+    function hjulSvg(fase) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (HJULBOKS * 2) + '" height="' + (HJULBOKS * 2) +
+             '" viewBox="0 0 ' + HJULBOKS + ' ' + HJULBOKS + '">' +
+             hjulTegning({ x: HJULBOKS / 2, y: HJULBOKS / 2, r: HJULRADIUS }, hj, 0, fase) + '</svg>';
+    }
 
     // Forholdet mellom bildets *halve* bredde og hjulets radius. Tegner man
     // med hele boksen mot radien, blir hjulet dobbelt så stort som resten av
@@ -706,20 +752,32 @@ var Bil = (function () {
      */
     var plasser = f.hjul.map(function (h) { return { x: h.x, y: h.y + TAK, r: h.r }; });
 
-    var igjen = 2, ut = {
+    /*
+     * Ett bilde per fase av hver del. Bildene lages bare når designet endres,
+     * så to faser koster to serialiseringer i det øyeblikket man trykker
+     * KJØR – ingenting per bilderute.
+     */
+    var ut = {
       plasser: plasser, bredde: B, hoyde: full,
-      bakke: BAKKE + TAK, hjulboks: margin
+      bakke: BAKKE + TAK, hjulboks: margin,
+      kropp: [], hjul: []
     };
 
+    var igjen = FASER * 2;
     function ferdig() { if (--igjen === 0) klar(ut); }
 
-    ut.kropp = new Image();
-    ut.kropp.onload = ferdig;
-    ut.kropp.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(kropp);
+    function lastInn(liste, fase, kilde) {
+      var img = new Image();
+      img.onload = ferdig;
+      img.onerror = ferdig;   // en ødelagt tegning skal ikke henge kjøringen
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(kilde);
+      liste[fase] = img;
+    }
 
-    ut.hjul = new Image();
-    ut.hjul.onload = ferdig;
-    ut.hjul.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(hjulsvg);
+    for (var fase = 0; fase < FASER; fase++) {
+      lastInn(ut.kropp, fase, kroppSvg(fase));
+      lastInn(ut.hjul, fase, hjulSvg(fase));
+    }
   }
 
   function standard() {
@@ -732,6 +790,7 @@ var Bil = (function () {
     BAKKE: BAKKE,
     bredde: B,
     hoyde: H + 10,
+    FASER: FASER,
     finn: finn,
     deler: deler,
     stil: stil,
