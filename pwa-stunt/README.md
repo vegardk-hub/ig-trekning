@@ -175,6 +175,24 @@ Tre ting det er verdt å vite:
   høyden på venstre side, og tallene og knappene står ved siden av. Uten det
   blir ruta så lav at rommet krymper uansett hva `preserveAspectRatio` gjør.
 
+## Kjøp skjer med ett trykk
+
+Ingen «Ja takk» å bekrefte med. For et barn som prøver seg fram er en dialog
+per kjøp et hinder, ikke en trygghet — det var slik det var først, og eieren
+ba om å få det bort.
+
+Da må trykket svare på en annen måte, og det er verdt å beholde:
+
+* **Pengemerket blafrer** når summen går ned. Uten det blir kjøpet helt
+  stille, og et barn som bommet på en rute ville ikke sett hvorfor pengene
+  ble færre.
+* **Det man ikke har råd til, rister** i stedet, og ruta er allerede dempet
+  (`.dyr`).
+
+Merk at et trykk på en del man ikke eier nå *kjøper* den. Det er prisen for
+at kjøpet går unna, og den er akseptert: ingenting kan gå tapt for godt —
+delen blir værende, og pynt kan slås av og på fritt etterpå.
+
 ## KJØR-knappen finnes på tre skjermer
 
 Garasjen, verkstedet og delene. Uten den på de to siste måtte barnet tilbake

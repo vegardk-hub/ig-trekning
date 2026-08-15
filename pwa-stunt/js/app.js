@@ -30,8 +30,7 @@
    'verkstedBil', 'verkstedPenger', 'kategorier', 'valgene', 'stilLinje',
    'delerPenger', 'delerListe',
    'lerret', 'hudPenger', 'hudFart', 'framdrift', 'hudHint', 'knappGass', 'knappBrems',
-   'resultatSum', 'resultatDetaljer', 'resultatBil', 'resultatRekord',
-   'kjopTittel', 'kjopTekst', 'kjopJa', 'kjopNei', 'kjopKort'
+   'resultatSum', 'resultatDetaljer', 'resultatBil', 'resultatRekord'
   ].forEach(function (id) { e[id] = document.getElementById(id); });
 
   /* ---------- lagring ---------- */
@@ -181,14 +180,13 @@
       rist(e.verkstedPenger);
       return;
     }
-    spor('Kjøpe ' + del.navn + '?', 'Det koster $' + del.pris + '. Du har ' + penger() + '.', function () {
-      stat.penger -= del.pris;
-      stat.eid[kat.id].push(del.id);
-      if (kat.flere) stat.valgt[kat.id].push(del.id);
-      else stat.valgt[kat.id] = del.id;
-      lagre();
-      tegnVerksted();
-    });
+    stat.penger -= del.pris;
+    stat.eid[kat.id].push(del.id);
+    if (kat.flere) stat.valgt[kat.id].push(del.id);
+    else stat.valgt[kat.id] = del.id;
+    lagre();
+    tegnVerksted();
+    blafr(e.verkstedPenger);
   }
 
   /* ---------- deler (oppgraderinger) ---------- */
@@ -233,34 +231,30 @@
     var pris = o.data.priser[neste];
     if (stat.penger < pris) { rist(e.delerPenger); return; }
 
-    spor('Oppgradere ' + o.data.navn.toLowerCase() + '?',
-         o.data.hva + ' blir bedre. Det koster $' + pris + '. Du har ' + penger() + '.',
-         function () {
-           stat.penger -= pris;
-           stat.oppg[id] = neste;
-           lagre();
-           tegnDeler();
-         });
+    stat.penger -= pris;
+    stat.oppg[id] = neste;
+    lagre();
+    tegnDeler();
+    blafr(e.delerPenger);
   }
 
-  /* ---------- kjøp-dialog ---------- */
+  /* ---------- svar på et trykk ---------- */
 
-  var kjopSvar = null;
-
-  function spor(tittel, tekst, ja) {
-    e.kjopTittel.textContent = tittel;
-    e.kjopTekst.textContent = tekst;
-    kjopSvar = ja;
-    e.kjopKort.hidden = false;
-    e.kjopJa.focus();
+  /*
+   * Et kjøp skjer med én gang, uten et «Ja takk» å bekrefte med. Eieren ba
+   * om det: for et barn som prøver seg fram er en dialog per kjøp et hinder,
+   * ikke en trygghet.
+   *
+   * Da må trykket svare på en annen måte. Pengemerket blafrer når summen
+   * går ned, så det er tydelig at noe kostet noe – uten det blir kjøpet helt
+   * stille, og et barn som bommet på en rute ville ikke sett hvorfor pengene
+   * ble færre. Det som ikke er råd til, rister i stedet.
+   */
+  function blafr(el) {
+    el.classList.remove('blafrer');
+    void el.offsetWidth;   // tvinger fram en ny animasjon
+    el.classList.add('blafrer');
   }
-
-  e.kjopJa.onclick = function () {
-    e.kjopKort.hidden = true;
-    if (kjopSvar) kjopSvar();
-    kjopSvar = null;
-  };
-  e.kjopNei.onclick = function () { e.kjopKort.hidden = true; kjopSvar = null; };
 
   function rist(el) {
     el.classList.remove('rister');

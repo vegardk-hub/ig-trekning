@@ -94,6 +94,19 @@ body {
   75% { transform: translateX(7px); }
 }
 
+/* Kvitteringen for et kjøp. Uten en «Ja takk»-dialog er dette det eneste
+   som sier at trykket kostet noe. */
+.blafrer { animation: blafr 0.5s ease-out; }
+@keyframes blafr {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.18); background: rgba(77, 252, 154, 0.35); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rister, .blafrer { animation: none; }
+}
+
 /* ---------- blinkende deler på bilen ---------- */
 
 /*
@@ -507,35 +520,6 @@ body {
   padding: 9px 11px;
   font-size: 14px;
 }
-
-/* ---------- overlegg ---------- */
-
-.overlegg:not([hidden]) {
-  position: absolute;
-  inset: 0;
-  background: rgba(8, 10, 18, 0.78);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 22px;
-  z-index: 10;
-}
-
-.kort {
-  background: linear-gradient(180deg, #2a3355, #1a2038);
-  border: 2px solid var(--panel-kant);
-  border-radius: 26px;
-  padding: 22px;
-  max-width: 340px;
-  width: 100%;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.kort h2 { margin: 0; font-size: 22px; }
-.kort p { margin: 0; color: var(--dempet); font-size: 15px; }
 
 /*
  * Liggende på telefon: garasjeruta blir lav og bred, og et rom som er
