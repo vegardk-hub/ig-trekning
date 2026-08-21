@@ -13,6 +13,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-poengtavle/` | Ukens poengtavle — husholdningsoppgaver med kroner, PWA |
 | `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
 | `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
+| `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den i looper og hopp, PWA |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -28,6 +29,7 @@ repoet:
 - Poengtavle: `https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/`
 - Monstergiret: `https://vegardk-hub.github.io/ig-trekning/pwa-lesing/`
 - Lesestjerna: `https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/`
+- Stuntgarasjen: `https://vegardk-hub.github.io/ig-trekning/pwa-stunt/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -86,6 +88,19 @@ server, og skal kjøres etter hver endring i `pwa-lesing/js/tale.js`:
 node pwa-lesing/tester/match.js
 ```
 
+Opplesingen har egne prøver, som trenger playwright:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/stemmer.js
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/innspilling.js
+```
+
+Innspillingsprøven stubber selve opptaket, og det skal den. **Skyøkta har
+ingen lydinngang**, og `--use-fake-device-for-media-capture` hjelper ikke —
+getUserMedia svarer `NotFoundError` uansett flaggkombinasjon. Ikke bruk tid på
+å få den ekte veien til å virke der.
+
 Kjøres de på Windows i stedet for i skyøkta, feiler `fyllmodus` og `tema` på ett
 mål hver, med tre piksler. Det er ikke en regresjon: `system-ui` løser til Segoe
 UI med 21 px linjeboks der, mot 17 px på Linux, som tallene er kalibrert mot.
@@ -93,7 +108,15 @@ Ikke «rett» dem lokalt — da ryker de på telefonen. Node ligger på
 `C:\Program Files\nodejs`, utenfor PATH, og `NODE_PATH` skal peke på
 `C:\Users\vegar\AppData\Roaming\npm\node_modules`.
 
-Sudoku, Fargeflasker, Poengtavla og Monstergiret er PWA-er. Endrer du filene de
+Stuntgarasjen har prøver på løypa og økonomien. De trenger verken nettleser
+eller server, og skal kjøres etter hver endring i `pwa-stunt/js/lope.js` eller
+`pwa-stunt/js/fysikk.js`:
+
+```
+node pwa-stunt/tester/lope.js
+```
+
+Sudoku, Fargeflasker, Poengtavla, Monstergiret og Stuntgarasjen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
 igjen hos alle som allerede har installert appen. **Lesestjerna har med vilje
 ingen service worker** — den trenger nett uansett, både til stemmen og til
@@ -205,6 +228,46 @@ Tallene står i `pwa-sudoku/README.md`, og kravene som prøver i `tester/tema.js
 og `tester/liggende.js`. Endrer du en farge eller en skriftstørrelse, kjør dem
 og les hva de sier før du velger.
 
+## Stuntgarasjen
+
+`pwa-stunt/README.md` går gjennom fysikken, økonomien og tegningen av bilen.
+Fire ting som ser ut som detaljer og har en grunn:
+
+- **Bilen er et punkt på en kurve, ikke et stivt legeme.** Det er derfor
+  loopene alltid virker. Bytter du til ekte kollisjonsfysikk, trenger du et
+  bibliotek repoet ikke har, og looper som ryker når bildefrekvensen dipper.
+- **Pynt ganger opp inntekten.** Eieren ba om én pengepott til både
+  oppgraderinger og design, og uten stilbonusen ville glitter gjort bilen
+  tregere — barnet ville angret på et valg det syntes var gøy. Fjerner du
+  bonusen, må du dele opp potten i stedet.
+- **Gassen har lavgir, og det er ikke pynt.** Den bratteste rampa er 45 grader
+  og koster mer enn en umodifisert motor gir. Uten lavgiret blir bilen stående,
+  og appen ser ut som den har hengt seg midt i en app som ikke kan tapes.
+- **Tilbehøret på taket stables etter hvor mye som allerede ligger der.**
+  Faste lag ga en sirene som hang i lufta hvis kofferten under ikke var
+  kjøpt. `TAK`-marginen i viewBoxen hører sammen med dette: uten den blir
+  toppen av tårnet klippet bort, og endrer du den, må `Bil.tegninger()`
+  flytte både `bakke` og hjulplasseringene like mye.
+- **Dekor kan stå på flere om gangen, og har soner.** `valgt.dekor` er en
+  liste. Gjør du den om til én id igjen, mister barnet pynt det har betalt
+  for hver gang det setter på noe nytt. Sonene er det som gjør at seks ting
+  får plass på en bilside uten å legge seg oppå hverandre.
+- **Jorda brytes ved hopp, ikke ved looper.** Bryter man på loop-punktene,
+  får bakken et loddrett hull i loopens bredde og man ser himmelen gjennom
+  jorda.
+- **Fysikken ligger i `fysikk.js`, uten et eneste piksel.** Det er det som
+  gjør at `tester/lope.js` kan svare på hvor langt bilen flyr og om en
+  maksbil når målet, på et sekund. Slår du den sammen med tegnekoden igjen,
+  må hvert slikt spørsmål måles med en nettleser i sanntid.
+- **Ingen loop må ligge innenfor rekkevidden til et hopp.** Bilen lander bare
+  på fast grunn, så en loop i flybanen blir noe den seiler tvers gjennom.
+  Derfor ligger alle loopene før det første hoppet. Prøven sier fra.
+
+Endrer du priser eller utbetalinger, kjør både en umodifisert og en fullt
+utstyrt bil gjennom løypa og se at summene ligger der tabellen i
+`pwa-stunt/README.md` sier. De to henger sammen: en sterk bil flyr over
+strekninger og mister mynter, så den tjener ikke proporsjonalt mer.
+
 ## Fargeflasker
 
 Målgruppen er en femåring, og det er ikke en detalj — det er premisset. Ingen
@@ -275,6 +338,30 @@ Fire ting som har kostet tid, eller som ville gjort det:
   «om», «opp» og «i», og halve teksten blir grønn av seg selv.
 - **Talegjenkjenning i hjemskjermmodus har historisk vært upålitelig på iOS.**
   Virker ikke mikrofonen, prøv siden i Safari før du leter i koden.
+- **Store bokstaver er `text-transform`, ikke omskrevet tekst.** Samme lærdom
+  som navnene i Poengtavla: skriver du om ordene, får både matchingen og
+  opplesingen versaler å jobbe med, og en stemme som får «ILDKULEN» kan finne
+  på å stave det. Versalvisningen trenger sin egen linjelengde, for versaler er
+  bredere og brekker setninger som ellers sto samlet.
+- **Opptak av forelderens stemme er per linje, ikke per tekst.** En tekst kan
+  være halvveis lest inn, og hullene faller tilbake på maskinstemmen. Det er
+  det som gjør at man kan lese inn kveldens tekst uten å binde seg til alle 48
+  — alt-eller-intet ville gjort det til et prosjekt i stedet for et halvminutt.
+  Opptakene ligger i IndexedDB, for `localStorage` tar ikke blobs. Ett
+  `Audio`-element må gjenbrukes for alle linjene: iOS' sperre sitter på
+  elementet, så et nytt element per linje blir stoppet fra og med linje to.
+- **iOS' personlige stemme er ikke tilgjengelig for nettsider.** Den ligger i
+  `AVSpeechSynthesis` bak en native tillatelse, og Safari slipper den ikke ut
+  til `speechSynthesis`. Eieren har spurt om det, så svaret er verdt å ha:
+  det ville krevd en ekte iOS-app i Swift. Stemmevelgeren viser derfor alt
+  systemet melder om, med et filter man kan slå av — så spørsmålet kan
+  etterprøves på enheten i stedet for å gjettes på. En valgt stemme må vinne
+  over språkfilteret, og utsagnets språkkode må følge stemmen.
+- **`speechSynthesis` er en getter på `window`.** Vanlig tilordning i en prøve
+  feiler stille, og prøven kjører videre mot den ekte — som ikke har stemmer i
+  skyøkta, så opplesingen er «ferdig» før den har begynt. Bruk
+  `Object.defineProperty`. `cancel()` fyrer dessuten `onend` på det som spilles,
+  så en stopp må ha et eget flagg for ikke å starte neste linje.
 
 Truckene er tegnet, ikke lastet ned: én SVG-tegning og en tabell med farge,
 motor og dekor. Motoren må være i metallfarge og stikke ned under panserlinja,

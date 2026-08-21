@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Stuntgarasjen</title>
+<meta name="description" content="Bygg og design din egen stuntbil, kjør den gjennom looper og hopp, og tjen penger til flere deler.">
+<meta name="theme-color" content="#161c2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ---------- garasjen ---------- -->
+<section id="skjermGarasje" class="skjerm">
+  <header class="topp">
+    <h1 class="tittel">Stuntgarasjen</h1>
+    <div id="garasjePenger" class="pengemerke">$0</div>
+  </header>
+
+  <div id="garasjeBil" class="bilscene"></div>
+
+  <div class="nokkeltall">
+    <div class="tall"><span class="talletikett">Stilbonus</span><strong id="garasjeStil" class="gronn">×1.00</strong></div>
+    <div class="tall"><span class="talletikett">Rekord</span><strong id="garasjeBeste">–</strong></div>
+  </div>
+
+  <nav class="hovedvalg">
+    <button id="knappVerksted" class="valgknapp">
+      <span class="ikon" aria-hidden="true">🎨</span><span>Design</span>
+    </button>
+    <button id="knappDeler" class="valgknapp">
+      <span class="ikon" aria-hidden="true">🔧</span><span>Oppgrader</span>
+    </button>
+  </nav>
+
+  <button id="knappKjor" class="storknapp kjorknapp">KJØR! 🏁</button>
+</section>
+
+<!-- ---------- verkstedet ---------- -->
+<section id="skjermVerksted" class="skjerm" hidden>
+  <header class="topp">
+    <button id="knappTilbakeVerksted" class="rundknapp" aria-label="Tilbake til garasjen">
+      <span aria-hidden="true">←</span>
+    </button>
+    <h1 class="tittel">Design bilen</h1>
+    <div id="verkstedPenger" class="pengemerke">$0</div>
+  </header>
+
+  <div id="verkstedBil" class="bilscene liten"></div>
+
+  <p id="stilLinje" class="stillinje"></p>
+
+  <nav id="kategorier" class="faner" aria-label="Hva du vil endre"></nav>
+  <div id="valgene" class="valgrutenett"></div>
+
+  <button class="storknapp kjorknapp">KJØR! 🏁</button>
+</section>
+
+<!-- ---------- oppgraderinger ---------- -->
+<section id="skjermDeler" class="skjerm" hidden>
+  <header class="topp">
+    <button id="knappTilbakeDeler" class="rundknapp" aria-label="Tilbake til garasjen">
+      <span aria-hidden="true">←</span>
+    </button>
+    <h1 class="tittel">Oppgrader</h1>
+    <div id="delerPenger" class="pengemerke">$0</div>
+  </header>
+
+  <p class="hjelpetekst">Sterkere bil gir mer fart i loopene og lengre hopp.</p>
+  <div id="delerListe" class="delliste"></div>
+
+  <button class="storknapp kjorknapp">KJØR! 🏁</button>
+</section>
+
+<!-- ---------- løypa ---------- -->
+<section id="skjermLop" class="skjerm lop" hidden>
+  <canvas id="lerret" class="lerret"></canvas>
+
+  <div class="hud">
+    <button id="knappAvbryt" class="rundknapp mork" aria-label="Avbryt kjøringen">
+      <span aria-hidden="true">✕</span>
+    </button>
+    <div id="hudPenger" class="hudpenger">$0</div>
+    <div id="hudFart" class="hudfart">0 km/t</div>
+  </div>
+
+  <p id="hudHint" class="hudhint" hidden>Trykk på gass! 👉</p>
+
+  <div class="framdriftsspor"><div id="framdrift" class="framdrift"></div></div>
+
+  <div class="pedaler">
+    <button id="knappBrems" class="pedal brems" aria-label="Brems">
+      <span aria-hidden="true">🛑</span><span class="pedalnavn">Brems</span>
+    </button>
+    <button id="knappGass" class="pedal gass" aria-label="Gass">
+      <span aria-hidden="true">🔥</span><span class="pedalnavn">Gass</span>
+    </button>
+  </div>
+</section>
+
+<!-- ---------- resultat ---------- -->
+<section id="skjermResultat" class="skjerm" hidden>
+  <header class="topp">
+    <h1 class="tittel">Bra kjørt!</h1>
+  </header>
+
+  <div class="sumkort">
+    <div class="sumetikett">Du tjente</div>
+    <div id="resultatSum" class="sum">$0</div>
+    <div id="resultatRekord" class="rekord"></div>
+  </div>
+
+  <div id="resultatDetaljer" class="detaljer"></div>
+  <div id="resultatBil" class="bilscene"></div>
+
+  <button id="knappIgjen" class="storknapp">Kjør igjen 🏁</button>
+  <div class="hovedvalg">
+    <button id="knappTilDeler" class="valgknapp">
+      <span class="ikon" aria-hidden="true">🔧</span><span>Bruk pengene</span>
+    </button>
+    <button id="knappGarasje" class="valgknapp">
+      <span class="ikon" aria-hidden="true">🏠</span><span>Garasjen</span>
+    </button>
+  </div>
+</section>
+
+<script src="js/bil.js"></script>
+<script src="js/garasje.js"></script>
+<script src="js/lope.js"></script>
+<script src="js/fysikk.js"></script>
+<script src="js/kjoring.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,42 +1,28 @@
 /*
- * Service worker: appen skal starte og virke uten nett.
+ * Service worker: spillet skal virke offline, i bilen og på hytta.
  *
  * Nett først, cache som reserve – filnavnene endrer seg aldri, så cache
  * først ville servert gammel kode i det uendelige etter en oppdatering.
- *
- * Merk at selve talegjenkjenningen krever nett i de fleste nettlesere. Det er
- * greit: uten nett virker fortsatt lesingen med trykk, brikkene, garasjen og
- * opplesingen av enkeltord, og det er hele appen minus mikrofonen.
  */
 
-const CACHE = 'monstergiret-v4';
+const CACHE = 'stuntgarasjen-v9';
 const FILER = [
   './',
   './index.html',
   './styles.css',
   './manifest.json',
-  './js/tekster.js',
-  './js/trucker.js',
-  './js/opptak.js',
-  './js/tale.js',
+  './js/bil.js',
+  './js/garasje.js',
+  './js/lope.js',
+  './js/fysikk.js',
+  './js/kjoring.js',
   './js/app.js',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
 
-// fetch() i en service worker går gjennom HTTP-cachen, og Pages sender
-// max-age=600. Uten no-store her bakes ti minutter gammel kode inn i en
-// fersk cache og blir liggende der.
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c => Promise.all(FILER.map(f =>
-        fetch(f, { cache: 'no-store' })
-          .then(svar => svar.ok ? c.put(f, svar) : null)
-          .catch(() => null)
-      )))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILER)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {

@@ -258,7 +258,27 @@ body {
   margin: 0 auto;
 }
 
-.linje { margin: 0 0 0.5em; }
+.linje {
+  margin: 0 0 0.5em;
+  padding: 0.05em 0.25em;
+  border-radius: 12px;
+  transition: background-color 260ms ease;
+}
+
+/* Linja appen leser høyt nå. Egen farge, ikke grønn: grønn betyr «du leste
+   dette», og det å bli lest for er ikke det samme. */
+.linje.leses { background: rgba(255, 159, 46, 0.16); }
+
+/* Store bokstaver er bare en visning. Teksten under ligger urørt, slik at
+   både matchingen og opplesingen får ordene slik de er skrevet — en stemme
+   som får «ILDKULEN», kan finne på å stave det. */
+/* Versaler er bredere enn minusker, så samme linjelengde i `ch` gir færre ord
+   per linje og brekker setninger som ellers sto samlet. Bredere ramme her
+   holder like mange ord på linja i begge visningene. */
+.lese-tekst.store {
+  text-transform: uppercase;
+  max-width: 30ch;
+}
 
 /* Ordene som ikke er lest ennå, skal være det klareste på skjermen – det er
    dem barnet faktisk leser. Første utkast dempet dem og lot de leste være
@@ -307,7 +327,36 @@ body {
   text-align: center;
 }
 
-.mikrofon {
+.knapperad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.sideknapp {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 2px solid var(--kant);
+  background: var(--flate);
+  color: var(--tekst);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+  display: none;
+}
+
+.sideknapp:not([hidden]) { display: flex; align-items: center; justify-content: center; }
+.sideknapp:active { background: var(--flate-lys); }
+.sideknapp.paa { border-color: var(--aksent); color: var(--aksent); }
+
+/* display: flex ville slått nettleserens [hidden]-stil, og knappen blitt
+   stående synlig i en nettleser uten talegjenkjenning. */
+.mikrofon { display: none; }
+
+.mikrofon:not([hidden]) {
   width: 88px;
   height: 88px;
   border-radius: 50%;
@@ -338,6 +387,70 @@ body {
   .lokk { transition: opacity 200ms ease; }
 }
 
+/* ---------- innspilling ---------- */
+
+.ingress {
+  color: var(--tekst-dempet);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin: 4px 0 10px;
+  flex: 0 0 auto;
+}
+
+.skille { border: 0; border-top: 1px solid var(--kant); margin: 20px 0 16px; }
+.kort-tittel.liten { font-size: 1.05rem; margin-bottom: 8px; }
+
+.opptak-linje {
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.opptak-linje p {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.opptak-knapper { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.smaaknapp {
+  background: var(--flate-lys);
+  border: 1px solid var(--kant);
+  color: var(--tekst);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 46px;
+}
+
+.smaaknapp:active { background: var(--kant); }
+.smaaknapp.tar-opp { background: #4a1d1d; border-color: #b3453d; color: #ffb9b3; }
+.smaaknapp.tar-opp { animation: puls-rod 1.4s ease-in-out infinite; }
+
+@keyframes puls-rod {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(190, 70, 60, 0.5); }
+  50%      { box-shadow: 0 0 0 12px rgba(190, 70, 60, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smaaknapp.tar-opp { animation: none; }
+}
+
+.liste-rad .status-merke {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--tekst-dempet);
+  flex: 0 0 auto;
+}
+
+.liste-rad.har-opptak .status-merke { color: var(--lest); }
+
 /* ---------- overlegg ---------- */
 
 .overlegg { display: none; }
@@ -351,6 +464,60 @@ body {
   justify-content: center;
   padding: calc(var(--trygg-topp) + 16px) 16px calc(var(--trygg-bunn) + 16px);
   z-index: 10;
+}
+
+.innstilling-kort {
+  background: var(--flate);
+  border: 1px solid var(--kant);
+  border-radius: 24px;
+  padding: 22px;
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  box-shadow: var(--skygge);
+}
+
+.kort-tittel { font-size: 1.35rem; font-weight: 800; margin: 0 0 18px; }
+
+.felt { display: block; margin-bottom: 16px; }
+
+.felt > span {
+  display: block;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tekst-dempet);
+  margin-bottom: 7px;
+}
+
+.felt select, .felt input[type="range"] {
+  width: 100%;
+  font-size: 1rem;
+  color: var(--tekst);
+  background: var(--flate-lys);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.felt input[type="range"] { padding: 8px 12px; accent-color: var(--aksent); }
+
+.avkryss {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 8px;
+  color: var(--tekst-dempet);
+  font-size: 0.95rem;
+}
+
+.avkryss input { width: 22px; height: 22px; accent-color: var(--aksent); }
+
+.minitekst {
+  margin: 0 0 12px;
+  color: var(--tekst-dempet);
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .belonning-kort, .truck-kort {
@@ -385,5 +552,6 @@ body {
 /* iPad i liggende format: teksten skal ikke bli en tynn stripe i midten. */
 @media (min-width: 820px) {
   .lese-tekst { max-width: 26ch; }
+  .lese-tekst.store { max-width: 34ch; }
   .skjerm:not([hidden]) { padding-left: 28px; padding-right: 28px; }
 }

@@ -36,6 +36,94 @@ være ubrukelig på akkurat dette barnet, er dette fortsatt en fungerende
 leseapp der man trykker seg gjennom teksten og får truckene. Mikrofonen er
 motoren, men den er ikke det eneste som holder appen oppe.
 
+## De tre knappene under teksten
+
+Mikrofonen i midten, og to støtteknapper som begge er der for barn som synes
+lesingen er tung.
+
+**`AA` — store bokstaver.** Bytter teksten til blokkbokstaver, som mange synes
+er lettere å kjenne igjen. Valget huskes. **Store bokstaver er bare en
+visning** — de kommer fra `text-transform` i CSS, og teksten under ligger
+urørt. Skrev vi om selve ordene, ville både matchingen og opplesingen fått
+versaler å jobbe med, og en stemme som får «ILDKULEN» kan finne på å stave det
+bokstav for bokstav. Samme lærdom som navnene i Poengtavla.
+
+Versaler er bredere enn minusker, så visningen har sin egen linjelengde —
+ellers brekker setninger som sto samlet i små bokstaver.
+
+**Høyttaleren — les teksten for meg.** Leser hele teksten høyt, én linje om
+gangen, og linja som leses lyser opp så barnet finner plassen.
+
+* **Linje for linje, ikke ord for ord.** `onboundary` er den eneste veien til
+  ordnøyaktig følging, og den er ikke til å stole på i Safari. En linje som
+  lyser er uansett nok til å holde plassen.
+* **Linja som leses har sin egen farge, ikke grønn.** Grønn betyr «du leste
+  dette», og det å bli lest for er ikke det samme.
+* **Opplesingen gjør ingenting grønt.** Det er et bevisst valg: en knapp som
+  farget hele teksten ville gjort brikken til noe man trykker seg til. Barnet
+  hører teksten først og leser den selv etterpå — det er hele poenget. Står
+  det fast på ett enkelt ord, er det trykk-på-ordet som er veien videre.
+* **Mikrofon og opplesing kan ikke gå samtidig.** Mikrofonen settes på pause
+  for hele opplesingen — én gang, ikke per linje — og trykk på mikrofonen
+  eller på et ord stopper opplesingen først. Ellers hører appen seg selv.
+* `cancel()` fyrer `onend` på linja som går, så stoppen har et eget flagg.
+  Uten det ville et stopptrykk startet neste linje i stedet.
+
+## Stemmen som leser
+
+Tannhjulet i garasjen åpner et valg av stemme og lesefart. Valget lagres og
+brukes både til hele tekster og til enkeltord.
+
+**Om iOS' personlige stemme.** Eieren spurte om opplesingen kunne bruke hans
+egen stemme via Personlig stemme i iOS 17. Så vidt vi vet, går ikke det:
+Personlig stemme ligger i `AVSpeechSynthesis` bak en egen native tillatelse
+(`requestPersonalVoiceAuthorization`), og Safari eksponerer den ikke til
+`speechSynthesis` på nettsider. Å nå den ville kreve en ekte iOS-app i Swift.
+
+Derfor er stemmevelgeren bygget slik at den **viser nøyaktig det systemet
+melder om**, ikke bare det vi tror finnes:
+
+* Lista er filtrert til norske stemmer, men avkryssingen «vis alle stemmer»
+  tar bort filteret helt. Dukker en personlig stemme opp for nettsider en dag,
+  ser man den der og kan velge den.
+* En valgt stemme vinner over språkfilteret, også når den ikke er norsk — en
+  personlig stemme kan godt være merket med en annen språkkode.
+* **Språkkoden på utsagnet følger stemmen.** Tvinger man `nb-NO` på en stemme
+  merket med noe annet, kan systemet bytte stemme bak ryggen på valget.
+* Telleren nederst sier hvor mange stemmer enheten melder om. Den er der for å
+  gjøre spørsmålet etterprøvbart på enheten i stedet for å gjette.
+
+`getVoices()` er tom til systemet har lastet lista, så velgeren fyller seg selv
+på `voiceschanged`. Første åpning sender også et tomt utsagn, som er det som
+får iOS til å laste lista i det hele tatt.
+
+## Din egen stemme
+
+Siden Personlig stemme ikke er tilgjengelig, er veien til en forelders stemme
+å **spille den inn** — ikke å klone den. Innstillinger → «Spill inn tekster»
+gir en liste over alle tekstene, og hver tekst kan leses inn linje for linje.
+
+Det bærende valget er at **innspillingen er per linje og helt frivillig**. En
+tekst kan være halvveis lest inn; linjer uten opptak faller tilbake på den
+syntetiske stemmen. Det gjør at man kan lese inn den ene teksten barnet står
+på i kveld, uten å binde seg til alle 48. Hadde opptaket vært alt-eller-intet
+per tekst, ville terskelen blitt et prosjekt i stedet for et halvminutt.
+
+* **Opptakene ligger i IndexedDB**, ikke i `localStorage` — det siste tar bare
+  strenger og har en grense rundt fem megabyte. Nøkkelen er tekst-id pluss
+  linjenummer.
+* **Alt ligger på enheten.** Ingen backend, så tømmer man nettleserdata, må
+  tekstene leses inn på nytt.
+* **Mikrofonen slippes med en gang opptaket er ferdig** (`track.stop()`).
+  Uten det blir opptaksmerket stående i statuslinja så lenge siden er åpen.
+* **Ett `Audio`-element gjenbrukes for alle linjene.** iOS krever et ekte
+  trykk for å slippe lyd gjennom, men sperren sitter på elementet: er det
+  først låst opp av et trykk, kan de neste linjene spilles fra en
+  `ended`-lytter, som ikke er noe trykk. Et nytt element per linje ville blitt
+  stoppet fra og med linje to.
+* Et opptak som ikke lar seg spille, hopper videre i stedet for å stoppe hele
+  opplesingen.
+
 ## Ordmatchingen
 
 Ligger i `js/tale.js`, uavhengig av resten, og er med vilje rundhåndet. En
@@ -178,6 +266,34 @@ Kjør dem etter hver endring i `js/tale.js`. Skruen som justeres oftest, er hvor
 rundhåndet matchingen skal være, og de to siste bolkene er de som holder den i
 sjakk: helt feil tekst skal ikke farge noe, og overspranget skal stoppe etter
 to ord.
+
+Opplesingen har egne prøver, som trenger playwright:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/opplesing.js
+```
+
+Stemmevelgeren og innspillingen har også prøver:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/stemmer.js
+NODE_PATH=/opt/node22/lib/node_modules node pwa-lesing/tester/innspilling.js
+```
+
+Innspillingsprøven stubber selve opptaket. **Skyøkta har ingen lydinngang, og
+Chromiums `--use-fake-device-for-media-capture` hjelper ikke** — getUserMedia
+svarer `NotFoundError` uansett flaggkombinasjon. Ikke bruk tid på å få den
+ekte veien til å virke der. Hvordan MediaRecorder oppfører seg i Safari, kan
+uansett ingen prøve på Linux svare på; det prøven svarer for, er tilstandene i
+skjermen, at opptaket havner i IndexedDB og overlever omlasting, og at
+høyttaleren spiller opptaket på de innleste linjene og lar maskinstemmen ta
+resten.
+
+Begge bytter ut `speechSynthesis` med en falsk som lar prøven gå én linje om
+gangen — i skyøkta finnes ingen stemmer, så ekte tale er ferdig før den har
+begynt. Merk at `speechSynthesis` er en getter på `window`: vanlig tilordning
+feiler stille, og da kjører prøven mot den ekte uten å si fra. Bruk
+`Object.defineProperty`.
 
 Ikonene genereres:
 

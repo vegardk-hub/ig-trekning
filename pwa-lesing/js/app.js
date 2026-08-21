@@ -100,7 +100,7 @@
   /* ---------- lagring ---------- */
 
   var NOKKEL = 'lesing-v1';
-  var data = { fullforte: [], lyd: true };
+  var data = { fullforte: [], lyd: true, store: false, stemme: null, fart: 0.8, alleStemmer: false };
 
   function last() {
     try {
@@ -109,6 +109,10 @@
       var d = JSON.parse(r);
       if (d && Array.isArray(d.fullforte)) data.fullforte = d.fullforte;
       if (d) data.lyd = d.lyd !== false;
+      if (d) data.store = d.store === true;
+      if (d && typeof d.stemme === 'string') data.stemme = d.stemme;
+      if (d && typeof d.fart === 'number') data.fart = d.fart;
+      if (d) data.alleStemmer = d.alleStemmer === true;
     } catch (f) {}
   }
 
@@ -180,7 +184,7 @@
 
   /* ---------- skjermer ---------- */
 
-  var skjermer = ['garasje', 'tekstliste', 'lesing'];
+  var skjermer = ['garasje', 'tekstliste', 'lesing', 'innspilling', 'opptak'];
 
   function vis(navn) {
     skjermer.forEach(function (n) {
@@ -278,8 +282,20 @@
       linjeFeiret: [],
       hjulpet: -1,
       matcher: Tale.lagMatcher(ordListe.map(function (o) { return o.rå; })),
-      lytter: null
+      lytter: null,
+      linjeElementer: [],
+      opplesing: null,
+      opptak: []
     };
+
+    // Opptakene hentes i bakgrunnen. Rekker de det ikke før høyttaleren
+    // trykkes, leser maskinstemmen den gangen – bedre enn å la barnet vente.
+    var denne = okt;
+    if (Opptak.stottes()) {
+      Opptak.forTekst(tekst.id, tekst.linjer.length).then(function (b) {
+        if (okt === denne) okt.opptak = b;
+      }, function () {});
+    }
 
     e('lese-tittel').textContent = tekst.tittel;
     e('lese-teller').textContent = (T.indeksFor(tekstId) + 1) + '/' + T.tekster.length;
@@ -293,6 +309,7 @@
       flate.appendChild(p);
       linjer.push(p);
     });
+    okt.linjeElementer = linjer;
 
     ordListe.forEach(function (o, i) {
       var s = document.createElement('span');
@@ -311,8 +328,66 @@
       : 'Mikrofonen virker ikke her. Trykk på ordene for å lese teksten.', false);
     e('knapp-mikrofon').hidden = !Tale.stottes();
     e('knapp-mikrofon').classList.remove('lytter');
+    e('knapp-opplesing').hidden = !Tale.kanLeseOpp();
+    e('knapp-opplesing').classList.remove('paa');
+    settStore(data.store);
     merkNaa();
     vis('lesing');
+  }
+
+  /* ---------- store bokstaver ---------- */
+
+  // Blokkbokstaver kommer fra CSS, ikke fra teksten. Skrev vi om selve ordene,
+  // ville både matchingen og opplesingen fått versaler å jobbe med, og en
+  // stemme som får «ILDKULEN» kan finne på å stave det bokstav for bokstav.
+  function settStore(paa) {
+    e('lese-tekst').classList.toggle('store', paa);
+    var k = e('knapp-store');
+    k.classList.toggle('paa', paa);
+    e('store-ikon').textContent = paa ? 'aa' : 'AA';
+    k.setAttribute('aria-label', paa ? 'Bytt til små bokstaver' : 'Bytt til store bokstaver');
+  }
+
+  /* ---------- opplesing av hele teksten ---------- */
+
+  function stoppOpplesing() {
+    if (okt && okt.opplesing) { okt.opplesing.stopp(); okt.opplesing = null; }
+    var k = e('knapp-opplesing');
+    if (k) k.classList.remove('paa');
+    if (okt) okt.linjeElementer.forEach(function (p) { p.classList.remove('leses'); });
+  }
+
+  // Opplesingen gjør ingenting grønt. Å bli lest for er en annen ting enn å
+  // lese selv, og en knapp som farget hele teksten ville gjort brikken til
+  // noe man trykker seg til. Barnet leser etterpå — det er hele poenget med
+  // å høre teksten først.
+  function vekslOpplesing() {
+    if (!okt || !Tale.kanLeseOpp()) return;
+    Lyd.vekk();
+
+    if (okt.opplesing) {
+      stoppOpplesing();
+      settStatus('Trykk på mikrofonen og les høyt.', false);
+      return;
+    }
+
+    e('knapp-opplesing').classList.add('paa');
+    settStatus('Hør på teksten. Så kan du lese den selv.', false);
+
+    okt.opplesing = Tale.lesOppLinjer(
+      okt.tekst.linjer,
+      function (nr) {
+        if (!okt) return;
+        okt.linjeElementer.forEach(function (p, i) { p.classList.toggle('leses', i === nr); });
+      },
+      function () {
+        if (!okt) return;
+        okt.opplesing = null;
+        e('knapp-opplesing').classList.remove('paa');
+        settStatus('Nå kan du lese den selv.', false);
+      },
+      function (nr) { return okt && okt.opptak ? okt.opptak[nr] : null; }
+    );
   }
 
   function settStatus(tekst, feil) {
@@ -365,6 +440,7 @@
   }
 
   function stoppOkt() {
+    stoppOpplesing();
     if (okt && okt.lytter) { okt.lytter.stopp(); okt.lytter = null; }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     var m = e('knapp-mikrofon');
@@ -374,6 +450,8 @@
   function vekslMikrofon() {
     if (!okt || !Tale.stottes()) return;
     Lyd.vekk();
+    // Mikrofon og opplesing kan ikke gå samtidig – da hører appen seg selv.
+    stoppOpplesing();
 
     if (okt.lytter && okt.lytter.i_gang()) {
       okt.lytter.stopp();
@@ -406,6 +484,7 @@
   function trykkOrd(indeks) {
     if (!okt) return;
     Lyd.vekk();
+    stoppOpplesing();
     var ord = okt.ord[indeks].rå;
 
     if (okt.lest[indeks]) { Tale.lesOpp(ord); return; }
@@ -482,6 +561,174 @@
     e('truckvisning').hidden = false;
   }
 
+  /* ---------- innspilling av egen stemme ---------- */
+
+  var Opptak = window.LeseOpptak;
+  var opptakFor = null;    // tekst-id som er åpen i opptaksskjermen
+  var opptaker = null;     // { mr, strom, linje }
+
+  function visInnspilling() {
+    e('innstillinger').hidden = true;
+    Opptak.tellinger().then(function (tall) {
+      var boks = e('innspilling-liste');
+      boks.innerHTML = '';
+      T.tekster.forEach(function (tekst, i) {
+        if (i % PER_TRUCK === 0) {
+          var t = document.createElement('p');
+          t.className = 'liste-gruppe';
+          t.textContent = 'Truck ' + (T.truckFor(i) + 1);
+          boks.appendChild(t);
+        }
+        var har = tall[tekst.id] || 0;
+        var alle = har >= tekst.linjer.length;
+        var rad = document.createElement('button');
+        rad.type = 'button';
+        rad.className = 'liste-rad' + (alle ? ' har-opptak' : '');
+        rad.dataset.tekst = tekst.id;
+        rad.innerHTML = '<span class="merke">' + (alle ? '✓' : '▸') + '</span>' +
+                        '<span>' + tekst.tittel + '</span>' +
+                        '<span class="status-merke">' + har + '/' + tekst.linjer.length + '</span>';
+        boks.appendChild(rad);
+      });
+      vis('innspilling');
+    });
+  }
+
+  function visOpptak(tekstId) {
+    var tekst = T.finn(tekstId);
+    if (!tekst) return;
+    opptakFor = tekstId;
+    e('opptak-tittel').textContent = tekst.tittel;
+    tegnOpptakslinjer();
+    vis('opptak');
+  }
+
+  function tegnOpptakslinjer() {
+    var tekst = T.finn(opptakFor);
+    Opptak.forTekst(opptakFor, tekst.linjer.length).then(function (blober) {
+      var boks = e('opptak-linjer');
+      boks.innerHTML = '';
+      tekst.linjer.forEach(function (linje, i) {
+        var kort = document.createElement('div');
+        kort.className = 'opptak-linje';
+        var tar = opptaker && opptaker.linje === i;
+        var knapper;
+        if (tar) {
+          knapper = '<button class="smaaknapp tar-opp" data-stopp="' + i + '">■ Stopp</button>';
+        } else if (blober[i]) {
+          knapper = '<button class="smaaknapp" data-hor="' + i + '">▶ Hør</button>' +
+                    '<button class="smaaknapp" data-ta="' + i + '">● Ta opp på nytt</button>' +
+                    '<button class="smaaknapp" data-slett="' + i + '">Slett</button>';
+        } else {
+          knapper = '<button class="smaaknapp" data-ta="' + i + '">● Spill inn</button>';
+        }
+        kort.innerHTML = '<p>' + linje + '</p><div class="opptak-knapper">' + knapper + '</div>';
+        boks.appendChild(kort);
+      });
+    });
+  }
+
+  function taOpp(linje) {
+    if (opptaker) return;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (strom) {
+      var mr = new MediaRecorder(strom);
+      var biter = [];
+      mr.ondataavailable = function (ev) { if (ev.data && ev.data.size) biter.push(ev.data); };
+      mr.onstop = function () {
+        // Slipp mikrofonen med en gang. Uten dette blir opptaksmerket stående
+        // i statuslinja så lenge siden er åpen.
+        strom.getTracks().forEach(function (s) { s.stop(); });
+        opptaker = null;
+        if (!biter.length) { tegnOpptakslinjer(); return; }
+        var type = mr.mimeType || biter[0].type || 'audio/mp4';
+        Opptak.lagre(opptakFor, linje, new Blob(biter, { type: type }))
+          .then(tegnOpptakslinjer, tegnOpptakslinjer);
+      };
+      opptaker = { mr: mr, strom: strom, linje: linje };
+      mr.start();
+      tegnOpptakslinjer();
+    }).catch(function () {
+      opptaker = null;
+      alert('Fikk ikke tilgang til mikrofonen. Åpne siden i Safari og si ja til mikrofon.');
+    });
+  }
+
+  function stoppOpptaker() {
+    if (opptaker && opptaker.mr.state !== 'inactive') opptaker.mr.stop();
+    else if (opptaker) { opptaker = null; tegnOpptakslinjer(); }
+  }
+
+  /* ---------- innstillinger for stemmen ---------- */
+
+  var PROVESETNING = 'Ildkulen står midt i hallen. Motoren våkner med et brøl.';
+
+  function fyllStemmer() {
+    var velger = e('valg-stemme');
+    var alle = Tale.alleStemmer();
+    var vis = data.alleStemmer ? alle : alle.filter(function (s) { return Tale.erNorsk(s.lang); });
+
+    // Er den valgte stemmen filtrert bort, tas den med likevel – ellers ville
+    // velgeren stille byttet stemme bak ryggen på den som valgte den.
+    if (data.stemme && !vis.some(function (s) { return s.uri === data.stemme; })) {
+      var valgt = alle.filter(function (s) { return s.uri === data.stemme; });
+      vis = valgt.concat(vis);
+    }
+
+    velger.innerHTML = '';
+    if (!vis.length) {
+      var tom = document.createElement('option');
+      tom.textContent = alle.length ? 'Ingen norske stemmer' : 'Fant ingen stemmer';
+      tom.value = '';
+      velger.appendChild(tom);
+    }
+    vis.forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s.uri;
+      o.textContent = s.navn + ' (' + s.lang + ')' + (s.lokal ? '' : ' – nett');
+      if (s.uri === data.stemme) o.selected = true;
+      velger.appendChild(o);
+    });
+    if (!data.stemme) {
+      var naa = Tale.naavaerendeStemme();
+      if (naa) velger.value = naa;
+    }
+
+    oppdaterFasit(alle);
+  }
+
+  // Fasiten er hele grunnen til at denne skjermen finnes: den viser nøyaktig
+  // hva Safari rapporterer på denne iPaden. Personlig stemme fra iOS ligger
+  // bak en native tillatelse i AVSpeechSynthesis, og så vidt vi vet slipper
+  // ikke Safari den ut til nettsider — men det er bedre å se etter på enheten
+  // enn å tro.
+  function oppdaterFasit(alle) {
+    var norske = alle.filter(function (s) { return Tale.erNorsk(s.lang); }).length;
+    var t = 'Safari melder om ' + alle.length + ' stemme' + (alle.length === 1 ? '' : 'r') +
+            ' på denne enheten, ' + norske + ' av dem norske.';
+    if (alle.length && !data.alleStemmer) {
+      t += ' Kryss av over for å se hele lista — er den personlige stemmen din tilgjengelig for nettsider, dukker den opp der, og da kan du velge den.';
+    }
+    e('stemme-fasit').textContent = t;
+  }
+
+  function settFart(f) {
+    data.fart = f;
+    Tale.settFart(f);
+    e('valg-fart').value = String(f);
+    e('fart-verdi').textContent = f < 0.7 ? 'Sakte' : (f > 0.95 ? 'Rask' : 'Vanlig');
+  }
+
+  function visInnstillinger() {
+    Lyd.vekk();
+    e('valg-alle').checked = data.alleStemmer;
+    settFart(data.fart);
+    fyllStemmer();
+    e('innstillinger').hidden = false;
+    // Første kall til getVoices() er ofte tomt. speak() på et gyldig trykk får
+    // iOS til å laste lista, og voiceschanged fyller velgeren rett etterpå.
+    if (!Tale.alleStemmer().length) Tale.lesOpp(' ');
+  }
+
   /* ---------- hendelser ---------- */
 
   function koble() {
@@ -500,7 +747,12 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-tilbake]'), function (b) {
       b.addEventListener('click', function () {
         stoppOkt();
+        stoppOpptaker();
+        Tale.stoppLyd();
         okt = null;
+        // Tilbake fra en tekst til innspillingslista: tallene har endret seg,
+        // så lista må tegnes på nytt og ikke bare vises igjen.
+        if (b.dataset.tilbake === 'innspilling') { visInnspilling(); return; }
         tegnGarasje();
         vis(b.dataset.tilbake);
       });
@@ -517,6 +769,13 @@
     });
 
     e('knapp-mikrofon').addEventListener('click', vekslMikrofon);
+    e('knapp-opplesing').addEventListener('click', vekslOpplesing);
+
+    e('knapp-store').addEventListener('click', function () {
+      data.store = !data.store;
+      lagre();
+      settStore(data.store);
+    });
 
     e('lese-tekst').addEventListener('click', function (ev) {
       var s = ev.target.closest ? ev.target.closest('.ord') : null;
@@ -536,6 +795,71 @@
 
     e('knapp-brum').addEventListener('click', function () { Lyd.brum(); });
 
+    e('knapp-innstillinger').addEventListener('click', visInnstillinger);
+
+    e('knapp-lukk-innstillinger').addEventListener('click', function () {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      e('innstillinger').hidden = true;
+    });
+
+    e('valg-stemme').addEventListener('change', function () {
+      data.stemme = e('valg-stemme').value || null;
+      Tale.settStemme(data.stemme);
+      lagre();
+      Tale.lesOpp(PROVESETNING);
+    });
+
+    e('valg-fart').addEventListener('change', function () {
+      settFart(parseFloat(e('valg-fart').value));
+      lagre();
+      Tale.lesOpp(PROVESETNING);
+    });
+
+    e('valg-fart').addEventListener('input', function () {
+      settFart(parseFloat(e('valg-fart').value));
+    });
+
+    e('valg-alle').addEventListener('change', function () {
+      data.alleStemmer = e('valg-alle').checked;
+      lagre();
+      fyllStemmer();
+    });
+
+    e('knapp-prov').addEventListener('click', function () { Tale.lesOpp(PROVESETNING); });
+
+    e('knapp-innspilling').hidden = !Opptak.stottes();
+    e('opptak-mangler').hidden = Opptak.stottes();
+    e('knapp-innspilling').addEventListener('click', visInnspilling);
+
+    e('innspilling-liste').addEventListener('click', function (ev) {
+      var rad = ev.target.closest ? ev.target.closest('.liste-rad') : null;
+      if (rad) visOpptak(rad.dataset.tekst);
+    });
+
+    e('opptak-linjer').addEventListener('click', function (ev) {
+      var k = ev.target.closest ? ev.target.closest('.smaaknapp') : null;
+      if (!k) return;
+      var d = k.dataset;
+      if (d.ta !== undefined) { Tale.stoppLyd(); taOpp(parseInt(d.ta, 10)); }
+      else if (d.stopp !== undefined) stoppOpptaker();
+      else if (d.hor !== undefined) {
+        var nr = parseInt(d.hor, 10);
+        var tekst = T.finn(opptakFor);
+        Opptak.forTekst(opptakFor, tekst.linjer.length).then(function (b) {
+          if (b[nr]) Tale.spillBlob(b[nr], function () {});
+        });
+      } else if (d.slett !== undefined) {
+        Tale.stoppLyd();
+        Opptak.slett(opptakFor, parseInt(d.slett, 10)).then(tegnOpptakslinjer);
+      }
+    });
+
+    // Stemmelista kommer ofte etter at siden er lastet. Står velgeren åpen,
+    // skal den fylle seg selv i stedet for å bli stående tom.
+    Tale.naarStemmerKommer(function () {
+      if (!e('innstillinger').hidden) fyllStemmer();
+    });
+
     e('knapp-lyd').addEventListener('click', function () {
       data.lyd = !data.lyd;
       lagre();
@@ -553,6 +877,8 @@
 
   last();
   koble();
+  Tale.settStemme(data.stemme);
+  Tale.settFart(data.fart);
   e('knapp-lyd').textContent = data.lyd ? '🔊' : '🔇';
   tegnGarasje();
   vis('garasje');

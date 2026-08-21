@@ -18,6 +18,7 @@
 <section id="garasje" class="skjerm">
   <header class="topp">
     <h1>Garasjen</h1>
+    <button id="knapp-innstillinger" class="ikonknapp" type="button" aria-label="Innstillinger">⚙</button>
     <button id="knapp-lyd" class="ikonknapp" type="button" aria-label="Lyd av eller på">🔊</button>
   </header>
 
@@ -64,11 +65,40 @@
 
   <footer class="bunn lese-bunn">
     <p id="lese-status" class="status">Trykk på mikrofonen og les høyt.</p>
-    <button id="knapp-mikrofon" class="mikrofon" type="button" aria-label="Start lesing">
-      <span class="mik-ikon">🎤</span>
-    </button>
+    <div class="knapperad">
+      <button id="knapp-store" class="sideknapp" type="button" aria-label="Bytt til store bokstaver">
+        <span id="store-ikon">AA</span>
+      </button>
+      <button id="knapp-mikrofon" class="mikrofon" type="button" aria-label="Start lesing">
+        <span class="mik-ikon">🎤</span>
+      </button>
+      <button id="knapp-opplesing" class="sideknapp" type="button" aria-label="Les teksten høyt for meg">
+        <span id="opplesing-ikon">🔊</span>
+      </button>
+    </div>
     <p class="hjelpetekst">Stopper du opp: trykk på ordet, så leses det for deg.</p>
   </footer>
+</section>
+
+<!-- ---------- Innspilling: velg tekst ---------- -->
+<section id="innspilling" class="skjerm" hidden>
+  <header class="topp">
+    <button class="ikonknapp tilbake" type="button" data-tilbake="garasje" aria-label="Tilbake">‹</button>
+    <h1>Din egen stemme</h1>
+  </header>
+  <p class="ingress">Les inn en tekst, så er det du som leser den for barnet. Du
+    trenger ikke gjøre alle — tekster du ikke har lest inn, leses av
+    maskinstemmen som før.</p>
+  <div id="innspilling-liste" class="liste-innhold"></div>
+</section>
+
+<!-- ---------- Innspilling: én tekst, linje for linje ---------- -->
+<section id="opptak" class="skjerm" hidden>
+  <header class="topp">
+    <button class="ikonknapp tilbake" type="button" data-tilbake="innspilling" aria-label="Tilbake">‹</button>
+    <h1 id="opptak-tittel">Spill inn</h1>
+  </header>
+  <div id="opptak-linjer" class="liste-innhold"></div>
 </section>
 
 <!-- ---------- Belønning ---------- -->
@@ -78,6 +108,42 @@
     <div class="rute liten" id="rute-belonning"></div>
     <p class="belonning-under" id="belonning-under">Du fikk en ny brikke.</p>
     <button id="knapp-videre" class="storknapp" type="button">Videre</button>
+  </div>
+</div>
+
+<!-- ---------- Innstillinger for opplesingen ---------- -->
+<div id="innstillinger" class="overlegg" hidden>
+  <div class="innstilling-kort">
+    <p class="kort-tittel">Stemmen som leser</p>
+
+    <label class="felt">
+      <span>Stemme</span>
+      <select id="valg-stemme"></select>
+    </label>
+
+    <label class="felt">
+      <span>Lesefart</span>
+      <input id="valg-fart" type="range" min="0.5" max="1.2" step="0.05">
+    </label>
+    <p id="fart-verdi" class="minitekst"></p>
+
+    <button id="knapp-prov" class="tekstknapp">Prøv stemmen</button>
+
+    <label class="avkryss">
+      <input id="valg-alle" type="checkbox">
+      <span>Vis alle stemmer, ikke bare de norske</span>
+    </label>
+    <p id="stemme-fasit" class="minitekst"></p>
+
+    <hr class="skille">
+    <p class="kort-tittel liten">Din egen stemme</p>
+    <p class="minitekst">Les inn tekstene selv, så er det din stemme barnet
+      hører. Opptakene ligger bare på denne enheten.</p>
+    <button id="knapp-innspilling" class="tekstknapp">Spill inn tekster</button>
+    <p id="opptak-mangler" class="minitekst" hidden>Denne enheten kan ikke ta
+      opp lyd i nettleseren.</p>
+
+    <button id="knapp-lukk-innstillinger" class="storknapp" type="button">Ferdig</button>
   </div>
 </div>
 
@@ -93,6 +159,7 @@
 
 <script src="./js/tekster.js"></script>
 <script src="./js/trucker.js"></script>
+<script src="./js/opptak.js"></script>
 <script src="./js/tale.js"></script>
 <script src="./js/app.js"></script>
 </body>

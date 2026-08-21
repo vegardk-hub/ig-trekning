@@ -165,26 +165,141 @@
   /* ---------- opplesing ---------- */
 
   var stemme = null;
+  var valgtStemme = null;   // voiceURI valgt av brukeren, hvis noen
+  var fart = 0.8;
+
+  function alleStemmer() {
+    if (!window.speechSynthesis) return [];
+    return (window.speechSynthesis.getVoices() || []).map(function (s) {
+      return { navn: s.navn || s.name, lang: s.lang, uri: s.voiceURI, lokal: s.localService !== false };
+    });
+  }
+
+  function norsk(lang) {
+    var l = (lang || '').toLowerCase();
+    return l.indexOf('nb') === 0 || l.indexOf('no') === 0 || l.indexOf('nn') === 0;
+  }
 
   function finnStemme() {
     if (!window.speechSynthesis) return null;
     if (stemme) return stemme;
     var alle = window.speechSynthesis.getVoices() || [];
-    for (var i = 0; i < alle.length; i++) {
-      var l = (alle[i].lang || '').toLowerCase();
-      if (l === 'nb-no' || l === 'no-no' || l.indexOf('nb') === 0 || l.indexOf('no') === 0) {
-        stemme = alle[i];
-        return stemme;
+    var i;
+    // Har brukeren valgt en stemme selv, vinner den – uansett språkkode. En
+    // personlig stemme kan godt være merket med noe annet enn nb-NO.
+    if (valgtStemme) {
+      for (i = 0; i < alle.length; i++) {
+        if (alle[i].voiceURI === valgtStemme || alle[i].name === valgtStemme) {
+          stemme = alle[i];
+          return stemme;
+        }
       }
+    }
+    for (i = 0; i < alle.length; i++) {
+      if (norsk(alle[i].lang)) { stemme = alle[i]; return stemme; }
     }
     return null;
   }
 
   if (window.speechSynthesis) {
-    window.speechSynthesis.addEventListener('voiceschanged', function () { stemme = null; finnStemme(); });
+    // getVoices() er tom til systemet har lastet lista. Uten denne lytteren
+    // ville en stemmevelger sett tom ut første gang den åpnes.
+    window.speechSynthesis.addEventListener('voiceschanged', function () {
+      stemme = null;
+      finnStemme();
+      if (paaNyeStemmer) paaNyeStemmer();
+    });
   }
 
+  var paaNyeStemmer = null;
+
   var aktivLytter = null;
+
+  /* ---------- avspilling av opptak ---------- */
+
+  // Ett Audio-element som gjenbrukes for alle linjene. iOS krever et ekte
+  // trykk for å slippe lyd gjennom, men bare på elementet — er det først låst
+  // opp av et trykk, kan de neste linjene spilles fra en `ended`-lytter, som
+  // ikke er noe trykk. Et nytt element per linje ville blitt stoppet fra og
+  // med linje to.
+  var lyd = null;
+  var lydUrl = null;
+
+  function stoppLyd() {
+    if (lyd) { lyd.pause(); lyd.onended = null; lyd.onerror = null; }
+    if (lydUrl) { URL.revokeObjectURL(lydUrl); lydUrl = null; }
+  }
+
+  function spillBlob(blob, ferdig) {
+    stoppLyd();
+    if (!lyd) lyd = new Audio();
+    lydUrl = URL.createObjectURL(blob);
+    lyd.src = lydUrl;
+    // Et opptak som ikke lar seg spille, skal ikke stoppe hele opplesingen.
+    lyd.onended = ferdig;
+    lyd.onerror = ferdig;
+    var p = lyd.play();
+    if (p && p.catch) p.catch(function () { ferdig(); });
+  }
+
+  // Leser en hel tekst, én linje om gangen, og sier fra hvilken linje som
+  // holder på. Linje for linje, ikke ord for ord: `onboundary` er den eneste
+  // veien til ordnøyaktig følging, og den er ikke til å stole på i Safari.
+  // En linje som lyser er uansett det barnet trenger for å finne plassen.
+  //
+  // Mikrofonen settes på pause én gang for hele opplesingen, ikke per linje.
+  function lesOppLinjer(linjer, paaLinje, ferdig, lydFor) {
+    var lytter = aktivLytter;
+    var avbrutt = false;
+    var i = 0;
+
+    function slutt() {
+      stoppLyd();
+      if (lytter) lytter.fortsett();
+      if (paaLinje) paaLinje(-1);
+      if (ferdig) ferdig();
+    }
+
+    function neste() {
+      if (avbrutt) return;
+      if (i >= linjer.length) { slutt(); return; }
+      var nr = i++;
+      if (paaLinje) paaLinje(nr);
+
+      // Er linja lest inn av en forelder, spilles den i stedet for å leses av
+      // maskinen. Hull i opptaket faller tilbake på den syntetiske stemmen, så
+      // en halvferdig innspilling er fullt brukbar.
+      var opptak = lydFor ? lydFor(nr) : null;
+      if (opptak) { spillBlob(opptak, neste); return; }
+      var y = new SpeechSynthesisUtterance(linjer[nr]);
+      var s = finnStemme();
+      // Språkkoden følger stemmen når vi har en. Tvinger vi nb-NO på en stemme
+      // som er merket med noe annet, kan systemet velge om stemmen bak ryggen
+      // på oss.
+      if (s) { y.voice = s; y.lang = s.lang || 'nb-NO'; } else { y.lang = 'nb-NO'; }
+      y.rate = fart;
+      y.onend = neste;
+      y.onerror = neste;
+      window.speechSynthesis.speak(y);
+    }
+
+    if (!window.speechSynthesis) { if (ferdig) ferdig(); return { stopp: function () {} }; }
+    if (lytter) lytter.pause();
+    window.speechSynthesis.cancel();
+    neste();
+
+    return {
+      stopp: function () {
+        if (avbrutt) return;
+        avbrutt = true;
+        stoppLyd();
+        // cancel() fyrer onend på den linja som går. Uten flagget over ville
+        // det startet neste linje i stedet for å stoppe.
+        window.speechSynthesis.cancel();
+        slutt();
+      }
+    };
+  }
 
   function lesOpp(tekst, ferdig) {
     if (!window.speechSynthesis) { if (ferdig) ferdig(); return; }
@@ -195,9 +310,8 @@
     window.speechSynthesis.cancel();
     var y = new SpeechSynthesisUtterance(tekst);
     var s = finnStemme();
-    if (s) y.voice = s;
-    y.lang = 'nb-NO';
-    y.rate = 0.85;
+    if (s) { y.voice = s; y.lang = s.lang || 'nb-NO'; } else { y.lang = 'nb-NO'; }
+    y.rate = fart;
     function slutt() {
       if (lytter) lytter.fortsett();
       if (ferdig) ferdig();
@@ -316,6 +430,16 @@
     lik: lik,
     lagMatcher: lagMatcher,
     lesOpp: lesOpp,
+    lesOppLinjer: lesOppLinjer,
+    alleStemmer: alleStemmer,
+    erNorsk: norsk,
+    naavaerendeStemme: function () { var s = finnStemme(); return s ? s.voiceURI : null; },
+    settStemme: function (uri) { valgtStemme = uri || null; stemme = null; finnStemme(); },
+    settFart: function (f) { fart = f; },
+    fart: function () { return fart; },
+    naarStemmerKommer: function (fn) { paaNyeStemmer = fn; },
+    spillBlob: spillBlob,
+    stoppLyd: stoppLyd,
     lytt: lytt
   };
 })();
