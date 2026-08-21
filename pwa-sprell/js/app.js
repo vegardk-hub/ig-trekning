@@ -1,7 +1,6 @@
 'use strict';
 
-/* Selve appen: trekker et oppdrag til det barnet som står for tur, viser
-   setningen, og leser den opp.
+/* Selve appen: trekker et oppdrag, viser setningen, og leser den opp.
 
    Trekkingen går via en kurv – oppdragene som passer stokkes, og det trekkes
    uten tilbakelegging til kurven er tom. Ren Math.random gir samme oppdrag to
@@ -9,19 +8,18 @@
    «ødelagt». */
 (function () {
 
-  var LAGER = 'sprell-v1';
+  var LAGER = 'sprell-v2';
 
   var el = {
     oppdrag: document.getElementById('oppdrag'),
     teller: document.getElementById('teller'),
     trekk: document.getElementById('trekk'),
     les: document.getElementById('les'),
+    rampe: document.getElementById('rampe'),
+    alder: document.getElementById('alder'),
     kunHer: document.getElementById('kun-her'),
     autoles: document.getElementById('autoles'),
-    talebeskjed: document.getElementById('talebeskjed'),
-    barn: [].slice.call(document.querySelectorAll('.barn')),
-    navn: [document.getElementById('navn-0'), document.getElementById('navn-1')],
-    alder: [document.getElementById('alder-0'), document.getElementById('alder-1')]
+    talebeskjed: document.getElementById('talebeskjed')
   };
 
   var valg = hentValg();
@@ -29,14 +27,13 @@
   var forrigeId = null;
   var antall = 0;
   var visning = '';
+  /* Rampemodus lagres med vilje ikke. Den slås på for en stund, og en app som
+     åpnes neste morgen skal starte i det vanlige – ellers begynner dagen med
+     en sur sokk uten at noen har bedt om det. */
+  var rampe = false;
 
   function standard() {
-    return {
-      kunHer: false,
-      autoles: true,
-      aktiv: 0,
-      barn: [{ navn: 'Vetle', alder: 8 }, { navn: 'Live', alder: 5 }]
-    };
+    return { alder: 6, kunHer: false, autoles: true };
   }
 
   function hentValg() {
@@ -45,17 +42,8 @@
       var lagret = JSON.parse(localStorage.getItem(LAGER) || '{}');
       if (typeof lagret.kunHer === 'boolean') v.kunHer = lagret.kunHer;
       if (typeof lagret.autoles === 'boolean') v.autoles = lagret.autoles;
-      if (lagret.aktiv === 0 || lagret.aktiv === 1) v.aktiv = lagret.aktiv;
-      if (Array.isArray(lagret.barn)) {
-        for (var i = 0; i < 2; i++) {
-          if (!lagret.barn[i]) continue;
-          /* Navnet lagres slik det skrives. Samme lærdom som i Poengtavla:
-             blokkbokstaver hører hjemme i CSS, ikke i dataene. */
-          if (typeof lagret.barn[i].navn === 'string') v.barn[i].navn = lagret.barn[i].navn;
-          var a = parseInt(lagret.barn[i].alder, 10);
-          if (a >= 3 && a <= 16) v.barn[i].alder = a;
-        }
-      }
+      var a = parseInt(lagret.alder, 10);
+      if (a >= 3 && a <= 12) v.alder = a;
     } catch (e) {
       return standard();
     }
@@ -71,15 +59,11 @@
     }
   }
 
-  function aktivtBarn() {
-    return valg.barn[valg.aktiv];
-  }
-
   function aktuelle() {
-    var alder = aktivtBarn().alder;
-    return window.SprellOppdrag.alle.filter(function (o) {
+    var bank = rampe ? window.SprellOppdrag.rampe : window.SprellOppdrag.vanlige;
+    return bank.filter(function (o) {
       if (valg.kunHer && o.sted !== 'her') return false;
-      return o.alder <= alder;
+      return o.alder <= valg.alder;
     });
   }
 
@@ -103,12 +87,10 @@
     var o = kurv.pop();
     forrigeId = o.id;
     antall++;
-    /* Setningen står som den er skrevet, med verbet først. Navnet hører
-       hjemme i linja under, ikke foran beskjeden. */
+    /* Setningen står som den er skrevet, med verbet først. */
     visning = window.SprellOppdrag.fyllUt(o.tekst);
     el.oppdrag.textContent = visning;
-    var navn = aktivtBarn().navn.trim();
-    el.teller.textContent = (navn ? navn + ' – oppdrag nummer ' : 'Oppdrag nummer ') + antall;
+    el.teller.textContent = (rampe ? 'Rampestrek nummer ' : 'Oppdrag nummer ') + antall;
     oppdaterTalestatus();
     if (valg.autoles && window.SprellTale.kanLese()) window.SprellTale.les(visning);
   }
@@ -131,52 +113,37 @@
     }
   }
 
-  function tegnBarn() {
-    for (var i = 0; i < 2; i++) {
-      var navn = valg.barn[i].navn.trim();
-      el.barn[i].textContent = navn || 'Barn ' + (i + 1);
-      el.barn[i].setAttribute('aria-pressed', valg.aktiv === i ? 'true' : 'false');
-      el.barn[i].classList.toggle('valgt', valg.aktiv === i);
-    }
+  function tegnRampe() {
+    el.rampe.setAttribute('aria-pressed', rampe ? 'true' : 'false');
+    el.rampe.classList.toggle('paa', rampe);
+    el.rampe.textContent = rampe ? 'Rampemodus er på' : 'Rampemodus';
+    el.trekk.textContent = rampe ? 'Ny rampestrek' : 'Nytt oppdrag';
   }
 
   el.trekk.addEventListener('click', trekk);
   el.les.addEventListener('click', lesOpp);
 
-  el.barn.forEach(function (knapp) {
-    knapp.addEventListener('click', function () {
-      var nr = parseInt(knapp.getAttribute('data-nr'), 10);
-      if (nr === valg.aktiv) return;
-      valg.aktiv = nr;
-      lagreValg();
-      tegnBarn();
-      /* Barna har ulikt utvalg. Kurven er stokket ut fra det forrige barnets
-         alder, så den må lages på nytt. */
-      kurv = [];
-    });
+  el.rampe.addEventListener('click', function () {
+    rampe = !rampe;
+    tegnRampe();
+    /* De to bankene har ingenting med hverandre å gjøre, så kurven kastes.
+       Ellers ville et par vanlige oppdrag ligget igjen i rampemodus. */
+    kurv = [];
+    window.SprellTale.stopp();
   });
 
-  for (var i = 0; i < 2; i++) {
-    (function (nr) {
-      el.navn[nr].value = valg.barn[nr].navn;
-      el.alder[nr].value = valg.barn[nr].alder;
-      el.navn[nr].addEventListener('input', function () {
-        valg.barn[nr].navn = el.navn[nr].value;
-        lagreValg();
-        tegnBarn();
-      });
-      el.alder[nr].addEventListener('change', function () {
-        var a = parseInt(el.alder[nr].value, 10);
-        if (!(a >= 3 && a <= 16)) {
-          el.alder[nr].value = valg.barn[nr].alder;
-          return;
-        }
-        valg.barn[nr].alder = a;
-        lagreValg();
-        if (nr === valg.aktiv) kurv = [];
-      });
-    })(i);
-  }
+  el.alder.value = valg.alder;
+  el.alder.addEventListener('change', function () {
+    var a = parseInt(el.alder.value, 10);
+    if (!(a >= 3 && a <= 12)) {
+      el.alder.value = valg.alder;
+      return;
+    }
+    valg.alder = a;
+    lagreValg();
+    /* Kurven er stokket ut fra den gamle alderen. */
+    kurv = [];
+  });
 
   el.kunHer.checked = valg.kunHer;
   el.autoles.checked = valg.autoles;
@@ -197,6 +164,6 @@
   });
 
   window.SprellTale.naarStemmerKommer(oppdaterTalestatus);
-  tegnBarn();
+  tegnRampe();
   oppdaterTalestatus();
 })();

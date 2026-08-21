@@ -275,20 +275,25 @@ strekninger og mister mynter, så den tjener ikke proporsjonalt mer.
 `pwa-sprell/README.md` går gjennom oppdragsbanken. Tre ting som ser ut som
 detaljer og har en grunn:
 
-- **Alderen på barnet filtrerer oppdragene, men vises aldri som en forskjell.**
-  Hvert oppdrag har en `alder` — 5 eller 8 — og skillet går på lesing, staving
-  og telling baklengs, ikke på lett og vanskelig. Ingen teller sier at
-  storebror har fler å velge mellom; søsken sammenligner, samme premiss som
-  identiske tavler i Poengtavla.
+- **Appen kjenner ingen navn.** Den snakker til den som står foran den, og kan
+  gis videre til neste barn uten et trykk. Det eneste som skiller barna, er
+  alderen: hvert oppdrag har en `alder` — 3, 5 eller 8 — og innstillingen går
+  fra 3 til 12. Skillet går på hva som må kunne gjøres for at beskjeden gir
+  mening (telle, lese, stave), ikke på lett og vanskelig.
+- **Rampemodus er en egen bank, og lagres ikke.** Knappen over oppdraget bytter
+  ut alle oppdragene med rampestreker, og modusen står aldri på når appen
+  åpnes på nytt — ellers begynner dagen med en sur sokk uten at noen har bedt
+  om det. Nye rampestreker må kunne gjøres om igjen på ti sekunder, aldri
+  gjelde noe som virkelig trengs (nøkler, briller, telefon), og aldri gjøre
+  vondt eller skremme på ordentlig.
 - **Oppdragene trekkes fra en stokket kurv uten tilbakelegging.** Ren
   `Math.random()` gjentar seg ofte nok til at et barn merker det, og da er
   maskinen «ødelagt». Bytter man barn eller filter, må kurven kastes — den er
   stokket ut fra det gamle utvalget.
 - **Setningen starter med verbet.** «Gå til soverommet ditt og hent det
   mykeste du finner» — ikke navnet først, ikke «Nå skal du …». Det er en
-  beskjed, og handlingen skal komme først for den som hører den. Navnet på
-  barnet som har turen står i linja under, ikke i setningen. Tall skrives med
-  bokstaver, for setningen leses opp.
+  beskjed, og handlingen skal komme først for den som hører den. Tall skrives
+  med bokstaver, for setningen leses opp.
 
 ## Fargeflasker
 

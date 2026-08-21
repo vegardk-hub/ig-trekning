@@ -39,8 +39,9 @@
   tilfeldig oppdrag barna kan gjøre inne — lag en snøengel, gå fem skritt
   baklengs, eller gå til kjøkkenet og hent noe hvitt. Setningen kan leses høyt
   av en voksen eller av maskinstemmen. 36 oppdrag med tilfeldige rom, tall, dyr
-  og farger, delt etter alder, og et filter for det som kan gjøres der barnet
-  står. Hvert oppdrag er én setning som starter med verbet. PWA.
+  og farger, delt etter alder fra 3 til 12, og et filter for det som kan gjøres
+  der barnet står. Egen rampemodus med 23 rampestreker som går ut på å tulle
+  med de voksne. Hvert oppdrag er én setning som starter med verbet. PWA.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på

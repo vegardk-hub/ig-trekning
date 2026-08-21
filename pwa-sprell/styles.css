@@ -26,18 +26,16 @@ h1 {
   margin: 0 0 1.5rem;
 }
 
-/* Barnevelgeren står over oppdraget: den sier hvem setningen gjelder, og
-   hvilke oppdrag som er med i trekningen. */
-.tur { display: flex; gap: .75rem; margin: 0 0 1rem; }
-.barn {
-  flex: 1 1 0;
-  font-size: 1.1rem;
-  padding: .6rem .5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Rampemodusknappen står over oppdraget, ikke nede i innstillingene: den skal
+   kunne slås av like fort som den ble slått på. Svart flate når den er på – da
+   ser man med én gang hvilken bank maskinen trekker fra. */
+.modus {
+  display: block;
+  width: 100%;
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
 }
-.barn.valgt { background: #000; color: #fff; font-weight: 600; }
+.modus.paa { background: #000; color: #fff; font-weight: 600; }
 
 #oppdrag {
   font-size: 1.75rem;
@@ -85,13 +83,9 @@ button:disabled { opacity: .4; cursor: default; }
 .valg label { display: block; margin: .6rem 0; }
 .valg input[type="checkbox"] { width: 1.15rem; height: 1.15rem; margin-right: .5rem; vertical-align: -.15rem; }
 
-.barnrad { display: flex; gap: .75rem; margin: .6rem 0; }
-.barnrad label { display: block; margin: 0; font-size: .9rem; }
-.barnrad .navn { flex: 1 1 auto; }
-.barnrad .alder { flex: 0 0 5rem; }
-.barnrad input {
-  display: block;
-  width: 100%;
+.alderrad { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.alderrad input {
+  flex: 0 0 5rem;
   font: inherit;
   color: inherit;
   background: #fff;

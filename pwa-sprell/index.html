@@ -17,12 +17,9 @@
 <main>
   <h1>Sprellemaskinen</h1>
 
-  <!-- Ett barn om gangen, og navnet står i setningen. Knappene her sier hvem
-       oppdraget gjelder – og hvilke oppdrag som er med i trekningen. -->
-  <div class="tur" role="group" aria-label="Hvem sin tur er det?">
-    <button type="button" class="barn" data-nr="0" aria-pressed="false"></button>
-    <button type="button" class="barn" data-nr="1" aria-pressed="false"></button>
-  </div>
+  <!-- Rampemodus bytter ut hele oppdragsbanken. Egen knapp, ikke en avkryssing
+       nede i innstillingene: den skal kunne slås av like fort som den slås på. -->
+  <button type="button" id="rampe" class="modus" aria-pressed="false">Rampemodus</button>
 
   <!-- aria-live gjør at en skjermleser sier den nye setningen når den byttes.
        Selve teksten er stor nok til å leses høyt fra andre siden av rommet. -->
@@ -37,19 +34,10 @@
   <p id="talebeskjed" class="beskjed" role="status"></p>
 
   <fieldset class="valg">
-    <legend>Barna</legend>
-    <div class="barnrad">
-      <label class="navn">Navn <input type="text" id="navn-0" autocomplete="off" maxlength="20"></label>
-      <label class="alder">Alder <input type="number" id="alder-0" min="3" max="16" inputmode="numeric"></label>
-    </div>
-    <div class="barnrad">
-      <label class="navn">Navn <input type="text" id="navn-1" autocomplete="off" maxlength="20"></label>
-      <label class="alder">Alder <input type="number" id="alder-1" min="3" max="16" inputmode="numeric"></label>
-    </div>
-  </fieldset>
-
-  <fieldset class="valg">
     <legend>Innstillinger</legend>
+    <label class="alderrad">Alder på barnet
+      <input type="number" id="alder" min="3" max="12" inputmode="numeric">
+    </label>
     <label><input type="checkbox" id="kun-her"> Bare oppdrag der jeg står</label>
     <label><input type="checkbox" id="autoles"> Les opp automatisk</label>
   </fieldset>

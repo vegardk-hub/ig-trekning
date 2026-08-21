@@ -11,39 +11,35 @@ hjemskjermen og virker uten nett.
 
 | Fil | Ansvar |
 | --- | --- |
-| `index.html` | Grensesnittet: setningen, to knapper, to avkryssinger |
+| `index.html` | Grensesnittet: setningen, knappene og innstillingene |
 | `styles.css` | Utseendet |
-| `js/oppdrag.js` | Oppdragsbanken og utfyllingen av lukene |
+| `js/oppdrag.js` | De to oppdragsbankene og utfyllingen av lukene |
 | `js/tale.js` | Maskinstemmen (`speechSynthesis`) |
-| `js/app.js` | Trekkingen, filteret og lagringen av valgene |
+| `js/app.js` | Trekkingen, filtrene, rampemodus og lagringen av valgene |
 | `sw.js`, `manifest.webmanifest` | PWA-delen |
 | `lag_ikon.py` | Skriver ikonene i `icons/` |
 
-## Barna
+## Alderen
 
-Ett barn om gangen. Knappene øverst sier hvem som har turen, og navnet gjentas
-i den lille linja under oppdraget — men **ikke inne i selve setningen**. Navn og
-alder settes i innstillingene og lagres i `localStorage` — **navnet lagres slik
-det skrives**, samme lærdom som i Poengtavla.
+**Appen kjenner ingen navn og skal ikke gjøre det** — den snakker til den som
+står foran den, og kan gis videre til neste barn uten et eneste trykk.
 
-Alderen er ikke pynt: den bestemmer hvilke oppdrag som er med i trekningen.
-Hvert oppdrag har en `alder`, som er laveste alder det passer for. Skillet går
-ikke på lett og vanskelig, men på det som krever lesing, staving eller å telle
-baklengs — der femåringen bare ville blitt stående og lurt på hva han skulle
-gjøre. **Ingenting i grensesnittet sier at den ene har flere oppdrag enn den
-andre.** Søsken sammenligner, og en teller som viser at storebror har fler,
-blir en sak.
+Det eneste som skiller barna, er alderen, som settes fra 3 til 12 i
+innstillingene og lagres i `localStorage`. Hvert oppdrag har en `alder` — 3, 5
+eller 8 — som er laveste alder det passer for. Skillet er ikke lett og
+vanskelig, men hva som må kunne gjøres for at beskjeden i det hele tatt gir
+mening: telle, holde på to tall samtidig, lese, stave. Fra 8 og opp er alt med.
 
 ## Oppdragene
 
-36 oppdrag, delt i to etter hvor de gjøres:
+36 vanlige oppdrag, delt i to etter hvor de gjøres:
 
 - **`sted: 'her'`** (22 stk) — gjøres der barnet står. Snøengel, fem skritt
   baklengs, sitte på rumpa og telle til ti.
 - **`sted: 'rom'`** (14 stk) — sender barnet til badet, kjøkkenet, loftet og
   tilbake igjen.
 
-Sju av dem er merket `alder: 8`, resten `alder: 5`.
+Sytten er merket `alder: 3`, tolv `alder: 5` og sju `alder: 8`.
 
 Avkryssingen **«Bare oppdrag der jeg står»** skrur av den siste gruppa. Den er
 til leggetid og til besøk hos andre — ikke en innstilling som skal glemmes bort,
@@ -65,10 +61,33 @@ To ting å vite før du skriver nye oppdrag:
 - **Setningen starter med verbet.** «Gå til soverommet ditt og hent det mykeste
   du finner», ikke «Live, gå til …» eller «Nå skal du gå til …». Det er en
   beskjed, og handlingen skal komme først — både for den som leser høyt og for
-  den som hører maskinstemmen. Hvem den gjelder, står over.
+  den som hører maskinstemmen.
 
 Rommene i `ROM` er stedene i et vanlig hus. Har man ikke loft, er det lista man
 stryker fra — ikke setningene.
+
+## Rampemodus
+
+Knappen over oppdraget bytter ut hele banken: 23 rampestreker som går ut på å
+tulle med de voksne. Den ligger over setningen og ikke nede blant
+innstillingene, fordi den skal kunne slås av like fort som den ble slått på.
+
+**Rampemodus lagres med vilje ikke.** Den slås på for en stund, og en app som
+åpnes neste morgen skal starte i det vanlige — ellers begynner dagen med en sur
+sokk uten at noen har bedt om det.
+
+Tre regler holder banken på riktig side av morsom. Skriver du nye, skriv dem
+etter disse:
+
+1. **Alt skal kunne gjøres om igjen på ti sekunder.** En sko som gjemmes, skal
+   finnes igjen — derfor står «husk hvor du la den» i selve setningen.
+2. **Ingenting som virkelig trengs.** Ikke nøkler, briller, telefon eller
+   medisiner. En rampestrek som gjør en voksen sen til jobb, er ikke en
+   rampestrek.
+3. **Ingenting som gjør vondt, ødelegger noe eller skremmer på ordentlig.**
+
+«Mamma» og «pappa» står i tekstene fordi barnet skal kjenne igjen hvem det
+gjelder. Passer det ikke i huset, er det disse ordene som byttes ut.
 
 ## Trekkingen
 
@@ -78,9 +97,10 @@ ganger på rad ofte nok til at et barn merker det, og da er maskinen «ødelagt�
 Når kurven fylles på nytt, byttes førstemann bort hvis det er samme oppdrag som
 avsluttet forrige kurv.
 
-Bytter man filter, kastes kurven — den er stokket ut fra det gamle utvalget, og
-ville ellers fortsatt sende barnet på badet en stund etter at «bare her jeg
-står» ble krysset av.
+Bytter man filter, alder eller modus, kastes kurven — den er stokket ut fra det
+gamle utvalget, og ville ellers fortsatt sende barnet på badet en stund etter at
+«bare her jeg står» ble krysset av, eller delt ut vanlige oppdrag i
+rampemodus.
 
 ## Stemmen
 
