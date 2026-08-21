@@ -1,8 +1,10 @@
 'use strict';
 
-/* Selve appen: trekker et oppdrag, viser setningen, og leser den opp.
-   Trekkingen går via en kurv – alle oppdragene stokkes, og det trekkes uten
-   tilbakelegging til kurven er tom. Ren Math.random gir samme oppdrag to
+/* Selve appen: trekker et oppdrag til det barnet som står for tur, viser
+   setningen, og leser den opp.
+
+   Trekkingen går via en kurv – oppdragene som passer stokkes, og det trekkes
+   uten tilbakelegging til kurven er tom. Ren Math.random gir samme oppdrag to
    ganger på rad ofte nok til at et barn merker det, og da er maskinen
    «ødelagt». */
 (function () {
@@ -16,7 +18,10 @@
     les: document.getElementById('les'),
     kunHer: document.getElementById('kun-her'),
     autoles: document.getElementById('autoles'),
-    talebeskjed: document.getElementById('talebeskjed')
+    talebeskjed: document.getElementById('talebeskjed'),
+    barn: [].slice.call(document.querySelectorAll('.barn')),
+    navn: [document.getElementById('navn-0'), document.getElementById('navn-1')],
+    alder: [document.getElementById('alder-0'), document.getElementById('alder-1')]
   };
 
   var valg = hentValg();
@@ -25,17 +30,36 @@
   var antall = 0;
   var visning = '';
 
+  function standard() {
+    return {
+      kunHer: false,
+      autoles: true,
+      aktiv: 0,
+      barn: [{ navn: 'Vetle', alder: 8 }, { navn: 'Live', alder: 5 }]
+    };
+  }
+
   function hentValg() {
-    var standard = { kunHer: false, autoles: true };
+    var v = standard();
     try {
       var lagret = JSON.parse(localStorage.getItem(LAGER) || '{}');
-      return {
-        kunHer: !!lagret.kunHer,
-        autoles: lagret.autoles === undefined ? standard.autoles : !!lagret.autoles
-      };
+      if (typeof lagret.kunHer === 'boolean') v.kunHer = lagret.kunHer;
+      if (typeof lagret.autoles === 'boolean') v.autoles = lagret.autoles;
+      if (lagret.aktiv === 0 || lagret.aktiv === 1) v.aktiv = lagret.aktiv;
+      if (Array.isArray(lagret.barn)) {
+        for (var i = 0; i < 2; i++) {
+          if (!lagret.barn[i]) continue;
+          /* Navnet lagres slik det skrives. Samme lærdom som i Poengtavla:
+             blokkbokstaver hører hjemme i CSS, ikke i dataene. */
+          if (typeof lagret.barn[i].navn === 'string') v.barn[i].navn = lagret.barn[i].navn;
+          var a = parseInt(lagret.barn[i].alder, 10);
+          if (a >= 3 && a <= 16) v.barn[i].alder = a;
+        }
+      }
     } catch (e) {
-      return standard;
+      return standard();
     }
+    return v;
   }
 
   function lagreValg() {
@@ -47,9 +71,15 @@
     }
   }
 
+  function aktivtBarn() {
+    return valg.barn[valg.aktiv];
+  }
+
   function aktuelle() {
+    var alder = aktivtBarn().alder;
     return window.SprellOppdrag.alle.filter(function (o) {
-      return !valg.kunHer || o.sted === 'her';
+      if (valg.kunHer && o.sted !== 'her') return false;
+      return o.alder <= alder;
     });
   }
 
@@ -69,13 +99,17 @@
 
   function trekk() {
     if (!kurv.length) fyllKurv();
+    if (!kurv.length) return;
     var o = kurv.pop();
     forrigeId = o.id;
     antall++;
-    visning = window.SprellOppdrag.fyllUt(o.tekst);
+    visning = window.SprellOppdrag.medNavn(
+      aktivtBarn().navn.trim(),
+      window.SprellOppdrag.fyllUt(o.tekst)
+    );
     el.oppdrag.textContent = visning;
     el.teller.textContent = 'Oppdrag nummer ' + antall;
-    el.les.disabled = !window.SprellTale.kanLese();
+    oppdaterTalestatus();
     if (valg.autoles && window.SprellTale.kanLese()) window.SprellTale.les(visning);
   }
 
@@ -97,8 +131,52 @@
     }
   }
 
+  function tegnBarn() {
+    for (var i = 0; i < 2; i++) {
+      var navn = valg.barn[i].navn.trim();
+      el.barn[i].textContent = navn || 'Barn ' + (i + 1);
+      el.barn[i].setAttribute('aria-pressed', valg.aktiv === i ? 'true' : 'false');
+      el.barn[i].classList.toggle('valgt', valg.aktiv === i);
+    }
+  }
+
   el.trekk.addEventListener('click', trekk);
   el.les.addEventListener('click', lesOpp);
+
+  el.barn.forEach(function (knapp) {
+    knapp.addEventListener('click', function () {
+      var nr = parseInt(knapp.getAttribute('data-nr'), 10);
+      if (nr === valg.aktiv) return;
+      valg.aktiv = nr;
+      lagreValg();
+      tegnBarn();
+      /* Barna har ulikt utvalg. Kurven er stokket ut fra det forrige barnets
+         alder, så den må lages på nytt. */
+      kurv = [];
+    });
+  });
+
+  for (var i = 0; i < 2; i++) {
+    (function (nr) {
+      el.navn[nr].value = valg.barn[nr].navn;
+      el.alder[nr].value = valg.barn[nr].alder;
+      el.navn[nr].addEventListener('input', function () {
+        valg.barn[nr].navn = el.navn[nr].value;
+        lagreValg();
+        tegnBarn();
+      });
+      el.alder[nr].addEventListener('change', function () {
+        var a = parseInt(el.alder[nr].value, 10);
+        if (!(a >= 3 && a <= 16)) {
+          el.alder[nr].value = valg.barn[nr].alder;
+          return;
+        }
+        valg.barn[nr].alder = a;
+        lagreValg();
+        if (nr === valg.aktiv) kurv = [];
+      });
+    })(i);
+  }
 
   el.kunHer.checked = valg.kunHer;
   el.autoles.checked = valg.autoles;
@@ -119,5 +197,6 @@
   });
 
   window.SprellTale.naarStemmerKommer(oppdaterTalestatus);
+  tegnBarn();
   oppdaterTalestatus();
 })();

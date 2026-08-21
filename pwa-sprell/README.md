@@ -4,7 +4,8 @@ Trekker et tilfeldig oppdrag barna kan gjøre inne. Setningen står stort på
 skjermen, så en voksen kan lese den høyt — eller barnet kan trykke **Les opp**
 og la maskinstemmen gjøre det.
 
-Første versjon: svart på hvitt, ingen bilder, bare knappene som trengs.
+Svart på hvitt, ingen bilder, bare knappene som trengs. PWA — kan legges på
+hjemskjermen og virker uten nett.
 
 ## Filene
 
@@ -15,15 +16,34 @@ Første versjon: svart på hvitt, ingen bilder, bare knappene som trengs.
 | `js/oppdrag.js` | Oppdragsbanken og utfyllingen av lukene |
 | `js/tale.js` | Maskinstemmen (`speechSynthesis`) |
 | `js/app.js` | Trekkingen, filteret og lagringen av valgene |
+| `sw.js`, `manifest.webmanifest` | PWA-delen |
+| `lag_ikon.py` | Skriver ikonene i `icons/` |
+
+## Barna
+
+Ett barn om gangen, og navnet står i setningen: «Live, gå til badet og hent noe
+hvitt.» Knappene øverst sier hvem som har turen. Navn og alder settes i
+innstillingene og lagres i `localStorage` — **navnet lagres slik det skrives**,
+samme lærdom som i Poengtavla.
+
+Alderen er ikke pynt: den bestemmer hvilke oppdrag som er med i trekningen.
+Hvert oppdrag har en `alder`, som er laveste alder det passer for. Skillet går
+ikke på lett og vanskelig, men på det som krever lesing, staving eller å telle
+baklengs — der femåringen bare ville blitt stående og lurt på hva han skulle
+gjøre. **Ingenting i grensesnittet sier at den ene har flere oppdrag enn den
+andre.** Søsken sammenligner, og en teller som viser at storebror har fler,
+blir en sak.
 
 ## Oppdragene
 
-Tretti oppdrag, delt i to etter hvor de gjøres:
+36 oppdrag, delt i to etter hvor de gjøres:
 
-- **`sted: 'her'`** (18 stk) — gjøres der barnet står. Snøengel, fem skritt
+- **`sted: 'her'`** (22 stk) — gjøres der barnet står. Snøengel, fem skritt
   baklengs, sitte på rumpa og telle til ti.
-- **`sted: 'rom'`** (12 stk) — sender barnet til badet, kjøkkenet, loftet og
+- **`sted: 'rom'`** (14 stk) — sender barnet til badet, kjøkkenet, loftet og
   tilbake igjen.
+
+Sju av dem er merket `alder: 8`, resten `alder: 5`.
 
 Avkryssingen **«Bare oppdrag der jeg står»** skrur av den siste gruppa. Den er
 til leggetid og til besøk hos andre — ikke en innstilling som skal glemmes bort,
@@ -42,6 +62,9 @@ To ting å vite før du skriver nye oppdrag:
   stemme som får «5» kan finne på å si det på engelsk.
 - **`{dyr}` må være hankjønnsord.** Setningene sier «som en …», så «som en
   egern» blir feil. `{farge}` må stå i intetkjønn: «noe som er rødt».
+- **Setningen skal tåle et navn foran seg.** Appen setter navnet først og
+  senker første bokstav, så «Legg deg på gulvet» blir «Live, legg deg på
+  gulvet». En setning som åpner med et egennavn ville blitt skrevet feil.
 
 Rommene i `ROM` er stedene i et vanlig hus. Har man ikke loft, er det lista man
 stryker fra — ikke setningene.
@@ -73,8 +96,15 @@ Finnes ingen stemme, står det under knappene i stedet for at knappen bare ikke
 gjør noe. Automatisk opplesing skjer alltid rett etter et trykk, som er det
 iOS krever for å slippe lyd ut i det hele tatt.
 
-## Ikke gjort ennå
+## PWA
 
-Ingen service worker og ingen manifest — appen er ikke en PWA i denne versjonen.
-Legges det til, må ikonene lages, og `CACHE`-navnet i `sw.js` må bumpes hver
-gang oppdragsbanken endres.
+`sw.js` er nett først med cache som reserve, og henter med `{ cache: 'no-store' }`
+under installering — uten det baker Pages' `max-age=600` ti minutter gammel kode
+inn i en fersk cache. **Endrer du en fil som står i `FILES`, bump `CACHE`-navnet**,
+ellers blir den gamle versjonen liggende hos alle som har appen på hjemskjermen.
+
+Ikonene er en strekfigur i et sprett, skrevet av `lag_ikon.py` uten Pillow:
+
+```
+python3 pwa-sprell/lag_ikon.py
+```

@@ -14,7 +14,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
 | `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
 | `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den i looper og hopp, PWA |
-| `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing |
+| `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -118,7 +118,7 @@ eller server, og skal kjøres etter hver endring i `pwa-stunt/js/lope.js` eller
 node pwa-stunt/tester/lope.js
 ```
 
-Sudoku, Fargeflasker, Poengtavla, Monstergiret og Stuntgarasjen er PWA-er. Endrer du filene de
+Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen og Sprellemaskinen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
 igjen hos alle som allerede har installert appen. **Lesestjerna har med vilje
 ingen service worker** — den trenger nett uansett, både til stemmen og til
@@ -269,6 +269,24 @@ Endrer du priser eller utbetalinger, kjør både en umodifisert og en fullt
 utstyrt bil gjennom løypa og se at summene ligger der tabellen i
 `pwa-stunt/README.md` sier. De to henger sammen: en sterk bil flyr over
 strekninger og mister mynter, så den tjener ikke proporsjonalt mer.
+
+## Sprellemaskinen
+
+`pwa-sprell/README.md` går gjennom oppdragsbanken. Tre ting som ser ut som
+detaljer og har en grunn:
+
+- **Alderen på barnet filtrerer oppdragene, men vises aldri som en forskjell.**
+  Hvert oppdrag har en `alder` — 5 eller 8 — og skillet går på lesing, staving
+  og telling baklengs, ikke på lett og vanskelig. Ingen teller sier at
+  storebror har fler å velge mellom; søsken sammenligner, samme premiss som
+  identiske tavler i Poengtavla.
+- **Oppdragene trekkes fra en stokket kurv uten tilbakelegging.** Ren
+  `Math.random()` gjentar seg ofte nok til at et barn merker det, og da er
+  maskinen «ødelagt». Bytter man barn eller filter, må kurven kastes — den er
+  stokket ut fra det gamle utvalget.
+- **Setningen skal tåle et navn foran seg.** Appen skriver «Live, gå til
+  badet …» ved å senke første bokstav, så et oppdrag kan ikke åpne med et
+  egennavn. Tall skrives med bokstaver, for setningen leses opp.
 
 ## Fargeflasker
 
