@@ -93,7 +93,7 @@ console.log('\n— Alle teknikkene er nådd —');
 // ingenting om den. Derfor listes det som faktisk ble brukt.
 for (const k of Object.keys(brukt).sort()) console.log(`  ${k.padEnd(24)} ${brukt[k]}`);
 
-const NYE = ['XYZ-Wing', 'W-Wing', 'Farging'];
+const NYE = ['XYZ-Wing', 'W-Wing', 'Farging', 'Unikt rektangel', 'Tvungen kjede'];
 sjekk('de nye teknikkene ble faktisk brukt', NYE.every(v => brukt[v] > 0),
       NYE.map(v => `${v}: ${brukt[v] || 0}`).join(', '));
 

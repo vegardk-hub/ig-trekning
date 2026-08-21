@@ -371,6 +371,11 @@ trengs** for å komme i mål med ren logikk:
 | Beinhard | 6–11 | Tripler, kvadrupler, X-Wing, XY-Wing, sverdfisk |
 | Ekspert | 12–13 | XYZ-Wing, W-Wing |
 | Mester | 14 | Farging |
+| Stormester | 15 | Unikt rektangel |
+| Virtuos | 16 | Én tvungen kjede |
+| Titan | 16 | To tvungne kjeder |
+| Orakel | 16 | Tre tvungne kjeder |
+| Legende | 16 | Fire eller flere tvungne kjeder |
 
 Grensene er satt etter måling, ikke etter hvor avanserte teknikkene høres ut.
 `tester/maaling.js` graver tusenvis av brett og skriver ut hvilken teknikk som
@@ -394,6 +399,30 @@ nesten aldri *nødvendige* — noe enklere holder — så de kan ikke bære et n
 alene og deler ett bånd med triplene og XY-Wing. W-Wing er derimot tett nok til
 å bære Ekspert alene.
 
+### De fem øverste, og hvorfor de teller kjeder
+
+Over Mester lå det lenge en stor pulje ubrukt: rundt en fjerdedel av alle dypt
+utgravde brett krevde mer enn teknikksettet rakk, og ble kastet. To teknikker
+til henter dem inn — **unikt rektangel** (nivå 15) og **tvungen kjede**
+(nivå 16).
+
+Men tvungen kjede alene topper **25 %** av alle brett, mer enn samtlige harde
+teknikker til sammen. Ett bånd der ville vært like grovt som å slå Lett og
+Ekspert sammen. Så de fire øverste nivåene skilles ikke på teknikk, men på
+**hvor mange kjeder** som trengs — det eneste målet på motstand som finnes når
+ingen skarpere teknikk står igjen:
+
+| Kjeder | Andel av alle brett |
+| --- | --- |
+| 1 | 16,5 % |
+| 2 | 5,5 % |
+| 3 | 2,3 % |
+| 4 eller flere | 0,8 % |
+
+Unikt rektangel er tynt (1,3 %) og er det tregeste nivået å lage — rundt et
+halvt sekund mot et budsjett på 2,5. Det holder, men det er nivået som ryker
+først om teknikklista endres.
+
 Endrer du teknikklista, må båndene måles på nytt. `tester/nivaaer.js` er
 vaktposten: den ber generatoren om brett på hvert nivå og sjekker at de faktisk
 lander i sitt eget bånd. Går et bånd tomt, bruker generatoren opp forsøkene og
@@ -404,7 +433,7 @@ leverer stille «det nærmeste den har» — altså forrige nivå, under nytt na
 | Fil | Ansvar |
 | --- | --- |
 | `js/core.js` | Rutenett, enheter, kandidater, brute force-løser med propagering |
-| `js/solver.js` | De fjorten løseteknikkene, forklaringene og graderingen |
+| `js/solver.js` | De seksten løseteknikkene, forklaringene og graderingen |
 | `js/generator.js` | Lager entydige brett på ønsket nivå |
 | `js/tema.js` | Fargeoppsettene — settes før første maling |
 | `js/statistikk.js` | Løste brett, beste tid og snitt per nivå |
@@ -419,17 +448,33 @@ Prøves i stigende rekkefølge, så hintet alltid er det enkleste som finnes:
 1. Naken ener · 2. Skjult ener · 3. Låst kandidat (peker og krav) ·
 4. Nakent par · 5. Skjult par · 6. Nakent trippel · 7. Skjult trippel ·
 8. Nakent kvadruppel · 9. X-Wing · 10. XY-Wing · 11. Sverdfisk ·
-12. XYZ-Wing · 13. W-Wing · 14. Farging
+12. XYZ-Wing · 13. W-Wing · 14. Farging · 15. Unikt rektangel ·
+16. Tvungen kjede
 
-De tre siste kom til for å gi rom over Ekspert. Med elleve teknikker var en
-tredjedel av alle gravde brett uløselige for løseren — og et nivå som krever mer
-enn Ekspert måtte hente brettene sine derfra. Med fjorten er en fjerdedel igjen
-utenfor, så det finnes fortsatt rom for et nivå over Mester den dagen det trengs.
+Teknikkene 12–14 kom til for å gi rom over Ekspert, og 15–16 for å gi rom over
+Mester. Hver gang er mønsteret det samme: puljen med brett som løseren ikke
+rekker, er råstoffet de nye nivåene lages av. Den var en tredjedel med elleve
+teknikker, en fjerdedel med fjorten, og er nå nede i 0,3 %. Det finnes med andre
+ord ikke flere nivåer å hente uten enda skarpere teknikker.
 
-**Farging** er den eneste av dem som følger en kjede i stedet for en figur: ett
-tall om gangen, gjennom enhetene der tallet bare kan stå to steder. Cellene
-deler seg i to lag der nøyaktig ett er det sanne, og det gir to slutninger uten
-at man vet hvilket lag som vinner.
+**Farging** er den eneste av de tre første som følger en kjede i stedet for en
+figur: ett tall om gangen, gjennom enhetene der tallet bare kan stå to steder.
+Cellene deler seg i to lag der nøyaktig ett er det sanne, og det gir to
+slutninger uten at man vet hvilket lag som vinner.
+
+**Unikt rektangel** er den eneste teknikken som bruker at brettet har *én*
+løsning. Fire celler i to rader, to kolonner og to bokser, der tre bare rommer
+det samme paret: var den fjerde også begrenset til paret, kunne de to tallene
+byttes om i alle fire uten at noe ble ulovlig, og brettet ville hatt to
+løsninger. Altså må den fjerde være noe annet.
+
+**Tvungen kjede** er siste utvei og den eneste som prøver seg fram: sett det ene
+tallet i en tocellet rute og følg enerne så langt de rekker. Ender det i en
+celle uten kandidater, eller en enhet uten plass til et tall, var antakelsen
+umulig. Det er ikke gjetting — motsigelsen er beviset, og kjeden fram til den er
+forklaringen brukeren får: «Sett at den er 4: da må R1K7 bli 1, da må R1K8 bli 7
+… og til slutt står R7K6 igjen uten et eneste tall som passer.» Fordi den er
+dyr, kjøres den bare når alt annet er prøvd.
 
 ### Generatoren
 
@@ -440,8 +485,15 @@ tilbake én om gangen — og alltid den som gjør brettet *minst* lettere, eller
 hopper man rett forbi det båndet man siktet på. Første punktet der brettet blir
 logisk løsbart, er nettopp det vanskeligste.
 
-Brettene er symmetriske (180°) på alle nivåer unntatt Ekspert, som trenger
-asymmetrisk graving for å bli hardt nok.
+Brettene er symmetriske (180°) til og med Vanskelig. Over det graves de
+asymmetrisk: et 180°-symmetrisk brett blir grunnere, og kommer sjelden opp i
+teknikkene de båndene krever.
+
+De fire øverste nivåene deler samme teknikknivå, så «for hardt» kan ikke bety
+«krever en skarpere teknikk» der — det finnes ingen. Der betyr det *for mange
+kjeder*, og ledetråder legges tilbake til kjedetallet er nede i båndet. Uten
+den justeringen ville generatoren trodd den var i mål med en gang, og Virtuos,
+Titan, Orakel og Legende ville alle levert det samme brettet.
 
 ### Offline
 

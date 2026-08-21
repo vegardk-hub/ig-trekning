@@ -101,7 +101,13 @@ const sek = t => {
   await page.click('#nytt-stat');
   sjekk('panelet åpner fra «Nytt spill»', await page.$eval('#stat-panel', e => !e.hidden));
   const rader = await page.$$eval('#statliste > *', e => e.length);
-  sjekk('lista har hode og sju nivåer', rader === 32, rader + ' ruter, ventet 32');
+  // Fire kolonner per rad, pluss hoderaden. Antallet leses av NIVAAER i stedet
+  // for å stå som et tall: lista har vokst to ganger alt, og et hardkodet tall
+  // gjør en prøve rød av en villet endring.
+  const antallNivaa = await page.evaluate(() => window.SudokuSolver.NIVAAER.length);
+  const ventet = (antallNivaa + 1) * 4;
+  sjekk(`lista har hode og ${antallNivaa} nivåer`, rader === ventet,
+        rader + ' ruter, ventet ' + ventet);
   const middelsrad = await page.$$eval('#statliste .stattall', e => e.slice(3, 6).map(x => x.textContent));
   sjekk('middels står med ett løst brett', middelsrad[0] === '1', middelsrad.join(' / '));
 
@@ -131,7 +137,7 @@ const sek = t => {
   }
 
   /*
-   * «Nytt spill» er den trangeste dialogen: sju nivåer, en knapp til, og
+   * «Nytt spill» er den trangeste dialogen: tolv nivåer, en knapp til, og
    * liggende bare 320 px å ta av. Den måles i begge formater — en måling bare
    * stående slapp gjennom et kort som lå 35 px utenfor liggende, der lista
    * går i to spalter og altså har helt andre høyder.
@@ -157,10 +163,11 @@ const sek = t => {
   });
   sjekk('«Statistikk» og «Avbryt» står på samme rad', sammeRad);
 
-  // Alle sju nivåene skal være der, og i stigende rekkefølge.
+  // Alle nivåene skal være der, i samme rekkefølge som løseren kjenner dem.
   const nivaaer = await page.$$eval('.nivaaknapp', els => els.map(e => e.dataset.nivaa));
-  sjekk('alle sju nivåene står i lista',
-        nivaaer.join(',') === 'lett,middels,krevende,vanskelig,beinhard,ekspert,mester',
+  const fraSolver = await page.evaluate(() => window.SudokuSolver.NIVAAER.map(n => n.id));
+  sjekk('alle nivåene står i lista, i samme rekkefølge som i løseren',
+        nivaaer.join(',') === fraSolver.join(','),
         nivaaer.join(', '));
 
   // Teknikkforklaringene står på samme linje som navnet og har text-overflow:

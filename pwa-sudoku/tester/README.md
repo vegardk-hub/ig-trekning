@@ -34,7 +34,7 @@ repoet skal fortsatt kunne åpnes uten å installere noe.
 | Prøve | Spørsmålet den svarer på |
 | --- | --- |
 | `teknikker` | Stryker noen løseteknikk et tall som faktisk hørte hjemme der? Måles mot fasiten, steg for steg. |
-| `nivaaer` | Treffer generatoren båndet den blir bedt om — på alle sju nivåene? |
+| `nivaaer` | Treffer generatoren båndet den blir bedt om — på alle tolv nivåene? De fire øverste deler teknikknivå og skilles på kjedetallet. |
 | `fyllmodus` | Setter fire trykk inn fire like tall? Angrer den ett om gangen? Får etikettene på verktøyknappene plass på ni skjermer? |
 | `auto` | Går knappen riktig runde: fyller → manuell → tomt? |
 | `boks` | Rydder et innsatt tall bort blyantmerkene med samme tall i boksen? |

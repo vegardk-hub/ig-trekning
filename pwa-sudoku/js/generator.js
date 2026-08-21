@@ -19,18 +19,44 @@
   // Målt, ikke gjettet — se kommentaren ved NIVAAER i solver.js, og
   // tester/maaling.js, som skriver ut fordelingen båndene er hentet fra.
   const OMRAADER = {
-    lett:      { min: 0,  maks: 2 },
-    middels:   { min: 3,  maks: 3 },
-    krevende:  { min: 4,  maks: 4 },
-    vanskelig: { min: 5,  maks: 5 },
-    beinhard:  { min: 6,  maks: 11 },
-    ekspert:   { min: 12, maks: 13 },
-    mester:    { min: 14, maks: 14 }
+    lett:       { min: 0,  maks: 2 },
+    middels:    { min: 3,  maks: 3 },
+    krevende:   { min: 4,  maks: 4 },
+    vanskelig:  { min: 5,  maks: 5 },
+    beinhard:   { min: 6,  maks: 11 },
+    ekspert:    { min: 12, maks: 13 },
+    mester:     { min: 14, maks: 14 },
+    stormester: { min: 15, maks: 15 },
+    // De fire øverste deler nivå 16 mellom seg og skilles på kjedetallet.
+    virtuos:    { min: 16, maks: 16, kjederMin: 1, kjederMaks: 1 },
+    titan:      { min: 16, maks: 16, kjederMin: 2, kjederMaks: 2 },
+    orakel:     { min: 16, maks: 16, kjederMin: 3, kjederMaks: 3 },
+    legende:    { min: 16, maks: 16, kjederMin: 4, kjederMaks: Infinity }
   };
 
-  // De tre hardeste graves asymmetrisk: et 180°-symmetrisk brett blir grunnere,
-  // og kommer sjelden opp i teknikkene de båndene krever.
-  const ASYMMETRISK = new Set(['beinhard', 'ekspert', 'mester']);
+  /* Ligger graderingen i båndet? Kjedetallet teller bare der båndet bruker det. */
+  function iBaandet(g, omraade) {
+    if (!g.solved || g.maks < omraade.min || g.maks > omraade.maks) return false;
+    if (omraade.kjederMin === undefined) return true;
+    const k = g.kjeder || 0;
+    return k >= omraade.kjederMin && k <= omraade.kjederMaks;
+  }
+
+  /*
+   * Er brettet fortsatt for hardt for båndet? Over nivå 16 finnes ingen høyere
+   * teknikk, så «for hardt» må der bety for mange kjeder — ellers ville
+   * justerNed trodd den var i mål med en gang og aldri lagt tilbake noe.
+   */
+  function forHardt(g, omraade) {
+    if (rang(g) > omraade.maks) return true;
+    if (omraade.kjederMaks === undefined || !g.solved) return false;
+    return (g.kjeder || 0) > omraade.kjederMaks;
+  }
+
+  // Alt over Vanskelig graves asymmetrisk: et 180°-symmetrisk brett blir
+  // grunnere, og kommer sjelden opp i teknikkene de båndene krever.
+  const ASYMMETRISK = new Set(['beinhard', 'ekspert', 'mester', 'stormester',
+                               'virtuos', 'titan', 'orakel', 'legende']);
 
   /*
    * 500, ikke 200: med sju nivåer er båndene smalere, og Krevende og Vanskelig
@@ -80,7 +106,7 @@
     const frist = performance.now() + JUSTER_BUDSJETT_MS;
     let g = S.grade(puzzle);
 
-    for (let runde = 0; runde < 30 && rang(g) > omraade.maks; runde++) {
+    for (let runde = 0; runde < 30 && forHardt(g, omraade); runde++) {
       if (performance.now() > frist) return null;
       const tomme = [];
       for (let i = 0; i < 81; i++) if (!puzzle[i]) tomme.push(i);
@@ -92,14 +118,19 @@
         prove[i] = solution[i];
         const pg = S.grade(prove);
 
-        if (pg.solved && pg.maks >= omraade.min && pg.maks <= omraade.maks) {
-          return { puzzle: prove, grade: pg };
-        }
-        if (pg.solved && pg.maks < omraade.min) continue;      // skjøt forbi — forkast
+        if (iBaandet(pg, omraade)) return { puzzle: prove, grade: pg };
+        if (pg.solved && !forHardt(pg, omraade)) continue;     // skjøt forbi — forkast
         // Fortsatt for hardt: ta det minste skrittet nedover som finnes, altså
         // den ledetråden som gjør brettet minst lettere. Går vi for fort ned,
         // hopper vi rett forbi båndet.
         if (rang(pg) < rang(g) && (!neste || rang(pg) > rang(neste.grade))) {
+          neste = { puzzle: prove, grade: pg };
+        }
+        // Samme teknikknivå, men færre kjeder, er også et skritt nedover i de
+        // øverste båndene — der er kjedetallet det eneste som skiller dem.
+        if (rang(pg) === rang(g) && omraade.kjederMaks !== undefined &&
+            pg.solved && (pg.kjeder || 0) < (g.kjeder || 0) &&
+            (!neste || rang(pg) > rang(neste.grade))) {
           neste = { puzzle: prove, grade: pg };
         }
       }
@@ -107,8 +138,7 @@
       puzzle = neste.puzzle;
       g = neste.grade;
     }
-    return g.solved && g.maks >= omraade.min && g.maks <= omraade.maks
-      ? { puzzle, grade: g } : null;
+    return iBaandet(g, omraade) ? { puzzle, grade: g } : null;
   }
 
   /**
@@ -136,7 +166,7 @@
       let puzzle = solution && grav(solution, rng, symmetric);
       let g = puzzle && S.grade(puzzle);
 
-      if (g && rang(g) > omraade.maks) {
+      if (g && forHardt(g, omraade)) {
         const mildere = justerNed(puzzle, solution, omraade, rng);
         if (mildere) { puzzle = mildere.puzzle; g = mildere.grade; }
         else g = null;
@@ -147,10 +177,11 @@
       if (!g) continue;
 
       const resultat = { puzzle, solution, grade: g, nivaa: nivaaId };
-      if (g.maks >= omraade.min) return resultat;
+      if (iBaandet(g, omraade)) return resultat;
 
       // Ble for lett — ta vare på det nærmeste i tilfelle vi går tom for forsøk.
-      const avstand = omraade.min - g.maks;
+      const avstand = (omraade.min - g.maks) ||
+                      (omraade.kjederMin || 0) - (g.kjeder || 0);
       if (!naermest || avstand < naermest.avstand) naermest = { avstand, resultat };
     }
 

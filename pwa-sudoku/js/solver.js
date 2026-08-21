@@ -544,6 +544,160 @@
     return null;
   }
 
+  /* ---------- Teknikk 15: Unikt rektangel ---------- */
+
+  /*
+   * Bygger på at brettet har nøyaktig én løsning. Fire celler i to rader, to
+   * kolonner og to bokser, der tre av dem bare rommer det samme paret, ville
+   * gitt to gyldige løsninger om den fjerde også var begrenset til paret —
+   * de to tallene lot seg da bytte om. Altså må den fjerde være noe annet.
+   */
+  function unikRektangel(state) {
+    for (let i = 0; i < 81; i++) {
+      if (state.v[i] || POPCOUNT[state.cand[i]] !== 2) continue;
+      const par = state.cand[i];
+
+      for (let j = 0; j < 81; j++) {
+        if (j === i || state.v[j] || state.cand[j] !== par) continue;
+        if (rowOf(i) !== rowOf(j)) continue;                  // to i samme rad
+
+        for (let k = 0; k < 81; k++) {
+          if (state.v[k] || state.cand[k] !== par) continue;
+          if (rowOf(k) === rowOf(i)) continue;
+          if (colOf(k) !== colOf(i) && colOf(k) !== colOf(j)) continue;
+
+          const kol4 = colOf(k) === colOf(i) ? colOf(j) : colOf(i);
+          const l = rowOf(k) * 9 + kol4;
+          if (state.v[l]) continue;
+          if ((state.cand[l] & par) !== par) continue;        // må romme begge
+          if (state.cand[l] === par) continue;                // da er brettet flertydig
+
+          // Nøyaktig to bokser — ellers er ikke ombyttet garantert lovlig
+          const bokser = new Set([boxOf(i), boxOf(j), boxOf(k), boxOf(l)]);
+          if (bokser.size !== 2) continue;
+
+          const elim = digitsOf(par).map(d => ({ cell: l, digit: d }));
+          return step({
+            id: 'unikt-rektangel', name: 'Unikt rektangel', level: 15,
+            cells: [i, j, k, l], digits: digitsOf(par), eliminations: elim,
+            short: 'Unikt rektangel: ' + cellName(l) + ' kan ikke være ' +
+                   listOf(digitsOf(par)) + '.',
+            text: 'De fire cellene ' + cellName(i) + ', ' + cellName(j) + ', ' + cellName(k) +
+                  ' og ' + cellName(l) + ' står i to rader, to kolonner og to bokser. De tre ' +
+                  'første rommer bare ' + listOf(digitsOf(par)) + '. Var ' + cellName(l) +
+                  ' også begrenset til de to, kunne tallene byttes om i alle fire uten at noe ' +
+                  'ble ulovlig — og brettet ville hatt to løsninger. Et sudoku har én, så ' +
+                  cellName(l) + ' må være noe annet: ' + listOf(digitsOf(par)) + ' strykes der.'
+          });
+        }
+      }
+    }
+    return null;
+  }
+
+  /* ---------- Teknikk 16: Tvungen kjede ---------- */
+
+  /*
+   * Siste utvei, og den eneste som prøver seg fram: sett et av de to tallene i
+   * en tocellet rute og følg enerne så langt de rekker. Ender det i en celle
+   * uten kandidater, eller en enhet uten plass til et tall, var antakelsen
+   * umulig — og det andre tallet står fast.
+   *
+   * Ikke gjetting: motsigelsen er et bevis, og kjeden fram til den er
+   * forklaringen. Men den er dyr, så den kjøres bare når alt annet er prøvd.
+   */
+  function tvungenKjede(state) {
+    for (let i = 0; i < 81; i++) {
+      if (state.v[i] || POPCOUNT[state.cand[i]] !== 2) continue;
+      const [d1, d2] = digitsOf(state.cand[i]);
+
+      for (const [anta, folger] of [[d1, d2], [d2, d1]]) {
+        const kjede = prov(state, i, anta);
+        if (!kjede) continue;
+        return step({
+          id: 'tvungen-kjede', name: 'Tvungen kjede', level: 16,
+          // Sporet kan være tretti celler langt. Bare ruta som får tallet er
+          // hovedsaken; de første leddene vises dempet så veien er til å følge.
+          cells: [i], unitCells: kjede.spor.slice(0, 12).map(s => s.cell),
+          digits: [anta, folger],
+          placement: { cell: i, digit: folger },
+          short: cellName(i) + ' kan ikke være ' + anta + ', så den må være ' + folger + '.',
+          text: cellName(i) + ' er enten ' + anta + ' eller ' + folger + '. Sett at den er ' +
+                anta + ': ' + kjede.spor.slice(0, 4).map(s =>
+                  'da må ' + cellName(s.cell) + ' bli ' + s.digit).join(', ') +
+                (kjede.spor.length > 4 ? ', og så videre' : '') + ' — og til slutt ' +
+                kjede.grunn + '. Det går ikke, så ' + cellName(i) + ' er ' + folger + '.'
+        });
+      }
+    }
+    return null;
+  }
+
+  /** Følger enerne fra en antakelse. Returnerer sporet fram til en motsigelse. */
+  function prov(state, celle, digit) {
+    const v = Uint8Array.from(state.v);
+    const cand = Int16Array.from(state.cand);
+    const spor = [];
+    const sett = (i, d) => {
+      v[i] = d; cand[i] = 0;
+      for (const p of PEERS[i]) cand[p] &= ~(1 << d);
+    };
+    sett(celle, digit);
+
+    for (let runde = 0; runde < 81; runde++) {
+      // Motsigelse? En tom celle uten kandidater, eller et tall uten plass.
+      for (let i = 0; i < 81; i++) {
+        if (!v[i] && cand[i] === 0) {
+          return { spor, grunn: 'står ' + cellName(i) + ' igjen uten et eneste tall som passer' };
+        }
+      }
+      for (const unit of UNITS) {
+        for (let d = 1; d <= 9; d++) {
+          let plasser = 0, satt = false;
+          for (const c of unit.cells) {
+            if (v[c] === d) { satt = true; break; }
+            if (!v[c] && (cand[c] & (1 << d))) plasser++;
+          }
+          if (!satt && plasser === 0) {
+            // Ubestemt form foran tallet: «rad 4», ikke «raden 4».
+            return { spor, grunn: 'har ' + unitName(unit) + ' ingen plass igjen til ' + d };
+          }
+        }
+      }
+
+      // Neste ener
+      let fant = false;
+      for (let i = 0; i < 81 && !fant; i++) {
+        if (!v[i] && POPCOUNT[cand[i]] === 1) {
+          const d = firstDigit(cand[i]);
+          spor.push({ cell: i, digit: d });
+          sett(i, d);
+          fant = true;
+        }
+      }
+      if (!fant) {
+        for (const unit of UNITS) {
+          for (let d = 1; d <= 9 && !fant; d++) {
+            const spots = [];
+            let satt = false;
+            for (const c of unit.cells) {
+              if (v[c] === d) { satt = true; break; }
+              if (!v[c] && (cand[c] & (1 << d))) spots.push(c);
+            }
+            if (!satt && spots.length === 1) {
+              spor.push({ cell: spots[0], digit: d });
+              sett(spots[0], d);
+              fant = true;
+            }
+          }
+          if (fant) break;
+        }
+      }
+      if (!fant) return null;      // ingen motsigelse innen rekkevidde
+    }
+    return null;
+  }
+
   /* ---------- Teknikkrekkefølge ---------- */
 
   const TECHNIQUES = [
@@ -561,7 +715,9 @@
     { level: 11, run: fish(3, 11, 'Sverdfisk', 'swordfish') },
     { level: 12, run: xyzWing },
     { level: 13, run: wWing },
-    { level: 14, run: farging }
+    { level: 14, run: farging },
+    { level: 15, run: unikRektangel },
+    { level: 16, run: tvungenKjede }
   ];
 
   /* ---------- Tilstand og anvendelse ---------- */
@@ -609,18 +765,41 @@
    * holder nesten alltid — så de kan ikke bære et bånd alene, og deler et med
    * triplene og XY-Wing. W-Wing er derimot tett (6,6 %) og bærer Ekspert.
    */
+  /*
+   * Over Mester holder det ikke å skille på teknikk. Tvungen kjede topper 25 %
+   * av alle dypt utgravde brett — mer enn alle de harde teknikkene til sammen —
+   * og ett bånd der ville vært like grovt som å slå sammen Lett og Ekspert.
+   * Derfor teller de fire øverste også *hvor mange* kjeder som trengs. Det er
+   * det eneste målet på motstand som finnes når ingen skarpere teknikk står
+   * igjen. Andelene bak er målt over 400 brett.
+   */
   const NIVAAER = [
-    { id: 'lett',      navn: 'Lett',      maks: 2 },
-    { id: 'middels',   navn: 'Middels',   maks: 3 },
-    { id: 'krevende',  navn: 'Krevende',  maks: 4 },
-    { id: 'vanskelig', navn: 'Vanskelig', maks: 5 },
-    { id: 'beinhard',  navn: 'Beinhard',  maks: 11 },
-    { id: 'ekspert',   navn: 'Ekspert',   maks: 13 },
-    { id: 'mester',    navn: 'Mester',    maks: 14 }
+    { id: 'lett',       navn: 'Lett',       maks: 2 },
+    { id: 'middels',    navn: 'Middels',    maks: 3 },
+    { id: 'krevende',   navn: 'Krevende',   maks: 4 },
+    { id: 'vanskelig',  navn: 'Vanskelig',  maks: 5 },
+    { id: 'beinhard',   navn: 'Beinhard',   maks: 11 },
+    { id: 'ekspert',    navn: 'Ekspert',    maks: 13 },
+    { id: 'mester',     navn: 'Mester',     maks: 14 },                  // farging
+    { id: 'stormester', navn: 'Stormester', maks: 15 },                  // unikt rektangel, ~1,3 %
+    { id: 'virtuos',    navn: 'Virtuos',    maks: 16, kjeder: 1 },       // ~16,5 %
+    { id: 'titan',      navn: 'Titan',      maks: 16, kjeder: 2 },       // ~5,5 %
+    { id: 'orakel',     navn: 'Orakel',     maks: 16, kjeder: 3 },       // ~2,3 %
+    { id: 'legende',    navn: 'Legende',    maks: 16, kjeder: Infinity } // ~0,8 %
   ];
 
-  function nivaaForMaks(maks) {
-    return NIVAAER.find(n => maks <= n.maks) || NIVAAER[NIVAAER.length - 1];
+  const KJEDE = 'Tvungen kjede';
+
+  /** Hvor mange tvungne kjeder trengte løsningen? */
+  function kjedetall(brukt) {
+    return (brukt && brukt[KJEDE]) || 0;
+  }
+
+  /** Båndet en gradering havner i. Tar hele graderingen, ikke bare maks. */
+  function nivaaFor(maks, brukt) {
+    const n = NIVAAER.find(niv => maks <= niv.maks &&
+      (niv.kjeder === undefined || kjedetall(brukt) <= niv.kjeder));
+    return n || NIVAAER[NIVAAER.length - 1];
   }
 
   /**
@@ -648,9 +827,10 @@
       brukt[s.name] = (brukt[s.name] || 0) + 1;
       applyStep(state, s);
     }
-    return { solved: true, maks, maksNavn, antall, brukt, nivaa: nivaaForMaks(maks) };
+    return { solved: true, maks, maksNavn, antall, brukt, kjeder: kjedetall(brukt),
+             nivaa: nivaaFor(maks, brukt) };
   }
 
-  global.SudokuSolver = { TECHNIQUES, NIVAAER, makeState, findStep, applyStep, grade };
+  global.SudokuSolver = { TECHNIQUES, NIVAAER, makeState, findStep, applyStep, grade, nivaaFor };
 
 })(window);

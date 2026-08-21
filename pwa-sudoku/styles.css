@@ -694,6 +694,18 @@ body {
   display: grid;
   gap: 6px;
   margin-bottom: 12px;
+  /* Tolv nivåer gjør kortet høyere enn en lav telefon. Skroller hele kortet,
+     må man dra seg forbi lista for å nå «Avbryt» — så det er bare lista som
+     skroller, og overskrift og knapp står i ro. */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#nytt-panel .modal-kort {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
 }
 
 /*
@@ -908,7 +920,9 @@ body {
     gap: 5px;
     margin-bottom: 8px;
   }
-  .nivaaknapp:last-child { grid-column: 1 / -1; }
+  /* Bare når antallet er oddetall: da blir den siste stående alene, og en
+     halv tom rad ser ut som en feil. Med tolv nivåer går det opp av seg selv. */
+  .nivaaknapp:nth-child(odd):last-child { grid-column: 1 / -1; }
 
   /* Tilbake til navnet over teknikken: på én linje måtte de dele en halv
      spaltebredde, og forklaringene ble kuttet med tre prikker. To spalter har
