@@ -12,6 +12,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-flasker/` | Fargeflasker — sorteringsspill for de minste, PWA |
 | `pwa-poengtavle/` | Ukens poengtavle — husholdningsoppgaver med kroner, PWA |
 | `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
+| `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -26,6 +27,7 @@ repoet:
 - Fargeflasker: `https://vegardk-hub.github.io/ig-trekning/pwa-flasker/`
 - Poengtavle: `https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/`
 - Monstergiret: `https://vegardk-hub.github.io/ig-trekning/pwa-lesing/`
+- Lesestjerna: `https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -93,7 +95,20 @@ Ikke «rett» dem lokalt — da ryker de på telefonen. Node ligger på
 
 Sudoku, Fargeflasker, Poengtavla og Monstergiret er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
-igjen hos alle som allerede har installert appen.
+igjen hos alle som allerede har installert appen. **Lesestjerna har med vilje
+ingen service worker** — den trenger nett uansett, både til stemmen og til
+lyttingen.
+
+Lesestjerna validerer tekstbanken med et skript i stedet for prøver. Kjør det
+etter hver endring i `pwa-lesestjerna/data/tekster.json`:
+
+```
+python pwa-lesestjerna/sjekk_tekster.py
+```
+
+Den fanger dubletter, ukjente emner, for lange tekster, tall skrevet med siffer
+og umerkte tallord. Les `pwa-lesestjerna/README.md` før du rører matchingen —
+den delen har en rekke feller som ser ut som detaljer og ikke er det.
 
 ## Konvensjoner
 

@@ -25,9 +25,17 @@
   til slutt blir en monstertruck. 48 tekster, åtte trucker, alle tegnet i SVG.
   PWA for iPad.
 
+- **[Lesestjerna](pwa-lesestjerna/)** — `pwa-lesestjerna/index.html`: leseapp
+  der barnet leser høyt og ordene lyser grønt når han sier dem riktig. Hver
+  ferdig setning gir en stjerne, hver ferdig tekst gir mynter, og myntene går
+  til huset han eier. Tjue tekster over fem emner, med ett konkret tall eller én
+  sammenlikning i hver. **Krever Edge** — både lyttingen og stemmen Finn finnes
+  bare der.
+
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/>, Fargeflasker på
 <https://vegardk-hub.github.io/ig-trekning/pwa-flasker/>, Poengtavla på
-<https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/> og Monstergiret på
-<https://vegardk-hub.github.io/ig-trekning/pwa-lesing/>.
+<https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/>, Monstergiret på
+<https://vegardk-hub.github.io/ig-trekning/pwa-lesing/> og Lesestjerna på
+<https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/>.
