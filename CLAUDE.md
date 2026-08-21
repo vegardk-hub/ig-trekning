@@ -14,6 +14,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
 | `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
 | `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den i looper og hopp, PWA |
+| `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -30,6 +31,7 @@ repoet:
 - Monstergiret: `https://vegardk-hub.github.io/ig-trekning/pwa-lesing/`
 - Lesestjerna: `https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/`
 - Stuntgarasjen: `https://vegardk-hub.github.io/ig-trekning/pwa-stunt/`
+- Sprellemaskinen: `https://vegardk-hub.github.io/ig-trekning/pwa-sprell/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.

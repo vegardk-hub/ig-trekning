@@ -35,6 +35,11 @@
   til huset han eier. Tjue tekster over fem emner, med ett konkret tall eller én
   sammenlikning i hver. **Krever Edge** — både lyttingen og stemmen Finn finnes
   bare der.
+- **[Sprellemaskinen](pwa-sprell/)** — `pwa-sprell/index.html`: trekker et
+  tilfeldig oppdrag barna kan gjøre inne — lag en snøengel, gå fem skritt
+  baklengs, eller gå til kjøkkenet og hent noe hvitt. Setningen kan leses høyt
+  av en voksen eller av maskinstemmen. Tretti oppdrag med tilfeldige rom, tall,
+  dyr og farger, og et filter for det som kan gjøres der barnet står.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på
@@ -42,5 +47,6 @@ sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-flasker/>, Poengtavla på
 <https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/>, Monstergiret på
 <https://vegardk-hub.github.io/ig-trekning/pwa-lesing/>, Stuntgarasjen på
-<https://vegardk-hub.github.io/ig-trekning/pwa-stunt/> og Lesestjerna på
-<https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/>.
+<https://vegardk-hub.github.io/ig-trekning/pwa-stunt/>, Lesestjerna på
+<https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/> og Sprellemaskinen på
+<https://vegardk-hub.github.io/ig-trekning/pwa-sprell/>.

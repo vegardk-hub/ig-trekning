@@ -1,0 +1,73 @@
+/* Første versjon med vilje uten farger og bilder: svart på hvitt, systemfont,
+   og knapper som er store nok for en barnehånd på telefon. */
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px;
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+}
+
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+}
+
+#oppdrag {
+  font-size: 1.75rem;
+  line-height: 1.35;
+  margin: 0;
+  /* Setningene har svært ulik lengde. Uten en minstehøyde hopper knappene opp
+     og ned mellom hvert trekk, og barnet bommer på den det sikter mot. */
+  min-height: 5.5em;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.teller {
+  margin: .5rem 0 1.25rem;
+  font-size: .9rem;
+}
+
+.knapper { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: .75rem 1.25rem;
+  min-height: 3rem;
+  cursor: pointer;
+}
+button.stor { flex: 1 1 12rem; font-size: 1.25rem; font-weight: 600; }
+button:active { background: #eee; }
+button:disabled { opacity: .4; cursor: default; }
+
+.beskjed { margin: .75rem 0 0; font-size: .9rem; }
+.beskjed:empty { margin: 0; }
+
+.valg {
+  margin: 2rem 0 0;
+  border: 1px solid #000;
+  border-radius: 8px;
+  padding: .5rem 1rem 1rem;
+}
+.valg legend { padding: 0 .35rem; font-size: .9rem; }
+.valg label { display: block; margin: .6rem 0; }
+.valg input { width: 1.15rem; height: 1.15rem; margin-right: .5rem; vertical-align: -.15rem; }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sprellemaskinen</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+  <h1>Sprellemaskinen</h1>
+
+  <!-- aria-live gjør at en skjermleser sier den nye setningen når den byttes.
+       Selve teksten er stor nok til å leses høyt fra andre siden av rommet. -->
+  <p id="oppdrag" aria-live="polite">Trykk på knappen for å få et oppdrag.</p>
+  <p id="teller" class="teller"></p>
+
+  <div class="knapper">
+    <button id="trekk" type="button" class="stor">Nytt oppdrag</button>
+    <button id="les" type="button" disabled>Les opp</button>
+  </div>
+
+  <p id="talebeskjed" class="beskjed" role="status"></p>
+
+  <fieldset class="valg">
+    <legend>Innstillinger</legend>
+    <label><input type="checkbox" id="kun-her"> Bare oppdrag der jeg står</label>
+    <label><input type="checkbox" id="autoles"> Les opp automatisk</label>
+  </fieldset>
+</main>
+<script src="js/oppdrag.js"></script>
+<script src="js/tale.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
