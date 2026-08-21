@@ -21,10 +21,10 @@ hjemskjermen og virker uten nett.
 
 ## Barna
 
-Ett barn om gangen, og navnet står i setningen: «Live, gå til badet og hent noe
-hvitt.» Knappene øverst sier hvem som har turen. Navn og alder settes i
-innstillingene og lagres i `localStorage` — **navnet lagres slik det skrives**,
-samme lærdom som i Poengtavla.
+Ett barn om gangen. Knappene øverst sier hvem som har turen, og navnet gjentas
+i den lille linja under oppdraget — men **ikke inne i selve setningen**. Navn og
+alder settes i innstillingene og lagres i `localStorage` — **navnet lagres slik
+det skrives**, samme lærdom som i Poengtavla.
 
 Alderen er ikke pynt: den bestemmer hvilke oppdrag som er med i trekningen.
 Hvert oppdrag har en `alder`, som er laveste alder det passer for. Skillet går
@@ -62,9 +62,10 @@ To ting å vite før du skriver nye oppdrag:
   stemme som får «5» kan finne på å si det på engelsk.
 - **`{dyr}` må være hankjønnsord.** Setningene sier «som en …», så «som en
   egern» blir feil. `{farge}` må stå i intetkjønn: «noe som er rødt».
-- **Setningen skal tåle et navn foran seg.** Appen setter navnet først og
-  senker første bokstav, så «Legg deg på gulvet» blir «Live, legg deg på
-  gulvet». En setning som åpner med et egennavn ville blitt skrevet feil.
+- **Setningen starter med verbet.** «Gå til soverommet ditt og hent det mykeste
+  du finner», ikke «Live, gå til …» eller «Nå skal du gå til …». Det er en
+  beskjed, og handlingen skal komme først — både for den som leser høyt og for
+  den som hører maskinstemmen. Hvem den gjelder, står over.
 
 Rommene i `ROM` er stedene i et vanlig hus. Har man ikke loft, er det lista man
 stryker fra — ikke setningene.

@@ -103,12 +103,12 @@
     var o = kurv.pop();
     forrigeId = o.id;
     antall++;
-    visning = window.SprellOppdrag.medNavn(
-      aktivtBarn().navn.trim(),
-      window.SprellOppdrag.fyllUt(o.tekst)
-    );
+    /* Setningen står som den er skrevet, med verbet først. Navnet hører
+       hjemme i linja under, ikke foran beskjeden. */
+    visning = window.SprellOppdrag.fyllUt(o.tekst);
     el.oppdrag.textContent = visning;
-    el.teller.textContent = 'Oppdrag nummer ' + antall;
+    var navn = aktivtBarn().navn.trim();
+    el.teller.textContent = (navn ? navn + ' – oppdrag nummer ' : 'Oppdrag nummer ') + antall;
     oppdaterTalestatus();
     if (valg.autoles && window.SprellTale.kanLese()) window.SprellTale.les(visning);
   }

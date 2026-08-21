@@ -40,7 +40,7 @@
   baklengs, eller gå til kjøkkenet og hent noe hvitt. Setningen kan leses høyt
   av en voksen eller av maskinstemmen. 36 oppdrag med tilfeldige rom, tall, dyr
   og farger, delt etter alder, og et filter for det som kan gjøres der barnet
-  står. Navnet på barnet som har turen står i setningen. PWA.
+  står. Hvert oppdrag er én setning som starter med verbet. PWA.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på

@@ -12,6 +12,11 @@
    ville blitt stående og lurt på. Ingenting i grensesnittet sier at den ene
    har flere oppdrag enn den andre; de sammenligner, akkurat som i Poengtavla.
 
+   Hver setning starter med verbet – «Gå til soverommet ditt og hent det mykeste
+   du finner». Det er en beskjed, og handlingen skal komme først, både for den
+   som leser den høyt og for den som hører maskinstemmen. Hvem oppdraget
+   gjelder, står over setningen i stedet for foran den.
+
    Setningene kan ha luker – {rom}, {tall}, {dyr}, {farge}. Lukene er det som
    gjør at oppdragene ikke blir like mange som setningene: samme oppdrag kommer
    tilbake med nytt rom eller nytt dyr, og føles nytt. Tallene skrives med
@@ -88,18 +93,9 @@ window.SprellOppdrag = (function () {
     });
   }
 
-  /* Navnet foran setningen, slik en voksen ville sagt det: «Live, gå til
-     badet …». Første bokstav må ned i det små, ellers står det «Live, Gå».
-     Uten navn står setningen som den er – navnefeltet kan stå tomt. */
-  function medNavn(navn, setning) {
-    if (!navn) return setning;
-    return navn + ', ' + setning.charAt(0).toLowerCase() + setning.slice(1);
-  }
-
   return {
     alle: OPPDRAG,
     ROM: ROM,
-    fyllUt: fyllUt,
-    medNavn: medNavn
+    fyllUt: fyllUt
   };
 })();

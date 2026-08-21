@@ -284,9 +284,11 @@ detaljer og har en grunn:
   `Math.random()` gjentar seg ofte nok til at et barn merker det, og da er
   maskinen «ødelagt». Bytter man barn eller filter, må kurven kastes — den er
   stokket ut fra det gamle utvalget.
-- **Setningen skal tåle et navn foran seg.** Appen skriver «Live, gå til
-  badet …» ved å senke første bokstav, så et oppdrag kan ikke åpne med et
-  egennavn. Tall skrives med bokstaver, for setningen leses opp.
+- **Setningen starter med verbet.** «Gå til soverommet ditt og hent det
+  mykeste du finner» — ikke navnet først, ikke «Nå skal du …». Det er en
+  beskjed, og handlingen skal komme først for den som hører den. Navnet på
+  barnet som har turen står i linja under, ikke i setningen. Tall skrives med
+  bokstaver, for setningen leses opp.
 
 ## Fargeflasker
 

@@ -4,7 +4,7 @@
 
    Bump CACHE hver gang en av FILES endres – ellers ligger den gamle versjonen
    igjen hos alle som har lagt appen på hjemskjermen. */
-const CACHE = 'sprell-v1';
+const CACHE = 'sprell-v2';
 const FILES = [
   './', './index.html', './styles.css',
   './js/oppdrag.js', './js/tale.js', './js/app.js',
