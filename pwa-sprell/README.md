@@ -50,14 +50,24 @@ mening: telle, holde på to tall samtidig, lese, stave. Fra 8 og opp er alt med.
 
 ## Oppdragene
 
-36 vanlige oppdrag, delt i to etter hvor de gjøres:
+Tre banker. **Stedet** velges i innstillingene — inne, i hagen, eller begge
+deler i samme kurv — og **rampemodus** av knappen over oppdraget. Rampemodus
+vinner når begge står på: det er den banken maskinen trekker fra, og den
+grønne hagebakgrunnen viker for rampefargene.
 
-- **`sted: 'her'`** (22 stk) — gjøres der barnet står. Snøengel, fem skritt
-  baklengs, sitte på rumpa og telle til ti.
-- **`sted: 'rom'`** (14 stk) — sender barnet til badet, kjøkkenet, loftet og
-  tilbake igjen.
+**Inne** (36 stk): 22 med `sted: 'her'` — snøengel, fem skritt baklengs, sitte
+på rumpa og telle til ti — og 14 med `sted: 'rom'`, som sender barnet til badet,
+kjøkkenet, loftet og tilbake. Sytten er merket `alder: 3`, tolv `alder: 5` og
+sju `alder: 8`.
 
-Sytten er merket `alder: 3`, tolv `alder: 5` og sju `alder: 8`.
+**Hagen** (20 stk): 9 med `sted: 'her'` og 11 som sender barnet rundt i hagen.
+Oppdragene bruker det som faktisk finnes ute — stein, pinner, blader, skygger,
+lyder — og **ingenting forutsetter en bestemt hage**: «det nærmeste treet»
+finnes også der det bare står ett. Ingenting krever verktøy, klatring eller
+vann. Sju er merket `alder: 3`, ti `alder: 5` og tre `alder: 8`.
+
+Avkryssingen «bare oppdrag der jeg står» virker begge steder: ute betyr `'her'`
+det som kan gjøres på flekken barnet står på.
 
 Avkryssingen **«Bare oppdrag der jeg står»** skrur av den siste gruppa. Den er
 til leggetid og til besøk hos andre — ikke en innstilling som skal glemmes bort,
@@ -87,7 +97,8 @@ stryker fra — ikke setningene.
 ## Rampemodus
 
 Knappen over oppdraget bytter ut hele banken: 23 rampestreker som går ut på å
-tulle med de voksne. Den ligger over setningen og ikke nede blant
+tulle med de voksne. Den overstyrer stedsvalget — rampestrekene hører hjemme
+inne, uansett hva som står i innstillingene. Den ligger over setningen og ikke nede blant
 innstillingene, fordi den skal kunne slås av like fort som den ble slått på.
 
 **Rampemodus lagres med vilje ikke.** Den slås på for en stund, og en app som
@@ -115,7 +126,7 @@ ganger på rad ofte nok til at et barn merker det, og da er maskinen «ødelagt�
 Når kurven fylles på nytt, byttes førstemann bort hvis det er samme oppdrag som
 avsluttet forrige kurv.
 
-Bytter man filter, alder eller modus, kastes kurven — den er stokket ut fra det
+Bytter man sted, filter, alder eller modus, kastes kurven — den er stokket ut fra det
 gamle utvalget, og ville ellers fortsatt sende barnet på badet en stund etter at
 «bare her jeg står» ble krysset av, eller delt ut vanlige oppdrag i
 rampemodus.
@@ -192,6 +203,11 @@ Bakgrunnen er en gradient, og den skifter i rampemodus. **Klassen må sitte på
 `body` når aldri opp dit — bakgrunnen ble stående uendret første gang. Fargen på
 statuslinja (`theme-color`) følger med, så det synes også når appen ligger på
 hjemskjermen.
+
+Hagen har sin egen grønne bakgrunn, satt på samme måte (`html.hage`), og
+statuslinjefargen følger med. Bytter man sted eller modus, stilles kortet
+tilbake til «trykk her» med ikonet for den nye banken — terning inne, tre i
+hagen, fjes i rampemodus — for det som sto der, kom fra en annen bank.
 
 Kortet får farge fra `--kort`, som `app.js` setter for hvert oppdrag. Vippen
 krever at klassen `ny` fjernes, at `offsetWidth` leses, og at den legges på

@@ -280,6 +280,10 @@ detaljer og har en grunn:
   alderen: hvert oppdrag har en `alder` — 3, 5 eller 8 — og innstillingen går
   fra 3 til 12. Skillet går på hva som må kunne gjøres for at beskjeden gir
   mening (telle, lese, stave), ikke på lett og vanskelig.
+- **Tre banker: inne, hagen og rampestrekene.** Stedet velges i
+  innstillingene (inne, hagen, eller begge i samme kurv), rampemodus av
+  knappen — og rampemodus vinner over stedet. Hageoppdragene forutsetter ingen
+  bestemt hage og krever verken verktøy, klatring eller vann.
 - **Rampemodus er en egen bank, og lagres ikke.** Knappen over oppdraget bytter
   ut alle oppdragene med rampestreker, og modusen står aldri på når appen
   åpnes på nytt — ellers begynner dagen med en sur sokk uten at noen har bedt

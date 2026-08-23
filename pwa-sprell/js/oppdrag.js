@@ -8,8 +8,11 @@
    som leser den høyt og for den som hører maskinstemmen. Appen kjenner ikke
    noe navn og skal ikke gjøre det: den snakker til den som står foran den.
 
+   Det finnes tre banker: inne, hagen og rampestrekene. Stedet velges i
+   innstillingene, rampemodus av knappen over oppdraget.
+
    `sted` er 'her' for det som gjøres der barnet står, og 'rom' for det som
-   sender barnet av gårde i huset.
+   sender barnet av gårde – i huset eller rundt i hagen.
 
    `ikon` er emojien som står over setningen. Den er ikke pynt: den som ikke
    kan lese ennå, ser hva oppdraget handler om før noen har lest det høyt.
@@ -35,7 +38,7 @@ window.SprellOppdrag = (function () {
   /* Intetkjønnsform: «noe som er rødt». */
   var FARGE = ['rødt', 'blått', 'grønt', 'gult', 'hvitt', 'svart'];
 
-  var VANLIG = [
+  var INNE = [
     /* --- der du står --- */
     { id: 'snoengel', ikon: '❄️', sted: 'her', alder: 3, tekst: 'Legg deg på gulvet og lag en snøengel.' },
     { id: 'tell-ti', ikon: '🔟', sted: 'her', alder: 3, tekst: 'Sett deg på rumpa og tell rolig til ti.' },
@@ -77,6 +80,37 @@ window.SprellOppdrag = (function () {
     { id: 'lukkede-oyne', ikon: '😌', sted: 'her', alder: 8, tekst: 'Balanser på ett bein med lukkede øyne, og tell til ti.' },
     { id: 'samme-bokstav', ikon: '🔠', sted: 'rom', alder: 8, tekst: 'Gå til {rom} og finn tre ting som begynner på samme bokstav som navnet ditt.' },
     { id: 'hent-bok', ikon: '📖', sted: 'rom', alder: 8, tekst: 'Gå til {rom} og hent en bok. Les den første setningen høyt.' }
+  ];
+
+  /* Hagen. Samme regler som inne – verbet først, tall med bokstaver – men
+     oppdragene bruker det som faktisk finnes ute: stein, pinner, blader,
+     skygger og lyder. Ingenting her krever verktøy, klatring eller vann, og
+     ingenting forutsetter en bestemt hage: «det nærmeste treet» finnes også
+     der det bare står ett. */
+  var HAGE = [
+    /* --- der du står --- */
+    { id: 'h-hopp-over', sted: 'her', alder: 3, ikon: '🦘', tekst: 'Hopp over noe som ligger på bakken, tre ganger.' },
+    { id: 'h-dans', sted: 'her', alder: 3, ikon: '💃', tekst: 'Lag den rareste dansen du kan, midt på plenen.' },
+    { id: 'h-rop', sted: 'her', alder: 3, ikon: '📣', tekst: 'Rop så høyt du kan opp mot himmelen, én gang.' },
+    { id: 'h-skygge', sted: 'her', alder: 5, ikon: '🌤️', tekst: 'Finn skyggen din, og prøv å hoppe over hodet på den.' },
+    { id: 'h-lytt', sted: 'her', alder: 5, ikon: '👂', tekst: 'Stå helt stille og lytt. Kom og fortell hvor mange lyder du hørte.' },
+    { id: 'h-maur', sted: 'her', alder: 5, ikon: '🐜', tekst: 'Finn en maur, og følg etter den så langt du klarer.' },
+    { id: 'h-skyer', sted: 'her', alder: 5, ikon: '☁️', tekst: 'Legg deg i gresset og finn en sky som ligner på noe.' },
+    { id: 'h-taarn', sted: 'her', alder: 8, ikon: '🏗️', tekst: 'Bygg det høyeste tårnet du klarer av det du finner ute.' },
+    { id: 'h-vinden', sted: 'her', alder: 8, ikon: '🌬️', tekst: 'Finn ut hvilken vei vinden blåser, og si det høyt.' },
+
+    /* --- rundt i hagen --- */
+    { id: 'h-blad', sted: 'rom', alder: 3, ikon: '🍃', tekst: 'Finn et blad som er større enn hånda di.' },
+    { id: 'h-kongler', sted: 'rom', alder: 3, ikon: '🌰', tekst: 'Lag en haug av kongler, steiner eller pinner.' },
+    { id: 'h-klem-tre', sted: 'rom', alder: 3, ikon: '🌳', tekst: 'Løp til det nærmeste treet og gi det en klem.' },
+    { id: 'h-pinne', sted: 'rom', alder: 3, ikon: '🪵', tekst: 'Finn en pinne som er lengre enn armen din.' },
+    { id: 'h-steiner', sted: 'rom', alder: 5, ikon: '🪨', tekst: 'Finn tre steiner og legg dem på rekke, fra minst til størst.' },
+    { id: 'h-rundt-huset', sted: 'rom', alder: 5, ikon: '🏠', tekst: 'Gå en runde rundt huset, så fort du klarer.' },
+    { id: 'h-blomster', sted: 'rom', alder: 5, ikon: '🌼', tekst: 'Tell blomstene du finner. Kom tilbake og si tallet.' },
+    { id: 'h-baklengs', sted: 'rom', alder: 5, ikon: '👣', tekst: 'Gå baklengs fra det ene hjørnet av hagen til det andre.' },
+    { id: 'h-hink', sted: 'rom', alder: 5, ikon: '🦩', tekst: 'Hink på ett bein bort til gjerdet og tilbake igjen.' },
+    { id: 'h-tre-farger', sted: 'rom', alder: 5, ikon: '🎨', tekst: 'Finn noe grønt, noe brunt og noe gult. Kom tilbake og vis det.' },
+    { id: 'h-ruest', sted: 'rom', alder: 8, ikon: '✋', tekst: 'Kjenn på tre ting ute, og si hvilken av dem som er ruest.' }
   ];
 
   /* Rampemodus. Alt her går ut på å tulle med de voksne, og det er en egen
@@ -133,9 +167,19 @@ window.SprellOppdrag = (function () {
     });
   }
 
+  /* Stedet velges i innstillingene: inne, i hagen, eller begge deler i samme
+     kurv. Rampemodus har sin egen bank og bryr seg ikke om stedet. */
+  function bank(sted) {
+    if (sted === 'hage') return HAGE;
+    if (sted === 'begge') return INNE.concat(HAGE);
+    return INNE;
+  }
+
   return {
-    vanlige: VANLIG,
+    inne: INNE,
+    hage: HAGE,
     rampe: RAMPE,
+    bank: bank,
     ROM: ROM,
     fyllUt: fyllUt
   };

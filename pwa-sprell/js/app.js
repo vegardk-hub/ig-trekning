@@ -30,6 +30,7 @@
     ark: document.getElementById('ark'),
     teppe: document.getElementById('teppe'),
     lukk: document.getElementById('lukk'),
+    sted: document.getElementById('sted'),
     alder: document.getElementById('alder'),
     lyd: document.getElementById('lyd'),
     kunHer: document.getElementById('kun-her'),
@@ -54,7 +55,7 @@
   }
 
   function standard() {
-    return { alder: 6, kunHer: false, autoles: true, lyd: true, dato: idag(), gjort: 0 };
+    return { sted: 'inne', alder: 6, kunHer: false, autoles: true, lyd: true, dato: idag(), gjort: 0 };
   }
 
   function hentValg() {
@@ -64,6 +65,7 @@
       if (typeof lagret.kunHer === 'boolean') v.kunHer = lagret.kunHer;
       if (typeof lagret.autoles === 'boolean') v.autoles = lagret.autoles;
       if (typeof lagret.lyd === 'boolean') v.lyd = lagret.lyd;
+      if (lagret.sted === 'inne' || lagret.sted === 'hage' || lagret.sted === 'begge') v.sted = lagret.sted;
       var a = parseInt(lagret.alder, 10);
       if (a >= 3 && a <= 12) v.alder = a;
       /* Stjernene gjelder dagen i dag. Er datoen en annen, begynner dagen på
@@ -85,7 +87,7 @@
   }
 
   function aktuelle() {
-    var bank = rampe ? window.SprellOppdrag.rampe : window.SprellOppdrag.vanlige;
+    var bank = rampe ? window.SprellOppdrag.rampe : window.SprellOppdrag.bank(valg.sted);
     return bank.filter(function (o) {
       if (valg.kunHer && o.sted !== 'her') return false;
       return o.alder <= valg.alder;
@@ -190,6 +192,37 @@
     }
   }
 
+  /* Hagen har sin egen bakgrunn, slik rampemodus har det. Klassene sitter på
+     html av samme grunn: gradienten males der, og variabler satt på body når
+     aldri opp dit. Rampemodus vinner når begge står på – da er det den banken
+     maskinen trekker fra. */
+  function tegnSted() {
+    var ute = !rampe && valg.sted === 'hage';
+    document.documentElement.classList.toggle('hage', ute);
+    /* Fargen på statuslinja følger med når appen ligger på hjemskjermen. */
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', rampe ? '#ffd166' : (ute ? '#a8e063' : '#5aa9e6'));
+  }
+
+  /* Ikonet på det tomme kortet sier hvilken bank maskinen står i før første
+     trekk: terning inne, tre i hagen, fjes i rampemodus. */
+  function standardIkon() {
+    if (rampe) return '😈';
+    return valg.sted === 'hage' ? '🌳' : '🎲';
+  }
+
+  /* Kortet stiller seg tilbake til «trykk her». Brukes når banken byttes:
+     det som sto der, kom fra en annen bank. */
+  function nullstillKort() {
+    visning = '';
+    el.ikon.textContent = standardIkon();
+    el.oppdrag.textContent = 'Trykk på den store knappen!';
+    el.kort.style.setProperty('--kort', nyFarge());
+    el.ferdig.disabled = true;
+    vipp();
+    oppdaterTalestatus();
+  }
+
   function tegnRampe() {
     el.rampe.setAttribute('aria-pressed', rampe ? 'true' : 'false');
     el.rampe.classList.toggle('paa', rampe);
@@ -201,8 +234,7 @@
        på html, og variabler satt på body ville aldri nådd opp dit. */
     document.documentElement.classList.toggle('rampe', rampe);
     /* Fargen på statuslinja følger med når appen ligger på hjemskjermen. */
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', rampe ? '#ffd166' : '#5aa9e6');
+    tegnSted();
   }
 
   /* ---------- innstillingsarket ---------- */
@@ -246,15 +278,17 @@
     window.SprellTale.stopp();
     window.SprellLyd.vekk();
     window.SprellLyd.rampe(rampe);
-    /* Kortet stiller seg tilbake til «trykk her»: det som sto der, kom fra den
-       andre banken. */
-    visning = '';
-    el.ikon.textContent = rampe ? '😈' : '🎲';
-    el.oppdrag.textContent = 'Trykk på den store knappen!';
-    el.kort.style.setProperty('--kort', nyFarge());
-    el.ferdig.disabled = true;
-    vipp();
-    oppdaterTalestatus();
+    nullstillKort();
+  });
+
+  el.sted.value = valg.sted;
+  el.sted.addEventListener('change', function () {
+    valg.sted = el.sted.value;
+    lagreValg();
+    /* Kurven er stokket ut fra det gamle stedet. */
+    kurv = [];
+    tegnSted();
+    nullstillKort();
   });
 
   el.alder.value = valg.alder;
@@ -298,6 +332,7 @@
   window.SprellLyd.settPaa(valg.lyd);
   window.SprellTale.naarStemmerKommer(oppdaterTalestatus);
   el.kort.style.setProperty('--kort', nyFarge());
+  el.ikon.textContent = standardIkon();
   tegnRampe();
   tegnStjerner();
   oppdaterTalestatus();

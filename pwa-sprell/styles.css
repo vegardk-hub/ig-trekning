@@ -13,6 +13,12 @@
   --skygge: rgba(27, 33, 64, .28);
 }
 
+/* Hagen har sin egen bakgrunn, så det synes hvilken bank som er valgt. */
+html.hage {
+  --bg1: #a8e063;
+  --bg2: #56ab2f;
+}
+
 /* Rampemodus har sin egen bakgrunn, så det synes på tvers av rommet hvilken
    bank maskinen trekker fra. Klassen må sitte på html og ikke på body:
    gradienten males på html, og variabler satt på body når aldri opp dit. */
@@ -231,6 +237,17 @@ button.rund { flex: 0 0 3.8rem; font-size: 1.5rem; padding: .5rem; }
 .lukk { display: block; width: 100%; margin-top: 1.2rem; background: var(--gul); }
 
 .alderrad { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.alderrad select {
+  flex: 0 0 auto;
+  max-width: 11rem;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: .45rem;
+  min-height: 2.75rem;
+}
 .alderrad input {
   flex: 0 0 5rem;
   font: inherit;

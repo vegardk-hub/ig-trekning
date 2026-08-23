@@ -4,13 +4,13 @@
 
    Bump CACHE hver gang en av FILES endres – ellers ligger den gamle versjonen
    igjen hos alle som har lagt appen på hjemskjermen. */
-const CACHE = 'sprell-v6';
+const CACHE = 'sprell-v7';
 /* Adressene må ha samme ?v= som i index.html – det er de forespørslene
    nettleseren faktisk sender, og bare de treffer noe i cachen. */
 const FILES = [
-  './', './index.html', './styles.css?v=6',
-  './js/oppdrag.js?v=6', './js/tale.js?v=6', './js/lyd.js?v=6',
-  './js/fyrverkeri.js?v=6', './js/app.js?v=6',
+  './', './index.html', './styles.css?v=7',
+  './js/oppdrag.js?v=7', './js/tale.js?v=7', './js/lyd.js?v=7',
+  './js/fyrverkeri.js?v=7', './js/app.js?v=7',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'
 ];
 
