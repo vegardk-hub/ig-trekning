@@ -122,10 +122,22 @@ rampemodus.
 
 ## Lyd og raketter
 
-Lydene er satt sammen av oscillatorer når de spilles — ingen lydfiler, ingenting
-å laste ned, ingen nye avhengigheter. Tre stykker: to blipp oppover når et
-oppdrag trekkes, en fanfare med gnister på toppen når noe er gjort, og en
-sniklyd som går nedover når rampemodus slås på og oppover når den slås av.
+Lydene er satt sammen av oscillatorer og hvit støy når de spilles — ingen
+lydfiler, ingenting å laste ned, ingen nye avhengigheter:
+
+- **Trekket:** to blipp oppover, som en maskin som spytter ut en lapp.
+- **Ferdig:** en fanfare, et sus mens raketten stiger, og et smell med knitring
+  når den sprekker. Suset og smellet er den samme hvite støyen — forskjellen
+  ligger i filteret, som klatrer oppover i suset og faller som en stein i
+  smellet.
+- **Rampemodus:** en sniklyd som går nedover når den slås på, og oppover når
+  den slås av. Lyden sier hvilken vei det gikk, også for den som ikke rekker å
+  lese knappen.
+
+**Smellet kalles fra fyrverkeriet, ikke fra en timer i `app.js`.** Raketten
+sprekker når den slutter å stige, og det tidspunktet avhenger av skjermhøyden —
+en fast forsinkelse ville sklidd fra bildet på en annen telefon. `fyr()` tar
+derfor imot en funksjon som kjøres i det gnistene kommer.
 
 To ting som må stå som de står:
 
@@ -140,6 +152,23 @@ Rakettene tegnes i et lerret som ligger over hele siden med
 når siste gnist er borte — en telefon skal ikke tegne et tomt lerret seksti
 ganger i sekundet resten av kvelden. Har systemet slått på «reduser bevegelse»,
 går det opp én rakett med færre gnister, og kortet slutter å vippe.
+
+## Innstillingene
+
+Innstillingene er for den voksne og ligger bak **prikkene i hjørnet**, ikke på
+barnets skjerm: der skal det stå ett oppdrag og tre knapper, ikke fire
+avkryssinger et barn kan skru på uten å vite hva de gjør. Arket kommer opp
+nedenfra, og lukkes med knappen, med et trykk på teppet bak, eller med Escape.
+Fokus flyttes til første felt når det åpnes, og tilbake til prikkene når det
+lukkes — ellers står fokus igjen på et felt som er borte fra skjermen.
+
+Arket skjules med attributtet `hidden`. **Regelen i CSS er
+`.ark:not([hidden])`**, ikke en egen `display:` på `.ark` — en `display` i CSS
+slår nettleserens egen `[hidden] { display: none }`, og arket ville blitt
+stående synlig selv om koden hadde skjult det.
+
+Beskjeden om at enheten mangler norsk stemme står også i arket. Den er til den
+voksne, ikke til barnet.
 
 ## Stemmen
 

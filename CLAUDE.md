@@ -295,6 +295,12 @@ detaljer og har en grunn:
   og stjernene nullstilles av seg selv når datoen skifter. Lydene lages av
   oscillatorer i farta, så det finnes ingen lydfiler å vedlikeholde — men
   `AudioContext` må lages inne i et trykk, ellers er iOS stum resten av økta.
+  Smellet kalles fra fyrverkeriet i det raketten sprekker, ikke fra en timer:
+  stigetida avhenger av skjermhøyden, så en fast forsinkelse sklir fra bildet.
+- **Innstillingene ligger bak prikkene i hjørnet.** Barnets skjerm skal ha ett
+  oppdrag og tre knapper, ikke fire avkryssinger. Arket skjules med `hidden`,
+  og regelen er `.ark:not([hidden])` — en egen `display:` ville slått av
+  nettleserens `[hidden]`.
 - **Setningen starter med verbet.** «Gå til soverommet ditt og hent det
   mykeste du finner» — ikke navnet først, ikke «Nå skal du …». Det er en
   beskjed, og handlingen skal komme først for den som hører den. Tall skrives

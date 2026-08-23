@@ -26,6 +26,10 @@
     ferdig: document.getElementById('ferdig'),
     rampe: document.getElementById('rampe'),
     stjerner: document.getElementById('stjerner'),
+    innstillinger: document.getElementById('innstillinger'),
+    ark: document.getElementById('ark'),
+    teppe: document.getElementById('teppe'),
+    lukk: document.getElementById('lukk'),
     alder: document.getElementById('alder'),
     lyd: document.getElementById('lyd'),
     kunHer: document.getElementById('kun-her'),
@@ -148,7 +152,10 @@
     el.kort.style.setProperty('--kort', '#2f9e44');
     vipp();
     window.SprellLyd.feiring();
-    window.SprellFyrverkeri.fyr();
+    window.SprellLyd.rakett();
+    /* Smellet kommer fra fyrverkeriet i det raketten sprekker, ikke fra en
+       timer her: hvor lenge den stiger, avhenger av skjermhøyden. */
+    window.SprellFyrverkeri.fyr(window.SprellLyd.smell);
     valg.gjort++;
     valg.dato = idag();
     lagreValg();
@@ -197,6 +204,34 @@
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', rampe ? '#ffd166' : '#5aa9e6');
   }
+
+  /* ---------- innstillingsarket ---------- */
+
+  function aapneArk() {
+    el.ark.hidden = false;
+    el.teppe.hidden = false;
+    el.innstillinger.setAttribute('aria-expanded', 'true');
+    el.ark.scrollTop = 0;
+    el.alder.focus();
+  }
+
+  function lukkArk() {
+    el.ark.hidden = true;
+    el.teppe.hidden = true;
+    el.innstillinger.setAttribute('aria-expanded', 'false');
+    /* Fokus tilbake på prikkene, ellers står det igjen på et felt som er
+       borte fra skjermen. */
+    el.innstillinger.focus();
+  }
+
+  el.innstillinger.addEventListener('click', function () {
+    if (el.ark.hidden) aapneArk(); else lukkArk();
+  });
+  el.lukk.addEventListener('click', lukkArk);
+  el.teppe.addEventListener('click', lukkArk);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !el.ark.hidden) lukkArk();
+  });
 
   el.trekk.addEventListener('click', trekk);
   el.les.addEventListener('click', lesOpp);

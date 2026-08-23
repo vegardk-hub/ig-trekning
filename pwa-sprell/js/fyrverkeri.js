@@ -10,6 +10,10 @@ window.SprellFyrverkeri = (function () {
   var deler = [];
   var kjorer = false;
   var forrige = 0;
+  /* Lyden av smellet hentes herfra og ikke fra en timer i app.js: raketten
+     sprekker når den slutter å stige, og det tidspunktet avhenger av
+     skjermhøyden. En fast forsinkelse ville sklidd fra bildet. */
+  var paaSprett = null;
 
   var FARGER = ['#ff4d6d', '#ffd23f', '#4ecdc4', '#5aa9e6', '#a06cd5', '#7bc950', '#ff9f1c'];
 
@@ -78,6 +82,7 @@ window.SprellFyrverkeri = (function () {
         t.fillRect(d.x - 2, d.y, 4, 12);
         if (d.y <= d.mal || d.fart >= 0) {
           sprett(d.x, d.y, d.farge);
+          if (paaSprett) paaSprett();
           deler.splice(i, 1);
         }
       } else {
@@ -106,8 +111,9 @@ window.SprellFyrverkeri = (function () {
     }
   }
 
-  function fyr() {
+  function fyr(naarDetSmeller) {
     if (!start()) return;
+    paaSprett = naarDetSmeller || null;
     var n = rolig() ? 1 : 3;
     for (var i = 0; i < n; i++) {
       var x = window.innerWidth * (0.2 + Math.random() * 0.6);
