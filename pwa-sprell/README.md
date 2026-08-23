@@ -60,11 +60,11 @@ på rumpa og telle til ti — og 14 med `sted: 'rom'`, som sender barnet til bad
 kjøkkenet, loftet og tilbake. Sytten er merket `alder: 3`, tolv `alder: 5` og
 sju `alder: 8`.
 
-**Hagen** (20 stk): 9 med `sted: 'her'` og 11 som sender barnet rundt i hagen.
+**Hagen** (50 stk): 22 med `sted: 'her'` og 28 som sender barnet rundt i hagen.
 Oppdragene bruker det som faktisk finnes ute — stein, pinner, blader, skygger,
 lyder — og **ingenting forutsetter en bestemt hage**: «det nærmeste treet»
 finnes også der det bare står ett. Ingenting krever verktøy, klatring eller
-vann. Sju er merket `alder: 3`, ti `alder: 5` og tre `alder: 8`.
+vann. Atten er merket `alder: 3`, tjuetre `alder: 5` og ni `alder: 8`.
 
 Avkryssingen «bare oppdrag der jeg står» virker begge steder: ute betyr `'her'`
 det som kan gjøres på flekken barnet står på.

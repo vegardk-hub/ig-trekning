@@ -38,7 +38,7 @@
 - **[Sprellemaskinen](pwa-sprell/)** — `pwa-sprell/index.html`: trekker et
   tilfeldig oppdrag barna kan gjøre inne — lag en snøengel, gå fem skritt
   baklengs, eller gå til kjøkkenet og hent noe hvitt. Setningen kan leses høyt
-  av en voksen eller av maskinstemmen. 36 oppdrag inne og 20 i hagen, med
+  av en voksen eller av maskinstemmen. 36 oppdrag inne og 50 i hagen, med
   tilfeldige rom, tall, dyr og farger, delt etter alder fra 3 til 12, og et
   filter for det som kan gjøres der barnet står. Hvert oppdrag har et ikon for den som ikke leser ennå, og
   «Ferdig!» gir fanfare, raketter og en stjerne. Egen rampemodus med 23

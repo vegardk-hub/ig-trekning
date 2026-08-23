@@ -99,6 +99,20 @@ window.SprellOppdrag = (function () {
     { id: 'h-taarn', sted: 'her', alder: 8, ikon: '🏗️', tekst: 'Bygg det høyeste tårnet du klarer av det du finner ute.' },
     { id: 'h-vinden', sted: 'her', alder: 8, ikon: '🌬️', tekst: 'Finn ut hvilken vei vinden blåser, og si det høyt.' },
 
+    { id: 'h-hopp-hoyt', sted: 'her', alder: 3, ikon: '⬆️', tekst: 'Hopp så høyt du klarer, tre ganger på rad.' },
+    { id: 'h-snurr-gress', sted: 'her', alder: 3, ikon: '🌀', tekst: 'Snurr rundt fem ganger, og sett deg ned i gresset etterpå.' },
+    { id: 'h-dyrelyd', sted: 'her', alder: 3, ikon: '🐄', tekst: 'Lag lyden til et dyr, så høyt du klarer.' },
+    { id: 'h-strekk', sted: 'her', alder: 3, ikon: '🙆', tekst: 'Strekk deg så høyt du kan, og bøy deg så lavt du kan.' },
+    { id: 'h-vaatt-gress', sted: 'her', alder: 3, ikon: '🌱', tekst: 'Kjenn på gresset, og si om det er vått eller tørt.' },
+    { id: 'h-kaste-gress', sted: 'her', alder: 3, ikon: '🌾', tekst: 'Kast en håndfull gress opp i lufta, og se hvor det lander.' },
+    { id: 'h-kaninhopp', sted: 'her', alder: 5, ikon: '🐇', tekst: 'Hopp som en kanin ti hopp på stedet.' },
+    { id: 'h-fly', sted: 'her', alder: 5, ikon: '✈️', tekst: 'Stå på ett bein med armene ut som et fly, mens noen teller til ti.' },
+    { id: 'h-fugl', sted: 'her', alder: 5, ikon: '🐦', tekst: 'Se etter en fugl, og fortell hva den gjorde.' },
+    { id: 'h-sirkel-lufta', sted: 'her', alder: 5, ikon: '✍️', tekst: 'Tegn en kjempestor sirkel i lufta med armen.' },
+    { id: 'h-himmelfarge', sted: 'her', alder: 5, ikon: '🌅', tekst: 'Se opp på himmelen, og si hvilken farge den har i dag.' },
+    { id: 'h-stille-seksti', sted: 'her', alder: 8, ikon: '⏳', tekst: 'Stå helt stille og tell til seksti uten å le.' },
+    { id: 'h-maal-skygge', sted: 'her', alder: 8, ikon: '📏', tekst: 'Mål skyggen din med skritt, og si hvor mange det ble.' },
+
     /* --- rundt i hagen --- */
     { id: 'h-blad', sted: 'rom', alder: 3, ikon: '🍃', tekst: 'Finn et blad som er større enn hånda di.' },
     { id: 'h-kongler', sted: 'rom', alder: 3, ikon: '🌰', tekst: 'Lag en haug av kongler, steiner eller pinner.' },
@@ -110,7 +124,24 @@ window.SprellOppdrag = (function () {
     { id: 'h-baklengs', sted: 'rom', alder: 5, ikon: '👣', tekst: 'Gå baklengs fra det ene hjørnet av hagen til det andre.' },
     { id: 'h-hink', sted: 'rom', alder: 5, ikon: '🦩', tekst: 'Hink på ett bein bort til gjerdet og tilbake igjen.' },
     { id: 'h-tre-farger', sted: 'rom', alder: 5, ikon: '🎨', tekst: 'Finn noe grønt, noe brunt og noe gult. Kom tilbake og vis det.' },
-    { id: 'h-ruest', sted: 'rom', alder: 8, ikon: '✋', tekst: 'Kjenn på tre ting ute, og si hvilken av dem som er ruest.' }
+    { id: 'h-ruest', sted: 'rom', alder: 8, ikon: '✋', tekst: 'Kjenn på tre ting ute, og si hvilken av dem som er ruest.' },
+    { id: 'h-lukt-ute', sted: 'rom', alder: 3, ikon: '👃', tekst: 'Lukt på tre forskjellige ting ute, og si hva som luktet best.' },
+    { id: 'h-mykt-hardt', sted: 'rom', alder: 3, ikon: '🧤', tekst: 'Finn noe mykt og noe hardt ute, og ta med begge tilbake.' },
+    { id: 'h-under-over', sted: 'rom', alder: 3, ikon: '🐛', tekst: 'Krabb under noe, over noe, og rundt noe.' },
+    { id: 'h-hils-plante', sted: 'rom', alder: 3, ikon: '🌷', tekst: 'Si «hei» til den største planten du finner.' },
+    { id: 'h-rundt-noe-stort', sted: 'rom', alder: 3, ikon: '🔄', tekst: 'Løp en runde rundt noe som er større enn deg.' },
+    { id: 'h-rundt-tre', sted: 'rom', alder: 5, ikon: '🏃', tekst: 'Løp tre runder rundt et tre.' },
+    { id: 'h-minste-blad', sted: 'rom', alder: 5, ikon: '🍂', tekst: 'Finn det minste bladet du klarer å få øye på.' },
+    { id: 'h-flat-stein', sted: 'rom', alder: 5, ikon: '🥌', tekst: 'Finn den flateste steinen du klarer, og legg den ved døra.' },
+    { id: 'h-tell-skritt', sted: 'rom', alder: 5, ikon: '🔢', tekst: 'Tell hvor mange skritt det er fra døra til gjerdet.' },
+    { id: 'h-gjemmested', sted: 'rom', alder: 5, ikon: '🫣', tekst: 'Finn et bra gjemmested, og vis det fram etterpå.' },
+    { id: 'h-sol-og-skygge', sted: 'rom', alder: 5, ikon: '☀️', tekst: 'Finn et sted med sol og et sted med skygge, og stå litt på hvert av dem.' },
+    { id: 'h-tungt-lett', sted: 'rom', alder: 5, ikon: '⚖️', tekst: 'Finn noe tungt og noe lett, og hold ett i hver hånd.' },
+    { id: 'h-tell-vinduer', sted: 'rom', alder: 5, ikon: '🪟', tekst: 'Tell vinduene på huset. Kom tilbake og si tallet.' },
+    { id: 'h-bokstav-pinner', sted: 'rom', alder: 8, ikon: '🔤', tekst: 'Legg pinner på bakken så de blir den første bokstaven i navnet ditt.' },
+    { id: 'h-regnbue', sted: 'rom', alder: 8, ikon: '🌈', tekst: 'Samle fem ting ute med hver sin farge, og legg dem på en rad.' },
+    { id: 'h-spindelvev', sted: 'rom', alder: 8, ikon: '🕸️', tekst: 'Se etter et spindelvev, og kom og fortell hvor du fant det.' },
+    { id: 'h-kaldest', sted: 'rom', alder: 8, ikon: '❄️', tekst: 'Kjenn på tre ting ute, og si hvilken av dem som er kaldest.' }
   ];
 
   /* Rampemodus. Alt her går ut på å tulle med de voksne, og det er en egen
