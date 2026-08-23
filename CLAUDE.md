@@ -297,6 +297,12 @@ detaljer og har en grunn:
   `AudioContext` må lages inne i et trykk, ellers er iOS stum resten av økta.
   Smellet kalles fra fyrverkeriet i det raketten sprekker, ikke fra en timer:
   stigetida avhenger av skjermhøyden, så en fast forsinkelse sklir fra bildet.
+- **CSS og JS lastes med `?v=N`, og nummeret står tre steder.** `index.html`,
+  `FILES` i `sw.js` og `CACHE`-navnet må økes samtidig. Uten versjonsmerket kan
+  en telefon ende med ny `index.html` og gammel `styles.css`/`app.js`: da tegner
+  prikkeknappen seg uten stilen som plasserer den og uten koden som lytter på
+  den. Nummeret vises nederst i innstillingsarket, så det kan etterspørres i
+  stedet for å gjettes.
 - **Innstillingene ligger bak prikkene i hjørnet.** Barnets skjerm skal ha ett
   oppdrag og tre knapper, ikke fire avkryssinger. Arket skjules med `hidden`,
   og regelen er `.ark:not([hidden])` — en egen `display:` ville slått av

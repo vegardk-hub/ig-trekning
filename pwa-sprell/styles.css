@@ -69,12 +69,18 @@ h1 {
 
 /* Prikkene sitter i hjørnet ved siden av overskriften, ikke i flyten: de er
    for den voksne, og skal ikke konkurrere med de store knappene. */
+/* Emojien inni knappen skal aldri være det som mottar trykket – på iOS kan et
+   barn treffe tegnet og ikke knappen rundt. */
+.prikker span { pointer-events: none; }
+
 .prikker {
   position: absolute;
   top: max(1rem, env(safe-area-inset-top));
   right: 1rem;
-  width: 3rem;
-  min-height: 3rem;
+  left: auto;          /* aldri arvet fra noe annet – knappen hører til høyre */
+  z-index: 3;
+  width: 3.1rem;
+  min-height: 3.1rem;
   padding: 0;
   border-radius: 50%;
   font-size: 1.1rem;
@@ -218,6 +224,9 @@ button.rund { flex: 0 0 3.8rem; font-size: 1.5rem; padding: .5rem; }
   width: 1.3rem; height: 1.3rem; margin-right: .55rem; vertical-align: -.2rem;
   accent-color: var(--gronn);
 }
+
+.hint { margin: -.5rem 0 .9rem 1.85rem; font-size: .85rem; color: #4a4f68; }
+.versjon { margin: 1.2rem 0 0; font-size: .8rem; text-align: center; color: #6b7089; }
 
 .lukk { display: block; width: 100%; margin-top: 1.2rem; background: var(--gul); }
 

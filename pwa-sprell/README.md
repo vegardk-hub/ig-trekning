@@ -201,9 +201,30 @@ bare første gang.
 ## PWA
 
 `sw.js` er nett først med cache som reserve, og henter med `{ cache: 'no-store' }`
-under installering — uten det baker Pages' `max-age=600` ti minutter gammel kode
-inn i en fersk cache. **Endrer du en fil som står i `FILES`, bump `CACHE`-navnet**,
-ellers blir den gamle versjonen liggende hos alle som har appen på hjemskjermen.
+både under installering og ved hvert nettkall — uten det svarer Pages'
+`max-age=600` med opptil ti minutter gammel fil.
+
+### Versjonsnummeret må flyttes tre steder
+
+CSS-en og JS-en lastes med `?v=N` i adressen. Det er ikke pynt: uten det kan en
+telefon havne med **ny `index.html` og gammel `styles.css` og `app.js`** — og da
+tegner prikkeknappen seg uten stilen som plasserer den (den havner øverst til
+venstre) og uten koden som lytter på den (ingenting skjer når man trykker). Det
+skjedde, på en iPhone, og det er grunnen til at nummeret finnes.
+
+Endrer du en fil, øk `N` **alle tre stedene samtidig**:
+
+1. `?v=N` på hver `<link>` og `<script>` i `index.html`
+2. de samme adressene i `FILES` i `sw.js` — det er de forespørslene nettleseren
+   faktisk sender, og bare de treffer noe i cachen
+3. `CACHE`-navnet i `sw.js`
+
+Versjonsnummeret står også nederst i innstillingsarket, så det går an å spørre
+«hva står det der?» i stedet for å gjette på hva telefonen kjører.
+
+Tar en ny service worker over mens appen står åpen, lastes siden om én gang
+(`controllerchange` i `index.html`) — ellers ligger den gamle koden fortsatt i
+vinduet selv om cachen er ny.
 
 Ikonene er en strekfigur i et sprett, skrevet av `lag_ikon.py` uten Pillow:
 
