@@ -18,8 +18,10 @@ from pathlib import Path
 HER = Path(__file__).parent / "icons"
 SKALA = 3
 
-BAKGRUNN = (0xFF, 0xFF, 0xFF)
-STREK = (0x00, 0x00, 0x00)
+# Samme blått som appens bakgrunn, med figuren i hvitt. Ikonet skal kjennes
+# igjen som appen på en hjemskjerm full av andre ikoner.
+BAKGRUNN = (0x5A, 0xA9, 0xE6)
+STREK = (0xFF, 0xFF, 0xFF)
 
 # Figuren i enhetskoordinater, 0–1 med y nedover: hode, kropp, armer opp,
 # beina ut til siden. Samme svart-hvitt som appen selv.

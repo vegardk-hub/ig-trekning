@@ -4,8 +4,8 @@ Trekker et tilfeldig oppdrag barna kan gjøre inne. Setningen står stort på
 skjermen, så en voksen kan lese den høyt — eller barnet kan trykke **Les opp**
 og la maskinstemmen gjøre det.
 
-Svart på hvitt, ingen bilder, bare knappene som trengs. PWA — kan legges på
-hjemskjermen og virker uten nett.
+Farger, lyd og raketter, laget for en femåring som ikke leser ennå. PWA — kan
+legges på hjemskjermen og virker uten nett.
 
 ## Filene
 
@@ -15,9 +15,27 @@ hjemskjermen og virker uten nett.
 | `styles.css` | Utseendet |
 | `js/oppdrag.js` | De to oppdragsbankene og utfyllingen av lukene |
 | `js/tale.js` | Maskinstemmen (`speechSynthesis`) |
+| `js/lyd.js` | Lydene, satt sammen av oscillatorer i farta |
+| `js/fyrverkeri.js` | Rakettene som går opp når et oppdrag er gjort |
 | `js/app.js` | Trekkingen, filtrene, rampemodus og lagringen av valgene |
 | `sw.js`, `manifest.webmanifest` | PWA-delen |
 | `lag_ikon.py` | Skriver ikonene i `icons/` |
+
+## Runden
+
+Barnet trykker **Nytt oppdrag**, gjør det som står der, og trykker **Ferdig!**
+Da går rakettene opp, det spilles en liten fanfare, og en stjerne legger seg i
+rada under knappene.
+
+Tre ting i den runden er valgt, ikke tilfeldige:
+
+- **Ingenting markerer noe som ikke er gjort.** Stjernene teller bare oppover,
+  det finnes ingen «mislyktes»-knapp, og telleren nullstilles av seg selv når
+  datoen skifter. Samme premiss som i Fargeflasker og Poengtavla.
+- **Ikonet står over setningen.** Det er ikke pynt: den som ikke kan lese ennå,
+  ser at oppdraget handler om en sokk eller en frosk før noen har lest det høyt.
+- **Kortet skifter farge for hvert oppdrag.** Det er den billigste måten å få et
+  nytt oppdrag til å se nytt ut for den som ikke leser.
 
 ## Alderen
 
@@ -102,6 +120,27 @@ gamle utvalget, og ville ellers fortsatt sende barnet på badet en stund etter a
 «bare her jeg står» ble krysset av, eller delt ut vanlige oppdrag i
 rampemodus.
 
+## Lyd og raketter
+
+Lydene er satt sammen av oscillatorer når de spilles — ingen lydfiler, ingenting
+å laste ned, ingen nye avhengigheter. Tre stykker: to blipp oppover når et
+oppdrag trekkes, en fanfare med gnister på toppen når noe er gjort, og en
+sniklyd som går nedover når rampemodus slås på og oppover når den slås av.
+
+To ting som må stå som de står:
+
+- **`AudioContext` må lages inne i et trykk.** iOS starter den i `suspended`, og
+  en kontekst laget mens siden lastes, blir aldri vekket — da er appen stum
+  resten av økta uten at noe feiler. Derfor kaller hvert trykk `Lyd.vekk()`.
+- **Hver tone trenger myke ramper på volumet.** Uten dem knepper det i
+  høyttaleren hver gang en tone slås av.
+
+Rakettene tegnes i et lerret som ligger over hele siden med
+`pointer-events: none`, så knappene under virker mens det spruter. Løkka stopper
+når siste gnist er borte — en telefon skal ikke tegne et tomt lerret seksti
+ganger i sekundet resten av kvelden. Har systemet slått på «reduser bevegelse»,
+går det opp én rakett med færre gnister, og kortet slutter å vippe.
+
 ## Stemmen
 
 `js/tale.js` velger første norske stemme systemet melder om. To feller ligger
@@ -116,6 +155,19 @@ der allerede:
 Finnes ingen stemme, står det under knappene i stedet for at knappen bare ikke
 gjør noe. Automatisk opplesing skjer alltid rett etter et trykk, som er det
 iOS krever for å slippe lyd ut i det hele tatt.
+
+## Fargene
+
+Bakgrunnen er en gradient, og den skifter i rampemodus. **Klassen må sitte på
+`html`, ikke på `body`:** gradienten males på `html`, og variabler satt på
+`body` når aldri opp dit — bakgrunnen ble stående uendret første gang. Fargen på
+statuslinja (`theme-color`) følger med, så det synes også når appen ligger på
+hjemskjermen.
+
+Kortet får farge fra `--kort`, som `app.js` setter for hvert oppdrag. Vippen
+krever at klassen `ny` fjernes, at `offsetWidth` leses, og at den legges på
+igjen — uten avlesningen slår nettleseren de to sammen, og animasjonen kjører
+bare første gang.
 
 ## PWA
 

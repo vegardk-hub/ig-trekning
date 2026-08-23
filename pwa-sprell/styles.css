@@ -1,87 +1,186 @@
-/* Første versjon med vilje uten farger og bilder: svart på hvitt, systemfont,
-   og knapper som er store nok for en barnehånd på telefon. */
+/* Fargene er appens eneste pynt, og de gjør en jobb: kortet skifter farge for
+   hvert oppdrag, så et nytt oppdrag ser nytt ut selv for den som ikke leser.
+   --kort settes fra app.js. */
+
+:root {
+  --bg1: #7fd0ff;
+  --bg2: #c9a7ff;
+  --kort: #ff9f1c;
+  --ink: #1b2140;
+  --papir: #fffdf7;
+  --gronn: #2f9e44;
+  --gul: #ffd23f;
+  --skygge: rgba(27, 33, 64, .28);
+}
+
+/* Rampemodus har sin egen bakgrunn, så det synes på tvers av rommet hvilken
+   bank maskinen trekker fra. Klassen må sitte på html og ikke på body:
+   gradienten males på html, og variabler satt på body når aldri opp dit. */
+html.rampe {
+  --bg1: #ffd166;
+  --bg2: #ff7b6b;
+}
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   margin: 0;
   padding: 0;
-  background: #fff;
-  color: #000;
+  min-height: 100%;
+  color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 18px;
   -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+/* Bakgrunnen ligger på html, ikke bare på body: da dekker den hele lerretet
+   også når siden er kortere enn skjermen. */
+html { background: linear-gradient(160deg, var(--bg1), var(--bg2)); }
+body { background: transparent; transition: none; }
+
+#fyrverkeri {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;   /* knappene under skal virke mens det spruter */
+  z-index: 5;
 }
 
 main {
-  max-width: 40rem;
+  position: relative;
+  z-index: 1;
+  max-width: 34rem;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
-  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding: 1.25rem 1.1rem 3rem;
+  padding-top: max(1.25rem, env(safe-area-inset-top));
 }
 
 h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  margin: 0 0 1rem;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--skygge);
 }
 
-/* Rampemodusknappen står over oppdraget, ikke nede i innstillingene: den skal
-   kunne slås av like fort som den ble slått på. Svart flate når den er på – da
-   ser man med én gang hvilken bank maskinen trekker fra. */
+/* Knapper: tykke, med en kant under som trykkes flat. Det er den samme
+   følelsen som en fysisk knapp, og den tåler en femårings pekefinger. */
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--papir);
+  border: 0;
+  border-radius: 16px;
+  padding: .85rem 1.1rem;
+  min-height: 3.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--skygge);
+  transition: transform .06s ease, box-shadow .06s ease;
+}
+button:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--skygge); }
+button:disabled { opacity: .45; box-shadow: 0 5px 0 var(--skygge); transform: none; cursor: default; }
+
 .modus {
   display: block;
   width: 100%;
   margin: 0 0 1rem;
   font-size: 1.05rem;
+  background: #fff5d1;
 }
-.modus.paa { background: #000; color: #fff; font-weight: 600; }
+.modus.paa { background: #2b2140; color: #ffd23f; }
+
+.kort {
+  background: var(--papir);
+  border: 6px solid var(--kort);
+  border-radius: 26px;
+  padding: 1rem 1.1rem 1.2rem;
+  box-shadow: 0 8px 0 var(--skygge);
+  text-align: center;
+}
+/* Kortet vipper inn når et nytt oppdrag kommer. Kort nok til at knappen kan
+   trykkes igjen med én gang. */
+.kort.ny { animation: sprett .32s ease; }
+@keyframes sprett {
+  0% { transform: scale(.94) rotate(-1.2deg); }
+  60% { transform: scale(1.03) rotate(.6deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.ikon { font-size: 3.2rem; line-height: 1.1; margin-bottom: .4rem; }
 
 #oppdrag {
-  font-size: 1.75rem;
-  line-height: 1.35;
+  font-size: 1.6rem;
+  line-height: 1.3;
+  font-weight: 700;
   margin: 0;
   /* Setningene har svært ulik lengde. Uten en minstehøyde hopper knappene opp
      og ned mellom hvert trekk, og barnet bommer på den det sikter mot. */
-  min-height: 5.5em;
-  border: 2px solid #000;
-  border-radius: 8px;
-  padding: 1rem;
+  min-height: 4.2em;
 }
 
 .teller {
-  margin: .5rem 0 1.25rem;
+  margin: .7rem 0 1rem;
+  font-size: .95rem;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 0 var(--skygge);
+}
+
+.knapper { display: flex; gap: .7rem; }
+button.stor {
+  flex: 1 1 auto;
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: var(--gul);
+}
+button.rund { flex: 0 0 3.8rem; font-size: 1.5rem; padding: .5rem; }
+
+.ferdig {
+  display: block;
+  width: 100%;
+  margin: .7rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: var(--gronn);
+  color: #fff;
+}
+
+.stjerner {
+  margin: .9rem 0 0;
+  min-height: 1.8rem;
+  font-size: 1.35rem;
+  line-height: 1.3;
+  text-align: center;
+  word-break: break-word;
+}
+
+.beskjed {
+  margin: .8rem 0 0;
   font-size: .9rem;
+  text-align: center;
+  color: #23273f;
 }
-
-.knapper { display: flex; flex-wrap: wrap; gap: .75rem; }
-
-button {
-  font: inherit;
-  color: inherit;
-  background: #fff;
-  border: 2px solid #000;
-  border-radius: 8px;
-  padding: .75rem 1.25rem;
-  min-height: 3rem;
-  cursor: pointer;
-}
-button.stor { flex: 1 1 12rem; font-size: 1.25rem; font-weight: 600; }
-button:active { background: #eee; }
-button:disabled { opacity: .4; cursor: default; }
-
-.beskjed { margin: .75rem 0 0; font-size: .9rem; }
 .beskjed:empty { margin: 0; }
 
 .valg {
-  margin: 2rem 0 0;
-  border: 1px solid #000;
-  border-radius: 8px;
-  padding: .5rem 1rem 1rem;
+  margin: 1.6rem 0 0;
+  border: 0;
+  border-radius: 18px;
+  background: rgba(255, 253, 247, .75);
+  padding: .4rem 1rem 1rem;
 }
-.valg legend { padding: 0 .35rem; font-size: .9rem; }
-.valg label { display: block; margin: .6rem 0; }
-.valg input[type="checkbox"] { width: 1.15rem; height: 1.15rem; margin-right: .5rem; vertical-align: -.15rem; }
+.valg legend { padding: 0 .4rem; font-size: .9rem; font-weight: 700; }
+.valg label { display: block; margin: .7rem 0; }
+.valg input[type="checkbox"] {
+  width: 1.3rem; height: 1.3rem; margin-right: .55rem; vertical-align: -.2rem;
+  accent-color: var(--gronn);
+}
 
 .alderrad { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .alderrad input {
@@ -89,8 +188,15 @@ button:disabled { opacity: .4; cursor: default; }
   font: inherit;
   color: inherit;
   background: #fff;
-  border: 1px solid #000;
-  border-radius: 6px;
-  padding: .5rem;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: .45rem;
   min-height: 2.75rem;
+}
+
+/* Den som har slått av bevegelse i systemet, skal slippe kortet som vipper.
+   Rakettene tar hensyn til det samme i js/fyrverkeri.js. */
+@media (prefers-reduced-motion: reduce) {
+  .kort.ny { animation: none; }
+  button { transition: none; }
 }
