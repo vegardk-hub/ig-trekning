@@ -275,11 +275,11 @@ strekninger og mister mynter, så den tjener ikke proporsjonalt mer.
 `pwa-sprell/README.md` går gjennom oppdragsbanken. Tre ting som ser ut som
 detaljer og har en grunn:
 
+- **Alt er skrevet for en femåring, og det finnes ingen aldersinnstilling.**
+  Et oppdrag som må forklares, eller som krever lesing, staving eller store
+  tall, hører ikke hjemme i banken. Innstillingen fantes før og er fjernet.
 - **Appen kjenner ingen navn.** Den snakker til den som står foran den, og kan
-  gis videre til neste barn uten et trykk. Det eneste som skiller barna, er
-  alderen: hvert oppdrag har en `alder` — 3, 5 eller 8 — og innstillingen går
-  fra 3 til 12. Skillet går på hva som må kunne gjøres for at beskjeden gir
-  mening (telle, lese, stave), ikke på lett og vanskelig.
+  gis videre til neste barn uten et trykk.
 - **Morgenlista går i rekkefølge, ikke tilfeldig.** Barnehagemodus er femten
   steg fra å stå opp til å si ha det, og sko før jakke gir ingen mening. Hvert
   «Ferdig!» gir en stjerne og to korte toner; rakettene spares til hele lista

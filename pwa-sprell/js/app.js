@@ -10,6 +10,9 @@
    - `morgen`  – går gjennom morgenlista i rekkefølge. Den eneste som ikke
                  trekker: sko før jakke gir ingen mening.
 
+   Alt er skrevet for en femåring, og det finnes ingen aldersinnstilling: et
+   oppdrag som må forklares, hører ikke hjemme i banken.
+
    Trekkingen går via en kurv – oppdragene som passer stokkes, og det trekkes
    uten tilbakelegging til kurven er tom. Ren Math.random gir samme oppdrag to
    ganger på rad ofte nok til at et barn merker det, og da er maskinen
@@ -40,7 +43,6 @@
     teppe: document.getElementById('teppe'),
     lukk: document.getElementById('lukk'),
     sted: document.getElementById('sted'),
-    alder: document.getElementById('alder'),
     lyd: document.getElementById('lyd'),
     kunHer: document.getElementById('kun-her'),
     autoles: document.getElementById('autoles'),
@@ -66,7 +68,7 @@
   }
 
   function standard() {
-    return { sted: 'inne', alder: 6, kunHer: false, autoles: true, lyd: true, dato: idag(), gjort: 0 };
+    return { sted: 'inne', kunHer: false, autoles: true, lyd: true, dato: idag(), gjort: 0 };
   }
 
   function hentValg() {
@@ -77,8 +79,6 @@
       if (typeof lagret.autoles === 'boolean') v.autoles = lagret.autoles;
       if (typeof lagret.lyd === 'boolean') v.lyd = lagret.lyd;
       if (lagret.sted === 'inne' || lagret.sted === 'hage' || lagret.sted === 'begge') v.sted = lagret.sted;
-      var a = parseInt(lagret.alder, 10);
-      if (a >= 3 && a <= 12) v.alder = a;
       /* Stjernene gjelder dagen i dag. Er datoen en annen, begynner dagen på
          null av seg selv – ingen nullstillingsknapp å glemme. */
       if (lagret.dato === v.dato && lagret.gjort > 0) v.gjort = lagret.gjort;
@@ -153,10 +153,8 @@
 
   function aktuelle() {
     var bank = modus === 'rampe' ? window.SprellOppdrag.rampe : window.SprellOppdrag.bank(valg.sted);
-    return bank.filter(function (o) {
-      if (valg.kunHer && o.sted !== 'her') return false;
-      return o.alder <= valg.alder;
-    });
+    if (!valg.kunHer) return bank;
+    return bank.filter(function (o) { return o.sted === 'her'; });
   }
 
   function fyllKurv() {
@@ -189,11 +187,9 @@
   /* ---------- morgenlista ---------- */
 
   function morgenStart() {
-    /* Lista filtreres bare på alder. «Bare oppdrag der jeg står» hører ikke
-       hjemme her – en morgen går tvers gjennom huset uansett. */
-    morgenliste = window.SprellOppdrag.morgen.filter(function (o) {
-      return o.alder <= valg.alder;
-    });
+    /* Hele lista, uten filter. «Bare oppdrag der jeg står» hører ikke hjemme
+       her – en morgen går tvers gjennom huset uansett. */
+    morgenliste = window.SprellOppdrag.morgen;
     steg = 0;
     visSteg();
   }
@@ -374,20 +370,6 @@
     kurv = [];
     tegnFarger();
     if (modus !== 'morgen') nullstillKort();
-  });
-
-  el.alder.value = valg.alder;
-  el.alder.addEventListener('change', function () {
-    var a = parseInt(el.alder.value, 10);
-    if (!(a >= 3 && a <= 12)) {
-      el.alder.value = valg.alder;
-      return;
-    }
-    valg.alder = a;
-    lagreValg();
-    /* Kurven er stokket ut fra den gamle alderen. */
-    kurv = [];
-    if (modus === 'morgen') morgenStart();
   });
 
   el.lyd.checked = valg.lyd;

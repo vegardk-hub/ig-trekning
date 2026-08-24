@@ -248,8 +248,8 @@ button.rund { flex: 0 0 3.8rem; font-size: 1.5rem; padding: .5rem; }
 
 .lukk { display: block; width: 100%; margin-top: 1.2rem; background: var(--gul); }
 
-.alderrad { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
-.alderrad select {
+.valgrad { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.valgrad select {
   flex: 0 0 auto;
   max-width: 11rem;
   font: inherit;
@@ -260,7 +260,7 @@ button.rund { flex: 0 0 3.8rem; font-size: 1.5rem; padding: .5rem; }
   padding: .45rem;
   min-height: 2.75rem;
 }
-.alderrad input {
+.valgrad input {
   flex: 0 0 5rem;
   font: inherit;
   color: inherit;

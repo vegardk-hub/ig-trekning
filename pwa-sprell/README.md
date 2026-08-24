@@ -37,16 +37,16 @@ Tre ting i den runden er valgt, ikke tilfeldige:
 - **Kortet skifter farge for hvert oppdrag.** Det er den billigste måten å få et
   nytt oppdrag til å se nytt ut for den som ikke leser.
 
-## Alderen
+## Målgruppen
 
-**Appen kjenner ingen navn og skal ikke gjøre det** — den snakker til den som
-står foran den, og kan gis videre til neste barn uten et eneste trykk.
+**Alt er skrevet for en femåring.** Det er ikke en innstilling, det er
+premisset: et oppdrag som må forklares, eller som krever lesing, staving eller
+store tall, hører ikke hjemme i banken i det hele tatt. Det var en
+aldersinnstilling her før, og den er fjernet — sammen med de få oppdragene som
+bare ga mening med den.
 
-Det eneste som skiller barna, er alderen, som settes fra 3 til 12 i
-innstillingene og lagres i `localStorage`. Hvert oppdrag har en `alder` — 3, 5
-eller 8 — som er laveste alder det passer for. Skillet er ikke lett og
-vanskelig, men hva som må kunne gjøres for at beskjeden i det hele tatt gir
-mening: telle, holde på to tall samtidig, lese, stave. Fra 8 og opp er alt med.
+**Appen kjenner heller ingen navn og skal ikke gjøre det** — den snakker til den
+som står foran den, og kan gis videre til neste barn uten et eneste trykk.
 
 ## Oppdragene
 
@@ -55,16 +55,15 @@ deler i samme kurv — og de to modusene av hver sin knapp over oppdraget.
 Modusene er gjensidig utelukkende og overstyrer stedet: står en av dem på, er
 det den banken maskinen bruker, og bakgrunnen skifter med den.
 
-**Inne** (36 stk): 22 med `sted: 'her'` — snøengel, fem skritt baklengs, sitte
-på rumpa og telle til ti — og 14 med `sted: 'rom'`, som sender barnet til badet,
-kjøkkenet, loftet og tilbake. Sytten er merket `alder: 3`, tolv `alder: 5` og
-sju `alder: 8`.
+**Inne** (236 stk): 178 med `sted: 'her'` — snøengel, hoppe som en frosk, late
+som du er en isbjørn, lage lyden av en brannbil — og 58 med `sted: 'rom'`, som
+sender barnet til badet, kjøkkenet, loftet og tilbake.
 
 **Hagen** (50 stk): 22 med `sted: 'her'` og 28 som sender barnet rundt i hagen.
 Oppdragene bruker det som faktisk finnes ute — stein, pinner, blader, skygger,
 lyder — og **ingenting forutsetter en bestemt hage**: «det nærmeste treet»
 finnes også der det bare står ett. Ingenting krever verktøy, klatring eller
-vann. Atten er merket `alder: 3`, tjuetre `alder: 5` og ni `alder: 8`.
+vann.
 
 Avkryssingen «bare oppdrag der jeg står» virker begge steder: ute betyr `'her'`
 det som kan gjøres på flekken barnet står på.
@@ -109,8 +108,6 @@ var. Det er den eneste banken uten `sted` og uten luker.
 - **«Hopp over» går videre uten stjerne.** Ingenting markerer et hoppet steg som
   mislykket; lista går bare videre. Er man i mål, blir knappen til «Begynn på
   nytt».
-- **Alderen kortner lista.** Tre steg krever litt mer (gre håret, pakke
-  matboksen, vurdere været) og er merket `alder: 5`. En treåring får tolv steg.
 - **«Bare oppdrag der jeg står» gjelder ikke her.** En morgen går tvers gjennom
   huset uansett.
 
@@ -149,7 +146,7 @@ ganger på rad ofte nok til at et barn merker det, og da er maskinen «ødelagt�
 Når kurven fylles på nytt, byttes førstemann bort hvis det er samme oppdrag som
 avsluttet forrige kurv.
 
-Bytter man sted, filter, alder eller modus, kastes kurven — den er stokket ut fra det
+Bytter man sted, filter eller modus, kastes kurven — den er stokket ut fra det
 gamle utvalget, og ville ellers fortsatt sende barnet på badet en stund etter at
 «bare her jeg står» ble krysset av, eller delt ut vanlige oppdrag i
 rampemodus.

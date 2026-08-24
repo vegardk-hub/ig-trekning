@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
 <!-- Rakettene tegnes her, over alt annet, men uten å ta imot trykk. -->
@@ -66,15 +66,12 @@
 <!-- Arket ligger utenfor <main> så det kan dekke hele skjermen nedenfra. -->
 <div id="ark" class="ark" role="dialog" aria-modal="true" aria-label="Innstillinger" hidden>
   <h2>Innstillinger</h2>
-  <label class="alderrad">Hvor skal dere sprelle?
+  <label class="valgrad">Hvor skal dere sprelle?
     <select id="sted">
       <option value="inne">Inne</option>
       <option value="hage">I hagen</option>
       <option value="begge">Inne og i hagen</option>
     </select>
-  </label>
-  <label class="alderrad">Alder på barnet
-    <input type="number" id="alder" min="3" max="12" inputmode="numeric">
   </label>
   <label><input type="checkbox" id="lyd"> Lyd</label>
   <p class="hint">Ingen lyd på iPhone? Sjekk at sidebryteren ikke står på lydløs
@@ -82,14 +79,14 @@
   <label><input type="checkbox" id="kun-her"> Bare oppdrag der jeg står</label>
   <label><input type="checkbox" id="autoles"> Les opp automatisk</label>
   <p id="talebeskjed" class="beskjed" role="status"></p>
-  <p class="versjon">Versjon 9</p>
+  <p class="versjon">Versjon 10</p>
   <button type="button" id="lukk" class="lukk">Lukk</button>
 </div>
-<script src="js/oppdrag.js?v=9"></script>
-<script src="js/tale.js?v=9"></script>
-<script src="js/lyd.js?v=9"></script>
-<script src="js/fyrverkeri.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/oppdrag.js?v=10"></script>
+<script src="js/tale.js?v=10"></script>
+<script src="js/lyd.js?v=10"></script>
+<script src="js/fyrverkeri.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
 <script>
 /* Ressursene har ?v= i adressen, så en ny index.html aldri kan bli stående med
    forrige CSS og JS. Det var det som skjedde: knappen tegnet seg uten stilen
