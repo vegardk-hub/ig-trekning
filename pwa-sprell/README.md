@@ -50,10 +50,10 @@ mening: telle, holde på to tall samtidig, lese, stave. Fra 8 og opp er alt med.
 
 ## Oppdragene
 
-Tre banker. **Stedet** velges i innstillingene — inne, i hagen, eller begge
-deler i samme kurv — og **rampemodus** av knappen over oppdraget. Rampemodus
-vinner når begge står på: det er den banken maskinen trekker fra, og den
-grønne hagebakgrunnen viker for rampefargene.
+Fire banker. **Stedet** velges i innstillingene — inne, i hagen, eller begge
+deler i samme kurv — og de to modusene av hver sin knapp over oppdraget.
+Modusene er gjensidig utelukkende og overstyrer stedet: står en av dem på, er
+det den banken maskinen bruker, og bakgrunnen skifter med den.
 
 **Inne** (36 stk): 22 med `sted: 'her'` — snøengel, fem skritt baklengs, sitte
 på rumpa og telle til ti — og 14 med `sted: 'rom'`, som sender barnet til badet,
@@ -93,6 +93,29 @@ To ting å vite før du skriver nye oppdrag:
 
 Rommene i `ROM` er stedene i et vanlig hus. Har man ikke loft, er det lista man
 stryker fra — ikke setningene.
+
+## Morgenen før barnehagen
+
+Knappen **🎒 Barnehage** bytter til morgenlista: femten steg fra «Stå opp av
+senga» til «Si ha det til alle hjemme».
+
+**Denne banken trekkes ikke — den går i rekkefølge.** Sko før jakke gir ingen
+mening, og et barn som får stegene i tilfeldig orden, blir mer usikkert enn det
+var. Det er den eneste banken uten `sted` og uten luker.
+
+- **«Ferdig!» gir en stjerne og går videre.** Kvitteringen er to korte toner,
+  ikke fanfaren: den kommer femten ganger på en morgen. **Rakettene spares til
+  hele lista er gjennom** — ellers er feiringen brukt opp før man er ute døra.
+- **«Hopp over» går videre uten stjerne.** Ingenting markerer et hoppet steg som
+  mislykket; lista går bare videre. Er man i mål, blir knappen til «Begynn på
+  nytt».
+- **Alderen kortner lista.** Tre steg krever litt mer (gre håret, pakke
+  matboksen, vurdere været) og er merket `alder: 5`. En treåring får tolv steg.
+- **«Bare oppdrag der jeg står» gjelder ikke her.** En morgen går tvers gjennom
+  huset uansett.
+
+Modusen lagres ikke, av samme grunn som rampemodus: appen skal ikke stå i
+morgenrutinen klokka fire på ettermiddagen.
 
 ## Rampemodus
 
@@ -204,8 +227,8 @@ Bakgrunnen er en gradient, og den skifter i rampemodus. **Klassen må sitte på
 statuslinja (`theme-color`) følger med, så det synes også når appen ligger på
 hjemskjermen.
 
-Hagen har sin egen grønne bakgrunn, satt på samme måte (`html.hage`), og
-statuslinjefargen følger med. Bytter man sted eller modus, stilles kortet
+Hagen har sin egen grønne bakgrunn, satt på samme måte (`html.hage`), morgenen
+en lys soloppgang (`html.morgen`), og statuslinjefargen følger med. Bytter man sted eller modus, stilles kortet
 tilbake til «trykk her» med ikonet for den nye banken — terning inne, tre i
 hagen, fjes i rampemodus — for det som sto der, kom fra en annen bank.
 

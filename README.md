@@ -42,7 +42,8 @@
   tilfeldige rom, tall, dyr og farger, delt etter alder fra 3 til 12, og et
   filter for det som kan gjøres der barnet står. Hvert oppdrag har et ikon for den som ikke leser ennå, og
   «Ferdig!» gir fanfare, raketter og en stjerne. Egen rampemodus med 23
-  rampestreker som går ut på å tulle med de voksne. PWA.
+  rampestreker som går ut på å tulle med de voksne, og en barnehagemodus som
+  går gjennom morgenrutinen steg for steg. PWA.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på

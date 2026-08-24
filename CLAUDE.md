@@ -280,9 +280,14 @@ detaljer og har en grunn:
   alderen: hvert oppdrag har en `alder` — 3, 5 eller 8 — og innstillingen går
   fra 3 til 12. Skillet går på hva som må kunne gjøres for at beskjeden gir
   mening (telle, lese, stave), ikke på lett og vanskelig.
-- **Tre banker: inne, hagen og rampestrekene.** Stedet velges i
+- **Morgenlista går i rekkefølge, ikke tilfeldig.** Barnehagemodus er femten
+  steg fra å stå opp til å si ha det, og sko før jakke gir ingen mening. Hvert
+  «Ferdig!» gir en stjerne og to korte toner; rakettene spares til hele lista
+  er gjennom, ellers er feiringen brukt opp før man er ute døra. «Hopp over»
+  går videre uten å markere noe som mislykket.
+- **Fire banker: inne, hagen, rampestrekene og morgenen.** Stedet velges i
   innstillingene (inne, hagen, eller begge i samme kurv), rampemodus av
-  knappen — og rampemodus vinner over stedet. Hageoppdragene forutsetter ingen
+  knappene — og modusene vinner over stedet. Hageoppdragene forutsetter ingen
   bestemt hage og krever verken verktøy, klatring eller vann.
 - **Rampemodus er en egen bank, og lagres ikke.** Knappen over oppdraget bytter
   ut alle oppdragene med rampestreker, og modusen står aldri på når appen

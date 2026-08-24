@@ -116,6 +116,15 @@ window.SprellLyd = (function () {
     });
   }
 
+  /* Kvitteringen på ett steg i morgenlista: to toner opp, kort og lys. Den må
+     være kortere enn fanfaren – den kommer femten ganger på en morgen. */
+  function stjerne() {
+    spill(function () {
+      tone(783.99, 0, 0.13, 'triangle', 0.16);
+      tone(1174.66, 0.1, 0.22, 'triangle', 0.14);
+    });
+  }
+
   /* Feiringen: en liten fanfare og tre gnister på toppen. */
   function feiring() {
     spill(function () {
@@ -145,6 +154,7 @@ window.SprellLyd = (function () {
     },
     trekk: trekk,
     rakett: rakett,
+    stjerne: stjerne,
     smell: smell,
     feiring: feiring,
     rampe: rampe

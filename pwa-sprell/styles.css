@@ -19,6 +19,12 @@ html.hage {
   --bg2: #56ab2f;
 }
 
+/* Morgenen har sin egen bakgrunn – lys som en soloppgang. */
+html.morgen {
+  --bg1: #ffe29a;
+  --bg2: #ffa17f;
+}
+
 /* Rampemodus har sin egen bakgrunn, så det synes på tvers av rommet hvilken
    bank maskinen trekker fra. Klassen må sitte på html og ikke på body:
    gradienten males på html, og variabler satt på body når aldri opp dit. */
@@ -114,12 +120,18 @@ button {
 button:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--skygge); }
 button:disabled { opacity: .45; box-shadow: 0 5px 0 var(--skygge); transform: none; cursor: default; }
 
+.moduser { display: flex; gap: .7rem; margin: 0 0 1rem; }
 .modus {
-  display: block;
-  width: 100%;
-  margin: 0 0 1rem;
-  font-size: 1.05rem;
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 1rem;
+  padding: .8rem .4rem;
   background: #fff5d1;
+  /* Knappeteksten skal ikke brekke: to knapper ved siden av hverandre må ha
+     samme høyde, ellers ser rada skjev ut. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .modus.paa { background: #2b2140; color: #ffd23f; }
 

@@ -8,8 +8,10 @@
    som leser den høyt og for den som hører maskinstemmen. Appen kjenner ikke
    noe navn og skal ikke gjøre det: den snakker til den som står foran den.
 
-   Det finnes tre banker: inne, hagen og rampestrekene. Stedet velges i
-   innstillingene, rampemodus av knappen over oppdraget.
+   Det finnes fire banker: inne, hagen, rampestrekene og morgenen før
+   barnehagen. Stedet velges i innstillingene, de to modusene av hver sin knapp
+   over oppdraget. Morgenbanken er den eneste som ikke trekkes tilfeldig – den
+   går i rekkefølge, og har derfor verken `sted` eller luker.
 
    `sted` er 'her' for det som gjøres der barnet står, og 'rom' for det som
    sender barnet av gårde – i huset eller rundt i hagen.
@@ -182,6 +184,32 @@ window.SprellOppdrag = (function () {
     { id: 'r-opp-ned', ikon: '🙃', sted: 'rom', alder: 8, tekst: 'Snu en kopp eller et bilde opp ned, og se hvor lang tid det tar før noen oppdager det.' }
   ];
 
+
+  /* Morgenen før barnehagen. Denne banken er ikke som de andre: den trekkes
+     ikke, den går i rekkefølge. Sko før jakke gir ingen mening, og et barn som
+     får stegene i tilfeldig orden, blir bare mer usikkert enn det var.
+
+     Stegene er skrevet så de kan gjøres alene så langt det går – appen er en
+     huskeliste barnet eier selv, ikke en beskjed fra en voksen. Ingenting her
+     kan mislykkes: hopper man over et steg, går lista videre uten å si fra. */
+  var MORGEN = [
+    { id: 'm-opp', alder: 3, ikon: '🛏️', tekst: 'Stå opp av senga.' },
+    { id: 'm-do', alder: 3, ikon: '🚽', tekst: 'Gå på do, og husk å vaske hendene.' },
+    { id: 'm-pyjamas', alder: 3, ikon: '🌙', tekst: 'Ta av deg pyjamasen, og legg den på plass.' },
+    { id: 'm-klaer', alder: 3, ikon: '👕', tekst: 'Ta på deg klærne.' },
+    { id: 'm-frokost', alder: 3, ikon: '🥣', tekst: 'Spis frokosten din.' },
+    { id: 'm-tenner', alder: 3, ikon: '🪥', tekst: 'Puss tennene, både oppe og nede.' },
+    { id: 'm-ansikt', alder: 3, ikon: '🧼', tekst: 'Vask ansiktet og hendene.' },
+    { id: 'm-haar', alder: 5, ikon: '💇', tekst: 'Gre håret ditt.' },
+    { id: 'm-matboks', alder: 5, ikon: '🍱', tekst: 'Legg matboksen og drikkeflaska i sekken.' },
+    { id: 'm-vaeret', alder: 5, ikon: '🌦️', tekst: 'Se ut av vinduet, og finn ut om du trenger regnjakke.' },
+    { id: 'm-jakke', alder: 3, ikon: '🧥', tekst: 'Ta på deg jakka.' },
+    { id: 'm-sko', alder: 3, ikon: '👟', tekst: 'Ta på deg skoene.' },
+    { id: 'm-lue', alder: 3, ikon: '🧤', tekst: 'Ta på deg lue og votter hvis det er kaldt ute.' },
+    { id: 'm-sekk', alder: 3, ikon: '🎒', tekst: 'Ta sekken på ryggen.' },
+    { id: 'm-hadet', alder: 3, ikon: '👋', tekst: 'Si ha det til alle hjemme.' }
+  ];
+
   function tilfeldig(liste) {
     return liste[Math.floor(Math.random() * liste.length)];
   }
@@ -210,6 +238,7 @@ window.SprellOppdrag = (function () {
     inne: INNE,
     hage: HAGE,
     rampe: RAMPE,
+    morgen: MORGEN,
     bank: bank,
     ROM: ROM,
     fyllUt: fyllUt
