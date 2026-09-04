@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Koordinatjakt</title>
+<meta name="description" content="Lag øvingsark der barn finner ting i et rutenett og skriver ordet – dyrehage, bondegård eller by.">
+<meta name="theme-color" content="#3d7a3a">
+<!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
+     index.html kan ellers stå med ti minutter gammel CSS og JS. -->
+<link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+
+<header class="topp">
+  <h1>Koordinatjakt</h1>
+  <p>Finn ruta, se hva som står der, skriv ordet. Skriv ut arket – fasiten blir stående her på skjermen.</p>
+</header>
+
+<!-- Panelet er for den voksne og skrives aldri ut. -->
+<section class="panel" aria-label="Lag et ark">
+  <label class="valg">Tema
+    <select id="tema"></select>
+  </label>
+
+  <label class="valg">Brett
+    <span class="brettrad">
+      <button type="button" id="forrige" class="pil" aria-label="Forrige brett">‹</button>
+      <input type="number" id="brett" min="1" max="999" step="1" value="1" inputmode="numeric">
+      <button type="button" id="neste" class="pil" aria-label="Neste brett">›</button>
+    </span>
+  </label>
+
+  <label class="valg">Oppgaver
+    <select id="antall">
+      <option value="8">8</option>
+      <option value="12" selected>12</option>
+      <option value="16">16</option>
+    </select>
+  </label>
+
+  <button type="button" id="nytt" class="knapp">Nytt brett</button>
+  <button type="button" id="skrivut" class="knapp primaer">Skriv ut</button>
+
+  <label class="bryter"><input type="checkbox" id="visfasit"> Vis fasit</label>
+  <p class="merknad" id="merknad">Samme brettnummer gir alltid samme bilde – skriv det ned, så kan arket lages på nytt.</p>
+</section>
+
+<!-- Arket er det som havner på papiret. Alt utenfor skjules i @media print. -->
+<article class="ark" id="ark">
+  <div class="arkhode">
+    <h2 id="arktittel">Koordinatjakt</h2>
+    <p class="navnefelt"><span>Navn:</span><span class="linje"></span></p>
+  </div>
+  <p class="instruks">Se på ruta som står foran linja. Skriv hva du finner der.</p>
+  <div class="bilde" id="bilde"></div>
+  <ol class="oppgaver" id="oppgaver"></ol>
+</article>
+
+<section class="fasit" id="fasit" hidden>
+  <h2 id="fasittittel">Fasit</h2>
+  <ol class="oppgaver fasitliste" id="fasitliste"></ol>
+</section>
+
+<script src="js/tilfeldig.js?v=1"></script>
+<script src="js/brikker.js?v=1"></script>
+<script src="js/temaer.js?v=1"></script>
+<script src="js/scene.js?v=1"></script>
+<script src="js/oppgaver.js?v=1"></script>
+<script src="js/tegn.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>

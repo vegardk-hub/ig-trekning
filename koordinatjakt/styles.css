@@ -1,0 +1,180 @@
+/* Appen har to utseender, og papiret er det viktigste av dem.
+   Skjermen er bare kontrollpanelet foran utskriften. */
+
+:root {
+  --ink: #2b3440;
+  --dempet: #5d6b75;
+  --papir: #ffffff;
+  --flate: #eef1f0;
+  --gronn: #3d7a3a;
+  --kant: #c9d2cd;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--flate);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+.topp {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem .25rem;
+}
+.topp h1 { margin: 0; font-size: 1.6rem; letter-spacing: .01em; }
+.topp p { margin: .4rem 0 0; color: var(--dempet); max-width: 40rem; }
+
+/* --------------------------------------------------------------- panel */
+
+.panel {
+  max-width: 52rem;
+  margin: 1rem auto;
+  padding: 1rem;
+  background: var(--papir);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  align-items: flex-end;
+}
+
+.valg { display: flex; flex-direction: column; gap: .3rem; font-size: .82rem; color: var(--dempet); }
+.valg select, .valg input {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  padding: .45rem .5rem;
+  border: 1px solid var(--kant);
+  border-radius: 8px;
+  background: var(--papir);
+}
+.valg select { min-width: 9rem; }
+
+.brettrad { display: flex; gap: .3rem; align-items: center; }
+.brettrad input { width: 5rem; text-align: center; }
+
+.pil {
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  width: 2.2rem;
+  padding: .4rem 0;
+  border: 1px solid var(--kant);
+  border-radius: 8px;
+  background: var(--papir);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.knapp {
+  font: inherit;
+  padding: .55rem 1rem;
+  border: 1px solid var(--kant);
+  border-radius: 8px;
+  background: var(--papir);
+  color: var(--ink);
+  cursor: pointer;
+}
+.knapp.primaer { background: var(--gronn); border-color: var(--gronn); color: #fff; font-weight: 600; }
+.pil:hover, .knapp:hover { filter: brightness(.97); }
+
+.bryter { display: flex; align-items: center; gap: .4rem; font-size: .95rem; }
+.merknad { flex-basis: 100%; margin: .25rem 0 0; font-size: .82rem; color: var(--dempet); }
+
+/* ----------------------------------------------------------------- ark */
+
+.ark {
+  max-width: 52rem;
+  margin: 1rem auto 2rem;
+  padding: 1.25rem 1.25rem 1.5rem;
+  background: var(--papir);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+}
+
+.arkhode { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.arkhode h2 { margin: 0; font-size: 1.15rem; }
+.navnefelt { margin: 0; display: flex; align-items: baseline; gap: .4rem; color: var(--dempet); font-size: .95rem; }
+/* Linja må ha bredde av seg selv – en tom inline-boks har ingen. */
+.navnefelt .linje { display: inline-block; width: 9rem; border-bottom: 1.5px solid var(--ink); }
+
+.instruks { margin: .5rem 0 .75rem; font-size: .95rem; color: var(--dempet); }
+
+.bilde svg { display: block; width: 100%; height: auto; }
+
+.oppgaver {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .7rem 1.25rem;
+}
+.oppgaver li { display: flex; align-items: baseline; gap: .5rem; }
+.oppgaver .rute {
+  font-weight: 700;
+  font-size: 1.05rem;
+  min-width: 2.6rem;
+  letter-spacing: .02em;
+}
+/* Skrivelinja skal fylle resten av kolonnen, ikke bare teksten sin. */
+.oppgaver .svarlinje { flex: 1; border-bottom: 1.5px solid var(--ink); height: 1.35rem; }
+.oppgaver .svar { flex: 1; border-bottom: 1.5px solid var(--kant); }
+
+/* --------------------------------------------------------------- fasit */
+
+.fasit {
+  max-width: 52rem;
+  margin: 0 auto 3rem;
+  padding: 1rem 1.25rem 1.25rem;
+  background: var(--papir);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+}
+.fasit h2 { margin: 0 0 .5rem; font-size: 1.05rem; }
+.fasitliste { margin-top: .25rem; }
+
+@media (max-width: 34rem) {
+  .oppgaver { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* --------------------------------------------------------------- print */
+
+@page { size: A4 portrait; margin: 12mm; }
+
+@media print {
+  html, body { background: #fff; }
+  .topp, .panel { display: none; }
+
+  .ark {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .arkhode h2 { font-size: 12pt; }
+  .navnefelt { font-size: 10pt; }
+  .instruks { font-size: 10pt; margin: 3mm 0 2mm; }
+
+  /* Bildet er kvadratisk. Ved 170 mm blir hver rute knapt 17 mm, og det er
+     den bredden brikkene er tegnet for. Blir det større, får ikke
+     oppgavelista plass på samme side. */
+  .bilde svg { width: 100%; max-width: 170mm; margin: 0 auto; }
+
+  .oppgaver { gap: 5mm 8mm; margin-top: 5mm; }
+  .oppgaver .rute { font-size: 12pt; }
+  .oppgaver .svarlinje { height: 7mm; }
+
+  /* Fasiten er med bare hvis den er slått på – da vil den voksne ha den på
+     papir. Egen side, så den ikke ligger under barnets ark. */
+  .fasit { break-before: page; page-break-before: always; border: 0; padding: 0; margin: 0; }
+  .fasit[hidden] { display: none !important; }
+}

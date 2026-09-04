@@ -45,6 +45,14 @@
   rampestreker som går ut på å tulle med de voksne, og en barnehagemodus som
   går gjennom morgenrutinen steg for steg. PWA.
 
+- **[Koordinatjakt](koordinatjakt/)** — `koordinatjakt/index.html`: lager
+  øvingsark for koordinater. Et rutenett på 10 × 10 med bokstaver vannrett og
+  tall loddrett, fylt med et bilde som henger sammen — en dyrehage, en
+  bondegård eller en by, med vei, innhegninger og ting langs veien. Barnet får
+  en liste koordinater og skriver hva som står i hver rute. Brettnummeret er
+  såkornet, så et ark kan lages på nytt, og fasiten står på skjermen. Lages
+  for å skrives ut; ingen service worker.
+
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/>, Fargeflasker på
@@ -52,5 +60,6 @@ sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-poengtavle/>, Monstergiret på
 <https://vegardk-hub.github.io/ig-trekning/pwa-lesing/>, Stuntgarasjen på
 <https://vegardk-hub.github.io/ig-trekning/pwa-stunt/>, Lesestjerna på
-<https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/> og Sprellemaskinen på
-<https://vegardk-hub.github.io/ig-trekning/pwa-sprell/>.
+<https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/>, Sprellemaskinen på
+<https://vegardk-hub.github.io/ig-trekning/pwa-sprell/> og Koordinatjakt på
+<https://vegardk-hub.github.io/ig-trekning/koordinatjakt/>.

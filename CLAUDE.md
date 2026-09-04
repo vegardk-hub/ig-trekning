@@ -15,6 +15,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
 | `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den i looper og hopp, PWA |
 | `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
+| `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, laget for utskrift |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -32,6 +33,7 @@ repoet:
 - Lesestjerna: `https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/`
 - Stuntgarasjen: `https://vegardk-hub.github.io/ig-trekning/pwa-stunt/`
 - Sprellemaskinen: `https://vegardk-hub.github.io/ig-trekning/pwa-sprell/`
+- Koordinatjakt: `https://vegardk-hub.github.io/ig-trekning/koordinatjakt/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -117,6 +119,18 @@ eller server, og skal kjøres etter hver endring i `pwa-stunt/js/lope.js` eller
 ```
 node pwa-stunt/tester/lope.js
 ```
+
+Koordinatjakt har prøver på utleggingen, oppgavene og brikkene. De trenger
+verken nettleser eller server, og skal kjøres etter hver endring i
+`koordinatjakt/js/`:
+
+```
+node koordinatjakt/tester/scene.js
+```
+
+De går gjennom 300 brett per tema. Det er ikke overdrevet: en regel som
+holder for brett 1 til 20, ryker gjerne på brett 137, og et brett med to
+løver ser helt riktig ut helt til fasiten sier feil rute.
 
 Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen og Sprellemaskinen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
@@ -320,6 +334,35 @@ detaljer og har en grunn:
   mykeste du finner» — ikke navnet først, ikke «Nå skal du …». Det er en
   beskjed, og handlingen skal komme først for den som hører den. Tall skrives
   med bokstaver, for setningen leses opp.
+
+## Koordinatjakt
+
+`koordinatjakt/README.md` går gjennom utleggingen, brikkene og tegningen.
+Appen lager øvingsark som skrives ut — den er ikke et spill, og barnet svarer
+med blyant. Fire ting som ser ut som detaljer og har en grunn:
+
+- **Bildet skal henge sammen, og det er hele poenget.** Et rutenett med
+  tilfeldige ikoner er en bildeordbok: barnet leter, finner, skriver, og
+  bruker aldri koordinatene til å resonnere. Er det derimot en dyrehage med
+  en sti gjennom, kan barnet gjette hvor ting *bør* være og sjekke med ruta.
+  Derfor legges veien først, sonene må grense til veien, og tingene langs
+  veien må ha en veirute som nabo.
+- **Veien er et kryss, ikke en strek.** Med bare én vannrett sti hang alt
+  sammen med den, og lå den i rad 7, sto øvre halvdel av arket tomt — halve
+  tallaksen uten en eneste oppgave. Hver fjerdedel med under tre veiruter får
+  i tillegg en arm inn til seg.
+- **Ett ord per brett, og en kulisse er aldri et svar.** To løver gjør «løve»
+  til et svar med to riktige koordinater, og blomster som pynt gjør det samme
+  hvis «blomst» er fasiten i F3. Begge feilene er usynlige på arket og
+  oppdages først når barnet har skrevet ferdig. Prøvene håndhever dem.
+- **Ruta er 17 mm på papir.** Brikkene er silhuetter med ett kjennetegn hver,
+  og alt har en mørk kontur — den er det eneste som holder arket lesbart i
+  svart-hvitt. En brikke som stikker utenfor sitt eget 0–100-rom, peker inn i
+  naborutas svar; slangens tunge lå på `x=104`.
+
+Appen har **med vilje ingen service worker**, som Lesestjerna: arket lages på
+en maskin med skriver, ikke på en telefon på hjemskjermen. `?v=` i
+`index.html` står der likevel, mot `max-age=600` fra Pages.
 
 ## Fargeflasker
 
