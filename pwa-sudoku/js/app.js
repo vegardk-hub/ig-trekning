@@ -33,7 +33,7 @@
   };
 
   let kandidater = new Int16Array(81);
-  let hint = null, hintSteg = 0;
+  let hint = null, hintSteg = 0, hintOm = '';
 
   /* ---------- Bygg rutenett og tastatur ---------- */
 
@@ -528,16 +528,72 @@
   function lukkHint() {
     hint = null;
     hintSteg = 0;
+    hintOm = '';
     $('#hint').hidden = true;
   }
 
   function visHint() {
     $('#hint-navn').textContent = hint.name;
     $('#hint-tekst').textContent = hintSteg === 1 ? hint.short : hint.text;
+    $('#hint-om').textContent = hintOm;
+    $('#hint-om').hidden = !hintOm;
     $('#hint-mer').hidden = hintSteg >= 2;
     $('#hint-bruk').textContent = hint.placement ? 'Sett inn tallet' : 'Stryk kandidatene';
     $('#hint').hidden = false;
   }
+
+  /*
+   * Hintet spør om ruta du står i — ikke om det enkleste trekket på brettet.
+   *
+   * Før var det alltid det siste: står du fast på én rute og trykker Hint, fikk
+   * du en naken ener i motsatt hjørne. Det er hjelp til noe man ikke ba om, og
+   * det svarer ikke på spørsmålet man faktisk stilte.
+   *
+   * Rekkefølgen er derfor:
+   *   1. et trekk som gjør noe med den valgte ruta — setter tallet, eller
+   *      stryker en kandidat der,
+   *   2. ellers: si hvor langt unna ruta er, og gi det første trekket på veien,
+   *   3. og uten valgt rute: det enkleste på brettet, som før.
+   */
+  function finnHint() {
+    const st = S.makeState(state.verdier, state.elim);
+    const i = state.valgt;
+
+    if (i < 0 || state.verdier[i]) return { steg: S.findStep(st), om: '' };
+
+    const her = S.findStepAt(st, i);
+    if (her) return { steg: her, om: '' };
+
+    /*
+     * Ingen teknikk rører ruta ennå. Da er det viktigste svaret at man *ikke*
+     * har oversett noe der — det er nettopp det man lurer på når man står fast.
+     *
+     * Trekktallet nevnes bare når det er lite nok til å bety noe. Målt er ruta
+     * ti trekk unna eller mer i 93 % av tilfellene, og «det trengs 28 trekk
+     * først» sier ingenting annet enn «nei».
+     */
+    const vei = S.stepsUntil(state.verdier, state.elim, i, 60);
+    if (vei && vei.trekk <= 4) {
+      return {
+        steg: vei.steg,
+        om: C.cellName(i) + ' er ikke klar ennå — det trengs ' +
+            (vei.trekk === 1 ? 'ett trekk' : ORDTALL[vei.trekk] + ' trekk') +
+            ' først. Dette er det første av dem.'
+      };
+    }
+
+    const igjen = C.digitsOf(C.candidatesFrom(state.verdier)[i] & ~state.elim[i]);
+    return {
+      steg: S.findStep(st),
+      om: C.cellName(i) + ' kan fortsatt være ' + listeAv(igjen) +
+          ', og ingen av dem lar seg utelukke ennå — du har ikke oversett noe. ' +
+          'Hintet under gjelder en annen rute.'
+    };
+  }
+
+  const ORDTALL = { 1: 'ett', 2: 'to', 3: 'tre', 4: 'fire' };
+  const listeAv = ds => ds.length === 0 ? 'ingenting' : ds.length === 1 ? String(ds[0])
+    : ds.slice(0, -1).join(', ') + ' eller ' + ds[ds.length - 1];
 
   function hintTrykk() {
     if (hint) {
@@ -547,11 +603,11 @@
     }
     skjulMelding();
 
-    const st = S.makeState(state.verdier, state.elim);
-    const s = S.findStep(st);
-    if (!s) { forklarStopp(); return; }
+    const funn = finnHint();
+    if (!funn.steg) { forklarStopp(); return; }
 
-    hint = s;
+    hint = funn.steg;
+    hintOm = funn.om;
     hintSteg = 1;
     visHint();
     tegn();

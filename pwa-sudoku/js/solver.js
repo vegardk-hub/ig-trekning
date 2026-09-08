@@ -38,12 +38,20 @@
     return out;
   }
 
+  /*
+   * Alle teknikkene leverer trekkene sine gjennom denne. Er et filter satt,
+   * svarer den null på det som ikke passer, og teknikken leter videre i stedet
+   * for å gi seg ved første funn — det er dette som gjør at hintet kan spørre
+   * om et bestemt sted på brettet i stedet for bare «det enkleste som finnes».
+   */
+  let filter = null;
+
   function step(o) {
     if (!o.eliminations) o.eliminations = [];
     if (!o.cells) o.cells = [];
     if (!o.unitCells) o.unitCells = [];
     o.targets = o.eliminations.map(e => e.cell);
-    return o;
+    return (filter && !filter(o)) ? null : o;
   }
 
   const listOf = ds => ds.length === 1 ? String(ds[0])
@@ -63,7 +71,7 @@
       if (state.v[i]) continue;
       if (POPCOUNT[state.cand[i]] !== 1) continue;
       const d = firstDigit(state.cand[i]);
-      return step({
+      const funn = step({
         id: 'naked-single', name: 'Naken ener', level: 1,
         cells: [i], digits: [d],
         placement: { cell: i, digit: d },
@@ -72,6 +80,7 @@
               ', kolonne ' + (colOf(i) + 1) + ' eller boks ' + (boxOf(i) + 1) +
               '. Da er ' + d + ' det eneste som er igjen for ' + cellName(i) + '.'
       });
+      if (funn) return funn;
     }
     return null;
   }
@@ -86,7 +95,7 @@
         if (!spots || spots.length !== 1) continue;
         const i = spots[0];
         if (POPCOUNT[state.cand[i]] === 1) continue;   // da er det en naken ener
-        return step({
+        const funn = step({
           id: 'hidden-single', name: 'Skjult ener', level: 2,
           cells: [i], unitCells: u.cells, digits: [d],
           placement: { cell: i, digit: d },
@@ -95,6 +104,7 @@
                 ' er alle andre celler utelukket, så ' + d + ' må stå i ' + cellName(i) +
                 ' selv om cellen også har andre kandidater.'
         });
+        if (funn) return funn;
       }
     }
     return null;
@@ -121,7 +131,7 @@
             .map(cell => ({ cell, digit: d }));
           if (!elim.length) continue;
 
-          return step({
+          const funn = step({
             id: 'pointing', name: 'Låst kandidat (peker)', level: 3,
             cells: spots, unitCells: box, digits: [d], eliminations: elim,
             short: d + ' i boks ' + (b + 1) + ' må stå i ' + axis.navn + ' ' + (line + 1) + '.',
@@ -131,6 +141,7 @@
                   'et sted på denne ' + bestemt + '. Derfor kan ' + d + ' strykes fra resten av ' +
                   axis.navn + ' ' + (line + 1) + ': ' + cellList(elim.map(e => e.cell)) + '.'
           });
+          if (funn) return funn;
         }
       }
     }
@@ -153,7 +164,7 @@
           .map(cell => ({ cell, digit: d }));
         if (!elim.length) continue;
 
-        return step({
+        const funn = step({
           id: 'claiming', name: 'Låst kandidat (krav)', level: 3,
           cells: spots, unitCells: u.cells, digits: [d], eliminations: elim,
           short: d + ' i ' + unitName(u) + ' må stå i boks ' + (b + 1) + '.',
@@ -163,6 +174,7 @@
                 ', er den låst til denne boksen, og ' + d + ' kan strykes fra de andre cellene i ' +
                 'boks ' + (b + 1) + ': ' + cellList(elim.map(e => e.cell)) + '.'
         });
+        if (funn) return funn;
       }
     }
     return null;
@@ -193,7 +205,7 @@
           }
           if (!elim.length) continue;
 
-          return step({
+          const funn = step({
             id: 'naked-' + size, name: 'Nakent ' + SUBSET_NAVN[size], level,
             cells: combo, unitCells: u.cells, digits, eliminations: elim,
             short: cellList(combo) + ' deler tallene ' + listOf(digits) + '.',
@@ -202,6 +214,7 @@
                   ORD[size] + ' tall bruker opp alle sammen, uansett hvilken rekkefølge de ' +
                   'kommer i. Ingen andre celler i ' + BESTEMT[u.kind] + ' kan derfor ha disse tallene.'
           });
+          if (funn) return funn;
         }
       }
       return null;
@@ -240,7 +253,7 @@
           if (!elim.length) continue;
 
           const cells = Array.from(union).sort((a, b) => a - b);
-          return step({
+          const funn = step({
             id: 'hidden-' + size, name: 'Skjult ' + SUBSET_NAVN[size], level,
             cells, unitCells: u.cells, digits, eliminations: elim,
             short: 'Tallene ' + listOf(digits) + ' må stå i ' + cellList(cells) + '.',
@@ -249,6 +262,7 @@
                   ORD[size] + ' celler fyller dem helt opp. Alle andre kandidater i disse ' +
                   'cellene kan derfor strykes.'
           });
+          if (funn) return funn;
         }
       }
       return null;
@@ -292,7 +306,7 @@
 
             const baseNr = listOf(combo.map(l => l.n + 1));
             const coverNr = listOf(Array.from(cover).sort((a, b) => a - b).map(n => n + 1));
-            return step({
+            const funn = step({
               id, name: navn, level,
               cells: baseCells, digits: [d], eliminations: elim,
               short: navn + ' på ' + d + ' i ' + dir.basePlural + ' ' + baseNr + '.',
@@ -303,6 +317,7 @@
                     dir.coverPlural + '. Da er ' + dir.coverPlural + ' brukt opp, og ' + d +
                     ' kan strykes ellers i dem: ' + cellList(elim.map(e => e.cell)) + '.'
             });
+            if (funn) return funn;
           }
         }
       }
@@ -337,7 +352,7 @@
         if (!elim.length) continue;
 
         const x = firstDigit(m1 & mp), y = firstDigit(m2 & mp);
-        return step({
+        const funn = step({
           id: 'xy-wing', name: 'XY-Wing', level: 10,
           cells: [pivot, w1, w2], digits: digitsOf(mp | m1 | m2), eliminations: elim,
           short: 'XY-Wing med ' + cellName(pivot) + ' som omdreiningspunkt fjerner ' + z + '.',
@@ -347,6 +362,7 @@
                 ' i én av vingene, så alle celler som ser begge vingene kan ikke være ' + z + ': ' +
                 cellList(elim.map(e => e.cell)) + '.'
         });
+        if (funn) return funn;
       }
     }
     return null;
@@ -388,7 +404,7 @@
         }
         if (!elim.length) continue;
 
-        return step({
+        const funn = step({
           id: 'xyz-wing', name: 'XYZ-Wing', level: 12,
           cells: [pivot, w1, w2], digits: digitsOf(mp), eliminations: elim,
           short: 'XYZ-Wing rundt ' + cellName(pivot) + ' fjerner ' + z + '.',
@@ -398,6 +414,7 @@
                 ', så en celle som ser alle tre kan ikke være det: ' +
                 cellList(elim.map(e => e.cell)) + '.'
         });
+        if (funn) return funn;
       }
     }
     return null;
@@ -439,7 +456,7 @@
           }
           if (!elim.length) continue;
 
-          return step({
+          const funn = step({
             id: 'w-wing', name: 'W-Wing', level: 13,
             cells: [a, b, p, q], unitCells: u.cells, digits: [x, y], eliminations: elim,
             short: 'W-Wing mellom ' + cellName(a) + ' og ' + cellName(b) + ' fjerner ' + y + '.',
@@ -450,6 +467,7 @@
                   '. Celler som ser begge kan derfor ikke være ' + y + ': ' +
                   cellList(elim.map(e => e.cell)) + '.'
           });
+          if (funn) return funn;
         }
       }
     }
@@ -507,7 +525,7 @@
           if (!par) continue;
           const elim = lag[f].filter(i => state.cand[i] & bit).map(i => ({ cell: i, digit: d }));
           if (!elim.length) continue;
-          return step({
+          const funn = step({
             id: 'farging', name: 'Farging', level: 14,
             cells: lag[1 - f], digits: [d], eliminations: elim,
             short: 'Farging på ' + d + ': den ene kjeden motsier seg selv.',
@@ -517,6 +535,7 @@
                   'enhet. Det laget kan altså ikke være det sanne, og ' + d +
                   ' stryker i hele laget: ' + cellList(elim.map(e => e.cell)) + '.'
           });
+          if (funn) return funn;
         }
 
         // En celle utenfor kjeden som ser begge lag: uansett hvilket lag som er
@@ -529,7 +548,7 @@
           }
         }
         if (elim.length) {
-          return step({
+          const funn = step({
             id: 'farging', name: 'Farging', level: 14,
             cells: komponent, digits: [d], eliminations: elim,
             short: 'Farging på ' + d + ': cellene ser begge lag.',
@@ -538,6 +557,7 @@
                   cellList(elim.map(e => e.cell)) + ' ser celler i begge lag — uansett hvilket lag ' +
                   'som vinner, står det en ' + d + ' de ser, så de kan ikke selv være ' + d + '.'
           });
+          if (funn) return funn;
         }
       }
     }
@@ -577,7 +597,7 @@
           if (bokser.size !== 2) continue;
 
           const elim = digitsOf(par).map(d => ({ cell: l, digit: d }));
-          return step({
+          const funn = step({
             id: 'unikt-rektangel', name: 'Unikt rektangel', level: 15,
             cells: [i, j, k, l], digits: digitsOf(par), eliminations: elim,
             short: 'Unikt rektangel: ' + cellName(l) + ' kan ikke være ' +
@@ -589,6 +609,7 @@
                   'ble ulovlig — og brettet ville hatt to løsninger. Et sudoku har én, så ' +
                   cellName(l) + ' må være noe annet: ' + listOf(digitsOf(par)) + ' strykes der.'
           });
+          if (funn) return funn;
         }
       }
     }
@@ -614,7 +635,7 @@
       for (const [anta, folger] of [[d1, d2], [d2, d1]]) {
         const kjede = prov(state, i, anta);
         if (!kjede) continue;
-        return step({
+        const funn = step({
           id: 'tvungen-kjede', name: 'Tvungen kjede', level: 16,
           // Sporet kan være tretti celler langt. Bare ruta som får tallet er
           // hovedsaken; de første leddene vises dempet så veien er til å følge.
@@ -628,6 +649,7 @@
                 (kjede.spor.length > 4 ? ', og så videre' : '') + ' — og til slutt ' +
                 kjede.grunn + '. Det går ikke, så ' + cellName(i) + ' er ' + folger + '.'
         });
+        if (funn) return funn;
       }
     }
     return null;
@@ -747,6 +769,39 @@
     return null;
   }
 
+  /**
+   * Det enkleste trekket som gjør noe med ruta `i` — setter et tall der, eller
+   * stryker en kandidat der. Uten dette pekte hintet på det enkleste trekket
+   * på hele brettet, som sjelden er det man står fast på.
+   */
+  function findStepAt(state, i) {
+    filter = s => (s.placement && s.placement.cell === i) ||
+                  s.eliminations.some(e => e.cell === i);
+    try {
+      return findStep(state);
+    } finally {
+      filter = null;
+    }
+  }
+
+  /**
+   * Hvor langt unna er ruta? Løser videre med teknikkene og teller trekk til
+   * noe rører ruta. Svaret er ærlig når det ikke finnes noe der ennå: «den
+   * løses ikke nå, den kommer om N trekk» er mer verdt enn et hint om noe
+   * annet, uten at det sies hva det gjelder.
+   */
+  function stepsUntil(values, elim, i, maksTrekk) {
+    const state = makeState(values, elim);
+    for (let n = 1; n <= (maksTrekk || 60); n++) {
+      const s = findStep(state);
+      if (!s) return null;
+      if ((s.placement && s.placement.cell === i) ||
+          s.eliminations.some(e => e.cell === i)) return { trekk: n, steg: s };
+      applyStep(state, s);
+    }
+    return null;
+  }
+
   /* ---------- Gradering ---------- */
 
   /*
@@ -831,6 +886,7 @@
              nivaa: nivaaFor(maks, brukt) };
   }
 
-  global.SudokuSolver = { TECHNIQUES, NIVAAER, makeState, findStep, applyStep, grade, nivaaFor };
+  global.SudokuSolver = { TECHNIQUES, NIVAAER, makeState, findStep, findStepAt,
+                          stepsUntil, applyStep, grade, nivaaFor };
 
 })(window);

@@ -209,6 +209,47 @@ Finner ikke løseren noe trekk, sier den fra om hvorfor: enten står det et tall
 brettet som ikke stemmer med løsningen (og hvilken rute det gjelder), eller så er
 brettet ferdig.
 
+### Hintet spør om ruta du står i
+
+Har du valgt en tom rute, handler hintet om **den** — ikke om det enkleste
+trekket på brettet.
+
+Det var ikke slik før, og det var feilen. Løseren leverte alltid det enkleste
+trekket som fantes noe sted, så sto du fast på én rute og trykket Hint, fikk du
+gjerne en naken ener i motsatt hjørne: hjelp til noe du ikke ba om. Målt traff
+det gamle hintet ruta man sto i i **1,8 %** av tilfellene — omtrent så ofte som
+en tilfeldig rute ville gjort.
+
+Nå er rekkefølgen:
+
+1. Et trekk som gjør noe med den valgte ruta — setter tallet, eller stryker en
+   kandidat der. Det finnes i **omtrent halvparten** av situasjonene.
+2. Ellers: en linje som sier hvilke tall ruta fortsatt kan være, og at ingen av
+   dem lar seg utelukke ennå — *du har ikke oversett noe*. Under den står
+   brettets enkleste trekk, med forbeholdet om at det gjelder en annen rute.
+3. Uten valgt rute: som før.
+
+Det andre punktet er halve poenget. Når man står fast, er spørsmålet like mye
+«har jeg oversett noe her?» som «hva er neste trekk», og et svar på det er verdt
+mer enn et hint om noe annet uten forklaring.
+
+Trekktallet nevnes bare når ruta er høyst fire trekk unna. Målt ligger den ti
+trekk unna eller mer i 93 % av tilfellene, og «det trengs 28 trekk først» sier
+ikke annet enn nei.
+
+Teknisk går det gjennom `step()` i `solver.js`, som alle teknikkene leverer
+trekkene sine gjennom. Er et filter satt, svarer den null på det som ikke passer,
+og teknikken leter videre i stedet for å gi seg ved første funn. Det er derfor
+`findStepAt` kan spørre om ett bestemt sted uten at hver enkelt teknikk måtte
+skrives om. Et hint koster 3–4 ms.
+
+Forbeholdet og forklaringen deler ett skrollefelt (`.hint-kropp`). Hver for seg
+kunne forbeholdet — som er lengst nettopp når det trengs — skyve **Bruk** ut av
+syne i den smale spalta liggende. På en 320 px skjerm ligger knappene fortsatt
+under kanten når forbeholdet står framme, og må skrolles fram; det er samme
+avveining som ellers gjelder stående, der sida med vilje ikke er låst når et
+hint er oppe.
+
 ## Blyantmerker
 
 **Auto**-knappen går i ring gjennom tre trinn, ikke av og på:
@@ -439,7 +480,7 @@ leverer stille «det nærmeste den har» — altså forrige nivå, under nytt na
 | `js/statistikk.js` | Løste brett, beste tid og snitt per nivå |
 | `js/app.js` | Grensesnitt, tastatur, angrelogg, klokke, lagring |
 | `lag_ikon.py` | Lager appikonene (krever Pillow) |
-| `tester/` | Atten prøver — `tester/README.md` |
+| `tester/` | Nitten prøver — `tester/README.md` |
 
 ### Løseteknikkene
 

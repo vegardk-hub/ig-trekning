@@ -1,8 +1,8 @@
 # Prøver
 
-Atten prøver, i to slag.
+Nitten prøver, i to slag.
 
-**Seksten kjører appen i en ekte nettleser** og måler den. De finnes fordi det
+**Sytten kjører appen i en ekte nettleser** og måler den. De finnes fordi det
 meste av det som har gått galt i denne appen ikke var logikk, men geometri og
 farge: en etikett som sprakk i en smal kolonne, et tall som falt under
 kontrastgrensa på flata det sto på, en knapp som lå bak et annet element og
@@ -45,6 +45,7 @@ repoet skal fortsatt kunne åpnes uten å installere noe.
 | `uthev` | Lyser både store tall og blyantmerker med samme siffer? |
 | `tastatur` | Fører venstre side blyant og høyre side tall når telefonen ligger? |
 | `liggende` | Står brettet i full høyde, sidene like brede, toppteksten i spalta, og lar ◐ seg trykke — på fem skjermstørrelser? |
+| `hint` | Gjelder hintet ruta du står i, og sier det fra når det ikke kan svare på den? |
 | `hintplass` | Dekker hintet aldri brettet, og lukker ✕ det i begge formater? |
 | `frys` | Er sida låst når det ikke er noe å skrolle til, og slipper den opp når et hint står framme? |
 | `modal` | Får dialogene plass, og lukker de seg på ✕, på knappen og på trykk utenfor? |

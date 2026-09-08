@@ -354,6 +354,19 @@ body {
 
 .hint-navn { font-weight: 700; font-size: 1.02rem; }
 
+/* Bakgrunn, ikke bare kursiv: dette er et forbehold om hintet under, og skal
+   leses før man begynner på forklaringen. */
+.hint-om {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  font-size: .86rem;
+  line-height: 1.35;
+  color: var(--blekk);
+  background: var(--hint-enhet);
+  border-radius: 6px;
+  flex: none;
+}
+
 .hint-tekst {
   margin: 6px 0 10px;
   font-size: .95rem;
@@ -1146,7 +1159,9 @@ body {
 
   .hint-topp, .hint-knapper { flex: none; }
 
-  .hint-tekst {
+  /* Kroppen skroller, ikke forklaringen alene: forbeholdet står over den og
+     ville ellers spist høyden knappene trenger. */
+  .hint-kropp {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -1156,6 +1171,7 @@ body {
   .melding { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
   .hint-navn { font-size: .9rem; }
   .hint-tekst { margin: 5px 0 8px; font-size: .8rem; line-height: 1.4; }
+  .hint-om { margin: 5px 0 0; padding: 5px 7px; font-size: .74rem; }
   .hint-knapper { flex-direction: column; gap: 5px; }
   .hint-knapper .knapp { padding: 6px 8px; font-size: .82rem; }
   .melding { padding: 8px 9px; font-size: .82rem; line-height: 1.4; }

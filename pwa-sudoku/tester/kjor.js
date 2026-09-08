@@ -39,6 +39,7 @@ const PROVER = [
   ['uthev', 'uthev: samme tall, både store og blyant'],
   ['tastatur', 'tastatur: venstre fører blyant, høyre skriver'],
   ['liggende', 'liggende: to sider, topptekst, plass på fem skjermer'],
+  ['hint', 'hint: hintet gjelder ruta du står i'],
   ['hintplass', 'hintplass: hintet dekker ikke brettet'],
   ['frys', 'frys: sida lar seg ikke dra'],
   ['modal', 'modal: dialoger får plass og lukker seg'],

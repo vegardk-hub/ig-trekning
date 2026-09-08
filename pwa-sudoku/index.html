@@ -53,7 +53,16 @@
             <span id="hint-navn" class="hint-navn"></span>
             <button id="hint-lukk" class="ikonknapp" aria-label="Lukk hint">&times;</button>
           </div>
-          <p id="hint-tekst" class="hint-tekst"></p>
+          <!-- Forbeholdet og forklaringen deler ett skrollefelt. Hver for seg
+               kunne forbeholdet — som er lengst når det trengs mest — skyve
+               «Bruk» ut av syne i den smale spalta liggende. -->
+          <div class="hint-kropp">
+            <!-- Står bare når hintet gjelder noe annet enn ruta du står i.
+                 Uten den linja ser et hint om andre enden av brettet ut som et
+                 svar på spørsmålet man nettopp stilte. -->
+            <p id="hint-om" class="hint-om" hidden></p>
+            <p id="hint-tekst" class="hint-tekst"></p>
+          </div>
           <div class="hint-knapper">
             <button id="hint-mer" class="knapp">Vis hvor</button>
             <button id="hint-bruk" class="knapp primaer">Bruk</button>
