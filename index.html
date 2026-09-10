@@ -404,6 +404,9 @@ function igTrekningBookmarklet() {
     funnet.forEach(function (v, bruker) { navn.push(bruker); });
     if (!navn.length) { alert('Fant ingen deltagere ennå.'); return; }
     window.open(APP_URL + '#u=' + encodeURIComponent(navn.join(',')), '_blank');
+    // Boksen er overflødig når man har flyttet seg over til trekningen i det nye vinduet.
+    stoppet = true;
+    boks.remove();
   };
 
   tegn();
