@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>IG Trekning — trekk vinner blant Instagram-kommentarer</title>
+<title>IG Trekning v2 — trekk vinner blant Instagram-kommentarer</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -72,8 +72,8 @@
 <body>
 <div class="app">
   <header>
-    <h1>📸 IG Trekning</h1>
-    <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg</p>
+    <h1>📸 IG Trekning <span style="font-size:15px;opacity:.75">v2</span></h1>
+    <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg<br><span style="font-size:12px;opacity:.85">Versjon 2 — håndterer også innlegg som åpnes som overlegg med pluss-knapp</span></p>
   </header>
 
   <div class="panel">
@@ -154,30 +154,40 @@
    Alt her er vanlig JavaScript — ingen server, ingen utvidelse.
    --------------------------------------------------------------- */
 function igTrekningBookmarklet() {
-  // Adressen til trekningssiden settes inn når bokmerket bygges, så bokmerket
-  // alltid peker tilbake dit det ble laget fra.
   var APP_URL = '__APP_URL__';
 
-  if (window.__igTrekningKjorer) { alert('Henting pågår allerede i denne fanen.'); return; }
+  /* Instagram bytter innlegg uten å laste siden på nytt. Både boksen og flagget
+     fra forrige kjøring overlever da, og tallet blir liggende igjen fra feil
+     innlegg. Derfor rydder vi alltid bort en tidligere kjøring først. */
+  if (typeof window.__igTrekningStopp === 'function') {
+    try { window.__igTrekningStopp(); } catch (e) {}
+  }
+  var gammelBoks = document.getElementById('igt-boks');
+  if (gammelBoks) gammelBoks.remove();
 
   var kode = location.pathname.match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
   if (!kode) { alert('Åpne et Instagram-innlegg først, og klikk så på bokmerket.'); return; }
+  var INNLEGG = kode[1];
 
-  // Reel-visningen etterlaster ikke kommentarer. /p/-siden gjør det.
-  if (location.pathname.indexOf('/p/') !== 0) {
+  function rot() { return document.querySelector('[role="dialog"]') || document; }
+  var iOverlegg = rot() !== document;
+
+  /* Reel-visningen som egen side etterlaster ikke kommentarer. Som overlegg gjør den det. */
+  if (!iOverlegg && location.pathname.indexOf('/p/') !== 0) {
     alert('Sender deg til den vanlige innleggssiden.\n\nKlikk på bokmerket én gang til når siden har lastet.');
-    location.href = 'https://www.instagram.com/p/' + kode[1] + '/';
+    location.href = 'https://www.instagram.com/p/' + INNLEGG + '/';
     return;
   }
 
-  window.__igTrekningKjorer = true;
-
   var boks = document.createElement('div');
+  boks.id = 'igt-boks';
   boks.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111;color:#fff;' +
     'padding:14px 16px;border-radius:12px;font:13px -apple-system,Segoe UI,Roboto,sans-serif;' +
-    'box-shadow:0 8px 30px rgba(0,0,0,.4);min-width:230px';
+    'box-shadow:0 8px 30px rgba(0,0,0,.4);min-width:240px';
   boks.innerHTML = '<div id="igt-tall" style="font-size:22px;font-weight:800">0 deltagere</div>' +
     '<div id="igt-stat" style="opacity:.6;margin-top:2px;font-size:11px">starter …</div>' +
+    '<div id="igt-kilde" style="opacity:.45;margin-top:4px;font-size:10px"></div>' +
+    '<div id="igt-fb" style="margin-top:6px;font-size:11px;color:#ffcf6b;display:none"></div>' +
     '<div style="margin-top:10px;display:flex;gap:6px">' +
     '<button id="igt-apne" style="flex:1;padding:8px;border:0;border-radius:8px;background:#5b5bf6;color:#fff;font-weight:700;cursor:pointer">Åpne trekningen</button>' +
     '<button id="igt-stopp" style="padding:8px 10px;border:0;border-radius:8px;background:#444;color:#fff;cursor:pointer">Stopp</button>' +
@@ -185,18 +195,25 @@ function igTrekningBookmarklet() {
   document.body.appendChild(boks);
 
   var funnet = new Map(), runder = 0, stille = 0, stoppet = false;
-  var tall = boks.querySelector('#igt-tall'), stat = boks.querySelector('#igt-stat');
+  var tall = boks.querySelector('#igt-tall');
+  var stat = boks.querySelector('#igt-stat');
+  var kilde = boks.querySelector('#igt-kilde');
+  var fbVarsel = boks.querySelector('#igt-fb');
+
+  window.__igTrekningStopp = function () { stoppet = true; };
 
   var PROFIL = /^\/([A-Za-z0-9._]{2,30})\/$/;
+  var SVARTRAAD = /^(Se alle \d+ svar|Vis \d+ svar til|Vis flere svar|View all \d+ repl|View \d+ more repl|Show more repl)/i;
 
   function hentFraSiden() {
+    var r = rot();
     var rader = new Set();
-    var tider = document.querySelectorAll('time');
+    var tider = r.querySelectorAll('time');
     for (var i = 0; i < tider.length; i++) {
       var el = tider[i];
       for (var d = 0; d < 8 && el; d++) {
         el = el.parentElement;
-        if (!el) break;
+        if (!el || el === document.body) break;
         var a = el.querySelector('a[href^="/"]');
         if (a && PROFIL.test(a.getAttribute('href') || '')) { rader.add(el); break; }
       }
@@ -204,43 +221,60 @@ function igTrekningBookmarklet() {
     var ut = [];
     rader.forEach(function (rad) {
       var a = rad.querySelector('a[href^="/"]');
-      // Kun FØRSTE lenke — ellers får @-omtaler inne i teksten lodd de ikke skal ha.
+      /* Kun FØRSTE lenke — ellers får @-omtaler i teksten lodd de ikke skal ha. */
       var m = (a && a.getAttribute('href') || '').match(PROFIL);
-      if (!m) return;
-      var bruker = m[1];
-      var tekst = (rad.innerText || '').replace(/\s+/g, ' ').trim();
-      tekst = tekst.replace(new RegExp('^' + bruker + '\\s*'), '');
-      tekst = tekst.replace(/^(Redigert\s*•\s*)?\d+\s*(s|min|t|d|u|w|h|m)\s+/i, '');
-      tekst = tekst.replace(/\s*(Se oversettelse|Svar|Liker|\d+ likerklikk|Se alle \d+ svar).*$/i, '');
-      ut.push({ username: bruker, text: tekst.trim() });
+      if (m) ut.push(m[1]);
     });
     return ut;
   }
 
-  function tegn() {
-    tall.textContent = funnet.size + ' deltagere';
-    stat.textContent = stoppet
-      ? 'ferdig · ' + runder + ' runder'
-      : runder + ' runder · leter etter flere …';
+  /* Overleggsvisningen laster ikke av seg selv — man må trykke pluss-knappen. */
+  function lastMer() {
+    var r = rot(), gjorde = false;
+    var pluss = r.querySelector('svg[aria-label="Last inn flere kommentarer"], svg[aria-label="Load more comments"]');
+    if (pluss) {
+      var knapp = pluss.closest('button') || pluss.parentElement;
+      if (knapp) { knapp.click(); gjorde = true; }
+    }
+    r.querySelectorAll('span, div').forEach(function (e) {
+      var t = (e.innerText || '').trim();
+      if (t && t.length < 40 && SVARTRAAD.test(t) && !e.__igtKlikket && e.getBoundingClientRect().width > 0) {
+        e.__igtKlikket = 1; e.click(); gjorde = true;
+      }
+    });
+    return gjorde;
   }
 
-  function steg() {
-    if (stoppet) return;
-    // Instagram laster flere kommentarer når spinneren nederst kommer til syne.
+  function scrollVidere() {
+    if (iOverlegg) {
+      var r = rot(), felt = null;
+      r.querySelectorAll('div, ul').forEach(function (el) {
+        if (el.scrollHeight <= el.clientHeight + 30) return;
+        if (el.getBoundingClientRect().height < 100) return;
+        var n = el.querySelectorAll('a[href^="/"]').length;
+        if (!felt || n > felt.n) felt = { el: el, n: n };
+      });
+      if (felt) felt.el.scrollTop = felt.el.scrollHeight;
+      return;
+    }
     var sp = document.querySelectorAll('svg[aria-label="Laster inn …"],svg[aria-label="Laster inn…"],svg[aria-label="Loading..."]');
     var siste = sp[sp.length - 1];
     if (siste) siste.scrollIntoView({ block: 'center' });
     else window.scrollTo(0, document.body.scrollHeight);
-    runder++;
+  }
 
-    setTimeout(function () {
-      var for_ = funnet.size;
-      hentFraSiden().forEach(function (k) { if (!funnet.has(k.username)) funnet.set(k.username, k.text); });
-      stille = funnet.size > for_ ? 0 : stille + 1;
-      tegn();
-      if (stille >= 20) { avslutt('Ingen nye på 18 sekunder.'); return; }
-      steg();
-    }, 900);
+  function sjekkFacebook() {
+    var m = (rot().innerText || document.body.innerText || '').match(/(\d+)\s+kommentarer fra Facebook/i);
+    if (!m) return;
+    fbVarsel.style.display = 'block';
+    fbVarsel.textContent = '⚠ ' + m[1] + ' kommentarer ligger på Facebook. Instagram viser dem ikke, ' +
+      'så de blir ikke med i trekningen.';
+  }
+
+  function tegn() {
+    tall.textContent = funnet.size + ' deltagere';
+    kilde.textContent = (iOverlegg ? 'overlegg' : 'egen side') + ' · innlegg ' + INNLEGG;
+    stat.textContent = stoppet ? 'ferdig · ' + runder + ' runder' : runder + ' runder · leter etter flere …';
   }
 
   function avslutt(hvorfor) {
@@ -249,14 +283,38 @@ function igTrekningBookmarklet() {
     stat.textContent = hvorfor + ' Trykk «Åpne trekningen».';
   }
 
+  function steg() {
+    if (stoppet) return;
+
+    /* Vakthund: bytter du innlegg underveis, ville tallene blandet seg. */
+    var na = location.pathname.match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+    if (!na || na[1] !== INNLEGG) {
+      avslutt('Du byttet innlegg — stoppet for å ikke blande sammen.');
+      return;
+    }
+
+    lastMer();
+    scrollVidere();
+    runder++;
+
+    setTimeout(function () {
+      var for_ = funnet.size;
+      hentFraSiden().forEach(function (u) { if (!funnet.has(u)) funnet.set(u, 1); });
+      stille = funnet.size > for_ ? 0 : stille + 1;
+      sjekkFacebook();
+      tegn();
+      if (stille >= 20) { avslutt('Ingen nye på 18 sekunder.'); return; }
+      steg();
+    }, 900);
+  }
+
   boks.querySelector('#igt-stopp').onclick = function () { avslutt('Stoppet.'); };
 
-  // Sender deltagerne videre i adresselinjen, så slipper man kopier og lim.
-  // Kun brukernavnene — tar man med kommentartekstene blir adressen for lang
-  // for Firefox og Safari.
+  /* Sender deltagerne videre i adressen, så slipper man kopier og lim.
+     Kun brukernavn — med kommentartekst blir adressen for lang for Firefox og Safari. */
   boks.querySelector('#igt-apne').onclick = function () {
     var navn = [];
-    funnet.forEach(function (tekst, bruker) { navn.push(bruker); });
+    funnet.forEach(function (v, bruker) { navn.push(bruker); });
     if (!navn.length) { alert('Fant ingen deltagere ennå.'); return; }
     window.open(APP_URL + '#u=' + encodeURIComponent(navn.join(',')), '_blank');
   };
@@ -276,7 +334,7 @@ document.getElementById('bookmarklet').href =
 /* ---------------------------------------------------------------
    Selve trekningen
    --------------------------------------------------------------- */
-var LAGER = 'ig-trekning-deltagere', LAGER_EKS = 'ig-trekning-ekskludert';
+var LAGER = 'ig-trekning-v2-deltagere', LAGER_EKS = 'ig-trekning-v2-ekskludert';
 
 function les(nokkel, standard) {
   try { var r = localStorage.getItem(nokkel); return r ? JSON.parse(r) : standard; }
