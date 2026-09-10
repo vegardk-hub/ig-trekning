@@ -6,81 +6,156 @@
 <title>Trekkapp — trekk vinner blant Instagram-kommentarer</title>
 <style>
   * { box-sizing: border-box; }
+  :root {
+    --ink: #071b28;
+    --navy: #0b2e40;
+    --petrol: #0f4c5c;
+    --petrol-2: #146b7a;
+    --blue: #1c8fa0;
+    --cyan: #2dd4bf;
+    --cyan-soft: #7fe3d6;
+  }
+  html, body { height: 100%; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: radial-gradient(circle at top left, #4f5bd5, #962fbf 35%, #d62976 60%, #fa7e1e 80%, #feda75 100%);
+    color: #eaf6fa;
     min-height: 100vh;
+    background:
+      radial-gradient(circle at 12% 15%, rgba(45,212,191,.22), transparent 42%),
+      radial-gradient(circle at 88% 80%, rgba(28,143,160,.35), transparent 48%),
+      linear-gradient(155deg, var(--ink) 0%, var(--navy) 38%, var(--petrol) 68%, var(--blue) 100%);
+    background-attachment: fixed;
+    position: relative;
+    overflow-x: hidden;
   }
-  .app { max-width: 640px; margin: 0 auto; padding: 24px 16px 60px; }
-  header { text-align: center; color: #fff; margin-bottom: 20px; }
-  header h1 { margin: 0 0 6px; font-size: 28px; }
-  header p { margin: 0; opacity: .9; font-size: 14px; }
-  .panel { background: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
-  h2 { margin-top: 0; font-size: 19px; }
-  ol.steps { padding-left: 20px; line-height: 1.85; color: #333; margin: 12px 0; }
-  ol.steps li { margin-bottom: 4px; }
-  .bookmarklet-box { text-align: center; background: #f7f7fb; border-radius: 14px; padding: 20px; margin: 16px 0; }
+  body::before, body::after { content: ""; position: fixed; z-index: 0; pointer-events: none; }
+  body::before {
+    top: -140px; right: -120px; width: 420px; height: 420px;
+    background: linear-gradient(135deg, rgba(45,212,191,.2), rgba(20,107,122,.03));
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  }
+  body::after {
+    bottom: -160px; left: -110px; width: 380px; height: 380px;
+    background: linear-gradient(135deg, rgba(28,143,160,.24), rgba(11,46,64,.03));
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  }
+  .app { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 32px 16px 60px; }
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  header .mark { flex: none; line-height: 0; }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: .2px; }
+  header p { margin: 4px 0 0; opacity: .82; font-size: 13.5px; line-height: 1.5; }
+  .panel {
+    position: relative;
+    background: linear-gradient(180deg, rgba(255,255,255,.99), rgba(232,247,250,.97));
+    border-radius: 22px;
+    padding: 28px 24px 26px;
+    box-shadow: 0 24px 60px rgba(4,26,38,.45), 0 1px 0 rgba(255,255,255,.5) inset;
+    border: 1px solid rgba(255,255,255,.5);
+    overflow: hidden;
+    color: var(--navy);
+  }
+  .panel::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+    background: linear-gradient(90deg, var(--petrol), var(--blue), var(--cyan), var(--blue), var(--petrol));
+  }
+  h2 { margin: 26px 0 4px; font-size: 17px; color: var(--navy); }
+  .panel > h2:first-of-type { margin-top: 0; }
+  .lead { color: #4f6b76; font-size: 14px; margin: 0; line-height: 1.6; }
+  ol.steps { list-style: none; counter-reset: step; padding-left: 0; margin: 14px 0; color: #33505c; }
+  ol.steps li { counter-increment: step; position: relative; padding: 2px 0 10px 38px; line-height: 1.6; font-size: 14px; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 0;
+    width: 24px; height: 24px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--petrol-2), var(--cyan));
+    color: #fff; font-size: 12px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(-6deg);
+  }
+  .bookmarklet-box {
+    text-align: center; background: linear-gradient(160deg, #eef8fa, #e2f1f4);
+    border: 1px solid #d7ecf0; border-radius: 16px; padding: 22px; margin: 16px 0;
+  }
   .bookmarklet-btn {
-    display: inline-block; padding: 14px 22px; color: #fff; text-decoration: none;
-    background: linear-gradient(45deg, #4f5bd5, #962fbf, #d62976, #fa7e1e);
+    display: inline-block; padding: 14px 24px; color: #fff; text-decoration: none;
+    background: linear-gradient(135deg, var(--petrol) 0%, var(--petrol-2) 40%, var(--blue) 75%, var(--cyan) 100%);
     border-radius: 12px; font-weight: 700; cursor: grab; user-select: none;
+    box-shadow: 0 10px 24px rgba(15,76,92,.35);
   }
-  .hint { font-size: 13px; color: #777; margin: 10px 0 0; }
-  .note { margin-top: 16px; background: #eef6ff; border-left: 4px solid #4f5bd5; padding: 10px 14px; font-size: 13px; color: #345; border-radius: 6px; }
+  .hint { font-size: 13px; color: #6c8791; margin: 10px 0 0; }
+  .note { margin-top: 16px; background: #e9f7f6; border-left: 4px solid var(--petrol-2); padding: 10px 14px; font-size: 13px; color: #1c4a52; border-radius: 6px; }
   .warn { background: #fff8ec; border-left-color: #e6a100; color: #6b4e05; }
   textarea {
-    width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 10px;
+    width: 100%; border: 1px solid #cfe4ea; border-radius: 10px; padding: 10px;
     font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; resize: vertical;
   }
-  input[type=text] { padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; font-family: inherit; }
+  input[type=text] { padding: 10px; border: 1px solid #cfe4ea; border-radius: 10px; font-size: 14px; font-family: inherit; }
+  input[type=text]:focus, textarea:focus { outline: 2px solid var(--cyan); outline-offset: 1px; }
   button { font-family: inherit; border: none; border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
   button:disabled { opacity: .5; cursor: default; }
-  .primary { background: #5b5bf6; color: #fff; }
-  .secondary { background: #eee; color: #333; }
+  .primary { background: var(--petrol-2); color: #fff; }
+  .secondary { background: #e3eef1; color: var(--navy); }
   .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-  .summary { margin-top: 18px; font-size: 15px; color: #333; }
+  .summary { margin-top: 18px; font-size: 15px; color: var(--navy); }
   .exclude-row { display: flex; gap: 8px; margin-top: 12px; }
   .exclude-row input { flex: 1; }
   details.participants { margin-top: 14px; font-size: 13px; }
-  details.participants summary { cursor: pointer; font-weight: 600; }
+  details.participants summary { cursor: pointer; font-weight: 600; color: var(--petrol-2); }
   details.participants ul { list-style: none; padding: 0; max-height: 240px; overflow-y: auto; margin: 8px 0 0; }
-  details.participants li { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
+  details.participants li { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; border-bottom: 1px solid #eaf2f4; }
   details.participants li.excluded { opacity: .4; text-decoration: line-through; }
-  .link-btn { background: none; color: #5b5bf6; font-size: 12px; padding: 2px 4px; }
+  .link-btn { background: none; color: var(--petrol-2); font-size: 12px; padding: 2px 4px; }
   .draw-btn {
-    display: block; width: 100%; margin-top: 20px; padding: 16px; font-size: 18px; font-weight: 800;
+    display: block; width: 100%; margin-top: 22px; padding: 16px; font-size: 18px; font-weight: 800;
     border-radius: 14px; color: #fff;
-    background: linear-gradient(45deg, #4f5bd5, #962fbf, #d62976, #fa7e1e);
+    background: linear-gradient(120deg, var(--petrol) 0%, var(--petrol-2) 35%, var(--blue) 70%, var(--cyan) 100%);
+    box-shadow: 0 14px 30px rgba(15,76,92,.35);
   }
-  .winner-card { margin-top: 20px; padding: 24px; border-radius: 16px; background: #111; color: #fff; text-align: center; }
-  .winner-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: .7; margin-bottom: 8px; }
+  .winner-card {
+    margin-top: 20px; padding: 26px; border-radius: 16px; text-align: center; color: #eaf6fa;
+    background: linear-gradient(160deg, var(--navy), var(--petrol));
+    position: relative; overflow: hidden;
+  }
+  .winner-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--cyan), var(--blue), var(--cyan));
+  }
+  .winner-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; opacity: .75; margin-bottom: 8px; }
   .winner-name { font-size: 26px; font-weight: 800; word-break: break-all; }
   .winner-comment { margin-top: 10px; font-style: italic; opacity: .85; font-size: 14px; }
-  .profile-link { display: inline-block; margin-top: 12px; color: #8ab4ff; font-size: 13px; }
+  .profile-link { display: inline-block; margin-top: 12px; color: var(--cyan-soft); font-size: 13px; }
   .winner-card .row { justify-content: center; margin-top: 16px; }
-  .confirm-btn { background: #2ecc71; color: #fff; }
-  .reject-btn { background: #e74c3c; color: #fff; }
-  .confirmed h3 { font-size: 16px; }
+  .confirm-btn { background: #14b8a6; color: #fff; }
+  .reject-btn { background: #e2584d; color: #fff; }
+  .confirmed h3 { font-size: 16px; color: var(--navy); }
   .confirmed ol { padding-left: 20px; line-height: 1.7; }
-  .confirmed a { color: #5b5bf6; text-decoration: none; font-weight: 600; }
+  .confirmed a { color: var(--petrol-2); text-decoration: none; font-weight: 600; }
   .confirmed a:hover { text-decoration: underline; }
   .error { color: #c0392b; font-size: 13px; margin-top: 8px; }
-  .ok { color: #2d7d46; background: #eafaf0; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
+  .ok { color: #0d7a63; background: #e3f7f2; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
   .hidden { display: none; }
-  code { background: #f2f2f7; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  code { background: #eaf2f4; color: var(--petrol-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <h1>📸 Trekkapp</h1>
-    <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg<br><span style="font-size:12px;opacity:.85">Håndterer også innlegg som åpnes som overlegg med pluss-knapp</span></p>
+    <span class="mark" aria-hidden="true">
+      <svg width="36" height="36" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="15" stroke="#2dd4bf" stroke-width="2" opacity=".55"/>
+        <circle cx="17" cy="17" r="10" stroke="#7fe3d6" stroke-width="2" opacity=".8"/>
+        <circle cx="17" cy="17" r="4.5" fill="#2dd4bf"/>
+      </svg>
+    </span>
+    <div>
+      <h1>Trekkapp</h1>
+      <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg<br><span style="font-size:12px;opacity:.85">Håndterer også innlegg som åpnes som overlegg med pluss-knapp</span></p>
+    </div>
   </header>
 
   <div class="panel">
     <h2>1. Legg knappen i bokmerkelinjen</h2>
-    <p style="color:#555;font-size:14px;margin:0">
+    <p class="lead">
       Dra den fargede knappen opp til bokmerkelinjen i nettleseren. Dette gjør du bare én gang.
       Ser du ingen bokmerkelinje, trykk <code>Ctrl+Shift+B</code> (Windows) eller
       <code>Cmd+Shift+B</code> (Mac).
@@ -108,11 +183,11 @@
     </div>
 
     <h2>3. Trekk vinner</h2>
-    <p style="color:#555;font-size:14px;margin:0 0 10px">
+    <p class="lead" style="margin-bottom:10px">
       Deltagerne dukker opp her av seg selv når du trykker «Åpne trekningen» på Instagram.
       Du trenger ikke gjøre noe i feltet under — det er kun for spesielle tilfeller.
     </p>
-    <details style="font-size:13px;color:#555">
+    <details style="font-size:13px;color:#4f6b76">
       <summary style="cursor:pointer;font-weight:600">Avansert: lim inn deltagerliste manuelt</summary>
       <textarea id="paste" rows="4" placeholder='[{"username":"ola.nordmann","text":"🔥"}, ...]'
                 style="margin-top:8px"></textarea>
@@ -183,16 +258,16 @@ function igTrekningBookmarklet() {
 
   var boks = document.createElement('div');
   boks.id = 'igt-boks';
-  boks.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111;color:#fff;' +
+  boks.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#0b2e40;color:#eaf6fa;' +
     'padding:14px 16px;border-radius:12px;font:13px -apple-system,Segoe UI,Roboto,sans-serif;' +
-    'box-shadow:0 8px 30px rgba(0,0,0,.4);min-width:240px';
+    'box-shadow:0 10px 30px rgba(4,20,30,.5);border:1px solid rgba(125,227,214,.25);min-width:240px';
   boks.innerHTML = '<div id="igt-tall" style="font-size:22px;font-weight:800">0 deltagere</div>' +
-    '<div id="igt-stat" style="opacity:.6;margin-top:2px;font-size:11px">starter …</div>' +
-    '<div id="igt-kilde" style="opacity:.45;margin-top:4px;font-size:10px"></div>' +
+    '<div id="igt-stat" style="opacity:.65;margin-top:2px;font-size:11px">starter …</div>' +
+    '<div id="igt-kilde" style="opacity:.5;margin-top:4px;font-size:10px"></div>' +
     '<div id="igt-fb" style="margin-top:6px;font-size:11px;color:#ffcf6b;display:none"></div>' +
     '<div style="margin-top:10px;display:flex;gap:6px">' +
-    '<button id="igt-apne" style="flex:1;padding:8px;border:0;border-radius:8px;background:#5b5bf6;color:#fff;font-weight:700;cursor:pointer">Åpne trekningen</button>' +
-    '<button id="igt-stopp" style="padding:8px 10px;border:0;border-radius:8px;background:#444;color:#fff;cursor:pointer">Stopp</button>' +
+    '<button id="igt-apne" style="flex:1;padding:8px;border:0;border-radius:8px;background:linear-gradient(135deg,#146b7a,#2dd4bf);color:#fff;font-weight:700;cursor:pointer">Åpne trekningen</button>' +
+    '<button id="igt-stopp" style="padding:8px 10px;border:0;border-radius:8px;background:#173e4d;color:#eaf6fa;cursor:pointer">Stopp</button>' +
     '</div>';
   document.body.appendChild(boks);
 
