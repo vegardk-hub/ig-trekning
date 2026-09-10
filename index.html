@@ -63,6 +63,8 @@
   .reject-btn { background: #e74c3c; color: #fff; }
   .confirmed h3 { font-size: 16px; }
   .confirmed ol { padding-left: 20px; line-height: 1.7; }
+  .confirmed a { color: #5b5bf6; text-decoration: none; font-weight: 600; }
+  .confirmed a:hover { text-decoration: underline; }
   .error { color: #c0392b; font-size: 13px; margin-top: 8px; }
   .ok { color: #2d7d46; background: #eafaf0; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
   .hidden { display: none; }
@@ -419,7 +421,10 @@ function vekslExkluder(brukernavn) {
 
 function tegnBekreftede() {
   $('confirmed').classList.toggle('hidden', bekreftede.length === 0);
-  $('confirmedList').innerHTML = bekreftede.map(function (v) { return '<li>@' + v.username + '</li>'; }).join('');
+  $('confirmedList').innerHTML = bekreftede.map(function (v) {
+    return '<li><a href="https://instagram.com/' + v.username + '" target="_blank" rel="noreferrer">@' +
+      v.username + '</a></li>';
+  }).join('');
 }
 
 function tegnVinner(spinner, navn) {
