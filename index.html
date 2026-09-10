@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>IG Trekning v2 — trekk vinner blant Instagram-kommentarer</title>
+<title>Trekkapp — trekk vinner blant Instagram-kommentarer</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -72,8 +72,8 @@
 <body>
 <div class="app">
   <header>
-    <h1>📸 IG Trekning <span style="font-size:15px;opacity:.75">v2</span></h1>
-    <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg<br><span style="font-size:12px;opacity:.85">Versjon 2 — håndterer også innlegg som åpnes som overlegg med pluss-knapp</span></p>
+    <h1>📸 Trekkapp</h1>
+    <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg<br><span style="font-size:12px;opacity:.85">Håndterer også innlegg som åpnes som overlegg med pluss-knapp</span></p>
   </header>
 
   <div class="panel">
@@ -511,10 +511,14 @@ $('drawBtn').onclick = trekk;
   var navn = decodeURIComponent(m[1]).split(',').filter(Boolean);
   if (!navn.length) return;
 
-  var kart = new Map();
-  kommentarer.concat(navn.map(function (u) { return { username: u, text: '' }; }))
-    .forEach(function (k) { kart.set(k.username + '::' + k.text, k); });
-  kommentarer = Array.from(kart.values());
+  // Hver kjøring erstatter forrige resultat i stedet for å legge seg oppå det —
+  // bokmerket scanner alltid alle kommentarene på nytt, så gammel data her er aldri
+  // mer fullstendig enn den ferske. Å slå dem sammen ga tidligere feil deltagertall
+  // hvis man kjørte appen på flere innlegg uten å trykke «Nullstill alt».
+  kommentarer = navn.map(function (u) { return { username: u, text: '' }; });
+  ekskludert = new Set();
+  bekreftede = [];
+  vinner = null;
   lagre();
 
   // Fjern dataene fra adresselinjen så den ikke blir stående uleselig lang

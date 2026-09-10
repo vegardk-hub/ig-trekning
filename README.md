@@ -1,6 +1,6 @@
 # ig-trekning
 
-- **Trekning** — `index.html`: trekk en vinner blant Instagram-kommentarer.
+- **Trekkapp** — `index.html`: trekk en vinner blant Instagram-kommentarer.
 - **[Lydspeil](visualizer/)** — `visualizer/index.html`: visualisering av
   musikk, lydfiler, video og mikrofon direkte i nettleseren. Åtte modi,
   tegnet med Canvas 2D.
