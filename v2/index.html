@@ -41,10 +41,17 @@
     clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
   }
   .app { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 32px 16px 60px; }
-  header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
   header .mark { flex: none; line-height: 0; }
+  header .header-text { flex: 1; min-width: 200px; }
   header h1 { margin: 0; font-size: 26px; letter-spacing: .2px; }
   header p { margin: 4px 0 0; opacity: .82; font-size: 13.5px; line-height: 1.5; }
+  .help-toggle {
+    flex: none; background: rgba(255,255,255,.1); color: #eaf6fa;
+    border: 1px solid rgba(255,255,255,.28); border-radius: 999px;
+    padding: 9px 16px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
+  }
+  .help-toggle:hover { background: rgba(255,255,255,.18); }
   .panel {
     position: relative;
     background: linear-gradient(180deg, rgba(255,255,255,.99), rgba(232,247,250,.97));
@@ -151,35 +158,38 @@
       <h1>Trekkapp</h1>
       <p>Trekk en tilfeldig, unik vinner blant kommentarene på et Instagram-innlegg<br><span style="font-size:12px;opacity:.85">Håndterer også innlegg som åpnes som overlegg med pluss-knapp</span></p>
     </div>
+    <button class="help-toggle" id="hjelpBtn" type="button">Skjul hjelp</button>
   </header>
 
   <div class="panel">
-    <h2>1. Legg knappen i bokmerkelinjen</h2>
-    <p class="lead">
-      Dra den fargede knappen opp til bokmerkelinjen i nettleseren. Dette gjør du bare én gang.
-      Ser du ingen bokmerkelinje, trykk <code>Ctrl+Shift+B</code> (Windows) eller
-      <code>Cmd+Shift+B</code> (Mac).
-    </p>
+    <div id="hjelp">
+      <h2>1. Legg knappen i bokmerkelinjen</h2>
+      <p class="lead">
+        Dra den fargede knappen opp til bokmerkelinjen i nettleseren. Dette gjør du bare én gang.
+        Ser du ingen bokmerkelinje, trykk <code>Ctrl+Shift+B</code> (Windows) eller
+        <code>Cmd+Shift+B</code> (Mac).
+      </p>
 
-    <div class="bookmarklet-box">
-      <a class="bookmarklet-btn" id="bookmarklet" href="#">🎁 Hent kommentarer</a>
-      <p class="hint">Dra meg opp til bokmerkelinjen ↑</p>
-    </div>
+      <div class="bookmarklet-box">
+        <a class="bookmarklet-btn" id="bookmarklet" href="#">🎁 Hent kommentarer</a>
+        <p class="hint">Dra meg opp til bokmerkelinjen ↑</p>
+      </div>
 
-    <h2>2. Kjør den på innlegget</h2>
-    <ol class="steps">
-      <li>Åpne Instagram i samme nettleser og logg inn som vanlig.</li>
-      <li>Gå til innlegget du vil trekke blant.</li>
-      <li>Klikk på bokmerket <strong>🎁 Hent kommentarer</strong>.</li>
-      <li>La fanen stå i fred. Den scroller seg selv gjennom kommentarene, og en liten
-          boks nede til høyre teller opp underveis.</li>
-      <li>Når den er ferdig, trykk <strong>Åpne trekningen</strong> i boksen. Deltagerne
-          følger med over hit av seg selv.</li>
-    </ol>
-    <div class="note warn">
-      Er du på en <code>/reel/</code>-lenke, sender bokmerket deg først til den vanlige
-      innleggssiden. Da må du klikke på bokmerket én gang til når siden har lastet.
-      Grunnen er at reel-visningen ikke etterlaster kommentarer.
+      <h2>2. Kjør den på innlegget</h2>
+      <ol class="steps">
+        <li>Åpne Instagram i samme nettleser og logg inn som vanlig.</li>
+        <li>Gå til innlegget du vil trekke blant.</li>
+        <li>Klikk på bokmerket <strong>🎁 Hent kommentarer</strong>.</li>
+        <li>La fanen stå i fred. Den scroller seg selv gjennom kommentarene, og en liten
+            boks nede til høyre teller opp underveis.</li>
+        <li>Når den er ferdig, trykk <strong>Åpne trekningen</strong> i boksen. Deltagerne
+            følger med over hit av seg selv.</li>
+      </ol>
+      <div class="note warn">
+        Er du på en <code>/reel/</code>-lenke, sender bokmerket deg først til den vanlige
+        innleggssiden. Da må du klikke på bokmerket én gang til når siden har lastet.
+        Grunnen er at reel-visningen ikke etterlaster kommentarer.
+      </div>
     </div>
 
     <h2>3. Trekk vinner</h2>
@@ -583,6 +593,20 @@ $('excludeBtn').onclick = function () {
 };
 $('excludeInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('excludeBtn').click(); });
 $('drawBtn').onclick = trekk;
+
+// Husker om hjelpeteksten (steg 1 og 2) er skjult, så valget står ved neste besøk.
+var HJELP_KEY = 'ig-trekning-v2-skjul-hjelp';
+var hjelpSkjult = les(HJELP_KEY, false);
+function tegnHjelp() {
+  $('hjelp').classList.toggle('hidden', hjelpSkjult);
+  $('hjelpBtn').textContent = hjelpSkjult ? 'Vis hjelp' : 'Skjul hjelp';
+}
+$('hjelpBtn').onclick = function () {
+  hjelpSkjult = !hjelpSkjult;
+  localStorage.setItem(HJELP_KEY, JSON.stringify(hjelpSkjult));
+  tegnHjelp();
+};
+tegnHjelp();
 
 // Kom vi hit fra bokmerket, ligger deltagerne i adressen etter #u=
 (function fraBokmerket() {
