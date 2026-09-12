@@ -8,13 +8,14 @@
 <meta name="theme-color" content="#3d7a3a">
 <!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
      index.html kan ellers stå med ti minutter gammel CSS og JS. -->
-<link rel="stylesheet" href="styles.css?v=1">
+<link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 
 <header class="topp">
   <h1>Koordinatjakt</h1>
-  <p>Finn ruta, se hva som står der, skriv ordet. Skriv ut arket – fasiten blir stående her på skjermen.</p>
+  <p>Finn ruta, se hva som står der, skriv ordet. Svar rett i feltene på
+    skjermen, eller skriv ut arket og bruk blyant. Fasiten blir stående her.</p>
 </header>
 
 <!-- Panelet er for den voksne og skrives aldri ut. -->
@@ -52,9 +53,20 @@
     <h2 id="arktittel">Koordinatjakt</h2>
     <p class="navnefelt"><span>Navn:</span><span class="linje"></span></p>
   </div>
-  <p class="instruks">Se på ruta som står foran linja. Skriv hva du finner der.</p>
-  <div class="bilde" id="bilde"></div>
-  <ol class="oppgaver" id="oppgaver"></ol>
+  <p class="instruks" id="instruks">Se på ruta som står foran linja. Skriv hva du finner der.</p>
+
+  <!-- Bildet og svarene står side ved side på brede skjermer, så tastaturet
+       på iPaden ikke dytter kartet ut av syne. I utskriften stables de. -->
+  <div class="arkkropp">
+    <div class="bilde" id="bilde"></div>
+
+    <div class="svarside">
+      <p class="fremdrift" id="fremdrift" aria-live="polite"></p>
+      <ol class="oppgaver" id="oppgaver"></ol>
+      <p class="beskjed" id="beskjed" role="status"></p>
+      <p class="ferdigkort" id="ferdigkort" role="status" hidden></p>
+    </div>
+  </div>
 </article>
 
 <section class="fasit" id="fasit" hidden>
@@ -62,12 +74,13 @@
   <ol class="oppgaver fasitliste" id="fasitliste"></ol>
 </section>
 
-<script src="js/tilfeldig.js?v=1"></script>
-<script src="js/brikker.js?v=1"></script>
-<script src="js/temaer.js?v=1"></script>
-<script src="js/scene.js?v=1"></script>
-<script src="js/oppgaver.js?v=1"></script>
-<script src="js/tegn.js?v=1"></script>
-<script src="js/app.js?v=1"></script>
+<script src="js/tilfeldig.js?v=2"></script>
+<script src="js/brikker.js?v=2"></script>
+<script src="js/temaer.js?v=2"></script>
+<script src="js/scene.js?v=2"></script>
+<script src="js/oppgaver.js?v=2"></script>
+<script src="js/svar.js?v=2"></script>
+<script src="js/tegn.js?v=2"></script>
+<script src="js/app.js?v=2"></script>
 </body>
 </html>

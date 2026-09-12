@@ -568,12 +568,56 @@ var Brikker = (function () {
     return '';
   }
 
+  /* --------------------------------------------------------- andre ord */
+
+  /* Ord barnet kan skrive i stedet, og som er like riktige. Det som måles er
+     om barnet fant riktig rute, ikke om det kaller tingen det samme som
+     brikketabellen. «Gatelys» for en lyktestolpe og «fjøs» for en låve er
+     riktige svar på et koordinatspørsmål.
+
+     To regler når du legger til noe her:
+
+     - **Alternativet må ikke kunne forveksles med et annet ord i banken.»
+       «Kiosk» duger ikke som alternativ for butikk, for kiosk er sitt eget
+       svar i dyrehagen. `tester/svar.js` sammenligner alle mot alle.
+     - **Det må være et annet ord, ikke en annen form.** «Løven» og «løvene»
+       håndteres av endelsene i `svar.js` og skal ikke stå her. */
+  var OGSAA = {
+    isbjorn: ['bjørn'],
+    slange: ['orm'],
+    ape: ['apekatt'],
+    kamel: ['dromedar'],
+    kanin: ['hare'],
+    hund: ['bikkje'],
+    katt: ['pus'],
+    laave: ['fjøs'],
+    silo: ['kornsilo'],
+    bronn: ['vannbrønn'],
+    hoyball: ['halmball', 'høyballe'],
+    fugleskremsel: ['skremsel'],
+    boette: ['søppelkasse', 'søppelspann', 'søppeldunk', 'bøtte', 'søppel'],
+    lykt: ['lykt', 'gatelys', 'lysstolpe'],
+    kart: ['skilt', 'kartskilt'],
+    port: ['inngang', 'grind'],
+    kiosk: ['bod', 'pølsebod'],
+    fontene: ['springvann', 'vannfontene'],
+    benk: ['sittebenk', 'parkbenk'],
+    blokk: ['høyhus', 'boligblokk'],
+    lyskryss: ['trafikklys', 'lyssignal'],
+    sykkel: ['tohjuling'],
+    bil: ['personbil'],
+    hus: ['bolighus'],
+    tre: ['treet']
+  };
+
   function finnes(id) { return Object.prototype.hasOwnProperty.call(D, id); }
   function ord(id) { return D[id].ord; }
+  function alternativer(id) { return OGSAA[id] || []; }
   function tegn(id) { return D[id].tegn(); }
 
   return {
-    F: F, GRUNN: GRUNN, ALLE: D,
-    finnes: finnes, ord: ord, tegn: tegn, grunnmonster: grunnmonster
+    F: F, GRUNN: GRUNN, ALLE: D, OGSAA: OGSAA,
+    finnes: finnes, ord: ord, alternativer: alternativer,
+    tegn: tegn, grunnmonster: grunnmonster
   };
 })();

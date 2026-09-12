@@ -20,7 +20,12 @@ var Oppgaver = (function () {
     var rng = Tilfeldig.lag(Tilfeldig.sad(scene.tema + ':oppgaver', scene.brett));
     var valgte = rng.stokk(scene.funn).slice(0, Math.min(antall, scene.funn.length));
     return valgte.map(function (f, i) {
-      return { nr: i + 1, rute: f.rute, ord: f.ord, x: f.x, y: f.y };
+      /* `brikke` følger med fordi skrivemodus trenger de alternative ordene
+         («fjøs» for en låve), og de henger på brikken, ikke på fasiten. */
+      return {
+        nr: i + 1, rute: f.rute, ord: f.ord, brikke: f.brikke,
+        alternativer: Brikker.alternativer(f.brikke), x: f.x, y: f.y
+      };
     });
   }
 

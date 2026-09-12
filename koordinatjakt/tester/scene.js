@@ -28,7 +28,7 @@ var Tilfeldig = last('tilfeldig', 'Tilfeldig');
 var Brikker = last('brikker', 'Brikker');
 var Temaer = last('temaer', 'Temaer');
 var Scene = last('scene', 'Scene', 'Tilfeldig,Brikker,Temaer', [Tilfeldig, Brikker, Temaer]);
-var Oppgaver = last('oppgaver', 'Oppgaver', 'Tilfeldig', [Tilfeldig]);
+var Oppgaver = last('oppgaver', 'Oppgaver', 'Tilfeldig,Brikker', [Tilfeldig, Brikker]);
 var Tegn = last('tegn', 'Tegn', 'Brikker,Scene', [Brikker, Scene]);
 
 var feil = 0, gjort = 0;

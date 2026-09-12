@@ -2,8 +2,12 @@
 
 Lager øvingsark der barnet finner ting i et rutenett og skriver ordet.
 Bokstavene A–J står vannrett, tallene 1–10 loddrett med **1 øverst** — som på
-et kart, ikke som i et koordinatsystem. Arket skrives ut; fasiten blir
-stående på skjermen.
+et kart, ikke som i et koordinatsystem.
+
+Det er **ett ark med to måter å svare på**: på skjermen er svarlinja et
+skrivefelt, på papiret er den en strek. Samme brett, samme oppgaver, samme
+rekkefølge — så en voksen kan skrive ut arket til ett barn og la det andre
+skrive på iPaden uten at de to sitter med hver sin oppgave.
 
 Live: <https://vegardk-hub.github.io/ig-trekning/koordinatjakt/>
 
@@ -27,12 +31,83 @@ må ha en veirute som nabo. Rekkefølgen står i `js/scene.js`.
 | `js/temaer.js` | Hvilke brikker som hører sammen, og hvor de kan stå. |
 | `js/scene.js` | Utleggingen av ett brett. Ingen piksler. |
 | `js/oppgaver.js` | Hvilke funn det spørres om, og fasiten. |
+| `js/svar.js` | Om et skrevet svar er riktig. Ingen DOM. |
 | `js/tegn.js` | Scenen som SVG. |
 | `js/app.js` | Panelet, adressen og utskriften. |
 
 `scene.js` er skilt fra `tegn.js` av samme grunn som fysikken i
 Stuntgarasjen er skilt fra tegningen: spørsmålene som avgjør om et brett
 duger, lar seg svare på uten nettleser.
+
+## Skrivemodus
+
+**Arket øver koordinater, ikke rettskriving.** Det er premisset for hele
+`svar.js`, og det avgjør hver eneste regel der. Et barn som finner sjiraffen i
+C4 og skriver «sjiraf», har løst oppgaven; en app som svarer nei på det, måler
+feil ferdighet og gjør en seier om til et nederlag.
+
+Derfor godtas fire ting utover det eksakte ordet:
+
+1. **Artikkel og bestemt form** — «en løve», «løven», «løva», «løvene». Et ord
+   på -e mister e-en i hunkjønn bestemt form, så endelsene legges også på
+   stammen uten den; ellers ryker «løva».
+2. **Æ, ø og å skrevet som ae, o og a.** På et tastatur som står på engelsk er
+   ikke det en feil, det er et tastaturvalg.
+3. **Én skrivefeil, inkludert ombytte.** Avstanden er Damerau-Levenshtein og
+   ikke vanlig Levenshtein, nettopp for ombyttet: «elefnat» ligger to vanlige
+   redigeringer fra «elefant», men én ombytting, og det er den feilen en
+   sjuåring gjør oftest.
+4. **Kjente alternative ord** — «gatelys» for en lyktestolpe, «fjøs» for en
+   låve. De står i `OGSAA` i `brikker.js`.
+
+Og tre ting som ikke godtas, fordi de gjør fasiten utydelig:
+
+- **Korte ord må treffe eksakt.** Samme lærdom som ordmatchingen i
+  Monstergiret: med én bokstavs slingring er «kart» og «katt» samme svar.
+  Grensa går ved fem bokstaver.
+- **Et svar som ligger like nær et annet ord på brettet, teller ikke.** Da må
+  barnet skrive nøyaktig.
+- **Delvis skrevne ord.** Toleransen gjelder når barnet sier seg ferdig, ikke
+  mens det skriver — ellers låser feltet seg på «elefan». Derfor har
+  `Svar.godtar` et `streng`-flagg: `input` bruker det, `Enter` og `blur` ikke.
+
+### Hvorfor «aldri avvis» ikke gjelder her
+
+Monstergiret og Lesestjerna kan bekrefte, aldri avvise, og ingenting blir
+rødt. Den regelen kommer av at **talegjenkjenning bommer på barnestemmer** —
+et «feil» ville rammet barn som leste riktig. Et skrevet svar er ikke usikkert
+på den måten: det står nøyaktig det barnet skrev. Her er det ærlig å si at det
+ikke stemte.
+
+Så Koordinatjakt sier fra — men uten å rope. Feltet får en rolig ramme, aldri
+en rød. Beskjeden nevner ruta og hjelpeknappen, ikke barnet. Hjelpen har to
+trinn: første trykk gir første bokstav og antall bokstaver, andre trykk
+skriver inn ordet, og ingen av dem markerer oppgaven som mislykket — samme
+premiss som «Hopp over» i Sprellemaskinen.
+
+Skrev barnet noe annet enn fasiten og fikk det godtatt, blir **barnets egen
+skrivemåte stående**, med riktig skrivemåte i lyst ved siden av. En rettelse,
+ikke en underkjennelse.
+
+### iPaden er ikke en detalj
+
+Fem ting i feltet er der på grunn av iOS, ikke på grunn av smak:
+
+- `autocorrect="off"` — ellers skriver iOS om ordet mens barnet skriver.
+- `autocapitalize="none"` — ellers får hvert svar stor forbokstav.
+- `spellcheck="false"` — røde bølger under et riktig dyrenavn hjelper ingen.
+- `enterkeyhint="next"` — Enter går til neste ubesvarte felt.
+- **16 px skriftstørrelse.** Er skriften mindre, zoomer Safari inn på feltet i
+  det det får fokus, og kartet forsvinner ut av skjermen.
+
+Bildet og svarene står **side ved side** fra 56 rem og opp. På en iPad i
+liggende stilling tar tastaturet halve høyden, og med svarene under kartet
+ville barnet mistet kartet av syne akkurat idet det skulle bruke det. Feltet
+scroller seg selv til midten når det får fokus.
+
+Svarene lagres i `localStorage` per brett. Et halvferdig ark skal tåle at
+iPaden låser seg — ellers begynner barnet forfra på tolv oppgaver det
+allerede har løst. Selve bildet lagres aldri: det er brettnummeret.
 
 ## Reglene som holder fasiten entydig
 
@@ -95,11 +170,23 @@ Kjøres etter hver endring i `js/`. De trenger verken nettleser eller server:
 
 ```
 node koordinatjakt/tester/scene.js
+node koordinatjakt/tester/svar.js
+NODE_PATH=/opt/node22/lib/node_modules node koordinatjakt/tester/skriving.js
 ```
 
-De går gjennom 300 brett per tema og svarer på alt over: entydig fasit,
-spredning, sammenhengende vei, soner som grenser til veien, brikker innenfor
-ruta, og at samme brettnummer alltid gir samme brett.
+`scene.js` går gjennom 300 brett per tema og svarer på alt om utleggingen:
+entydig fasit, spredning, sammenhengende vei, soner som grenser til veien,
+brikker innenfor ruta, og at samme brettnummer alltid gir samme brett.
+
+`svar.js` svarer for matchingen, og har krav fra begge sider — en liste
+skrivemåter som *må* godtas, og en med svar som *ikke* får gå gjennom. Den
+delen ryker stille begge veier: for streng, og arket måler rettskriving; for
+slapp, og fasiten er meningsløs.
+
+`skriving.js` trenger playwright og svarer for hva feltet gjør med svaret —
+at et eksakt svar låser seg selv, at en skrivefeil ikke låser seg halvveis, at
+hjelpen skriver inn ordet og ikke det som sto der fra før, og at tolv løste
+oppgaver overlever en omlasting.
 
 ## Nye brikker og temaer
 
@@ -112,3 +199,9 @@ holder seg innenfor 0–100. Legg den så inn i et tema, i én av tre lister:
 
 Ordet må være kort, konkret og entydig: «traktor», ikke «kjøretøy». Det er
 det barnet skal skrive.
+
+Alternative ord hører i `OGSAA` i `brikker.js`, med to regler: alternativet må
+ikke kunne forveksles med et annet ord i banken («kiosk» duger ikke for
+butikk, for kiosk er sitt eget svar i dyrehagen), og det må være et annet ord,
+ikke en annen form — «løven» håndteres av endelsene i `svar.js`.
+`tester/svar.js` sammenligner alle skrivemåter mot alle.

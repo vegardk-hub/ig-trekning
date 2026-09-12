@@ -109,23 +109,96 @@ html, body {
 
 .bilde svg { display: block; width: 100%; height: auto; }
 
+/* Bildet og svarene side ved side når skjermen er bred nok. På en iPad i
+   liggende stilling tar tastaturet halve høyden, og med svarene under kartet
+   ville barnet mistet kartet av syne i det feltet fikk fokus. */
+@media screen and (min-width: 56rem) {
+  .ark { max-width: 64rem; }
+  .arkkropp {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 21rem);
+    gap: 1.5rem;
+    align-items: start;
+  }
+}
+
+.fremdrift { margin: 0 0 .5rem; font-size: .9rem; font-weight: 600; color: var(--dempet); }
+
 .oppgaver {
   list-style: none;
-  margin: 1rem 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: .7rem 1.25rem;
+  grid-template-columns: 1fr;
+  gap: .5rem;
 }
-.oppgaver li { display: flex; align-items: baseline; gap: .5rem; }
+.oppgaver li { display: flex; align-items: center; gap: .5rem; }
 .oppgaver .rute {
   font-weight: 700;
   font-size: 1.05rem;
   min-width: 2.6rem;
   letter-spacing: .02em;
 }
-/* Skrivelinja skal fylle resten av kolonnen, ikke bare teksten sin. */
-.oppgaver .svarlinje { flex: 1; border-bottom: 1.5px solid var(--ink); height: 1.35rem; }
+
+/* 16 px er ikke en smakssak: er skriften mindre, zoomer Safari inn på feltet
+   i det det får fokus, og kartet forsvinner ut av skjermen. */
+.svarfelt {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 16px;
+  padding: .45rem .55rem;
+  color: var(--ink);
+  background: var(--papir);
+  border: 1.5px solid var(--kant);
+  border-radius: 8px;
+}
+.svarfelt:focus { outline: 3px solid #9ecbff; outline-offset: 1px; border-color: #6aa6e0; }
+
+/* Riktig svar låses. Grønt, aldri rødt – det finnes ingen tilstand som
+   markerer at barnet tok feil, bare en som mangler. */
+.svarfelt.riktig {
+  background: #e8f6e4;
+  border-color: var(--gronn);
+  color: #1f5a1d;
+  font-weight: 600;
+}
+/* Et svar som ikke stemte får en rolig ramme, ikke en rød. */
+.svarfelt.bom { border-color: #e0a33c; background: #fdf6e7; }
+
+.hjelp {
+  flex: 0 0 auto;
+  width: 2.1rem;
+  height: 2.1rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--dempet);
+  background: var(--papir);
+  border: 1.5px solid var(--kant);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.hjelp.tilbud { color: #a8700f; border-color: #e0a33c; background: #fdf6e7; }
+.hjelp[hidden] { display: none; }
+
+/* Barnets skrivemåte blir stående; riktig skrivemåte settes ved siden av
+   når de er ulike. En rettelse, ikke en underkjennelse. */
+.retting { font-size: .82rem; color: var(--dempet); font-style: italic; }
+.retting:empty { display: none; }
+
+.beskjed { margin: .6rem 0 0; min-height: 1.2rem; font-size: .9rem; color: #8a6412; }
+.beskjed:empty { min-height: 0; }
+
+.ferdigkort {
+  margin: .75rem 0 0;
+  padding: .7rem .9rem;
+  background: #e8f6e4;
+  border: 1.5px solid var(--gronn);
+  border-radius: 10px;
+  font-weight: 700;
+  color: #1f5a1d;
+}
+
 .oppgaver .svar { flex: 1; border-bottom: 1.5px solid var(--kant); }
 
 /* --------------------------------------------------------------- fasit */
@@ -140,10 +213,6 @@ html, body {
 }
 .fasit h2 { margin: 0 0 .5rem; font-size: 1.05rem; }
 .fasitliste { margin-top: .25rem; }
-
-@media (max-width: 34rem) {
-  .oppgaver { grid-template-columns: repeat(2, 1fr); }
-}
 
 /* --------------------------------------------------------------- print */
 
@@ -169,9 +238,28 @@ html, body {
      oppgavelista plass på samme side. */
   .bilde svg { width: 100%; max-width: 170mm; margin: 0 auto; }
 
-  .oppgaver { gap: 5mm 8mm; margin-top: 5mm; }
-  .oppgaver .rute { font-size: 12pt; }
-  .oppgaver .svarlinje { height: 7mm; }
+  /* På papir er svarlinja en strek igjen. Feltene skrives ut som linjer med
+     det barnet eventuelt alt har skrevet – arket skal se likt ut uansett
+     hvilken vei det ble brukt. */
+  .arkkropp { display: block; }
+  .fremdrift, .beskjed, .ferdigkort, .hjelp, .retting { display: none !important; }
+
+  .oppgaver {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5mm 8mm;
+    margin-top: 5mm;
+  }
+  .oppgaver .rute { font-size: 12pt; color: #000; }
+  .svarfelt {
+    height: 7mm;
+    padding: 0 0 1mm;
+    border: 0;
+    border-bottom: 1.5px solid #000;
+    border-radius: 0;
+    background: transparent !important;
+    color: #000 !important;
+    font-weight: 400 !important;
+  }
 
   /* Fasiten er med bare hvis den er slått på – da vil den voksne ha den på
      papir. Egen side, så den ikke ligger under barnets ark. */

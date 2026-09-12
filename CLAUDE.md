@@ -15,7 +15,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
 | `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den i looper og hopp, PWA |
 | `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
-| `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, laget for utskrift |
+| `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -120,17 +120,26 @@ eller server, og skal kjøres etter hver endring i `pwa-stunt/js/lope.js` eller
 node pwa-stunt/tester/lope.js
 ```
 
-Koordinatjakt har prøver på utleggingen, oppgavene og brikkene. De trenger
-verken nettleser eller server, og skal kjøres etter hver endring i
-`koordinatjakt/js/`:
+Koordinatjakt har tre sett prøver. De to første trenger verken nettleser eller
+server, og skal kjøres etter hver endring i `koordinatjakt/js/`:
 
 ```
 node koordinatjakt/tester/scene.js
+node koordinatjakt/tester/svar.js
 ```
 
-De går gjennom 300 brett per tema. Det er ikke overdrevet: en regel som
-holder for brett 1 til 20, ryker gjerne på brett 137, og et brett med to
-løver ser helt riktig ut helt til fasiten sier feil rute.
+`scene.js` går gjennom 300 brett per tema. Det er ikke overdrevet: en regel som
+holder for brett 1 til 20, ryker gjerne på brett 137, og et brett med to løver
+ser helt riktig ut helt til fasiten sier feil rute. `svar.js` svarer for hva
+som godtas som skrevet svar, med krav fra begge sider — for streng, og arket
+måler rettskriving i stedet for koordinater; for slapp, og fasiten er
+meningsløs.
+
+Skrivefeltene har egne prøver, som trenger playwright:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node koordinatjakt/tester/skriving.js
+```
 
 Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen og Sprellemaskinen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
@@ -359,6 +368,22 @@ med blyant. Fire ting som ser ut som detaljer og har en grunn:
   og alt har en mørk kontur — den er det eneste som holder arket lesbart i
   svart-hvitt. En brikke som stikker utenfor sitt eget 0–100-rom, peker inn i
   naborutas svar; slangens tunge lå på `x=104`.
+- **Arket øver koordinater, ikke rettskriving.** Skrivemodus godtar bestemt
+  form, æøå skrevet som ae/o/a, én skrivefeil (Damerau-Levenshtein, så et
+  ombytte som «elefnat» koster én) og kjente alternative ord. Men korte ord må
+  treffe eksakt — «kart» og «katt» er én bokstav fra hverandre, samme lærdom
+  som ordmatchingen i Monstergiret — og toleransen gjelder først når barnet
+  sier seg ferdig, ellers låser feltet seg på «elefan».
+- **«Kan bekrefte, aldri avvise» gjelder *ikke* her.** Den regelen kommer av
+  at talegjenkjenning bommer på barnestemmer, så et «feil» ville rammet barn
+  som leste riktig. Et skrevet svar er ikke usikkert på den måten. Appen sier
+  derfor fra — men uten rødt, uten å nevne barnet, og med en hjelpeknapp i to
+  trinn som aldri markerer oppgaven som mislykket.
+- **Feltene er satt opp for iOS, ikke for smak.** `autocorrect="off"`,
+  `autocapitalize="none"`, `spellcheck="false"`, `enterkeyhint="next"` og
+  minst 16 px skrift — er skriften mindre, zoomer Safari inn på feltet og
+  kartet forsvinner. Bildet står ved siden av svarene fra 56 rem og opp, fordi
+  tastaturet på iPaden ellers dytter kartet ut av syne.
 
 Appen har **med vilje ingen service worker**, som Lesestjerna: arket lages på
 en maskin med skriver, ikke på en telefon på hjemskjermen. `?v=` i
