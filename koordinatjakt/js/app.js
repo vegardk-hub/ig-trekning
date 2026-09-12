@@ -222,7 +222,9 @@
        svar er ikke usikkert på den måten. */
     o.el.felt.classList.add('bom');
     o.el.hjelp.classList.add('tilbud');
-    el.beskjed.textContent = 'Ikke helt. Se en gang til på ' + o.rute + ' – eller trykk på ?';
+    // Ingen naken «?» til slutt: den brekker ned på egen linje og ser ut som en feil.
+    el.beskjed.textContent = 'Ikke helt. Se en gang til på ' + o.rute +
+      ', eller trykk på hjelpeknappen.';
   }
 
   function godta(o, flyttVidere) {
@@ -246,7 +248,7 @@
     o.el.li.classList.add('lost');
     if (feiring) o.el.li.classList.add('nettopp');
     o.el.retting.textContent =
-      Svar.normaliser(tekst) === Svar.normaliser(o.ord) ? '' : o.ord;
+      Svar.normaliser(tekst) === Svar.normaliser(o.ord) ? '' : 'Skrives «' + o.ord + '»';
   }
 
   function nesteTomme(fra) {

@@ -112,8 +112,8 @@ function bolk(navn) { console.log('\n' + navn); }
   await side.waitForTimeout(120);
   krev(await felt(langt).evaluate(e => e.classList.contains('riktig')),
     '«' + medFeil + '» skal godtas når barnet sier seg ferdig');
-  krev(await retting(langt).textContent() === fasit[langt],
-    'riktig skrivemåte skal stå ved siden av', await retting(langt).textContent());
+  krev((await retting(langt).textContent()).indexOf(fasit[langt]) >= 0,
+    'riktig skrivemåte skal stå under feltet', await retting(langt).textContent());
 
   bolk('Galt svar sier fra uten å rope');
   const galt = fasit.findIndex((o, i) => i !== 0 && i !== langt);

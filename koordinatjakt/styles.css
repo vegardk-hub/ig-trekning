@@ -132,7 +132,9 @@ html, body {
   grid-template-columns: 1fr;
   gap: .5rem;
 }
-.oppgaver li { display: flex; align-items: center; gap: .5rem; }
+/* `wrap` er ikke pynt: rettingen har sin egen bredde og krymper ikke, så på
+   en iPad rant den ut av kortet når den lå på samme linje som feltet. */
+.oppgaver li { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .5rem; }
 .oppgaver .rute {
   font-weight: 700;
   font-size: 1.05rem;
@@ -183,7 +185,14 @@ html, body {
 
 /* Barnets skrivemåte blir stående; riktig skrivemåte settes ved siden av
    når de er ulike. En rettelse, ikke en underkjennelse. */
-.retting { font-size: .82rem; color: var(--dempet); font-style: italic; }
+.retting {
+  flex: 1 0 100%;
+  /* Innrykk med padding og ikke margin: `box-sizing: border-box` regner
+     padding inn i de 100 prosentene, mens en margin dytter linja utenfor. */
+  padding-left: 3.1rem;
+  font-size: .82rem;
+  color: var(--dempet);
+}
 .retting:empty { display: none; }
 
 .beskjed { margin: .6rem 0 0; min-height: 1.2rem; font-size: .9rem; color: #8a6412; }
