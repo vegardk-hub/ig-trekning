@@ -4,8 +4,8 @@ Lager øvingsark der barnet finner ting i et rutenett og skriver ordet.
 Bokstavene A–J står vannrett, tallene 1–10 loddrett med **1 øverst** — som på
 et kart, ikke som i et koordinatsystem.
 
-Det er **ett ark med to måter å svare på**: på skjermen er svarlinja et
-skrivefelt, på papiret er den en strek. Samme brett, samme oppgaver, samme
+Det er **ett ark med tre måter å svare på**: på skjermen er svarlinja et
+skrivefelt med en mikrofonknapp ved siden av, på papiret er den en strek. Samme brett, samme oppgaver, samme
 rekkefølge — så en voksen kan skrive ut arket til ett barn og la det andre
 skrive på iPaden uten at de to sitter med hver sin oppgave.
 
@@ -31,7 +31,8 @@ må ha en veirute som nabo. Rekkefølgen står i `js/scene.js`.
 | `js/temaer.js` | Hvilke brikker som hører sammen, og hvor de kan stå. |
 | `js/scene.js` | Utleggingen av ett brett. Ingen piksler. |
 | `js/oppgaver.js` | Hvilke funn det spørres om, og fasiten. |
-| `js/svar.js` | Om et skrevet svar er riktig. Ingen DOM. |
+| `js/svar.js` | Om et svar er riktig – skrevet eller sagt. Ingen DOM. |
+| `js/lytting.js` | Mikrofonen. Ett ord, ett forsøk. |
 | `js/tegn.js` | Scenen som SVG. |
 | `js/app.js` | Panelet, adressen og utskriften. |
 
@@ -71,13 +72,62 @@ Og tre ting som ikke godtas, fordi de gjør fasiten utydelig:
   mens det skriver — ellers låser feltet seg på «elefan». Derfor har
   `Svar.godtar` et `streng`-flagg: `input` bruker det, `Enter` og `blur` ikke.
 
-### Hvorfor «aldri avvis» ikke gjelder her
+### Innlesing
+
+Barnet kan si ordet i stedet for å skrive det. Det er en annen bruk av
+mikrofonen enn i Monstergiret og Lesestjerna, der den står på mens barnet
+leser en hel tekst, og det gir en annen innstilling i `lytting.js`:
+
+- **`continuous = false`.** Vi venter på ett ord, ikke på en strøm. Og
+  gjenkjenneren skal **ikke** startes på nytt i `onend` — det er nødvendig når
+  noen leser og pauser, men her ville det bare latt mikrofonen stå åpen i
+  bakgrunnen.
+- **`maxAlternatives = 5`.** Ett ord uten setning rundt seg er det vanskeligste
+  en gjenkjenner får, for den har ingen sammenheng å gjette ut fra.
+  Førstevalget er ofte feil mens det riktige ligger som nummer tre. Alle
+  alternativene prøves, og det er den enkeltendringen som flytter mest på hvor
+  ofte innlesing faktisk virker.
+- **Tidsur på sju sekunder.** Sier barnet ingenting, fyrer verken `onresult`
+  eller `onerror` på alle nettlesere, og knappen blir stående og lyse.
+
+Matchingen er den samme som for skrevne svar, pluss en lydvei: `Svar.forenkle`
+skriver ordet om til noe som ligner uttalen, så skrivemåter som høres like ut,
+faller sammen. Ideen er hentet fra `pwa-lesing/js/tale.js`, og grunnen er den
+samme — **gjenkjenneren skriver ned det den hørte, ikke det som staves.**
+Rekkefølgen i `forenkle` er ikke likegyldig: æ, ø og å må stå igjen til etter
+sj- og kj-reglene, ellers blir «skole» til «sjole».
+
+Et treff skriver **fasiten** inn i feltet, ikke det gjenkjenneren fikk til.
+Den kan ha hørt «sjiraf» og blitt godtatt; i feltet skal det stå «sjiraff». For
+et barn som ikke skriver ennå, er det gratis lesetrening.
+
+Gjenkjenningen går over nett i både Chrome og Safari — lyden sendes til en
+tjener. Uten nett skjer det ingenting, og det er ikke en feil i appen. Finnes
+ikke `SpeechRecognition` i det hele tatt, forsvinner mikrofonknappene og
+panelet sier hvorfor; skriving virker som før.
+
+Har mikrofonen sluttet å virke etter at siden er lagt på hjemskjermen: prøv
+den i Safari først. Samme historie som Monstergiret — talegjenkjenning i
+hjemskjermmodus har vært upålitelig på iOS, og det er ikke koden her.
+
+### Hvorfor «aldri avvis» ikke gjelder for det skrevne svaret – men gjelder for det talte
 
 Monstergiret og Lesestjerna kan bekrefte, aldri avvise, og ingenting blir
 rødt. Den regelen kommer av at **talegjenkjenning bommer på barnestemmer** —
-et «feil» ville rammet barn som leste riktig. Et skrevet svar er ikke usikkert
-på den måten: det står nøyaktig det barnet skrev. Her er det ærlig å si at det
-ikke stemte.
+et «feil» ville rammet barn som leste riktig.
+
+Det gjør at de to svarveiene her må behandles motsatt, og forskjellen er hvor
+usikkerheten ligger:
+
+- **Skrevet svar.** Det står nøyaktig det barnet skrev. Appen kan trygt si at
+  det ikke stemte.
+- **Talt svar.** Det er en gjetning om en barnestemme. Et bom fra mikrofonen
+  sier ingenting om barnet, og får derfor aldri `bom`-rammen eller «ikke
+  helt». Appen forteller hva den hørte — det er en opplysning om mikrofonen,
+  ikke en dom.
+
+Dette er kravet som er lettest å ødelegge ved et uhell, siden de to veiene
+ender i samme felt. `tester/lytting.js` håndhever det.
 
 Så Koordinatjakt sier fra — men uten å rope. Feltet får en rolig ramme, aldri
 en rød. Beskjeden nevner ruta og hjelpeknappen, ikke barnet. Hjelpen har to
@@ -172,6 +222,7 @@ Kjøres etter hver endring i `js/`. De trenger verken nettleser eller server:
 node koordinatjakt/tester/scene.js
 node koordinatjakt/tester/svar.js
 NODE_PATH=/opt/node22/lib/node_modules node koordinatjakt/tester/skriving.js
+NODE_PATH=/opt/node22/lib/node_modules node koordinatjakt/tester/lytting.js
 ```
 
 `scene.js` går gjennom 300 brett per tema og svarer på alt om utleggingen:
@@ -187,6 +238,13 @@ slapp, og fasiten er meningsløs.
 at et eksakt svar låser seg selv, at en skrivefeil ikke låser seg halvveis, at
 hjelpen skriver inn ordet og ikke det som sto der fra før, og at tolv løste
 oppgaver overlever en omlasting.
+
+`lytting.js` trenger playwright og **stubber gjenkjenneren**, som den skal:
+skyøkta har ingen lydinngang, og `--use-fake-device-for-media-capture` hjelper
+ikke — samme lærdom som innspillingsprøven i Monstergiret. Den svarer for alt
+som ligger mellom gjenkjenneren og barnet: at mikrofonen settes opp for ett ord
+og ikke for en strøm, at et treff skriver inn fasiten, og framfor alt at et bom
+fra mikrofonen aldri behandles som et galt svar.
 
 ## Nye brikker og temaer
 

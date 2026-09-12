@@ -111,6 +111,78 @@ var Svar = (function () {
     return normaliser(ord).length >= MINSTELENGDE ? 1 : 0;
   }
 
+  /* ------------------------------------------------------------- talen */
+
+  /* Skriver ordet om til noe som ligner måten det uttales på.
+   *
+   * Ideen er hentet fra `pwa-lesing/js/tale.js`, og grunnen er den samme:
+   * **gjenkjenneren skriver ned det den hørte, ikke det som staves.** Sier
+   * barnet «sjiraff», kommer det gjerne tilbake som «sjiraf», «girafo» eller
+   * «sirap». Poenget er ikke riktig fonetikk, men at skrivemåter som høres
+   * like ut, faller sammen.
+   *
+   * Dette brukes bare på talte svar. Et skrevet svar skal fortsatt måles mot
+   * bokstavene – der er «sirap» en annen ting enn en sjiraff. */
+  function forenkle(o) {
+    o = String(o).toLowerCase();
+    /* Rekkefølgen er ikke likegyldig. Æ, ø og å må stå igjen til etter
+       sj- og kj-reglene: «sk» er mykt foran i, y, ei og øy, men hardt ellers,
+       og folder vi ø til o først, blir «skole» til «sjole». */
+    o = o.replace(/hv/g, 'v');
+    o = o.replace(/gj|hj|lj/g, 'j');
+    o = o.replace(/skj|sj/g, 'S');
+    o = o.replace(/sk([eiyø])/g, 'S$1');
+    o = o.replace(/kj|tj/g, 'C');
+    o = o.replace(/k([iyj])/g, 'C$1');
+    // «hund» og «hun» høres likt ut, det samme gjør «and» og «ann».
+    o = o.replace(/([ln])d\b/g, '$1');
+    o = o.replace(/æ/g, 'e').replace(/ø/g, 'o').replace(/å/g, 'o');
+    o = o.replace(/(.)\1+/g, '$1');
+    return o.replace(/[^a-zSC0-9]/g, '');
+  }
+
+  function lydTreff(tekst, ord, alternativer) {
+    var lyd = forenkle(tekst);
+    if (!lyd) return false;
+    var treff = false;
+    former(ord, alternativer).forEach(function (f) { if (forenkle(f) === lyd) treff = true; });
+    return treff;
+  }
+
+  /*
+   * Et talt svar. `kandidater` er alt gjenkjenneren mente å høre – alle
+   * alternativene, ikke bare førstevalget.
+   *
+   * Hver kandidat prøves både som hele utsagnet og ord for ord: sier barnet
+   * «det er en løve», er «løve» det eneste som betyr noe.
+   *
+   * Her gjelder regelen fra Monstergiret igjen, og den gjelder for alvor:
+   * **appen kan bekrefte, aldri avvise.** Et nei fra mikrofonen sier ingenting
+   * om barnet – gjenkjenneren bommer på barnestemmer, og et enkeltord uten
+   * setning rundt seg er det vanskeligste den får. Derfor er dette
+   * rundhåndet, og derfor sier appen aldri at et talt svar var feil.
+   */
+  function godtarTalt(kandidater, oppgave, andre) {
+    var liste = [].concat(kandidater || []);
+    for (var i = 0; i < liste.length; i++) {
+      var hele = String(liste[i] || '');
+      var biter = [hele].concat(hele.toLowerCase().split(/[\s,.!?]+/));
+      for (var j = 0; j < biter.length; j++) {
+        var bit = biter[j];
+        if (!bit) continue;
+        if (godtar(bit, oppgave, andre, false)) return true;
+        // Lydveien: bare hvis den ikke passer like godt på noe annet på brettet.
+        if (!lydTreff(bit, oppgave.ord, oppgave.alternativer)) continue;
+        var tvetydig = false;
+        (andre || []).forEach(function (a) {
+          if (lydTreff(bit, a.ord, a.alternativer)) tvetydig = true;
+        });
+        if (!tvetydig) return true;
+      }
+    }
+    return false;
+  }
+
   /*
    * `oppgave`  – { ord, alternativer }
    * `andre`    – de øvrige funnene på brettet, samme form. Brukes bare til å
@@ -138,6 +210,9 @@ var Svar = (function () {
     naerhet: naerhet,
     toleranse: toleranse,
     godtar: godtar,
+    forenkle: forenkle,
+    lydTreff: lydTreff,
+    godtarTalt: godtarTalt,
     ENDELSER: ENDELSER,
     MINSTELENGDE: MINSTELENGDE
   };

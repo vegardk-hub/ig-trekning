@@ -135,11 +135,17 @@ som godtas som skrevet svar, med krav fra begge sider — for streng, og arket
 måler rettskriving i stedet for koordinater; for slapp, og fasiten er
 meningsløs.
 
-Skrivefeltene har egne prøver, som trenger playwright:
+Svarfeltene og mikrofonen har egne prøver, som trenger playwright:
 
 ```
 NODE_PATH=/opt/node22/lib/node_modules node koordinatjakt/tester/skriving.js
+NODE_PATH=/opt/node22/lib/node_modules node koordinatjakt/tester/lytting.js
 ```
+
+`lytting.js` stubber gjenkjenneren, og det skal den: skyøkta har ingen
+lydinngang, og `--use-fake-device-for-media-capture` hjelper ikke — samme
+lærdom som innspillingsprøven i Monstergiret. Ikke bruk tid på å få den ekte
+veien til å virke der.
 
 Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen og Sprellemaskinen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
@@ -374,11 +380,22 @@ med blyant. Fire ting som ser ut som detaljer og har en grunn:
   treffe eksakt — «kart» og «katt» er én bokstav fra hverandre, samme lærdom
   som ordmatchingen i Monstergiret — og toleransen gjelder først når barnet
   sier seg ferdig, ellers låser feltet seg på «elefan».
-- **«Kan bekrefte, aldri avvise» gjelder *ikke* her.** Den regelen kommer av
-  at talegjenkjenning bommer på barnestemmer, så et «feil» ville rammet barn
-  som leste riktig. Et skrevet svar er ikke usikkert på den måten. Appen sier
-  derfor fra — men uten rødt, uten å nevne barnet, og med en hjelpeknapp i to
-  trinn som aldri markerer oppgaven som mislykket.
+- **«Kan bekrefte, aldri avvise» gjelder for det talte svaret, ikke for det
+  skrevne.** De to veiene ender i samme felt og må behandles motsatt, fordi
+  usikkerheten ligger ulike steder. Det barnet *skrev*, står det nøyaktig hva
+  er — der kan appen trygt si at det ikke stemte, uten rødt og uten å nevne
+  barnet. Det mikrofonen *hørte*, er en gjetning om en barnestemme — der får et
+  bom aldri `bom`-rammen eller «ikke helt»; appen forteller hva den hørte, og
+  det er en opplysning om mikrofonen. Dette er lett å ødelegge ved et uhell;
+  `tester/lytting.js` håndhever det.
+- **Mikrofonen venter på ett ord, ikke på en strøm.** `continuous = false`, og
+  ingen omstart i `onend` — den omstarten er nødvendig når noen leser en hel
+  tekst og pauser, men her ville den bare latt mikrofonen stå åpen.
+  `maxAlternatives = 5` er den enkeltendringen som flytter mest: ett ord uten
+  setning rundt seg er det vanskeligste en gjenkjenner får, og det riktige
+  ordet ligger ofte ikke først. Et treff skriver inn fasiten, ikke det
+  gjenkjenneren fikk til. Gjenkjenningen går over nett i både Chrome og
+  Safari.
 - **Feltene er satt opp for iOS, ikke for smak.** `autocorrect="off"`,
   `autocapitalize="none"`, `spellcheck="false"`, `enterkeyhint="next"` og
   minst 16 px skrift — er skriften mindre, zoomer Safari inn på feltet og

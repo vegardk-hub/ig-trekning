@@ -126,6 +126,49 @@ bolk('Tvetydig skrivefeil avvises');
 krev(godtar('lyktestolpen', 'lykt'), 'entydig når det står alene');
 krev(!godtar('kart', 'katt', ['kart']), 'ligger et annet ord på brettet like nær, må svaret være eksakt');
 
+/* ----------------------------------------------------------- talte svar */
+
+bolk('Lydforenkling');
+[
+  ['sjiraff', 'Siraf'],
+  ['skole', 'skole'],        // «sk» er hardt foran o – ikke «sjole»
+  ['skøyte', 'Soyte'],       // men mykt foran ø
+  ['kirke', 'Cirke'],        // «k» er mykt foran i
+  ['kanin', 'kanin'],        // og hardt foran a
+  ['hund', 'hun'],
+  ['katt', 'kat']
+].forEach(function (par) {
+  krev(Svar.forenkle(par[0]) === par[1],
+    'forenkle(«' + par[0] + '») skal bli ' + par[1], Svar.forenkle(par[0]));
+});
+
+bolk('Talte svar godtas');
+[
+  [['løve'], 'love', 'ordet rett fram'],
+  [['Løve.'], 'love', 'gjenkjenneren setter punktum og stor bokstav'],
+  [['det er en løve'], 'love', 'barnet sier en hel setning'],
+  [['grevling', 'revling', 'løve'], 'love', 'riktig ord ligger som tredje alternativ'],
+  [['sjiraf'], 'sjiraff', 'gjenkjenneren skriver det den hørte'],
+  [['lyktestolpen'], 'lykt', 'bestemt form'],
+  [['gatelys'], 'lykt', 'et annet riktig ord'],
+  [['fjøs'], 'laave', 'alternativ, talt']
+].forEach(function (p) {
+  krev(Svar.godtarTalt(p[0], oppgave(p[1]), []), p[2] + ': ' + JSON.stringify(p[0]) +
+    ' skal godtas som ' + Brikker.ord(p[1]));
+});
+
+bolk('Talte svar som ikke skal gå gjennom');
+krev(!Svar.godtarTalt(['grevling'], oppgave('love'), []), 'et annet ord');
+krev(!Svar.godtarTalt([], oppgave('love'), []), 'ingenting hørt');
+krev(!Svar.godtarTalt([''], oppgave('love'), []), 'tomt utsagn');
+krev(!Svar.godtarTalt(['kart'], oppgave('katt'), []), 'korte ord må treffe, også på øret');
+krev(!Svar.godtarTalt(['tiger'], oppgave('love'), [oppgave('tiger')]),
+  'et annet funn på samme brett');
+/* Lydveien må stoppes av den samme tvetydighetsregelen som skriveveien.
+   To ekte ord som kolliderer finnes ikke i banken, så paret er konstruert. */
+krev(!Svar.godtarTalt(['hunn'], { ord: 'hund', alternativer: [] }, [{ ord: 'hun', alternativer: [] }]),
+  'et talt ord som høres ut som to ting på brettet');
+
 /* --------------------------------------------------- ordene mot hverandre */
 
 bolk('Ingen to brikker deler en skrivemåte');
@@ -136,6 +179,17 @@ ider.forEach(function (id) {
     krev(!eier[form] || eier[form] === id,
       'skrivemåten «' + form + '» tilhører både ' + eier[form] + ' og ' + id);
     eier[form] = eier[form] || id;
+  });
+});
+
+bolk('Ingen to brikker høres like ut');
+var lydeier = {};
+ider.forEach(function (id) {
+  Svar.former(Brikker.ord(id), Brikker.alternativer(id)).forEach(function (form) {
+    var lyd = Svar.forenkle(form);
+    krev(!lydeier[lyd] || lydeier[lyd] === id,
+      'lyden «' + lyd + '» tilhører både ' + lydeier[lyd] + ' og ' + id);
+    lydeier[lyd] = lydeier[lyd] || id;
   });
 });
 
@@ -161,6 +215,7 @@ Temaer.IDER.forEach(function (tema) {
       // Selve fasiten må alltid gå gjennom, også med resten av brettet ved siden av.
       krev(Svar.godtar(o.ord, o, andre, false), tema + ' ' + n + ': fasiten «' + o.ord + '» ble ikke godtatt');
       krev(Svar.godtar(o.ord, o, andre, true), tema + ' ' + n + ': fasiten ble ikke godtatt mens den skrives');
+      krev(Svar.godtarTalt([o.ord], o, andre), tema + ' ' + n + ': fasiten «' + o.ord + '» ble ikke godtatt talt');
       // Et annet ord på samme brett må aldri gå gjennom.
       if (andre.length) {
         var feilOrd = andre[0].ord;

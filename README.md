@@ -49,9 +49,10 @@
   øvingsark for koordinater. Et rutenett på 10 × 10 med bokstaver vannrett og
   tall loddrett, fylt med et bilde som henger sammen — en dyrehage, en
   bondegård eller en by, med vei, innhegninger og ting langs veien. Barnet får
-  en liste koordinater og skriver hva som står i hver rute — rett i feltene på
-  iPaden, eller med blyant på et utskrevet ark. Svarene godtas i bestemt form
-  og med én skrivefeil, for det er koordinater som øves, ikke rettskriving.
+  en liste koordinater og sier eller skriver hva som står i hver rute — i
+  feltene på iPaden, i mikrofonen, eller med blyant på et utskrevet ark.
+  Svarene godtas i bestemt form og med én skrivefeil, for det er koordinater
+  som øves, ikke rettskriving.
   Brettnummeret er såkornet, så et ark kan lages på nytt, og fasiten står på
   skjermen. Ingen service worker.
 

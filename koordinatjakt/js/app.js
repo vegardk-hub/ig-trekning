@@ -33,6 +33,7 @@
     bilde: document.getElementById('bilde'),
     oppgaver: document.getElementById('oppgaver'),
     fremdrift: document.getElementById('fremdrift'),
+    lyttemerknad: document.getElementById('lyttemerknad'),
     beskjed: document.getElementById('beskjed'),
     ferdigkort: document.getElementById('ferdigkort'),
     fasit: document.getElementById('fasit'),
@@ -44,7 +45,10 @@
   var LAGER = 'koordinatjakt-svar-v1';
   var MAKS_LAGREDE_BRETT = 40;
 
-  var naa = { oppgaver: [], nokkel: '', lost: {} };
+  var naa = { oppgaver: [], nokkel: '', lost: {}, lytter: null };
+
+  // Mikrofonknappene finnes ikke hvis nettleseren ikke kan høre.
+  el.lyttemerknad.hidden = Lytting.stottes();
 
   Temaer.LISTE.forEach(function (t) {
     var o = document.createElement('option');
@@ -121,6 +125,8 @@
     el.fasittittel.textContent = 'Fasit – ' + tittel;
     el.bilde.innerHTML = Tegn.svg(scene);
 
+    Lytting.stopp();
+    naa.lytter = null;
     el.oppgaver.innerHTML = '';
     el.fasitliste.innerHTML = '';
     el.beskjed.textContent = '';
@@ -165,6 +171,16 @@
     felt.setAttribute('enterkeyhint', 'next');
     felt.setAttribute('aria-label', 'Hva er i ' + o.rute + '?');
 
+    /* Mikrofonen står før hjelpeknappen: den er et alternativ til å skrive,
+       ikke en form for hjelp. Et barn som ikke skriver ennå, skal kunne løse
+       hele arket med den. */
+    var mikrofon = document.createElement('button');
+    mikrofon.type = 'button';
+    mikrofon.className = 'mikrofon';
+    mikrofon.textContent = '🎤';
+    mikrofon.setAttribute('aria-label', 'Si svaret for ' + o.rute);
+    mikrofon.hidden = !Lytting.stottes();
+
     var hjelp = document.createElement('button');
     hjelp.type = 'button';
     hjelp.className = 'hjelp';
@@ -176,10 +192,11 @@
 
     li.appendChild(rute);
     li.appendChild(felt);
+    li.appendChild(mikrofon);
     li.appendChild(hjelp);
     li.appendChild(retting);
 
-    o.el = { li: li, felt: felt, hjelp: hjelp, retting: retting };
+    o.el = { li: li, felt: felt, mikrofon: mikrofon, hjelp: hjelp, retting: retting };
     o.hjelpetrinn = 0;
 
     if (naa.lost[o.rute]) laas(o, naa.lost[o.rute], false);
@@ -200,6 +217,7 @@
       li.scrollIntoView({ block: 'center' });
     });
     hjelp.addEventListener('click', function () { hjelpetrinn(o); });
+    mikrofon.addEventListener('click', function () { lyttTil(o); });
 
     return li;
   }
@@ -245,6 +263,7 @@
     o.el.felt.classList.add('riktig');
     o.el.hjelp.classList.remove('tilbud');
     o.el.hjelp.hidden = true;
+    o.el.mikrofon.hidden = true;
     o.el.li.classList.add('lost');
     if (feiring) o.el.li.classList.add('nettopp');
     o.el.retting.textContent =
@@ -279,6 +298,69 @@
        havnet i rettingen ved siden av. */
     o.el.felt.value = o.ord;
     godta(o);
+  }
+
+  /* -------------------------------------------------------------- talen
+     Her gjelder regelen fra Monstergiret, og den gjelder for alvor:
+     **appen kan bekrefte, aldri avvise.** Et nei fra mikrofonen sier
+     ingenting om barnet — gjenkjenneren bommer på barnestemmer, og ett ord
+     uten setning rundt seg er det vanskeligste den får. Derfor får et talt
+     svar som ikke traff, aldri `bom`-rammen eller «ikke helt». Appen
+     forteller hva den hørte, og det er en opplysning om mikrofonen, ikke en
+     dom over barnet.
+
+     Det er den motsatte avveiningen av det skrevne svaret, og forskjellen er
+     hvor usikkerheten ligger: det barnet skrev, står det nøyaktig hva det er. */
+
+  function avsluttLytting() {
+    if (!naa.lytter) return;
+    naa.lytter.el.li.classList.remove('lytter');
+    naa.lytter.el.mikrofon.setAttribute('aria-pressed', 'false');
+    naa.lytter = null;
+  }
+
+  function lyttTil(o) {
+    if (o.el.felt.readOnly) return;
+    var samme = naa.lytter === o;
+    Lytting.stopp();
+    avsluttLytting();
+    if (samme) { el.beskjed.textContent = ''; return; }   // andre trykk slår av
+
+    o.el.felt.classList.remove('bom');
+    naa.lytter = o;
+    o.el.li.classList.add('lytter');
+    o.el.mikrofon.setAttribute('aria-pressed', 'true');
+    el.beskjed.textContent = 'Si hva som er i ' + o.rute + ' …';
+
+    var startet = Lytting.lytt({
+      paaSvar: function (kandidater) {
+        if (Svar.godtarTalt(kandidater, o, andre(o))) {
+          /* Fasiten skrives inn, ikke det gjenkjenneren fikk til. Den kan ha
+             hørt «sjiraf» og blitt godtatt; i feltet skal det stå «sjiraff».
+             For et barn som ikke skriver ennå, er det gratis lesetrening. */
+          o.el.felt.value = o.ord;
+          godta(o);
+          return;
+        }
+        el.beskjed.textContent = kandidater && kandidater.length
+          ? 'Jeg hørte «' + kandidater[0] + '». Prøv en gang til, eller skriv ordet.'
+          : 'Jeg hørte ingenting. Prøv en gang til.';
+      },
+      paaFeil: function (kode) {
+        el.beskjed.textContent =
+          kode === 'nektet' ? 'Mikrofonen er ikke slått på for denne siden.' :
+          kode === 'nett' ? 'Innlesing trenger nett. Skriv ordet i stedet.' :
+          kode === 'ingenting' ? 'Jeg hørte ingenting. Prøv en gang til.' :
+          kode === 'avbrutt' ? '' :
+          'Mikrofonen ville ikke. Prøv igjen, eller skriv ordet.';
+      },
+      paaSlutt: avsluttLytting
+    });
+
+    if (!startet) {
+      avsluttLytting();
+      el.beskjed.textContent = 'Fikk ikke slått på mikrofonen. Skriv ordet i stedet.';
+    }
   }
 
   function oppdaterFremdrift() {

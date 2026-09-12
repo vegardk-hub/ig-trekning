@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#3d7a3a">
 <!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
      index.html kan ellers stå med ti minutter gammel CSS og JS. -->
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -45,6 +45,8 @@
 
   <label class="bryter"><input type="checkbox" id="visfasit"> Vis fasit</label>
   <p class="merknad" id="merknad">Samme brettnummer gir alltid samme bilde – skriv det ned, så kan arket lages på nytt.</p>
+  <p class="merknad" id="lyttemerknad" hidden>Innlesing virker ikke i denne nettleseren. Prøv Safari eller Chrome – og husk at
+    gjenkjenningen trenger nett.</p>
 </section>
 
 <!-- Arket er det som havner på papiret. Alt utenfor skjules i @media print. -->
@@ -53,7 +55,8 @@
     <h2 id="arktittel">Koordinatjakt</h2>
     <p class="navnefelt"><span>Navn:</span><span class="linje"></span></p>
   </div>
-  <p class="instruks" id="instruks">Se på ruta som står foran linja. Skriv hva du finner der.</p>
+  <p class="instruks" id="instruks">Se på ruta som står foran linja. Skriv hva du finner der –
+    eller trykk på mikrofonen og si det.</p>
 
   <!-- Bildet og svarene står side ved side på brede skjermer, så tastaturet
        på iPaden ikke dytter kartet ut av syne. I utskriften stables de. -->
@@ -74,13 +77,14 @@
   <ol class="oppgaver fasitliste" id="fasitliste"></ol>
 </section>
 
-<script src="js/tilfeldig.js?v=2"></script>
-<script src="js/brikker.js?v=2"></script>
-<script src="js/temaer.js?v=2"></script>
-<script src="js/scene.js?v=2"></script>
-<script src="js/oppgaver.js?v=2"></script>
-<script src="js/svar.js?v=2"></script>
-<script src="js/tegn.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/tilfeldig.js?v=3"></script>
+<script src="js/brikker.js?v=3"></script>
+<script src="js/temaer.js?v=3"></script>
+<script src="js/scene.js?v=3"></script>
+<script src="js/oppgaver.js?v=3"></script>
+<script src="js/svar.js?v=3"></script>
+<script src="js/lytting.js?v=3"></script>
+<script src="js/tegn.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>
