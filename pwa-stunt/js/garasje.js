@@ -25,8 +25,8 @@
 
 var Garasje = (function () {
 
-  var B = 480, H = 560;
-  var GULV = 430;          // gulvlinja bilen står på
+  var B = 480, H = 640;
+  var GULV = 470;          // gulvlinja bilen står på
   var BILSKALA = 0.75;
 
   var VEGG = '#232a40';
@@ -34,7 +34,6 @@ var Garasje = (function () {
   var VEGG_MORK = '#1b2136';
   var RAMME = '#39415e';
   var RAMME_MORK = '#2a3049';
-  var RUTE = '#222a42';
   var METALL = '#4a5470';
 
   /* ---------- ting i rommet ---------- */
@@ -46,9 +45,40 @@ var Garasje = (function () {
            '<ellipse cx="' + x + '" cy="136" rx="26" ry="6" fill="#fff3c4"/>' +
            // Lyskjeglen ned mot gulvet. Den er det som gjør at rommet ser
            // opplyst ut i stedet for bare lyst malt.
-           '<path d="M' + (x - 24) + ' 139 L' + (x + 24) + ' 139 L' + (x + 108) + ' ' + GULV +
-             ' L' + (x - 108) + ' ' + GULV + ' Z" fill="url(#' + pre + 'kjegle)"/>' +
+           '<path d="M' + (x - 24) + ' 139 L' + (x + 24) + ' 139 L' + (x + 118) + ' ' + GULV +
+             ' L' + (x - 118) + ' ' + GULV + ' Z" fill="url(#' + pre + 'kjegle)"/>' +
            '<circle cx="' + x + '" cy="139" r="8" fill="#fff8dc"' + ' class="blink-' + gruppe + '"/>';
+  }
+
+  /*
+   * Lyspyttene på gulvet hører sammen med kjeglene. En kjegle som stopper i
+   * gulvlinja ser ut som et forheng: det er flekken nedenfor som gjør at
+   * lyset lander et sted.
+   */
+  function lyspytt(x, pre) {
+    return '<ellipse cx="' + x + '" cy="' + (GULV + 46) + '" rx="150" ry="46" fill="url(#' +
+           pre + 'pytt)"/>';
+  }
+
+  /*
+   * Gulvet i perspektiv. Linjene møtes i et punkt bak veggen, og tverrlinjene
+   * står tettere jo lenger bak de ligger. Det er den eneste konstruksjonen i
+   * hele appen som later som den er tredimensjonal, og den koster åtte
+   * linjer: uten den leser gulvet som enda en vegg lagt ned.
+   */
+  function gulvrutenett(pre) {
+    var vx = B / 2, vy = GULV - 150;
+    var s = '<g clip-path="url(#' + pre + 'gulvklipp)" stroke="' + RAMME +
+            '" stroke-width="2" opacity="0.55" fill="none">';
+    for (var i = -7; i <= 17; i++) {
+      s += '<line x1="' + (i * 52) + '" y1="' + H + '" x2="' + vx + '" y2="' + vy + '"/>';
+    }
+    for (var k = 1; k <= 5; k++) {
+      var t = k / 6;
+      var y = GULV + (H - GULV) * t * t;
+      s += '<line x1="0" y1="' + y.toFixed(1) + '" x2="' + B + '" y2="' + y.toFixed(1) + '"/>';
+    }
+    return s + '</g>';
   }
 
   function verktoytavle(x, y) {
@@ -133,14 +163,28 @@ var Garasje = (function () {
 
     s += '<defs>' +
          '<linearGradient id="' + pre + 'kjegle" x1="0" y1="0" x2="0" y2="1">' +
-           '<stop offset="0" stop-color="#fff3c4" stop-opacity="0.20"/>' +
+           '<stop offset="0" stop-color="#ffeec2" stop-opacity="0.30"/>' +
            '<stop offset="1" stop-color="#fff3c4" stop-opacity="0"/></linearGradient>' +
+         '<radialGradient id="' + pre + 'pytt">' +
+           '<stop offset="0" stop-color="#ffeaa8" stop-opacity="0.26"/>' +
+           '<stop offset="1" stop-color="#ffeaa8" stop-opacity="0"/></radialGradient>' +
          '<linearGradient id="' + pre + 'gulv" x1="0" y1="0" x2="0" y2="1">' +
-           '<stop offset="0" stop-color="#2a3350"/>' +
-           '<stop offset="1" stop-color="#151a2b"/></linearGradient>' +
+           '<stop offset="0" stop-color="#333e60"/>' +
+           '<stop offset="0.45" stop-color="#232b45"/>' +
+           '<stop offset="1" stop-color="#12172680"/></linearGradient>' +
          '<linearGradient id="' + pre + 'vegg" x1="0" y1="0" x2="0" y2="1">' +
            '<stop offset="0" stop-color="' + VEGG_LYS + '"/>' +
-           '<stop offset="1" stop-color="' + VEGG + '"/></linearGradient>' +
+           '<stop offset="0.72" stop-color="' + VEGG + '"/>' +
+           '<stop offset="1" stop-color="' + VEGG_MORK + '"/></linearGradient>' +
+         // Refleksjonen tones bort nedover. Uten uttoningen ser speilbildet
+         // like fast ut som bilen, og gulvet blir en glassplate.
+         '<linearGradient id="' + pre + 'demp" x1="0" y1="0" x2="0" y2="1">' +
+           '<stop offset="0" stop-color="#171d30" stop-opacity="0.10"/>' +
+           '<stop offset="0.5" stop-color="#171d30" stop-opacity="0.72"/>' +
+           '<stop offset="1" stop-color="#171d30" stop-opacity="0.96"/></linearGradient>' +
+         '<clipPath id="' + pre + 'gulvklipp">' +
+           '<rect x="0" y="' + GULV + '" width="' + B + '" height="' + (H - GULV) + '"/>' +
+         '</clipPath>' +
          '</defs>';
 
     /* --- vegg og gulv, helt ut til kanten --- */
@@ -155,14 +199,8 @@ var Garasje = (function () {
 
     s += '<rect x="0" y="' + GULV + '" width="' + B + '" height="' + (H - GULV) +
          '" fill="url(#' + pre + 'gulv)"/>';
-
-    // Fliser i det øverste båndet av gulvet. Et helt rutet gulv i perspektiv
-    // ville krevd en projeksjon; dette leser som fliser uten den.
-    for (var i = 0; i < 16; i++) {
-      if (i % 2) continue;
-      s += '<rect x="' + (i * 30) + '" y="' + GULV + '" width="30" height="26" fill="' + RUTE + '"/>';
-    }
-    s += '<rect x="0" y="' + GULV + '" width="' + B + '" height="4" fill="' + RAMME + '"/>';
+    s += gulvrutenett(pre);
+    s += '<rect x="0" y="' + (GULV - 3) + '" width="' + B + '" height="5" fill="' + RAMME + '"/>';
 
     /* --- ting langs veggen --- */
 
@@ -170,13 +208,36 @@ var Garasje = (function () {
     s += vimpler(78);
     s += verktoytavle(20, 196);
     s += hylle(368, 214);
-    s += verktoykasse(22, 372);
-    s += dekkstabel(424, 418);
+    s += verktoykasse(22, 412);
+    s += dekkstabel(424, 458);
 
     /* --- bilen, i samme koordinatverden --- */
 
     var tx = (B - Bil.bredde * BILSKALA) / 2;
     var ty = GULV - Bil.BAKKE * BILSKALA;
+
+    /*
+     * Speilbildet først, så lyspyttene, så bilen. Rekkefølgen er hele
+     * trikset: lyset legger seg *over* refleksjonen og vasker den ut der
+     * gulvet er lyst, akkurat som et blankt betonggulv gjør.
+     */
+    /*
+     * Klippet ligger på en *ytre* gruppe uten transform. `clip-path` løses i
+     * brukerrommet elementets eget `transform` har satt opp, så en klipperute
+     * i gulvkoordinater på den speilvendte gruppa ble tolket i speilvendt,
+     * skalert rom – og klippet bort hele refleksjonen.
+     */
+    s += '<g clip-path="url(#' + pre + 'gulvklipp)" opacity="0.19">' +
+         '<g transform="translate(' + tx + ',' + (2 * GULV - ty).toFixed(1) +
+         ') scale(' + BILSKALA + ',' + (-BILSKALA) + ')">' +
+         Bil.innhold(valgt, pre + 'speil') + '</g></g>';
+    s += '<rect x="0" y="' + GULV + '" width="' + B + '" height="' + (H - GULV) +
+         '" fill="url(#' + pre + 'demp)"/>';
+    s += lyspytt(148, pre) + lyspytt(332, pre);
+
+    // Skygge rett under bilen, så den ikke svever over sitt eget speilbilde.
+    s += '<ellipse cx="' + (B / 2) + '" cy="' + (GULV + 6) + '" rx="116" ry="11" fill="#0c1020" opacity="0.42"/>';
+
     s += '<g transform="translate(' + tx + ',' + ty.toFixed(1) + ') scale(' + BILSKALA + ')">' +
          Bil.innhold(valgt, pre + 'bil') + '</g>';
 
@@ -184,7 +245,7 @@ var Garasje = (function () {
 
     s += '<rect x="0" y="0" width="' + B + '" height="56" fill="' + RAMME + '"/>';
     // Porten er rullet opp: noen få lameller under bjelken.
-    for (i = 0; i < 4; i++) {
+    for (var i = 0; i < 4; i++) {
       s += '<rect x="0" y="' + (8 + i * 11) + '" width="' + B + '" height="8" rx="3" fill="' +
            RAMME_MORK + '"/>';
     }

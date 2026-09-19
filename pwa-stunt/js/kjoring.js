@@ -1,14 +1,14 @@
 /*
- * Kjøringen: kamera, bakgrunn og tegning av løypa.
+ * Kjøringen: kamera, bil, partikler og sløyfa.
  *
- * Selve fysikken ligger i `fysikk.js`. Den ble skilt ut fordi løypa må
- * stemmes av mot tall bare simuleringen kjenner – avsprangsfart, hopplengde,
- * om en maksbil rekker fra siste hopp til mål – og de spørsmålene skal kunne
- * besvares av en prøve i node på et sekund, ikke av en nettleser som kjører
- * løypa i sanntid.
+ * Fysikken ligger i `fysikk.js` og kulissene i `kulisse.js`. Det som er igjen
+ * her, er kameraet, bilen selv, alt som spruter ut av den, og bilderuta som
+ * binder det sammen.
  *
- * Det som er igjen her, er utseende: hvor kameraet står, hvordan asfalten,
- * jorda og åsene tegnes, og hvor fort hjulene snurrer.
+ * Kameraet er ikke en ren følger. Det ser lenger fram jo fortere bilen går,
+ * trekker seg litt ut i fart, og rister når bilen lander. Alle tre er små
+ * tall, og til sammen er de forskjellen på at bildet *følger* bilen og at
+ * det *kjører* den.
  */
 'use strict';
 
@@ -30,6 +30,7 @@ var Kjoring = (function () {
     var fys = Fysikk.lag(lope, oppg, bonus);
     var b = fys.bil;
     var popper = fys.popper;
+    var kul = Kulisse.lag(lope);
 
     var tid = 0, rest = 0, sistTid = 0;
     var kjorer = false, ferdigKalt = null;
@@ -45,9 +46,6 @@ var Kjoring = (function () {
      * ...men bare opp til et tak. Et femeikers hjul gjentar seg hver 72.
      * grad, og passerer det mer enn halvparten av det mellom to bilderuter,
      * ser det ut til å snurre bakover – samme vognhjuleffekt som på film.
-     * Ekte fart ville gitt over 40 grader per rute på toppfart. Taket ligger
-     * godt under halve eikeavstanden, så hjulet alltid går rett vei; under
-     * det er snurringen nøyaktig.
      */
     var MAKSSNURR = 16;   // radianer per sekund
 
@@ -57,29 +55,157 @@ var Kjoring = (function () {
      * dem i takt med klokka. Takten er den samme som CSS-animasjonen i
      * garasjen, så lysene blinker likt begge steder.
      */
-    var BLINKTAKT = 0.45;   // sekunder per fase
+    var BLINKTAKT = 0.45;
+
+    /* ---------- kamera ---------- */
+
+    var framsyn = 0;        // hvor langt foran bilen kameraet ser
+    var ristX = 0, ristY = 0;
+    var forrigeFlyr = false;
+
+    function kamerarist(styrke) {
+      ristX = styrke;
+      ristY = styrke * 0.7;
+    }
+
+    /* ---------- partikler ---------- */
+
+    /*
+     * Ett felles kvantum for alt som spruter: støv fra hjulene, smell i
+     * landingen og gnister når en mynt tas. Én liste og én oppdatering er
+     * nok – forskjellen mellom dem er bare farge, levetid og tyngde.
+     */
+    var partikler = [];
+    var MAKSPARTIKLER = 150;
+
+    function gnist(x, y, vx, vy, r, farge, levetid, tyngde) {
+      if (partikler.length >= MAKSPARTIKLER) partikler.shift();
+      partikler.push({
+        x: x, y: y, vx: vx, vy: vy, r: r,
+        farge: farge, alder: 0, levetid: levetid, tyngde: tyngde || 0
+      });
+    }
+
+    function stov(x, y, fart) {
+      var v = (Math.random() - 0.5) * 60;
+      gnist(x + (Math.random() - 0.5) * 20, y - 4,
+            -fart * 0.10 + v, -20 - Math.random() * 60,
+            7 + Math.random() * 9, '#c8b48e', 0.55 + Math.random() * 0.35, -90);
+    }
+
+    function smell(x, y) {
+      for (var i = 0; i < 16; i++) {
+        var vi = Math.PI + (Math.random() - 0.5) * Math.PI * 1.1;
+        var f = 120 + Math.random() * 280;
+        gnist(x, y - 6, Math.cos(vi) * f, Math.sin(vi) * f * 0.7,
+              6 + Math.random() * 12, '#d8c8a4', 0.5 + Math.random() * 0.4, 260);
+      }
+    }
+
+    function myntsprut(x, y) {
+      for (var i = 0; i < 9; i++) {
+        var vi = Math.random() * Math.PI * 2;
+        var f = 90 + Math.random() * 200;
+        gnist(x, y, Math.cos(vi) * f, Math.sin(vi) * f,
+              3 + Math.random() * 5, '#7dfcb0', 0.35 + Math.random() * 0.25, 140);
+      }
+    }
+
+    function oppdaterPartikler(dt) {
+      for (var i = partikler.length - 1; i >= 0; i--) {
+        var q = partikler[i];
+        q.alder += dt;
+        if (q.alder >= q.levetid) { partikler.splice(i, 1); continue; }
+        q.vy += q.tyngde * dt;
+        q.x += q.vx * dt;
+        q.y += q.vy * dt;
+        q.vx *= 1 - 1.6 * dt;
+      }
+    }
+
+    function tegnPartikler() {
+      for (var i = 0; i < partikler.length; i++) {
+        var q = partikler[i];
+        var t = q.alder / q.levetid;
+        ctx.globalAlpha = (1 - t) * 0.8;
+        ctx.fillStyle = q.farge;
+        ctx.beginPath();
+        ctx.arc(q.x, q.y, q.r * (0.6 + t * 0.9), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
 
     function snurr(dt) {
       var fart = Math.abs(b.flyr ? b.fvx : b.v);
       hjulsnurr += Math.min(fart / hjulradius, MAKSSNURR) * dt;
     }
 
-    /* ---------- tegning ---------- */
+    /* ---------- hendelser å reagere på ---------- */
 
-    var bilPos = fys.posisjon;
+    // Myntene får et merke når spruten er vist, så den ikke gjentas hver
+    // rute. Fysikken nullstiller `tatt`; dette nullstilles her ved start.
+    for (var mi = 0; mi < lope.mynter.length; mi++) lope.mynter[mi].blaff = false;
+
+    function sePaaHendelser(dt) {
+      // Landing: fysikken sier bare at bilen ikke flyr lenger.
+      if (forrigeFlyr && !b.flyr) {
+        var pos = fys.posisjon();
+        smell(pos.x, pos.y);
+        kamerarist(26);
+      }
+      forrigeFlyr = b.flyr;
+
+      if (ristX > 0) {
+        ristX *= 1 - 9 * dt;
+        ristY *= 1 - 9 * dt;
+        if (ristX < 0.5) ristX = ristY = 0;
+      }
+
+      // Støv fra bakhjulet når bilen ruller fort på bakken.
+      if (!b.flyr && b.v > 260 && Math.random() < dt * 34) {
+        var q = fys.posisjon();
+        stov(q.x - BILBREDDE * 0.3, q.y, b.v);
+      }
+    }
+
+    function seEtterTatteMynter() {
+      for (var i = 0; i < lope.mynter.length; i++) {
+        var m = lope.mynter[i];
+        if (m.tatt && !m.blaff) {
+          m.blaff = true;
+          myntsprut(m.x, m.y);
+        }
+      }
+    }
+
+    /* ---------- tegning ---------- */
 
     function tegn() {
       var bredde = lerret.width, hoyde = lerret.height;
-      var skala = Math.max(bredde / SYNSBREDDE, hoyde / SYNSHOYDE);
-      var pos = bilPos();
+      var pos = fys.posisjon();
+      var fart = b.flyr ? Math.hypot(b.fvx, b.fvy) : b.v;
 
-      // Kameraet følger bilen rett. Et tak på hvor høyt det kan gå var
-      // fristende, men da klatrer bildet vekk fra bilen i loopene og man
-      // mister den man styrer.
-      var kamX = pos.x, kamY = pos.y - 40;
+      // Fart trekker bildet litt ut, så det føles raskere uten at bilen
+      // blir borte.
+      var skala = Math.max(bredde / SYNSBREDDE, hoyde / SYNSHOYDE) *
+                  (1 - Math.min(0.11, fart / 14000));
+
+      var kamX = pos.x + framsyn + ristX * (Math.random() - 0.5) * 2;
+      var kamY = pos.y - 40 + ristY * (Math.random() - 0.5) * 2;
+
+      var vidde = bredde / skala, hoydeV = hoyde / skala;
+      var kam = {
+        x: kamX, y: kamY,
+        venstre: kamX - vidde * 0.45,
+        hoyre: kamX + vidde * 0.62,
+        bunn: kamY + hoydeV * 0.5,
+        tid: tid,
+        andel: Math.min(1, b.s / lope.lengde)
+      };
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      himmel(bredde, hoyde);
+      kul.himmel(ctx, bredde, hoyde, kam);
 
       ctx.save();
       // Bilen står til venstre for midten, så det er plass til å se hva som
@@ -88,161 +214,92 @@ var Kjoring = (function () {
       ctx.scale(skala, skala);
       ctx.translate(-kamX, -kamY);
 
-      aser(kamX, kamY, bredde / skala, hoyde / skala);
-      tegnBakkefyll();
-      tegnVei();
-      tegnMaal();
-      tegnMynter();
+      kul.verden(ctx, kam);
+      seEtterTatteMynter();
+      tegnMynter(kam);
+      tegnSkygge(pos);
+      tegnPartikler();
       tegnBil(pos);
       tegnPopper();
 
       ctx.restore();
-    }
 
-    function himmel(bredde, hoyde) {
-      var g = ctx.createLinearGradient(0, 0, 0, hoyde);
-      g.addColorStop(0, '#2b3a72');
-      g.addColorStop(0.55, '#5a6fc0');
-      g.addColorStop(1, '#9fa9de');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, bredde, hoyde);
+      fartsstriper(bredde, hoyde, fart);
+      vignett(bredde, hoyde);
     }
 
     /*
-     * Åsene i bakgrunnen. De ligger fast i forhold til kameraet og flyttes
-     * bare en brøkdel av kamerabevegelsen – det er hele parallakseffekten,
-     * og den er det eneste som gir følelse av fart mens bilen står stille
-     * på skjermen. Høyden følger kameraet, ellers stuper horisonten ut av
-     * bildet hver gang bilen går rundt en loop.
+     * Mynten er et snurrende merke, ikke en flat ring: bredden går som en
+     * cosinus, så den vender kanten til med jevne mellomrom. Det er den
+     * eneste bevegelsen i løypa som ikke kommer av at bilen flytter seg, og
+     * uten den ser en stillestående strekning død ut.
      */
-    function aser(kamX, kamY, vidde, hoyde) {
-      var lag = [
-        { dybde: 0.26, farge: '#3d4a86', h: 220, b: 860, y: 0.40 },
-        { dybde: 0.50, farge: '#46568f', h: 150, b: 590, y: 0.46 }
-      ];
-      var bunn = kamY + hoyde;
-      for (var l = 0; l < lag.length; l++) {
-        var a = lag[l];
-        var grunn = kamY + hoyde * a.y;
-        var faseskift = kamX * (1 - a.dybde);
-        var forste = Math.floor((kamX - vidde - faseskift) / a.b) * a.b + faseskift;
-        ctx.fillStyle = a.farge;
-        ctx.beginPath();
-        for (var x = forste; x < kamX + vidde; x += a.b) {
-          // Buene er bredere enn avstanden mellom dem, så de går inn i
-          // hverandre. Møttes de akkurat, fikk hver dal en skarp V som så
-          // ut som en feil i tegningen heller enn som terreng.
-          ctx.moveTo(x - a.b * 0.2, bunn);
-          ctx.lineTo(x - a.b * 0.2, grunn);
-          ctx.quadraticCurveTo(x + a.b / 2, grunn - a.h, x + a.b * 1.2, grunn);
-          ctx.lineTo(x + a.b * 1.2, bunn);
-          ctx.closePath();
-        }
-        ctx.fill();
-      }
-    }
-
-    /*
-     * Løypa deles i strekninger som brytes ved hopp, og bare der. Et tidlig
-     * forsøk brøt på loop-punktene i stedet, og da fikk bakken et loddrett
-     * hull i hele loopens bredde – man så himmelen gjennom jorda. Loopen er
-     * en del av samme strekning; det er hoppet som er et ekte gap.
-     */
-    function strekninger() {
-      var p = lope.punkter, ut = [], na = [];
-      for (var i = 0; i < p.length; i++) {
-        na.push(p[i]);
-        if (p[i].hopp) { ut.push(na); na = []; }
-      }
-      if (na.length) ut.push(na);
-      return ut;
-    }
-
-    var STREKNINGER = null;
-
-    function tegnBakkefyll() {
-      if (!STREKNINGER) STREKNINGER = strekninger();
-      var dyp = lope.lavest + 1400;
-      ctx.fillStyle = '#2f5a34';
-      for (var s = 0; s < STREKNINGER.length; s++) {
-        // Bare fast grunn danner overkanten. En loop skal ha himmel under seg.
-        var g = STREKNINGER[s].filter(function (q) { return q.bakke; });
-        if (g.length < 2) continue;
-        // Første og siste strekning strekkes ut til sidene. Uten det slutter
-        // jorda tvert ved startstreken, og bilen står på en grønn flate med
-        // himmel rett bak seg.
-        var venstre = s === 0 ? g[0].x - 4000 : g[0].x;
-        var hoyre = s === STREKNINGER.length - 1 ? g[g.length - 1].x + 4000 : g[g.length - 1].x;
-
-        ctx.beginPath();
-        ctx.moveTo(venstre, g[0].y);
-        for (var k = 0; k < g.length; k++) ctx.lineTo(g[k].x, g[k].y);
-        ctx.lineTo(hoyre, g[g.length - 1].y);
-        ctx.lineTo(hoyre, dyp);
-        ctx.lineTo(venstre, dyp);
-        ctx.closePath();
-        ctx.fill();
-      }
-    }
-
-    function tegnVei() {
-      if (!STREKNINGER) STREKNINGER = strekninger();
-
-      function strek(bredde, farge, stiplet) {
-        ctx.lineWidth = bredde;
-        ctx.strokeStyle = farge;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.setLineDash(stiplet || []);
-        for (var s = 0; s < STREKNINGER.length; s++) {
-          var d = STREKNINGER[s];
-          ctx.beginPath();
-          ctx.moveTo(d[0].x, d[0].y);
-          for (var k = 1; k < d.length; k++) ctx.lineTo(d[k].x, d[k].y);
-          ctx.stroke();
-        }
-        ctx.setLineDash([]);
-      }
-
-      strek(30, '#20242c');
-      strek(22, '#39414f');
-      strek(3, 'rgba(255,255,255,0.5)', [26, 30]);
-    }
-
-    function tegnMaal() {
-      var p = lope.punkter[lope.punkter.length - 1];
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(p.x - 6, p.y - 230, 12, 230);
-      for (var r = 0; r < 7; r++) {
-        for (var c = 0; c < 3; c++) {
-          ctx.fillStyle = (r + c) % 2 ? '#ffffff' : '#1b1e24';
-          ctx.fillRect(p.x + 6 + c * 26, p.y - 228 + r * 26, 26, 26);
-        }
-      }
-    }
-
-    function tegnMynter() {
+    function tegnMynter(kam) {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (var i = 0; i < lope.mynter.length; i++) {
         var m = lope.mynter[i];
         if (m.tatt) continue;
-        var puls = 1 + Math.sin(tid * 5 + m.x * 0.02) * 0.06;
+        if (m.x < kam.venstre - 60 || m.x > kam.hoyre + 60) continue;
+
+        var snurr = Math.cos(tid * 2.6 + m.x * 0.01);
+        var sv = Math.abs(snurr) * 0.85 + 0.15;
+        var loft = Math.sin(tid * 2 + m.x * 0.013) * 5;
+
         ctx.save();
-        ctx.translate(m.x, m.y);
-        ctx.scale(puls, puls);
+        ctx.translate(m.x, m.y + loft);
+
+        var glod = ctx.createRadialGradient(0, 0, 4, 0, 0, 40);
+        glod.addColorStop(0, 'rgba(90,255,170,0.32)');
+        glod.addColorStop(1, 'rgba(90,255,170,0)');
+        ctx.fillStyle = glod;
+        ctx.fillRect(-40, -40, 80, 80);
+
+        ctx.scale(sv, 1);
         ctx.beginPath();
-        ctx.arc(0, 0, 22, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(46, 204, 113, 0.22)';
+        ctx.arc(0, 0, 21, 0, Math.PI * 2);
+        ctx.fillStyle = '#146b40';
         ctx.fill();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#2ecc71';
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = snurr > 0 ? '#5dffa8' : '#2ecc71';
         ctx.stroke();
-        ctx.fillStyle = '#7dfcb0';
-        ctx.font = 'bold 30px system-ui, sans-serif';
-        ctx.fillText('$', 0, 1);
+
+        if (sv > 0.34) {
+          ctx.fillStyle = '#b6ffd6';
+          ctx.font = 'bold 28px system-ui, sans-serif';
+          ctx.fillText('$', 0, 1);
+        }
         ctx.restore();
       }
+    }
+
+    /*
+     * Skyggen under bilen. På bakken er den en tett flekk; i lufta krymper
+     * den og blekner med høyden, og ligger igjen nede på asfalten. Den er
+     * pynt, men den er også det eneste som sier hvor høyt oppe bilen er midt
+     * i et hopp – uten den er det umulig å bedømme en landing.
+     */
+    function tegnSkygge(pos) {
+      var bakkeY = pos.y, hoyde = 0;
+
+      if (b.flyr) {
+        var p = lope.punkter, funnet = null;
+        for (var i = b.hoppStart; i < p.length; i++) {
+          if (p[i].bakke && p[i].x >= b.fx) { funnet = p[i]; break; }
+        }
+        if (!funnet) return;
+        bakkeY = funnet.y;
+        hoyde = Math.max(0, bakkeY - pos.y);
+      }
+
+      var n = Math.min(1, hoyde / 700);
+      var bred = BILBREDDE * (0.46 - n * 0.22);
+      ctx.globalAlpha = 0.34 * (1 - n * 0.75);
+      ctx.fillStyle = '#0d1220';
+      ctx.beginPath();
+      ctx.ellipse(pos.x, bakkeY + 4, bred, 10 - n * 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
     }
 
     function tegnBil(pos) {
@@ -293,6 +350,62 @@ var Kjoring = (function () {
       }
       ctx.globalAlpha = 1;
     }
+
+    /*
+     * De to siste laget ligger i skjermkoordinater, ikke i verden: striper
+     * som skal lese som fart må følge skjermen, og en vignett som følger
+     * kameraet ville vandret rundt i bildet.
+     */
+    function fartsstriper(bredde, hoyde, fart) {
+      if (fart < 700) return;
+      var styrke = Math.min(1, (fart - 700) / 900);
+      ctx.lineCap = 'butt';
+      for (var i = 0; i < 12; i++) {
+        // Høyden er fast per stripe. Et tidlig forsøk lot dem gli nedover
+        // også, og da så de ut som regn i stedet for fart.
+        var y = Kulisse.slump(i) * hoyde;
+        var l = bredde * (0.10 + Kulisse.slump(i + 9) * 0.20) * styrke;
+        var runde = bredde * 1.7;
+        var x = bredde * 1.2 -
+                (tid * 2600 * (0.6 + Kulisse.slump(i + 3)) + Kulisse.slump(i + 4) * runde) % runde;
+
+        /*
+         * Stripa tones ut i begge ender. En jevn hvit strek med runde ender
+         * leser som en ripe i skjermen – det er uttoningen som gjør den til
+         * noe som farer forbi.
+         */
+        var a = styrke * 0.30 * (0.4 + Kulisse.slump(i + 11));
+        var g = ctx.createLinearGradient(x - l, 0, x, 0);
+        g.addColorStop(0, 'rgba(255,255,255,0)');
+        g.addColorStop(0.45, 'rgba(255,255,255,' + a.toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 1.5 + Kulisse.slump(i + 2) * 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - l, y);
+        ctx.stroke();
+      }
+    }
+
+    var vignettmaske = null, vignettMaal = '';
+
+    function vignett(bredde, hoyde) {
+      var nokkel = bredde + 'x' + hoyde;
+      if (vignettMaal !== nokkel) {
+        // Gradienten lages bare når skjermen endrer størrelse. En ny
+        // radialgradient per bilderute er ren sløsing.
+        vignettmaske = ctx.createRadialGradient(
+          bredde * 0.45, hoyde * 0.5, Math.min(bredde, hoyde) * 0.35,
+          bredde * 0.45, hoyde * 0.5, Math.max(bredde, hoyde) * 0.78);
+        vignettmaske.addColorStop(0, 'rgba(0,0,0,0)');
+        vignettmaske.addColorStop(1, 'rgba(6,8,18,0.48)');
+        vignettMaal = nokkel;
+      }
+      ctx.fillStyle = vignettmaske;
+      ctx.fillRect(0, 0, bredde, hoyde);
+    }
+
     /* ---------- sløyfe ---------- */
 
     function bilderute(na) {
@@ -316,8 +429,17 @@ var Kjoring = (function () {
       while (rest >= Fysikk.DT && vakt++ < 40) {
         rest -= Fysikk.DT;
         fys.steg();
+        sePaaHendelser(Fysikk.DT);
         if (fys.ferdig()) break;
       }
+
+      // Framsynet glir på plass i stedet for å hoppe, ellers rykker hele
+      // bildet hver gang farten endrer seg brått – som i hver eneste landing.
+      var fart = b.flyr ? Math.hypot(b.fvx, b.fvy) : b.v;
+      var mal = Math.min(150, fart * 0.10);
+      framsyn += (mal - framsyn) * Math.min(1, 2.5 * dt);
+
+      oppdaterPartikler(dt);
 
       for (var i = popper.length - 1; i >= 0; i--) {
         popper[i].alder += dt;

@@ -134,18 +134,37 @@ body {
 
 /* ---------- bilen ---------- */
 
+/*
+ * Ruta bilen vises i er en *scene*, ikke et panel: en lyskjegle ovenfra, en
+ * lysflekk der hjulene står, og mørke i hjørnene. Det er de tre tingene som
+ * gjør at bilen ser ut til å stå et sted. Et jevnt panel bak den leste som
+ * et utklipp på papir, og det sto dårlig til løypa, som har dybde.
+ */
 .bilscene {
+  position: relative;
   flex: 1 1 auto;
   min-height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  background:
+    radial-gradient(75% 45% at 50% 88%, rgba(255, 233, 170, 0.16), rgba(255, 233, 170, 0) 70%),
+    radial-gradient(90% 70% at 50% 6%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 72%),
+    linear-gradient(180deg, #2a3350 0%, #1b2338 62%, #141a2b 100%);
   border: 2px solid var(--panel-kant);
   border-radius: 22px;
   padding: 8px;
   overflow: hidden;
+  box-shadow: inset 0 -18px 34px rgba(6, 9, 18, 0.55);
 }
+
+/*
+ * Ingen tegnet gulvstripe her. Bilen har sin egen skygge i SVG-en, og hvor
+ * den lander i ruta avhenger av forholdet mellom ruta og tegningen – en
+ * stripe på en fast prosenthøyde traff under bilen i verkstedet og et
+ * godt stykke under den på resultatskjermen. Lysflekken i bakgrunnen
+ * følger derimot ruta og treffer alltid.
+ */
 
 .bilscene.liten { flex: 0 0 auto; height: 132px; }
 
@@ -154,7 +173,7 @@ body {
 /* Bakgrunnen matcher garasjens mørkeste flate, så luften som blir til overs
    når rommet ikke har samme forhold som ruta, leser som mørke i rommet og
    ikke som et hull. */
-#garasjeBil { padding: 0; background: #1b2136; }
+#garasjeBil { padding: 0; background: #1b2136; box-shadow: none; }
 .garasjescene { width: 100%; height: 100%; display: block; }
 
 .bilbilde { width: 100%; height: 100%; }
@@ -167,8 +186,9 @@ body {
 
 .tall {
   flex: 1 1 0;
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
   border: 2px solid var(--panel-kant);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   border-radius: 15px;
   padding: 8px 12px;
   display: flex;
@@ -191,7 +211,7 @@ body {
 .valgknapp {
   flex: 1 1 0;
   border: 2px solid var(--panel-kant);
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
   color: var(--tekst);
   border-radius: 17px;
   padding: 12px 8px;
@@ -202,7 +222,10 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
+
+.valgknapp:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
 
 .valgknapp .ikon { font-size: 24px; }
 
@@ -270,7 +293,12 @@ body {
   gap: 2px;
 }
 
-.fane.valgt { border-color: var(--gull); color: var(--tekst); background: rgba(255, 198, 26, 0.15); }
+.fane.valgt {
+  border-color: var(--gull);
+  color: var(--tekst);
+  background: linear-gradient(180deg, rgba(255, 198, 26, 0.28), rgba(255, 198, 26, 0.08));
+  box-shadow: 0 0 16px rgba(255, 198, 26, 0.25);
+}
 .fanetegn { font-size: 20px; }
 .fanenavn { font-size: 11px; font-weight: 700; white-space: nowrap; }
 
@@ -286,7 +314,7 @@ body {
 
 .valg {
   border: 2px solid var(--panel-kant);
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
   color: var(--tekst);
   border-radius: 16px;
   padding: 10px 6px 8px;
@@ -296,10 +324,24 @@ body {
   align-items: center;
   gap: 3px;
   min-height: 106px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.08s;
 }
 
-.valg.valgt { border-color: var(--gronn); background: rgba(77, 252, 154, 0.12); }
-.valg.dyr { opacity: 0.55; }
+/* Trykket skal kjennes. Kjøpet skjer uten bekreftelse, så knappen som gir
+   etter er halve kvitteringen – den andre halvparten er `blafr` på pengene. */
+.valg:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.28); }
+
+.valg.valgt {
+  border-color: var(--gronn);
+  background: linear-gradient(180deg, rgba(77, 252, 154, 0.22), rgba(77, 252, 154, 0.07));
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28), 0 0 18px rgba(77, 252, 154, 0.28);
+}
+.valg.dyr { opacity: 0.55; box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .valg { transition: none; }
+}
 
 .valgtegn { font-size: 24px; line-height: 1; }
 
@@ -333,10 +375,11 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
   border: 2px solid var(--panel-kant);
   border-radius: 18px;
   padding: 12px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .deltegn { font-size: 26px; }
@@ -362,7 +405,7 @@ body {
   background: rgba(255, 255, 255, 0.13);
 }
 
-.pip.fylt { background: var(--gronn); }
+.pip.fylt { background: var(--gronn); box-shadow: 0 0 8px rgba(77, 252, 154, 0.55); }
 
 .kjopknapp {
   border: none;

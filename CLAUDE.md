@@ -290,6 +290,23 @@ Fire ting som ser ut som detaljer og har en grunn:
   gjør at `tester/lope.js` kan svare på hvor langt bilen flyr og om en
   maksbil når målet, på et sekund. Slår du den sammen med tegnekoden igjen,
   må hvert slikt spørsmål måles med en nettleser i sanntid.
+- **Kulissene ligger i `kulisse.js`, uten kamera og uten bil.** Himmel,
+  parallakselag, jordlag, asfalt og mål. Dybden er 2D-triks, ikke WebGL —
+  luftperspektiv, tverrsnitt og et bånd med tykkelse. `README.md` går gjennom
+  alle fire, og de fire fellene de har gått i.
+- **`bland()` gir fra seg `rgb(...)`, og `les()` må forstå begge former.**
+  Luftperspektivet blander en allerede blandet himmelfarge videre inn i
+  åsene. Med bare hex-grenen ga andre ledd `rgb(NaN,NaN,NaN)` — og canvas
+  ignorerer en ugyldig `fillStyle` **stille**, så flaten ble tegnet i forrige
+  farge. Hele landskapet kom ut som én blek klump uten en eneste feilmelding.
+- **Parallaksen er `x - kam.x * (1 - dybde)`, ikke `x * dybde`.** Ganger du
+  x-en, ganges bølgelengden med det samme, og de fjerne lagene blir flate
+  plater. Kameraet ser bare 575 enheter i bredden, så fjellfrekvensene er satt
+  mot det tallet.
+- **`clip-path` løses etter elementets eget `transform`.** Refleksjonen i
+  garasjegulvet er speilvendt og skalert; med klippet på samme gruppe ble
+  klipperuta tolket i speilvendt rom og fjernet hele refleksjonen. Klippet
+  ligger derfor på en ytre gruppe uten transform.
 - **Ingen loop må ligge innenfor rekkevidden til et hopp.** Bilen lander bare
   på fast grunn, så en loop i flybanen blir noe den seiler tvers gjennom.
   Derfor ligger alle loopene før det første hoppet. Prøven sier fra.

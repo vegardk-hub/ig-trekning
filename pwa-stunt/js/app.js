@@ -28,7 +28,7 @@
   ['skjermGarasje', 'skjermVerksted', 'skjermDeler', 'skjermLop', 'skjermResultat',
    'garasjeBil', 'garasjePenger', 'garasjeStil', 'garasjeBeste',
    'verkstedBil', 'verkstedPenger', 'kategorier', 'valgene', 'stilLinje',
-   'delerPenger', 'delerListe',
+   'delerPenger', 'delerListe', 'delerBil',
    'lerret', 'hudPenger', 'hudFart', 'framdrift', 'hudHint', 'knappGass', 'knappBrems',
    'resultatSum', 'resultatDetaljer', 'resultatBil', 'resultatRekord'
   ].forEach(function (id) { e[id] = document.getElementById(id); });
@@ -193,6 +193,9 @@
 
   function tegnDeler() {
     e.delerPenger.textContent = penger();
+    // Bilen står også her. Oppgraderinger er tall, og et barn som ser bilen
+    // mens det bruker pengene, vet hva tallene gjelder.
+    e.delerBil.innerHTML = Bil.svg(stat.valgt, 'd', 'bilbilde');
     e.delerListe.innerHTML = '';
 
     Fysikk.OPPGRADERINGER.forEach(function (o) {

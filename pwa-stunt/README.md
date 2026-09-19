@@ -97,7 +97,8 @@ og mister mynter underveis. Det er en tilsiktet motvekt, ikke en feil.
 | `js/garasje.js` | Rommet bilen står i på garasjeskjermen |
 | `js/lope.js` | Løypa: punktlista, myntene, oppslag langs kurven |
 | `js/fysikk.js` | Simuleringen: fart, hopp, mynter, penger, oppgraderinger |
-| `js/kjoring.js` | Kamera og tegning av løypa |
+| `js/kulisse.js` | Himmel, landskap, asfalt og mål — alt som ikke er bilen |
+| `js/kjoring.js` | Kamera, bil, partikler og sløyfa |
 | `js/app.js` | De fem skjermene, butikken, lagringen |
 
 **Fysikken ligger for seg selv, uten et eneste piksel.** Den ble skilt ut fra
@@ -108,6 +109,50 @@ måtte hvert slikt spørsmål besvares ved å instrumentere koden med en
 `console.log`, starte en nettleser og kjøre løypa i sanntid — flere minutter
 per svar. Nå svarer `tester/lope.js` på alt sammen på et sekund, og
 nettleseren gir nøyaktig de samme tallene.
+
+## Dybde uten 3D
+
+Det finnes ingen WebGL her, og ingen 3D-motor. Følelsen av rom er satt sammen
+av fire billige grep i `kulisse.js`, og de bærer hele utseendet:
+
+* **Fire parallakselag** med fjell, snø og skog. Hvert lag blandes mot
+  himmelens disfarge etter hvor langt unna det er — luftperspektiv. Uten det
+  blir alle åsene like harde, og bildet er flatt uansett hvor mange lag man
+  legger på.
+* **Bakken er et tverrsnitt**, ikke en grønn flate: gresstorv, jord og fjell i
+  lag, som en geologisk profil. Det er det som gir bakken volum i stedet for å
+  være en silhuett.
+* **Asfalten er et bånd med tykkelse**, tegnet langs normalen til kurven. En
+  `lineWidth`-strek ville gitt samme bildet, men da er det ingen kant å legge
+  høylys eller mørkt understell på, og veien blir flat.
+* **Himmelen skifter gjennom turen**, fra morgen til solnedgang, med stjerner
+  som tennes når den mørkner. Løypa er lang nok til at en tur føles som en
+  reise, og en himmel som skifter er det billigste som sier det.
+
+Garasjegulvet er det eneste stedet som later som det er tredimensjonalt: et
+rutenett med forsvinningspunkt bak veggen, og tverrlinjer som står tettere
+bakover. Det koster åtte linjer kode, og uten det leser gulvet som enda en
+vegg lagt ned.
+
+Fire feller dette har gått i, som alle ville kommet tilbake:
+
+* **`bland()` gir fra seg `rgb(...)`, og luftperspektivet blander en allerede
+  blandet farge videre.** Så lenge `les()` bare forsto `#rrggbb`, ga det andre
+  leddet `rgb(NaN,NaN,NaN)` — og canvas **ignorerer en ugyldig `fillStyle`
+  stille**. Flaten ble tegnet i forrige farge, og hele landskapet kom ut som
+  én blek klump uten at noe klaget.
+* **Parallaksen ligger i et forskjøvet koordinat, ikke i en ganget x.** Et
+  lag skal vandre `dybde` så fort som kameraet, og får det av `x - kam.x *
+  (1 - dybde)`. Ganger man x-en med `dybde` i stedet, ganges bølgelengden med
+  det samme: kameraet ser 575 enheter, og de fjerne lagene ble flate plater
+  fordi én skjerm dekket en tiendedel av en fjellrygg.
+* **Fjellprofilen er `1 - |sin|`, ikke `sin`.** En ren sinus gir runde topper,
+  og fire lag med runde topper leser som vann. Absoluttverdien legger en knekk
+  på toppen, og det er knekken som gjør en silhuett til et fjell.
+* **`clip-path` løses i rommet elementets eget `transform` setter opp.**
+  Refleksjonen i garasjegulvet er en speilvendt, skalert gruppe; med klippet
+  på den samme gruppa ble klipperuta tolket i speilvendt rom og fjernet hele
+  refleksjonen. Klippet må ligge på en ytre gruppe uten transform.
 
 ## Bilen tegnes, den lastes ikke ned
 
@@ -151,9 +196,14 @@ To ting det er verdt å vite hvis du endrer dette:
 
 ## Garasjen
 
-Garasjeskjermen viser bilen i et rom: port, vegg, gulv med fliser, to lamper
-med lyskjegler, vimpler, verktøytavle, hylle, verktøykasse og en dekkstabel.
-Alt ligger i `js/garasje.js` — `bil.js` svarer for bilen og ingenting annet.
+Garasjeskjermen viser bilen i et rom: port, vegg, et gulv i perspektiv, to
+lamper med lyskjegler og lyspytter, vimpler, verktøytavle, hylle,
+verktøykasse og en dekkstabel. Bilen speiler seg svakt i gulvet. Alt ligger i
+`js/garasje.js` — `bil.js` svarer for bilen og ingenting annet.
+
+Rekkefølgen i gulvet er ikke tilfeldig: **speilbildet, så dempingen, så
+lyspyttene, så bilen.** Lyset legger seg *over* refleksjonen og vasker den ut
+der gulvet er lyst, akkurat som et blankt betonggulv gjør.
 
 **Bilen tegnes inni garasjens SVG, ikke ved siden av.** `Bil.innhold()` gir
 tegningen uten `<svg>` rundt, og garasjen legger den inn med en `transform`.
