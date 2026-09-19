@@ -94,7 +94,7 @@ var Kulisse = (function () {
    * legger en knekk på toppen og runder dalen – det er den knekken som gjør
    * en silhuett til et fjell.
    *
-   * Frekvensene er satt mot synsfeltet: kameraet ser omtrent 575 enheter i
+   * Frekvensene er satt mot synsfeltet: kameraet ser omtrent 630 enheter i
    * bredden, så hovedtoppene kommer med drøyt halvannen skjerms mellomrom.
    */
   function fjellhoyde(x, frø) {

@@ -5,10 +5,9 @@
  * her, er kameraet, bilen selv, alt som spruter ut av den, og bilderuta som
  * binder det sammen.
  *
- * Kameraet er ikke en ren følger. Det ser lenger fram jo fortere bilen går,
- * trekker seg litt ut i fart, og rister når bilen lander. Alle tre er små
- * tall, og til sammen er de forskjellen på at bildet *følger* bilen og at
- * det *kjører* den.
+ * Kameraet holder bilen midt i bildet. Det trekker seg litt ut i fart og
+ * rister når bilen lander – to små tall, og til sammen er de forskjellen på
+ * at bildet *følger* bilen og at det *kjører* den.
  */
 'use strict';
 
@@ -62,7 +61,6 @@ var Kjoring = (function () {
 
     /* ---------- kamera ---------- */
 
-    var framsyn = 0;        // hvor langt foran bilen kameraet ser
     var ristX = 0, ristY = 0;
     var forrigeFlyr = false;
 
@@ -249,14 +247,16 @@ var Kjoring = (function () {
                   (1 - Math.min(0.11, fart / 14000)) *
                   (1 - 0.055 * turboGlod);
 
-      var kamX = pos.x + framsyn + ristX * (Math.random() - 0.5) * 2;
+      var kamX = pos.x + ristX * (Math.random() - 0.5) * 2;
       var kamY = pos.y - 40 + ristY * (Math.random() - 0.5) * 2;
 
       var vidde = bredde / skala, hoydeV = hoyde / skala;
       var kam = {
         x: kamX, y: kamY,
-        venstre: kamX - vidde * 0.45,
-        hoyre: kamX + vidde * 0.62,
+        // Litt slakk i begge ender, så noe som så vidt er utenfor kanten,
+        // rekker å bli tegnet før det kommer inn.
+        venstre: kamX - vidde * 0.56,
+        hoyre: kamX + vidde * 0.56,
         bunn: kamY + hoydeV * 0.5,
         tid: tid,
         andel: Math.min(1, b.s / lope.lengde)
@@ -266,9 +266,19 @@ var Kjoring = (function () {
       kul.himmel(ctx, bredde, hoyde, kam);
 
       ctx.save();
-      // Bilen står til venstre for midten, så det er plass til å se hva som
-      // kommer. Den kjører bare én vei.
-      ctx.translate(bredde * 0.36, hoyde * 0.56);
+      /*
+       * Bilen står midt i bildet. Den sto lenge på 36 % av bredden, med den
+       * begrunnelsen at den kjører én vei og trenger plass til å se hva som
+       * kommer – og *i tillegg* skjøv et framsyn kameraet opp til 150 enheter
+       * videre framover jo fortere den gikk. Til sammen havnet bilen rundt
+       * 20 % inn fra venstre kant, og eieren ba om den midt i bildet.
+       *
+       * Sikten framover krymper fra 640 til 550 enheter, og det er lite fordi
+       * synsfeltet ble utvidet fra 1000 til 1100 da kulissene kom. Til
+       * gjengjeld ser man mye mer *bak* bilen – der dollartegnene fra et hopp
+       * henger igjen.
+       */
+      ctx.translate(bredde * 0.5, hoyde * 0.56);
       ctx.scale(skala, skala);
       ctx.translate(-kamX, -kamY);
 
@@ -524,12 +534,6 @@ var Kjoring = (function () {
         sePaaHendelser(Fysikk.DT);
         if (fys.ferdig()) break;
       }
-
-      // Framsynet glir på plass i stedet for å hoppe, ellers rykker hele
-      // bildet hver gang farten endrer seg brått – som i hver eneste landing.
-      var fart = b.flyr ? Math.hypot(b.fvx, b.fvy) : b.v;
-      var mal = Math.min(150, fart * 0.10);
-      framsyn += (mal - framsyn) * Math.min(1, 2.5 * dt);
 
       oppdaterPartikler(sdt);
 

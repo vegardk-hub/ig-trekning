@@ -108,6 +108,23 @@ rundt 330 enheter fra å nås av forrige hopp, og turboen spiser den marginen: e
 maksbil med turboen inne hele veien flyr *forbi* en rampe og taper hoppet.
 Det er en ekte avveining, ikke en feil.
 
+## Kameraet: bilen står midt i bildet
+
+Den sto lenge på **36 %** av bredden, med den begrunnelsen at bilen kjører én
+vei og trenger plass til å se hva som kommer. I tillegg skjøv et *framsyn*
+kameraet opp til 150 enheter videre framover jo fortere bilen gikk. De to la
+seg oppå hverandre: på en telefon havnet bilen rundt **20 %** inn fra venstre
+kant, og eieren ba om den midt i bildet.
+
+Nå er ankeret 0,5 og framsynet borte. Sikten framover er ikke tapt av den
+grunn — synsfeltet ble utvidet fra 1000 til 1100 enheter da kulissene kom, så
+halve det er 550 enheter mot 640 før. Til gjengjeld ser man mye mer *bak*
+bilen, og det er der dollartegnene fra et hopp henger igjen.
+
+Kameraet trekker seg fortsatt litt ut i fart og rister når bilen lander. Det
+er de to tallene som gjør at bildet *kjører* bilen i stedet for bare å følge
+den.
+
 ## Farten: én skala, ikke nye tall
 
 Alt i `fysikk.js` er stemt av mot alt annet — rampevinkler, hopplengder,
@@ -374,7 +391,7 @@ Fire feller dette har gått i, som alle ville kommet tilbake:
 * **Parallaksen ligger i et forskjøvet koordinat, ikke i en ganget x.** Et
   lag skal vandre `dybde` så fort som kameraet, og får det av `x - kam.x *
   (1 - dybde)`. Ganger man x-en med `dybde` i stedet, ganges bølgelengden med
-  det samme: kameraet ser 575 enheter, og de fjerne lagene ble flate plater
+  det samme: kameraet ser 630 enheter, og de fjerne lagene ble flate plater
   fordi én skjerm dekket en tiendedel av en fjellrygg.
 * **Fjellprofilen er `1 - |sin|`, ikke `sin`.** En ren sinus gir runde topper,
   og fire lag med runde topper leser som vann. Absoluttverdien legger en knekk

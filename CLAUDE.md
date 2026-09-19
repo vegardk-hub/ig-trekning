@@ -366,9 +366,14 @@ Fire ting som ser ut som detaljer og har en grunn:
   åsene. Med bare hex-grenen ga andre ledd `rgb(NaN,NaN,NaN)` — og canvas
   ignorerer en ugyldig `fillStyle` **stille**, så flaten ble tegnet i forrige
   farge. Hele landskapet kom ut som én blek klump uten en eneste feilmelding.
+- **Bilen står midt i bildet, og framsynet er fjernet.** Ankeret var 0,36 og
+  et framsyn skjøv kameraet opp til 150 enheter videre framover ved fart; de
+  to la seg oppå hverandre, og bilen havnet rundt 20 % inn fra venstre kant.
+  Eieren ba om den midt i bildet. Legger du tilbake et framsyn, flytter du
+  bilen ut av midten igjen — det er samme feilen.
 - **Parallaksen er `x - kam.x * (1 - dybde)`, ikke `x * dybde`.** Ganger du
   x-en, ganges bølgelengden med det samme, og de fjerne lagene blir flate
-  plater. Kameraet ser bare 575 enheter i bredden, så fjellfrekvensene er satt
+  plater. Kameraet ser bare 630 enheter i bredden, så fjellfrekvensene er satt
   mot det tallet.
 - **`clip-path` løses etter elementets eget `transform`.** Refleksjonen i
   garasjegulvet er speilvendt og skalert; med klippet på samme gruppe ble
