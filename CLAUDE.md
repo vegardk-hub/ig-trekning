@@ -292,16 +292,29 @@ Fire ting som ser ut som detaljer og har en grunn:
   et lavere motortall river opp hopplengder, myntbuer og økonomi på én gang.
   `resultat().tid` er simulerte sekunder — virkelig varighet er
   `tid / TIDSSKALA`.
-- **Seks tiere à fem trinn gir finere trinn, ikke en raskere bil.** Taket på
+- **Ti tiere à fem trinn gir finere trinn, ikke en raskere bil.** Taket på
   ytelsen er det samme som før tierne kom, og det *må* det være: 1280 i
   toppfart er målt mot hopplengdene. Trenger du mer progresjon, legg den i
-  prisene og i `teknikkbonus()`, aldri i `MOTOR.til`.
+  prisene, i `UTBETALING` og i `teknikkbonus()`, aldri i `MOTOR.til`.
+- **`TRINN` skal bli stående på fem.** Det er det som gjør at nivå 5 betyr
+  «tier 2, null av fem» uansett hvor mange tiere det er, og at en lagring fra
+  seks tiere peker på nøyaktig samme tier etterpå. Endrer du `TRINN`, må hver
+  eneste lagring migreres; endrer du `TIERE`, trenger ingen det.
+- **`UTBETALING` er tempoknappen.** Én grunnsats alle utbetalinger ganges med,
+  så balansen *mellom* dem ikke rikker seg — en mynt er fortsatt en tidel av
+  en loop. Går det for fort, senk den; ikke rør de enkelte beløpene.
+- **Hvert tier skal vare lengre enn det forrige, fra tier 3 og opp.** Det er
+  differansen mellom prisstigningen (1,64 per tier) og inntektsstigningen
+  (~1,26 per tier) som gir det. Tier 1 og 2 er korte uansett, fordi
+  designkatalogen konkurrerer om de samme pengene og stilbonusen dobler
+  inntekten i løpet av de første ti turene — prøven krever derfor ikke
+  stigning der.
 - **Teknikkbonusen er ikke pynt, den er det som gjør de siste tierne mulige.**
   Prisene i tier 6 er hundre ganger dem i tier 1, mens ytelsen har et tak — en
   halvferdig bil kjører nesten like fort som en ferdig. Uten en inntekt som
   ganges opp av hvert kjøpte trinn, blir tier 5 og 6 en vegg.
 - **Progresjonen er en prøve, ikke en magefølelse.** `tester/lope.js` spiller
-  gjennom hele spillet med en grådig kjøper og teller turer (~69). Det er det
+  gjennom hele spillet med en grådig kjøper og teller turer (~190). Det er det
   eneste som setter ytelsestak, prisstigning og teknikkbonus opp mot hverandre.
   Endrer du ett av de tre, les hva den sier før du velger.
 - **En maksa bil fra den gamle skalaen begynner på starten av tier 2.**
@@ -315,7 +328,13 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **En migrering som allerede har vært ute, må rettes for begge tilstander.**
   Den som ikke har åpnet appen ennå, og den som har. Nøkkelen på `versjon`
   alene fanger bare den første.
-- **`HJULBOKS` hører sammen med glorien på dekk-tier 6.** Glorien rekker ut
+- **Ett synlig lag per dekk-tier.** Et tier som ikke endrer noe man ser, er en
+  dyrere pipe i en meter. Et første forsøk med ti tiere ga tier 2 og 3 bare en
+  skygge i gummien og hvite bolter — de så ut nøyaktig som tier 1, mens navnet
+  og fargen i verkstedet sa noe helt annet. Tierfargen kommer derfor inn
+  allerede på felgkanten i tier 2. Legger du til tiere, del lista på nytt i
+  stedet for å stable i toppen.
+- **`HJULBOKS` hører sammen med glorien på øverste dekk-tier.** Glorien rekker ut
   til 1,29 ganger hjulradien; boksen må være videre enn det. Med den gamle på
   1,1 ble hele neonringen skåret bort — og bare i løypa, for i garasjen er
   bilen en SVG uten noen boks å klippes mot.

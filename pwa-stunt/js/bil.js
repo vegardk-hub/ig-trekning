@@ -318,14 +318,23 @@ var Bil = (function () {
    * som noe og ikke bare som en dyrere pipe i en meter.
    *
    * Lagene stables: et tier legger til noe, det fjerner aldri noe. Slik blir
-   * tier 6 summen av alt, og barnet kjenner igjen det det allerede hadde.
+   * øverste tier summen av alt, og barnet kjenner igjen det det allerede
+   * hadde.
    *
-   *   1  Stål     – som før: dekk, felg, eiker, nav
-   *   2  Smaragd  – slipt felgkant og boltring
-   *   3  Safir    – bremseskive bak eikene, farget navkapsel
-   *   4  Ametyst  – neonring i tierfargen, blinker
-   *   5  Magma    – doble ringer i motfase og glødende eiker
-   *   6  Plasma   – full glorie, krom i felgen og gnister rundt kanten
+   *    1  Stål     – dekk, felg, eiker, nav
+   *    2  Bronse   – skygge i gummien og felgkant i tierfargen
+   *    3  Smaragd  – boltring i tierfargen
+   *    4  Safir    – bremseskive bak eikene, i tierfargen
+   *    5  Ametyst  – farget navkapsel
+   *    6  Rubin    – neonring inne i felgen, blinker
+   *    7  Magma    – lys i eikene, i motfase
+   *    8  Gull     – enda en ring lenger ut
+   *    9  Plasma   – gnister rundt felgkanten
+   *   10  Kvantum  – full glorie utenfor dekket
+   *
+   * Ett lag per tier er ikke tilfeldig: et tier som ikke endrer noe man ser,
+   * er en dyrere pipe i en meter. Legger du til tiere, må denne lista deles
+   * på nytt – ikke stables opp i toppen.
    *
    * Ingen `<filter>`. Glød lages av tre konsentriske streker med fallende
    * bredde og stigende ugjennomsiktighet. Et SVG-filter ville vært penere,
@@ -354,8 +363,8 @@ var Bil = (function () {
     var tf = t.farge || STANDARDTIER.farge;
     var g = '<g>', e, v;
 
-    // Tier 6: halo utenfor selve dekket, så hjulet lyser opp asfalten rundt seg.
-    if (niva >= 6) {
+    // Tier 10: halo utenfor selve dekket, så hjulet lyser opp asfalten rundt seg.
+    if (niva >= 10) {
       g += glorie(h.x, h.y, h.r * 1.12, tf, h.r * 0.10, 1, blink('a', fase));
     }
 
@@ -378,24 +387,37 @@ var Bil = (function () {
            (h.r * 0.16).toFixed(1) + '" stroke-linecap="round"/>';
     }
 
-    // Tier 3: bremseskive bak eikene, i tierfargen.
-    if (niva >= 3) {
+    // Tier 4: bremseskive bak eikene, i tierfargen.
+    if (niva >= 4) {
       g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.70).toFixed(1) +
            '" fill="' + tf + '" fill-opacity="0.22"/>';
     }
 
     g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.62).toFixed(1) + '" fill="' + hj.felg + '"/>';
 
-    // Tier 2: slipt kant på felgen og en ring med bolter.
+    /*
+     * Tier 2: felgkant i tierfargen. Dette er det første stedet fargen vises,
+     * og den må vises tidlig. Et første forsøk ga tier 2 og 3 bare en skygge
+     * i gummien og hvite bolter – de så ut nøyaktig som tier 1, mens navnet
+     * og fargen i verkstedet sa noe helt annet. Et tier man ikke ser, er en
+     * dyrere pipe i en meter.
+     */
     if (niva >= 2) {
       g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.62).toFixed(1) +
-           '" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="' +
-           (h.r * 0.05).toFixed(1) + '"/>';
+           '" fill="none" stroke="' + tf + '" stroke-width="' +
+           (h.r * 0.09).toFixed(1) + '"/>';
+      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.58).toFixed(1) +
+           '" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="' +
+           (h.r * 0.03).toFixed(1) + '"/>';
+    }
+
+    // Tier 3: en ring med bolter, også i tierfargen.
+    if (niva >= 3) {
       for (e = 0; e < 6; e++) {
         v = (e * 60 + i * 18) * Math.PI / 180;
-        g += '<circle cx="' + (h.x + Math.cos(v) * h.r * 0.30).toFixed(1) +
-             '" cy="' + (h.y + Math.sin(v) * h.r * 0.30).toFixed(1) +
-             '" r="' + (h.r * 0.045).toFixed(1) + '" fill="#ffffff" fill-opacity="0.55"/>';
+        g += '<circle cx="' + (h.x + Math.cos(v) * h.r * 0.34).toFixed(1) +
+             '" cy="' + (h.y + Math.sin(v) * h.r * 0.34).toFixed(1) +
+             '" r="' + (h.r * 0.055).toFixed(1) + '" fill="' + tf + '"/>';
       }
     }
 
@@ -408,8 +430,8 @@ var Bil = (function () {
       g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
            '" stroke="' + hj.dekk + '" stroke-width="' + (h.r * 0.12).toFixed(1) +
            '" stroke-linecap="round"/>';
-      // Tier 5: lys midt i hver eike, i motfase av ringene.
-      if (niva >= 5) {
+      // Tier 7: lys midt i hver eike, i motfase av ringene.
+      if (niva >= 7) {
         g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
              '" stroke="' + tf + '" stroke-width="' + (h.r * 0.05).toFixed(1) +
              '" stroke-linecap="round"' + blink('b', fase) + '/>';
@@ -418,26 +440,26 @@ var Bil = (function () {
 
     g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.17).toFixed(1) + '" fill="' + hj.dekk + '"/>';
 
-    // Tier 3: farget navkapsel oppå navet.
-    if (niva >= 3) {
+    // Tier 5: farget navkapsel oppå navet.
+    if (niva >= 5) {
       g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.11).toFixed(1) +
            '" fill="' + tf + '"/>';
     }
 
-    // Tier 4: neonring inne i felgen. Tier 5 legger en til lenger ut, i motfase.
-    if (niva >= 4) {
+    // Tier 6: neonring inne i felgen. Tier 8 legger en til lenger ut, i motfase.
+    if (niva >= 6) {
       g += glorie(h.x, h.y, h.r * 0.50, tf, h.r * 0.055, 1, blink('a', fase));
     }
-    if (niva >= 5) {
+    if (niva >= 8) {
       g += glorie(h.x, h.y, h.r * 0.68, tf, h.r * 0.045, 0.85, blink('b', fase));
     }
 
     /*
-     * Tier 6: gnister rundt felgkanten. De står fast i forhold til hjulet, så
+     * Tier 9: gnister rundt felgkanten. De står fast i forhold til hjulet, så
      * de snurrer med det i løypa – et mønster som ikke fulgte hjulet, ville
      * sett ut som et lag som lå og flimret oppå.
      */
-    if (niva >= 6) {
+    if (niva >= 9) {
       for (e = 0; e < 10; e++) {
         v = (e * 36 + i * 18) * Math.PI / 180;
         g += '<circle cx="' + (h.x + Math.cos(v) * h.r * 0.86).toFixed(1) +
@@ -825,7 +847,7 @@ var Bil = (function () {
   /*
    * Prøven i lista tegnes **uten** dekk-tier, og det er med vilje. Lista
    * finnes for å skille de fem designene fra hverandre – navnet sier
-   * ingenting om hvordan felgen ser ut – og på tier 6 la glorien seg over
+   * ingenting om hvordan felgen ser ut – og på øverste tier la glorien seg over
    * alle fem så de ble til fem like rosa klatter. Bilen rett over lista viser
    * hvordan hjulet faktisk ser ut med tieret på.
    */
@@ -849,7 +871,7 @@ var Bil = (function () {
    * bilderute ville drept bildefrekvensen på telefon.
    *
    * Hjulboksen er større enn hjulet (75 mot 50). Mønsteret på de grove
-   * dekkene stikker noen enheter utenfor radien, og glorien på dekk-tier 6
+   * dekkene stikker noen enheter utenfor radien, og glorien på øverste dekk-tier
    * rekker ut til 1,29 ganger radien. Med den gamle boksen på 55 ble hele
    * neonringen skåret bort i løypa – og bare der, for i garasjen er bilen en
    * SVG uten noen boks å klippes mot. Endrer du glorien, må dette tallet

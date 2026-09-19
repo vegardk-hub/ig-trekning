@@ -434,8 +434,11 @@ body {
   margin-right: 6px;
   padding: 1px 7px;
   border-radius: 7px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
+  /* Merket skal aldri brekke. «Tier 10 · Kvantum» ved siden av en femsifret
+     pris gjorde radene ulike høye fordi bare noen av dem delte seg i to. */
+  white-space: nowrap;
   color: #10131f;
   background: var(--tierfarge, var(--gronn));
 }
@@ -443,15 +446,16 @@ body {
 .kjopknapp {
   border: none;
   border-radius: 13px;
-  padding: 11px 15px;
-  font-size: 16px;
+  padding: 11px 12px;
+  font-size: 15px;
   font-weight: 800;
+  white-space: nowrap;
   color: #10131f;
   background: linear-gradient(180deg, #ffd45a, var(--gull));
   cursor: pointer;
 }
 
-.fullt { font-size: 13px; color: var(--gronn); font-weight: 700; }
+.fullt { font-size: 13px; color: var(--gronn); font-weight: 700; white-space: nowrap; }
 
 /* ---------- løypa ---------- */
 

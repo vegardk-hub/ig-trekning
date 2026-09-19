@@ -59,9 +59,9 @@
         if (!Array.isArray(s.valgt.ekstra)) s.valgt.ekstra = [];
         if (lagret.oppg) for (var o in s.oppg) if (typeof lagret.oppg[o] === 'number') s.oppg[o] = lagret.oppg[o];
 
-        // Oppgraderingene gikk fra sju nivåer til seks tiere à fem trinn.
+        // Oppgraderingene gikk fra sju nivåer til tiere à fem trinn.
         // `Fysikk.fraGammelLagring()` eier hele omregningen og sier hvorfor
-        // en maksa bil skal begynne på tier 2 og ikke på toppen av tier 6.
+        // en maksa bil skal begynne på tier 2 og ikke på toppen av stigen.
         for (var m in s.oppg) s.oppg[m] = Fysikk.fraGammelLagring(s.oppg[m], lagret.versjon);
         s.versjon = Fysikk.LAGRINGSVERSJON;
       }
@@ -95,7 +95,17 @@
     if (navn === 'skjermDeler') tegnDeler();
   }
 
-  function penger() { return '$' + stat.penger; }
+  /*
+   * Tusenskille med hardt mellomrom. Prisene i de øverste tierne er femsifrede
+   * og totalen sekssifret, og «$28300» er ikke et tall et barn leser – det er
+   * en sifferrekke. Mellomrommet må være hardt, ellers brekker beløpet i to
+   * midt i en knapp.
+   */
+  function kr(n) {
+    return '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+  }
+
+  function penger() { return kr(stat.penger); }
 
   // Felgen viser dekk-tieret. Alt som tegner bilen går gjennom denne, så
   // garasjen, verkstedet, delelista, resultatet og løypa aldri kan vise
@@ -112,7 +122,7 @@
     var b = Bil.bonus(stat.valgt);
     e.garasjeStil.textContent = '×' + b.toFixed(2);
     e.garasjeTeknikk.textContent = '×' + Fysikk.teknikkbonus(stat.oppg).toFixed(2);
-    e.garasjeBeste.textContent = stat.beste ? '$' + stat.beste : '–';
+    e.garasjeBeste.textContent = stat.beste ? kr(stat.beste) : '–';
   }
 
   /* ---------- verksted ---------- */
@@ -160,7 +170,7 @@
 
       var under = har
         ? (valgt ? '<span class="paa">✓ På bilen</span>' : '<span class="eid">Eier</span>')
-        : '<span class="pris">$' + del.pris + '</span>';
+        : '<span class="pris">' + kr(del.pris) + '</span>';
 
       k.innerHTML = merke + '<span class="valgnavn">' + del.navn + '</span>' + under +
                     (del.stil ? '<span class="stilmerke">+' + del.stil + ' stil</span>' : '<span class="stilmerke"></span>');
@@ -220,12 +230,12 @@
 
       var rad = document.createElement('div');
       rad.className = 'delrad';
-      // Fargen settes fra tieret og ikke fra en klasse per tier: seks tiere
-      // × tre deler ville blitt atten regler i CSS-en for én farge.
+      // Fargen settes fra tieret og ikke fra en klasse per tier: ti tiere
+      // × tre deler ville blitt tretti regler i CSS-en for én farge.
       rad.style.setProperty('--tierfarge', t.farge);
 
       /*
-       * Pipene viser trinnene i *dette* tieret, ikke alle tretti. Tretti piper
+       * Pipene viser trinnene i *dette* tieret, ikke alle femti. Femti piper
        * på en telefonrad blir en stripe man ikke kan telle, og poenget med
        * tiere er nettopp at man alltid ser en kort vei til neste farge.
        */
@@ -236,7 +246,7 @@
 
       var knapp = pris === null
         ? '<span class="fullt">Fullt utbygd</span>'
-        : '<button class="kjopknapp" data-id="' + o.id + '">$' + pris + '</button>';
+        : '<button class="kjopknapp" data-id="' + o.id + '">' + kr(pris) + '</button>';
 
       rad.innerHTML =
         '<span class="deltegn" aria-hidden="true">' + o.data.tegn + '</span>' +
@@ -327,7 +337,7 @@
   function oppdaterHud() {
     if (!lop) return;
     var t = lop.tilstand();
-    e.hudPenger.textContent = '$' + t.penger;
+    e.hudPenger.textContent = kr(t.penger);
     e.hudFart.textContent = t.fart + ' km/t';
     e.framdrift.style.width = (t.andel * 100).toFixed(1) + '%';
 
@@ -348,9 +358,9 @@
     if (res.penger > stat.beste) stat.beste = res.penger;
     lagre();
 
-    e.resultatSum.textContent = '$' + res.penger;
+    e.resultatSum.textContent = kr(res.penger);
     e.resultatBil.innerHTML = Bil.svg(stat.valgt, 'r', 'bilbilde', dekktier());
-    e.resultatRekord.textContent = res.penger >= stat.beste ? 'Ny rekord! 🏆' : 'Rekord: $' + stat.beste;
+    e.resultatRekord.textContent = res.penger >= stat.beste ? 'Ny rekord! 🏆' : 'Rekord: ' + kr(stat.beste);
 
     var b = Bil.bonus(stat.valgt);
     e.resultatDetaljer.innerHTML =

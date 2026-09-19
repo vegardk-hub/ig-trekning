@@ -89,13 +89,14 @@ var Fysikk = (function () {
   var TURBOMIN = 0.22;       // laveste stand som kan tennes
   var TURBOSTART = 0.35;     // med i tanken fra start, så den kan prøves tidlig
 
-  /* ---------- oppgraderinger: seks tiere à fem trinn ---------- */
+  /* ---------- oppgraderinger: ti tiere à fem trinn ---------- */
 
   /*
    * Det var sju nivåer per del, og bilen var ferdig utbygd etter rundt tjue
-   * turer. Nå er det seks *tiere* med fem trinn i hver – tretti kjøpbare
-   * trinn per del, nitti i alt. Hvert tier har sin egen farge, og siste trinn
-   * i et tier løfter bilen inn i det neste.
+   * turer. Så ble det seks tiere, og da tok det sytti – fortsatt for fort.
+   * Nå er det ti *tiere* med fem trinn i hver: femti kjøpbare trinn per del,
+   * hundre og femti i alt, og rundt 190 turer før alt er eid. Hvert tier har
+   * sin egen farge, og siste trinn i et tier løfter bilen inn i det neste.
    *
    * Tre ting henger sammen her, og det ene går ikke an uten det andre:
    *
@@ -105,8 +106,11 @@ var Fysikk = (function () {
    *   seilte over både neste rampe og alt som lå mellom. Flere tiere gir
    *   altså *finere* trinn, ikke en raskere bil – «litt og litt bedre».
    *
-   *   Prisene dobler seg nesten for hvert tier. Uten det er tier 6 kjøpt opp
-   *   på et par turer, og de fem første var bare en teller.
+   *   Prisene stiger med `TIERFAKTOR` for hvert tier, og inntekten stiger
+   *   saktere enn det. Det er differansen som gjør at hvert tier tar lengre
+   *   tid enn det forrige – fra tier 3 og opp er varigheten 5, 8, 11, 13, 18,
+   *   29, 46, 46 turer. Uten den er tier 10 kjøpt opp på et par turer, og de
+   *   ni første var bare en teller.
    *
    *   Inntekten må følge etter, ellers blir de siste tierne en vegg. Derfor
    *   `teknikkbonus()`: hvert kjøpte trinn ganger opp alt man tjener, akkurat
@@ -116,26 +120,41 @@ var Fysikk = (function () {
    * `tester/lope.js` spiller gjennom hele progresjonen og sier fra hvis de tre
    * driver fra hverandre.
    */
-  var TIERE = 6;
+  var TIERE = 10;
   var TRINN = 5;                      // kjøpbare trinn i hvert tier
-  var MAKSNIVA = TIERE * TRINN;       // 30 per del
+  var MAKSNIVA = TIERE * TRINN;       // 50 per del, 150 i alt
 
-  // Navnene og fargene brukes både på felgen og i verkstedet, så et tier ser
-  // likt ut uansett hvor barnet møter det.
+  /*
+   * Navnene og fargene brukes både på felgen og i verkstedet, så et tier ser
+   * likt ut uansett hvor barnet møter det.
+   *
+   * De seks første navnene sto her fra før og er beholdt i rekkefølge – et
+   * barn som har nådd Safir, skal ikke finne at Safir plutselig er noe annet.
+   * Bronse og Rubin er skutt inn der stigen trengte et trinn, og Gull og
+   * Kvantum lagt på toppen.
+   *
+   * `TRINN` er med vilje uendret på fem. Da betyr nivå 5 fortsatt «tier 2,
+   * null av fem», og en lagring fra da det var seks tiere, peker på nøyaktig
+   * samme tier som før – den har bare flere igjen over seg.
+   */
   var TIER = [
     { navn: 'Stål',    farge: '#9aa7bd' },
+    { navn: 'Bronse',  farge: '#c9803f' },
     { navn: 'Smaragd', farge: '#4ade80' },
     { navn: 'Safir',   farge: '#38bdf8' },
     { navn: 'Ametyst', farge: '#c084fc' },
+    { navn: 'Rubin',   farge: '#ff4d5e' },
     { navn: 'Magma',   farge: '#ff8a2b' },
-    { navn: 'Plasma',  farge: '#ff2d95' }
+    { navn: 'Gull',    farge: '#ffd54a' },
+    { navn: 'Plasma',  farge: '#ff2d95' },
+    { navn: 'Kvantum', farge: '#2ffbe0' }
   ];
 
   /*
    * Tieret et nivå hører til. Merk at siste trinn i et tier *flytter* bilen
    * opp: nivå 5 er «tier 2, null av fem», ikke «tier 1, fem av fem». Det er
    * det som gjør at kjøpet man sparte til, gir en ny farge med en gang.
-   * Unntaket er toppen: nivå 30 blir stående som tier 6, fullt utbygd.
+   * Unntaket er toppen: siste nivå blir stående i øverste tier, fullt utbygd.
    */
   function tierAv(nivaa) {
     return Math.min(TIERE, Math.floor(grense(nivaa) / TRINN) + 1);
@@ -212,14 +231,25 @@ var Fysikk = (function () {
     { id: 'dekk', data: DEKK }
   ];
 
-  // Ytelsen går rett fra bunn til tak over de tretti trinnene. Ingen kurve:
+  // Ytelsen går rett fra bunn til tak over alle trinnene. Ingen kurve:
   // et tier skal kjennes likt uansett hvilket det er, og det er prisen og
   // fargen som skiller dem, ikke hvor mye hvert trinn gir.
   function niva(data, n) {
     return data.fra + (data.til - data.fra) * (grense(n) / MAKSNIVA);
   }
 
-  var TIERFAKTOR = 2.35;      // hvor mye dyrere hvert tier er enn det forrige
+  /*
+   * Hvor mye dyrere hvert tier er enn det forrige. Tallet ser lavere ut enn
+   * det var med seks tiere (2,35), og er det ikke: med ti tiere ganges det
+   * opp ni ganger i stedet for fem, så tier 10 koster 75 ganger tier 1.
+   *
+   * Det er *forholdet* mellom prisstigningen og inntektsstigningen som avgjør
+   * hvor mange turer et tier tar. Inntekten vokser rundt 1,26 per tier, så en
+   * prisstigning på 1,64 gir omtrent 1,30 flere turer for hvert tier man
+   * kommer opp. Det er «lengre og lengre tid for hvert nivå», og prøven
+   * håndhever det fra tier 3 og opp.
+   */
+  var TIERFAKTOR = 1.64;
   var TRINNOKNING = 0.30;     // hvor mye dyrere hvert trinn er inne i et tier
 
   /*
@@ -245,9 +275,25 @@ var Fysikk = (function () {
    *
    * Den må være der. Ytelsen har et tak, så en ferdig bygd bil kjører ikke
    * nevneverdig fortere enn en halvferdig og ville tjent omtrent det samme –
-   * mens prisene i tier 6 er hundre ganger dem i tier 1.
+   * mens prisene i tier 10 er 75 ganger dem i tier 1.
+   *
+   * Den vokser med vilje *saktere* enn prisene. Det er differansen som gjør
+   * at hvert tier tar lengre tid enn det forrige.
    */
   var TEKNIKK = 3.0;          // hvor mye fullt utbygd ganger opp
+
+  /*
+   * Alt som betales ut, ganges med denne. Den er det ene tallet som styrer
+   * hvor fort det går å bygge bilen, uten å røre balansen *mellom*
+   * utbetalingene – en mynt skal fortsatt være verdt en tidel av en loop, og
+   * en salto skal fortsatt være det største enkeltbeløpet i spillet.
+   *
+   * Den står på 0,60 fordi det gikk for fort. Med full utbetaling og seks
+   * tiere var bilen ferdig bygd etter sytti turer; med ti tiere og denne
+   * satsen tar det nesten tre ganger så lang tid, og en umodifisert tur gir
+   * rundt $500 mot $890 før.
+   */
+  var UTBETALING = 0.60;
 
   function teknikkbonus(oppg) {
     var sum = 0;
@@ -286,7 +332,8 @@ var Fysikk = (function () {
 
     // De to bonusene ganges sammen: pynt og teknikk er to uavhengige måter å
     // tjene mer på, og begge skal lønne seg uten å gjøre den andre unødig.
-    var sats = bonus * teknikkbonus(oppg);
+    // `UTBETALING` er grunnsatsen som styrer hvor fort det hele går.
+    var sats = UTBETALING * bonus * teknikkbonus(oppg);
 
     for (var i = 0; i < lope.mynter.length; i++) lope.mynter[i].tatt = false;
     for (i = 0; i < lope.looper.length; i++) lope.looper[i].betalt = false;

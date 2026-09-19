@@ -123,21 +123,30 @@ tydelig går saktere, leser som at måleren er ødelagt.
 `tid / TIDSSKALA`, og det er det tallet `tester/lope.js` måler mot: en
 umodifisert bil bruker rundt 40 sekunder, en maksbil rundt 22.
 
-## Oppgraderinger: seks tiere à fem trinn
+## Oppgraderinger: ti tiere à fem trinn
 
 Motor, girkasse og dekk hadde sju nivåer hver, og bilen var ferdig utbygd
-etter rundt tjue turer. Nå er det **seks tiere med fem trinn i hvert** — tretti
-kjøpbare trinn per del, nitti i alt. Hvert tier har sin egen farge og sitt eget
-navn, og siste trinn i et tier løfter bilen inn i det neste:
+etter rundt tjue turer. Så ble det seks tiere, og da tok det sytti — fortsatt
+for fort. Nå er det **ti tiere med fem trinn i hvert**: femti kjøpbare trinn
+per del, hundre og femti i alt, og rundt **190 turer** før alt er eid. Hvert
+tier har sin egen farge og sitt eget navn, og siste trinn i et tier løfter
+bilen inn i det neste:
 
-| Tier | | Farge |
-| --- | --- | --- |
-| 1 | Stål | `#9aa7bd` |
-| 2 | Smaragd | `#4ade80` |
-| 3 | Safir | `#38bdf8` |
-| 4 | Ametyst | `#c084fc` |
-| 5 | Magma | `#ff8a2b` |
-| 6 | Plasma | `#ff2d95` |
+| Tier | | Farge | | Tier | | Farge |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Stål | `#9aa7bd` | | 6 | Rubin | `#ff4d5e` |
+| 2 | Bronse | `#c9803f` | | 7 | Magma | `#ff8a2b` |
+| 3 | Smaragd | `#4ade80` | | 8 | Gull | `#ffd54a` |
+| 4 | Safir | `#38bdf8` | | 9 | Plasma | `#ff2d95` |
+| 5 | Ametyst | `#c084fc` | | 10 | Kvantum | `#2ffbe0` |
+
+De seks første navnene sto her fra før og er beholdt i rekkefølge — et barn
+som har nådd Safir, skal ikke finne at Safir plutselig er noe annet. Bronse og
+Rubin er skutt inn der stigen trengte et trinn, Gull og Kvantum lagt på toppen.
+
+`TRINN` er uendret på fem. Derfor betyr nivå 5 fortsatt «tier 2, null av fem»,
+og en lagring fra da det var seks tiere, peker på nøyaktig samme tier som før
+— den har bare flere igjen over seg.
 
 Tre tall henger sammen her, og ingen av dem går an alene:
 
@@ -146,26 +155,39 @@ Tre tall henger sammen her, og ingen av dem går an alene:
   forsøk med 1650 ga en maksbil som fløy 5000 enheter og seilte over både
   neste rampe og alt som lå mellom. Flere tiere gir altså **finere trinn, ikke
   en raskere bil** — «litt og litt bedre».
-* **Prisene ganges med 2,35 for hvert tier** (`TIERFAKTOR`), og med 30 % for
-  hvert trinn inne i et tier. Første motortrinn koster $150, første trinn i
-  tier 6 koster $10 800.
-* **Inntekten må følge etter.** Derfor `teknikkbonus()`: hvert kjøpte trinn
-  ganger opp alt man tjener i løypa, opp til ×4,0 med alt bygd. Uten den blir
-  de siste tierne en vegg, for ytelsen har jo et tak — en halvferdig bil
-  kjører nesten like fort som en ferdig og ville tjent omtrent det samme.
+* **Prisene ganges med 1,64 for hvert tier** (`TIERFAKTOR`), og med 30 % for
+  hvert trinn inne i et tier. Tallet ser lavere ut enn det var med seks tiere
+  (2,35), og er det ikke: med ti tiere ganges det opp ni ganger i stedet for
+  fem, så tier 10 koster 75 ganger tier 1. Første motortrinn koster $150,
+  første trinn i tier 10 koster $11 500.
+* **Inntekten må følge etter, men saktere.** `teknikkbonus()` ganger opp alt
+  man tjener, opp til ×4,0 med alt bygd. Uten den blir de siste tierne en
+  vegg, for ytelsen har jo et tak — en halvferdig bil kjører nesten like fort
+  som en ferdig og ville tjent omtrent det samme. Men den vokser *saktere* enn
+  prisene, og det er nettopp differansen som gjør at et tier tar lengre tid
+  enn det forrige.
+
+`UTBETALING` (0,60) er grunnsatsen alle utbetalinger ganges med. Den er det ene
+tallet som styrer tempoet uten å røre balansen *mellom* utbetalingene — en mynt
+skal fortsatt være verdt en tidel av en loop, og en salto skal fortsatt være
+det største enkeltbeløpet i spillet. En umodifisert tur gir rundt $500, mot
+$890 før.
 
 `tester/lope.js` spiller gjennom hele progresjonen med en grådig kjøper og
 teller turer. Det er den eneste prøven som faktisk setter de tre tallene opp
 mot hverandre, og den sier fra hvis de driver fra hverandre:
 
 ```
-tier nådd på tur: T1@1 T2@6 T3@11 T4@16 T5@23 T6@39
-alt eid etter 69 turer
+turer per tier: T1:8 T2:5 T3:5 T4:8 T5:11 T6:13 T7:18 T8:29 T9:46 T10:46
+alt eid etter 190 turer
 ```
 
-Hvert tier varer lenger enn det forrige. Det er meningen: de første fargene
-skal komme raskt nok til at et barn skjønner at det finnes flere, og den siste
-skal være noe man sparer til.
+**Fra tier 3 og opp varer hvert tier lenger enn det forrige**, og prøven
+håndhever det. Kravet gjelder ikke tier 1 og 2: der konkurrerer
+oppgraderingene med designkatalogen om de samme pengene, og stilbonusen dobler
+inntekten i løpet av de første ti turene. De to første tierne blir korte
+uansett hva prisene gjør — og det er riktig, for det er der barnet kjøper lakk
+og glitter.
 
 ### Dekk-tieret er det eneste man ser
 
@@ -177,11 +199,22 @@ kjenner igjen det det allerede hadde:
 | Tier | Legger til |
 | --- | --- |
 | 1 | dekk, felg, eiker, nav |
-| 2 | skygge i gummien, slipt felgkant, boltring |
-| 3 | bremseskive bak eikene, farget navkapsel |
-| 4 | neonring i tierfargen, blinker |
-| 5 | ytterligere en ring i motfase, og lys i eikene |
-| 6 | full glorie utenfor dekket og gnister rundt felgkanten |
+| 2 | skygge i gummien og **felgkant i tierfargen** |
+| 3 | boltring i tierfargen |
+| 4 | bremseskive bak eikene |
+| 5 | farget navkapsel |
+| 6 | neonring inne i felgen, blinker |
+| 7 | lys i eikene, i motfase |
+| 8 | enda en ring lenger ut |
+| 9 | gnister rundt felgkanten |
+| 10 | full glorie utenfor dekket |
+
+Ett lag per tier er ikke tilfeldig: **et tier som ikke endrer noe man ser, er
+en dyrere pipe i en meter.** Et første forsøk med ti tiere ga tier 2 og 3 bare
+en skygge i gummien og hvite bolter — de så ut nøyaktig som tier 1, mens navnet
+og fargen i verkstedet sa noe helt annet. Derfor kommer tierfargen inn allerede
+på felgkanten i tier 2. Legger du til tiere, må lista deles på nytt — ikke
+stables opp i toppen.
 
 Ingen `<filter>`. Glød lages av tre konsentriske streker med fallende bredde og
 stigende ugjennomsiktighet (`glorie()`). Et SVG-filter ville vært penere, men
@@ -247,12 +280,12 @@ Tallene er kalibrert slik:
 | | |
 | --- | --- |
 | Startkapital | $250 |
-| Umodifisert bil, én tur | ~$890 |
-| Umodifisert bil, kjørt godt (saltoer landet, turbo brukt) | ~$981 |
-| Fullt utbygd bil, én tur | ~$8056 |
+| Umodifisert bil, én tur | ~$496 |
+| Umodifisert bil, kjørt godt (saltoer landet, turbo brukt) | ~$552 |
+| Fullt utbygd bil, én tur | ~$4841 |
 | Hele designkatalogen | $5790 |
-| Alle oppgraderinger (90 trinn) | $396 980 |
-| Turer til alt er eid | ~69 |
+| Alle oppgraderinger (150 trinn) | $698 725 |
+| Turer til alt er eid | ~190 |
 
 Avstanden mellom den første og den siste bilen er ni ganger, og det er
 teknikkbonusen som gjør det: prisene i tier 6 er hundre ganger dem i tier 1.
@@ -260,7 +293,7 @@ Blir den mye større, er de første turene ikke verdt å kjøre; blir den mindre
 er de siste tierne en vegg. Prøven holder den mellom seks og tolv.
 
 Tallene måles av `tester/lope.js`, som feiler hvis de driver utenfor rammene.
-Å eie alt tar rundt sytti turer, og de siste tierne er noe man sparer til over
+Å eie alt tar rundt 190 turer, og de siste tierne er noe man sparer til over
 mange økter — det er meningen.
 
 **De to bonusene ganges sammen.** Stil kommer fra pynt, teknikk fra
@@ -281,8 +314,8 @@ midten; de henger sammen.
 Merk at en sterkere bil ikke bare tjener mer: den flyr også over strekninger
 og mister mynter underveis. Det er en tilsiktet motvekt, ikke en feil.
 
-Saltoen er den største enkeltutbetalingen i spillet — $45 mot $35 for en loop
-og $4 for en mynt. Det er med vilje: den er det eneste som krever at barnet
+Saltoen er den største enkeltutbetalingen i spillet — 45 mot 35 for en loop og
+4 for en mynt, før `UTBETALING` og bonusene. Det er med vilje: den er det eneste som krever at barnet
 gjør noe annet enn å holde gassen. Taket på hva én tur kan gi, måles som
 `nakenAlt` i prøven, og skal ikke kunne dobles av salto og turbo alene.
 

@@ -297,7 +297,7 @@ krev(BONUS_MAKS > 1.95 && BONUS_MAKS < 2.25,
  * saltoene og bruker turboen. Klarer den å doble seg, er det ikke lenger en
  * bonus, det er en ny økonomi.
  */
-krev(naken.penger > 700 && naken.penger < 1050,
+krev(naken.penger > 380 && naken.penger < 620,
      'en umodifisert tur ligger utenfor det README-en lover', naken.penger);
 krev(nakenAlt.penger < naken.penger * 1.4,
      'salto og turbo gir for mye på en umodifisert bil',
@@ -319,7 +319,7 @@ krev(maks.penger < naken.penger * 12,
 
 overskrift('Tiere og progresjon');
 
-krev(Fysikk.TIERE === 6, 'det skal være seks tiere', Fysikk.TIERE);
+krev(Fysikk.TIERE === 10, 'det skal være ti tiere', Fysikk.TIERE);
 krev(Fysikk.MAKSNIVA === Fysikk.TIERE * Fysikk.TRINN, 'maksnivået stemmer ikke med tiere × trinn');
 
 /*
@@ -350,12 +350,18 @@ krev(Math.abs(Fysikk.verdi(Fysikk.MOTOR, Fysikk.MAKSNIVA) - 1280) < 1,
      'toppfarten har flyttet seg, og da stemmer ikke lengdene i lope.js',
      Fysikk.verdi(Fysikk.MOTOR, Fysikk.MAKSNIVA));
 
-// Hvert tier må koste mer enn det forrige, ellers er de bare farger.
+/*
+ * Hvert tier må koste mer enn det forrige, ellers er de bare farger. Grensa
+ * er 1,5 og ikke 1,8: med ti tiere ganges `TIERFAKTOR` opp ni ganger i
+ * stedet for fem, så raten per tier er lavere selv om spennet fra første til
+ * siste tier er større. Kravet fanger et sammenbrudd i prisingen, ikke en
+ * bestemt faktor – den måles av progresjonen lenger nede.
+ */
 Fysikk.OPPGRADERINGER.forEach(function (o) {
   for (var i = 1; i < Fysikk.TIERE; i++) {
     var for_ = Fysikk.pris(o.data, (i - 1) * Fysikk.TRINN);
     var na = Fysikk.pris(o.data, i * Fysikk.TRINN);
-    krev(na > for_ * 1.8,
+    krev(na > for_ * 1.5,
          o.id + ': tier ' + (i + 1) + ' koster ikke nok mer enn tier ' + i, for_ + ' → ' + na);
   }
 });
@@ -372,9 +378,11 @@ var UMIGRERT = undefined, V2 = 2;
 krev(Fysikk.fraGammelLagring(6, UMIGRERT) === Fysikk.TRINN,
      'en maksa bil fra den gamle skalaen havner ikke på starten av tier 2',
      Fysikk.fraGammelLagring(6, UMIGRERT));
-krev(Fysikk.fraGammelLagring(Fysikk.MAKSNIVA, V2) === Fysikk.TRINN,
+// Versjon 2 lagret en maksa gammel bil som 6 × TRINN. At det tallet en stund
+// var det samme som MAKSNIVA, var tilfeldig – nå er MAKSNIVA 50.
+krev(Fysikk.fraGammelLagring(6 * Fysikk.TRINN, V2) === Fysikk.TRINN,
      'en bil som allerede fikk versjon 2-migreringen, blir ikke rettet tilbake',
-     Fysikk.fraGammelLagring(Fysikk.MAKSNIVA, V2));
+     Fysikk.fraGammelLagring(6 * Fysikk.TRINN, V2));
 krev(Fysikk.tierInfo(Fysikk.fraGammelLagring(6, UMIGRERT)).n === 2,
      'en maksa bil starter ikke i tier 2');
 krev(Fysikk.tierInfo(Fysikk.fraGammelLagring(6, UMIGRERT)).trinn === 0,
@@ -436,21 +444,44 @@ function spillGjennom() {
     var t = Fysikk.tierInfo(oppg.motor).n;
     if (!merke[t]) merke[t] = turer;
   }
-  return { turer: turer, merke: merke };
+
+  // Hvor mange turer hvert tier varte. Det er dette tallet som skal vokse.
+  var varte = [];
+  for (var i = 1; i <= Fysikk.TIERE; i++) {
+    if (!merke[i]) break;
+    varte.push((merke[i + 1] || turer) - merke[i]);
+  }
+  return { turer: turer, merke: merke, varte: varte };
 }
 
 var gjennom = spillGjennom();
-console.log('  tier nådd på tur: ' + Object.keys(gjennom.merke).map(function (t) {
-  return 'T' + t + '@' + gjennom.merke[t];
+console.log('  turer per tier: ' + gjennom.varte.map(function (v, i) {
+  return 'T' + (i + 1) + ':' + v;
 }).join(' '));
 console.log('  alt eid etter ' + gjennom.turer + ' turer');
 
-krev(gjennom.turer > 45 && gjennom.turer < 110,
+krev(gjennom.turer > 140 && gjennom.turer < 260,
      'det tar urimelig få eller mange turer å bygge bilen ferdig', gjennom.turer + ' turer');
 krev(gjennom.merke[Fysikk.TIERE] !== undefined, 'siste tier ble aldri nådd');
-krev(gjennom.merke[2] !== undefined && gjennom.merke[2] <= 12,
+krev(gjennom.merke[2] !== undefined && gjennom.merke[2] <= 14,
      'det tar for lang tid å se det andre tieret – første farge må komme tidlig',
      'tur ' + gjennom.merke[2]);
+
+/*
+ * «Lengre og lengre tid for hvert nivå». Kravet gjelder fra tier 3 og opp,
+ * og ikke fra tier 1: der konkurrerer oppgraderingene med designkatalogen om
+ * de samme pengene, og stilbonusen dobler inntekten i løpet av de første ti
+ * turene. Tier 1 og 2 blir derfor korte uansett hva prisene gjør, og det er
+ * riktig – det er der barnet kjøper lakk og glitter.
+ */
+for (var v = 3; v < gjennom.varte.length; v++) {
+  krev(gjennom.varte[v] >= gjennom.varte[v - 1],
+       'tier ' + (v + 1) + ' går fortere enn tier ' + v + ' – stigningen har snudd',
+       gjennom.varte[v - 1] + ' → ' + gjennom.varte[v] + ' turer');
+}
+krev(gjennom.varte[Fysikk.TIERE - 1] > gjennom.varte[2] * 4,
+     'det siste tieret er ikke vesentlig lengre enn det tredje',
+     gjennom.varte[2] + ' mot ' + gjennom.varte[Fysikk.TIERE - 1] + ' turer');
 
 /* ---------- oppsummering ---------- */
 
