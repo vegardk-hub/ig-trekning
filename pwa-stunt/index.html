@@ -94,12 +94,18 @@
 
   <div class="framdriftsspor"><div id="framdrift" class="framdrift"></div></div>
 
+  <!-- Turbo står til venstre, ikke til høyre. Høyre tommel skal kunne bli
+       liggende på gassen mens venstre velger mellom brems og turbo. -->
   <div class="pedaler">
+    <button id="knappTurbo" class="pedal turbo" aria-label="Turbo">
+      <span id="turbofyll" class="turbofyll"></span>
+      <span class="pedaltegn" aria-hidden="true">⚡</span><span class="pedalnavn">Turbo</span>
+    </button>
     <button id="knappBrems" class="pedal brems" aria-label="Brems">
-      <span aria-hidden="true">🛑</span><span class="pedalnavn">Brems</span>
+      <span class="pedaltegn" aria-hidden="true">🛑</span><span class="pedalnavn">Brems</span>
     </button>
     <button id="knappGass" class="pedal gass" aria-label="Gass">
-      <span aria-hidden="true">🔥</span><span class="pedalnavn">Gass</span>
+      <span class="pedaltegn" aria-hidden="true">🔥</span><span class="pedalnavn">Gass</span>
     </button>
   </div>
 </section>

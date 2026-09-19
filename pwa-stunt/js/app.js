@@ -29,7 +29,8 @@
    'garasjeBil', 'garasjePenger', 'garasjeStil', 'garasjeBeste',
    'verkstedBil', 'verkstedPenger', 'kategorier', 'valgene', 'stilLinje',
    'delerPenger', 'delerListe', 'delerBil',
-   'lerret', 'hudPenger', 'hudFart', 'framdrift', 'hudHint', 'knappGass', 'knappBrems',
+   'lerret', 'hudPenger', 'hudFart', 'framdrift', 'hudHint',
+   'knappGass', 'knappBrems', 'knappTurbo', 'turbofyll',
    'resultatSum', 'resultatDetaljer', 'resultatBil', 'resultatRekord'
   ].forEach(function (id) { e[id] = document.getElementById(id); });
 
@@ -293,7 +294,15 @@
     e.hudPenger.textContent = '$' + t.penger;
     e.hudFart.textContent = t.fart + ' km/t';
     e.framdrift.style.width = (t.andel * 100).toFixed(1) + '%';
-    e.hudHint.hidden = !t.staar;
+
+    // Hintet er en streng og ikke et flagg: fysikken vet når det er verdt å
+    // si noe, og hva. Tom streng betyr ingenting å si.
+    e.hudHint.hidden = !t.hint;
+    if (t.hint) e.hudHint.textContent = t.hint;
+
+    e.turbofyll.style.height = (t.turbo * 100).toFixed(0) + '%';
+    e.knappTurbo.classList.toggle('klar', t.turboKlar || t.turboPaa);
+    e.knappTurbo.classList.toggle('brenner', t.turboPaa);
     if (!e.skjermLop.hidden) requestAnimationFrame(oppdaterHud);
   }
 
@@ -313,6 +322,7 @@
       linje('🔁', res.looper + (res.looper === 1 ? ' loop' : ' looper')) +
       linje('🛫', res.hopp + (res.hopp === 1 ? ' hopp' : ' hopp') +
                  (res.lengsteHopp ? ', lengste ' + res.lengsteHopp : '')) +
+      (res.saltoer ? linje('🔄', res.saltoer + (res.saltoer === 1 ? ' salto' : ' saltoer')) : '') +
       linje('✨', 'Stilbonus ×' + b.toFixed(2));
 
     // Litt pause, så det siste dollartegnet rekker å bli sett.
@@ -341,17 +351,20 @@
 
   hold(e.knappGass, 'gass');
   hold(e.knappBrems, 'brems');
+  hold(e.knappTurbo, 'turbo');
 
   // Tastatur er bare til utprøving på maskin – telefonen er hovedsaken.
   window.addEventListener('keydown', function (ev) {
     if (!lop) return;
     if (ev.key === 'ArrowRight' || ev.key === ' ') lop.sett('gass', true);
     if (ev.key === 'ArrowLeft') lop.sett('brems', true);
+    if (ev.key === 'ArrowUp' || ev.key === 'Shift') lop.sett('turbo', true);
   });
   window.addEventListener('keyup', function (ev) {
     if (!lop) return;
     if (ev.key === 'ArrowRight' || ev.key === ' ') lop.sett('gass', false);
     if (ev.key === 'ArrowLeft') lop.sett('brems', false);
+    if (ev.key === 'ArrowUp' || ev.key === 'Shift') lop.sett('turbo', false);
   });
 
   document.getElementById('knappVerksted').onclick = function () { vis('skjermVerksted'); };

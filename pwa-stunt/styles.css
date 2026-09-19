@@ -453,29 +453,30 @@ body {
   padding: 6px 10px;
 }
 
+/*
+ * Hintet er en plate som klemmer seg rundt teksten, ikke en stripe tvers over
+ * skjermen. Teksten skifter – «Trykk på gass», «Hold gass i lufta = salto» –
+ * og en bakgrunn med faste prosentmarger passet bare den korteste av dem.
+ */
 .hudhint {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 12px;
+  right: 12px;
   bottom: calc(max(14px, env(safe-area-inset-bottom)) + 150px);
-  margin: 0;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  margin: 0 auto;
+  padding: 7px 16px;
+  border-radius: 14px;
+  background: var(--gull);
   text-align: center;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   color: #10131f;
   animation: puls 1s ease-in-out infinite;
 }
 
 .hudhint:not([hidden]) { display: block; }
-
-.hudhint::before {
-  content: '';
-  position: absolute;
-  inset: -6px 22% -6px 22%;
-  background: var(--gull);
-  border-radius: 13px;
-  z-index: -1;
-}
 
 @keyframes puls {
   0%, 100% { transform: scale(1); }
@@ -521,8 +522,11 @@ body {
 
 .pedalnavn { font-size: 14px; font-weight: 800; letter-spacing: 0.5px; }
 
+/* Tegnet og navnet må ligge over turbomåleren, som er et eget lag i bunnen. */
+.pedaltegn, .pedalnavn { position: relative; z-index: 1; }
+
 .pedal.gass {
-  flex: 2 1 0;
+  flex: 2.2 1 0;
   background: linear-gradient(180deg, #ffd45a, var(--gull));
   box-shadow: 0 5px 0 #b98700;
 }
@@ -532,6 +536,47 @@ body {
   background: linear-gradient(180deg, #ff8f88, var(--rod));
   box-shadow: 0 5px 0 #a92b25;
 }
+
+/*
+ * Turboen er en måler, ikke bare en knapp. Standen tegnes som et fyll som
+ * stiger nedenfra, så barnet ser tanken fylles av myntene det plukker – og
+ * kan se at den er tom uten å ha trykket og blitt skuffet.
+ */
+.pedal.turbo {
+  flex: 1 1 0;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: #2a2244;
+  box-shadow: 0 5px 0 #171132;
+  opacity: 0.6;
+}
+
+.turbofyll {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: linear-gradient(180deg, #a982ff, #6a3ff0);
+}
+
+/* Klar til å tennes: full farge og et lite lys, så knappen inviterer. */
+.pedal.turbo.klar { opacity: 1; }
+.pedal.turbo.klar .turbofyll { box-shadow: 0 0 18px rgba(169, 130, 255, 0.85); }
+
+/*
+ * Den brennende turboen er lilla og ikke gyllen. Et første forsøk gjorde den
+ * oransje som flammen, og da sto det to gullknapper ved siden av hverandre –
+ * turboen var ikke til å skille fra gassen i det den gjorde noe.
+ */
+.pedal.turbo.brenner {
+  color: #fff;
+  background: linear-gradient(180deg, #d59bff, #8b3ff5);
+  box-shadow: 0 5px 0 #4c1b9e, 0 0 26px rgba(180, 110, 255, 0.85);
+}
+
+.pedal.turbo.brenner .turbofyll { background: rgba(255, 255, 255, 0.35); }
 
 .pedal.trykket { transform: translateY(3px); box-shadow: none; }
 

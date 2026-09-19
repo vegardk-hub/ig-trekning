@@ -31,6 +31,65 @@ var Fysikk = (function () {
   var LOOPGULV = 170;        // laveste fart inne i en loop
 
   /*
+   * Simulerte sekunder per virkelig sekund. Alt annet i fila er stemt av mot
+   * hverandre – rampevinkler, hopplengder, myntbuer, økonomi – så farten kan
+   * ikke settes ned ved å skru på tallene uten å rive opp hele avstemmingen.
+   * En tidsskala senker *hele* verden likt: bilen bruker lenger tid på samme
+   * løype, og ingen avstand, bue eller sum endrer seg.
+   *
+   * `tid` i resultatet er derfor simulerte sekunder. Virkelig varighet er
+   * `tid / TIDSSKALA`, og det er det tallet `tester/lope.js` måler mot.
+   */
+  var TIDSSKALA = 0.78;
+
+  /*
+   * Luftkontroll. Gass spinner bilen bakover, brems forover – som i sjangeren
+   * ellers, og det er den fysiske intuisjonen: hjulene får gass, og kroppen
+   * roterer motsatt vei.
+   *
+   * Rotasjonen er *bare* tegning. Landingen leser farten, ikke hvordan bilen
+   * ser ut, så en bil som lander opp-ned lander like trygt som en som står
+   * rett. Det er samme regel som at ingenting kan gå galt i en loop: her
+   * finnes det ingen måte å tape på, så en salto kan bare gi noe.
+   */
+  var LUFTKRAFT = 7.5;       // rad/s² fra gass eller brems i lufta
+  var MAKSSPINN = 8.0;       // rad/s
+  var SALTOLONN = 45;
+  var RETTING = 14;          // hvor fort bilen retter seg opp etter landing
+
+  /*
+   * En salto betales først når bilen lander noenlunde rett. Det er det som
+   * gjør den til en *kontroll* og ikke til gratis penger: holder man bare
+   * gassen, snurrer bilen videre og lander på taket. Slipper man begge
+   * knappene, retter den seg mot nærmeste hele runde – spinn opp, slipp,
+   * land flatt.
+   *
+   * En bom koster ingenting. Det er hele premisset: her finnes det ingen måte
+   * å tape på, så en mislykket salto er en uteblitt bonus, aldri en straff.
+   */
+  var SALTOVINDU = 0.75;     // radianer fra rett opp som godtas i landingen
+  var SALTORETT = 2.4;       // hvor fort bilen søker mot hel runde uten trykk
+  var SPINNDEMP = 4.0;       // hvor fort spinnet ebber ut uten trykk
+
+  /*
+   * Turbo. Måleren fylles av mynter og looper, så det man plukker underveis
+   * blir til noe man kan bruke – ikke bare til et tall på skjermen.
+   *
+   * Taket er med vilje bare 15 % over toppfarten. Myntbuene over hoppene er
+   * regnet ut fra en *målt* avsprangsfart (`REFERANSEFART` i `lope.js`), og
+   * en turbo som ga vesentlig mer fart ville sendt bilen i en bue langt over
+   * sine egne mynter. Kreften er derimot dobbel, så turboen kjennes på det
+   * som faktisk er tregt: opp en bakke og ut av en loop.
+   */
+  var TURBOKRAFT = 2.0;      // ganger girkraften, på toppen av gassen
+  var TURBOTAK = 1.15;       // hvor mye toppfarten løftes mens den brenner
+  var TURBOBRUK = 0.9;       // andel av måleren per sekund
+  var TURBOMYNT = 0.055;     // påfyll per mynt
+  var TURBOLOOP = 0.15;      // påfyll per loop
+  var TURBOMIN = 0.22;       // laveste stand som kan tennes
+  var TURBOSTART = 0.35;     // med i tanken fra start, så den kan prøves tidlig
+
+  /*
    * Sju nivåer per del. Det var fire, og da var bilen ferdig utbygd før
    * barnet var ferdig med å spille. Trinnene over det fjerde koster mer enn
    * hele designkatalogen til sammen, og det er meningen: de siste er noe å
@@ -77,12 +136,16 @@ var Fysikk = (function () {
       s: 0, v: 0,
       flyr: false, fx: 0, fy: 0, fvx: 0, fvy: 0,
       vinkel: 0,
+      // Luftvinkelen er nesen som følger farten; `snurret` er saltoen som
+      // legges oppå, og `retting` er det som er igjen av den etter landing.
+      luftvinkel: 0, spinn: 0, snurret: 0, runder: 0, retting: 0,
+      turbo: TURBOSTART, turboPaa: false,
       hoppFra: 0, hoppStart: 0, hoppTid: 0,
       ferdig: false
     };
 
-    var inn = { gass: false, brems: false };
-    var penger = 0, mynter = 0, looper = 0, hopp = 0, lengsteHopp = 0;
+    var inn = { gass: false, brems: false, turbo: false };
+    var penger = 0, mynter = 0, looper = 0, hopp = 0, lengsteHopp = 0, saltoer = 0;
     var popper = [];
     var tid = 0, staarTid = 0;
 
@@ -113,10 +176,43 @@ var Fysikk = (function () {
 
     /* ---------- bakken ---------- */
 
+    /*
+     * Turboen har en sperre nedover, ikke oppover: den kan ikke *tennes* under
+     * `TURBOMIN`, men en turbo som allerede brenner får tømme tanken. Uten
+     * sperren blir knappen et konstant lite dytt i stedet for noe man sparer
+     * på, og uten unntaket slukner den midt i en bakke med en fjerdedel igjen.
+     */
+    function turboSteg() {
+      if (!inn.turbo || b.turbo <= 0) { b.turboPaa = false; return false; }
+      if (!b.turboPaa && b.turbo < TURBOMIN) { return false; }
+      b.turboPaa = true;
+      b.turbo = Math.max(0, b.turbo - TURBOBRUK * DT);
+      return true;
+    }
+
+    function fyllTurbo(mengde) {
+      b.turbo = Math.min(1, b.turbo + mengde);
+    }
+
     function stegBakke() {
       var pkt = Lope.ved(lope, b.s);
       var loop = Lope.iLoop(lope, b.s);
+      var brenner = turboSteg();
+      var tak = toppfart * (brenner ? TURBOTAK : 1);
       var a = 0;
+
+      /*
+       * Turbokraften toner ut mot sitt eget tak, på samme måte som lavgiret
+       * toner ut mot toppfarten. Et første forsøk la på en fast kraft og
+       * stolte på at den myke toppfartsbremsen holdt igjen – den bremser med
+       * 2,2 per sekund, og en maksbil med turbo fant likevel likevekt langt
+       * over 2000. Den fløy 8745 enheter, hoppet over to ramper og seilte
+       * tvers gjennom løypa.
+       */
+      // Gulvet på 0,15 er der for at knappen aldri skal kjennes død: en bil
+      // som allerede ligger på taket sitt, skal fortsatt få et dytt og et
+      // flammesprut når barnet trykker.
+      if (brenner) a += kraft * TURBOKRAFT * Math.max(0.15, 1 - b.v / tak);
 
       /*
        * Lavgir: gassen tar hardest når bilen står nesten stille, og ebber ut
@@ -138,7 +234,7 @@ var Fysikk = (function () {
 
       // Toppfarten er ikke et hardt tak: en bratt utforbakke skal kunne gi
       // mer, den skal bare ebbe ut igjen.
-      if (b.v > toppfart) b.v -= (b.v - toppfart) * 2.2 * DT;
+      if (b.v > tak) b.v -= (b.v - tak) * 2.2 * DT;
       if (loop && b.v < LOOPGULV) b.v = LOOPGULV;
       if (b.v < 0) b.v = 0;
 
@@ -149,11 +245,20 @@ var Fysikk = (function () {
       staarTid = (b.v < 45 && !inn.gass) ? staarTid + DT : 0;
 
       b.s += b.v * DT;
-      b.vinkel = pkt.vinkel;
+
+      // Landet bilen skjevt, står `retting` igjen og ebber ut. Uten den
+      // smeller bilen fra opp-ned til blank rett i én bilderute, og saltoen
+      // ser ut som en tegnefeil i stedet for et stunt som gikk bra.
+      b.vinkel = pkt.vinkel + b.retting;
+      if (b.retting) {
+        b.retting *= 1 - RETTING * DT;
+        if (Math.abs(b.retting) < 0.01) b.retting = 0;
+      }
 
       if (loop && !loop.betalt && b.s > loop.til - 30) {
         loop.betalt = true;
         looper++;
+        fyllTurbo(TURBOLOOP);
         hendelser.push({ type: 'loop', x: pkt.x, v: b.v });
         betal(35, 'LOOP!', pkt.x, pkt.y, true);
       }
@@ -179,6 +284,12 @@ var Fysikk = (function () {
       b.hoppFra = pkt.x;
       b.hoppStart = pkt.i;
       b.hoppTid = 0;
+      b.luftvinkel = pkt.vinkel;
+      b.spinn = 0;
+      b.snurret = 0;
+      b.runder = 0;
+      b.retting = 0;
+      b.turboPaa = false;   // ingen motorkraft uten bakke under hjulene
       hendelser.push({
         type: 'avsprang', x: pkt.x, v: b.v,
         grader: pkt.vinkel * 180 / Math.PI
@@ -201,11 +312,28 @@ var Fysikk = (function () {
       b.fy += b.fvy * DT;
       b.hoppTid += DT;
 
-      // Nesen følger farten. Bilen roterer altså aldri feil vei, og lander
-      // alltid på hjulene – det er den samme regelen som at ingenting kan
-      // gå galt i en loop.
+      // Gass spinner bakover, brems forover. Trykkes begge, står det stille –
+      // det er riktig svar og krever ingen egen regel.
+      if (inn.gass) b.spinn -= LUFTKRAFT * DT;
+      if (inn.brems) b.spinn += LUFTKRAFT * DT;
+      if (b.spinn > MAKSSPINN) b.spinn = MAKSSPINN;
+      if (b.spinn < -MAKSSPINN) b.spinn = -MAKSSPINN;
+
+      if (!inn.gass && !inn.brems) {
+        b.spinn *= 1 - SPINNDEMP * DT;
+        var hel = Math.round(b.snurret / (Math.PI * 2)) * Math.PI * 2;
+        b.snurret += (hel - b.snurret) * Math.min(1, SALTORETT * DT);
+      }
+
+      b.snurret += b.spinn * DT;
+      b.runder = Math.floor(Math.abs(b.snurret) / (Math.PI * 2));
+
+      // Nesen følger farten, og saltoen legges oppå. Landingen leser farten
+      // og ikke tegningen, så bilen lander like trygt opp-ned – det er den
+      // samme regelen som at ingenting kan gå galt i en loop.
       var mal = Math.atan2(b.fvy, b.fvx);
-      b.vinkel += Lope.vinkeldiff(mal, b.vinkel) * Math.min(1, 4 * DT);
+      b.luftvinkel += Lope.vinkeldiff(mal, b.luftvinkel) * Math.min(1, 4 * DT);
+      b.vinkel = b.luftvinkel + b.snurret;
 
       var mark = bakkePunkt(b.hoppStart, b.fx);
 
@@ -228,11 +356,27 @@ var Fysikk = (function () {
       b.v = Math.max(120, fart * (1 - landingstap * Math.min(1, diff / (Math.PI / 2))));
 
       b.s = mark.s;
-      b.vinkel = mark.vinkel;
+      // Det som er igjen av saltoen tas med ned og rettes opp på bakken.
+      // `vinkeldiff` gir korteste vei, så bilen aldri snurrer den lange veien
+      // tilbake etter halvannen runde.
+      b.retting = Lope.vinkeldiff(b.vinkel, mark.vinkel);
+      b.vinkel = mark.vinkel + b.retting;
+      b.spinn = 0;
       b.flyr = false;
 
-      hendelser.push({ type: 'landing', x: mark.x, lengde: lengde, tid: b.hoppTid });
+      hendelser.push({
+        type: 'landing', x: mark.x, lengde: lengde, tid: b.hoppTid,
+        runder: b.runder, rett: Math.abs(b.retting) < SALTOVINDU
+      });
       betal(8 + lengde / 28 + b.hoppTid * 14, 'HOPP ' + lengde, mark.x, mark.y - 90, true);
+
+      // Saltoen betales her, og bare hvis bilen kom ned på hjulene.
+      if (b.runder > 0 && Math.abs(b.retting) < SALTOVINDU) {
+        saltoer += b.runder;
+        betal(SALTOLONN * b.runder,
+              (b.runder > 1 ? b.runder + '× ' : '') + 'SALTO!',
+              mark.x, mark.y - 150, true);
+      }
 
       // Landet bilen på eller forbi målstreken, er turen over med en gang.
       // Uten dette ville en maksbil som flyr helt fram, lande og så trille
@@ -248,9 +392,25 @@ var Fysikk = (function () {
         if (Math.abs(m.x - pos.x) < 62 && Math.abs(m.y - (pos.y - 40)) < 66) {
           m.tatt = true;
           mynter++;
+          fyllTurbo(TURBOMYNT);
           betal(4, '', m.x, m.y);
         }
       }
+    }
+
+    /*
+     * Ett hint om gangen, og bare når det trengs. «Trykk på gass» er det som
+     * berger en bil som er blitt stående; salto-hintet vises bare til barnet
+     * har fått sin første, for etter det er det ingen nyhet.
+     */
+    function hint() {
+      if (b.ferdig) return '';
+      if (staarTid > 1.2) return 'Trykk på gass! 👉';
+      if (!b.flyr || saltoer > 0) return '';
+      // To trinn, fordi saltoen har to: få den rundt, og så lande den.
+      if (b.runder > 0) return 'Slipp, så lander du rett! 👐';
+      if (b.hoppTid > 0.3) return 'Hold gass i lufta = salto! 🔄';
+      return '';
     }
 
     function avslutt() {
@@ -283,31 +443,43 @@ var Fysikk = (function () {
       tilstand: function () {
         return {
           penger: penger,
-          fart: Math.round((b.flyr ? Math.hypot(b.fvx, b.fvy) : b.v) / 8),
+          // Hastigheten vises slik den *ser ut*, altså gjennom tidsskalaen.
+          // Et tall som sier 160 mens bilen tydelig går saktere, leser som
+          // at måleren er ødelagt.
+          fart: Math.round((b.flyr ? Math.hypot(b.fvx, b.fvy) : b.v) * TIDSSKALA / 8),
           andel: Math.min(1, b.s / lope.lengde),
           flyr: b.flyr,
-          staar: staarTid > 1.2 && !b.ferdig
+          runder: b.runder,
+          turbo: b.turbo,
+          turboPaa: b.turboPaa,
+          turboKlar: b.turbo >= TURBOMIN,
+          hint: hint()
         };
       },
       resultat: function () {
         return {
           penger: penger, mynter: mynter, looper: looper,
-          hopp: hopp, lengsteHopp: lengsteHopp, tid: tid
+          hopp: hopp, lengsteHopp: lengsteHopp, saltoer: saltoer, tid: tid
         };
       }
     };
   }
 
   /*
-   * Kjører en hel tur uten tegning. Brukes av prøvene: `gass` er en funksjon
-   * som får tilstanden og svarer om det trykkes gass, så en prøve kan kjøre
-   * både en bil som holder gassen i bunn og en som aldri rører den.
+   * Kjører en hel tur uten tegning. Brukes av prøvene: `gass` og `turbo` er
+   * funksjoner som får tilstanden og svarer om knappen holdes, så en prøve
+   * kan kjøre både en bil som holder alt i bunn og en som aldri rører noe.
+   *
+   * `turbo` er som standard *av*. Tallene løypa er stemt av mot, er målt på
+   * en bil uten turbo, og de skal fortsette å bety det samme.
    */
-  function simuler(lope, oppg, bonus, gass) {
+  function simuler(lope, oppg, bonus, gass, turbo) {
     var f = lag(lope, oppg, bonus);
     var vakt = 0;
     while (!f.ferdig() && vakt++ < 200000) {
-      f.sett('gass', gass ? gass(f.tilstand()) : true);
+      var t = f.tilstand();
+      f.sett('gass', gass ? gass(t) : true);
+      f.sett('turbo', turbo ? turbo(t) : false);
       f.steg();
     }
     var ut = f.resultat();
@@ -321,6 +493,8 @@ var Fysikk = (function () {
     simuler: simuler,
     G: G,
     DT: DT,
+    TIDSSKALA: TIDSSKALA,
+    TURBOMIN: TURBOMIN,
     MOTOR: MOTOR,
     GIR: GIR,
     DEKK: DEKK,

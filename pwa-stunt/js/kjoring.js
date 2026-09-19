@@ -19,8 +19,11 @@ var Kjoring = (function () {
   // Hvor mye av verden som får plass. Skalaen tar den strengeste av bredde
   // og høyde, så bilen er like stor stående som liggende – uten det blir den
   // et frimerke i portrett og fyller skjermen i landskap.
-  var SYNSBREDDE = 1000;
-  var SYNSHOYDE = 1150;
+  //
+  // Tallene ble satt opp da kulissene kom: fjellene, skogen og jordlagene er
+  // verdt å se, og et trangere utsnitt viste bare asfalt og bil.
+  var SYNSBREDDE = 1100;
+  var SYNSHOYDE = 1260;
 
   function lag(lerret, lope, bilder, oppg, bonus) {
     var ctx = lerret.getContext('2d');
@@ -63,6 +66,11 @@ var Kjoring = (function () {
     var ristX = 0, ristY = 0;
     var forrigeFlyr = false;
 
+    // Turboen slås av og på med ett trykk, men bildet skal ikke hoppe. Glødet
+    // glir etter, og alt som henger på turboen – utsnitt, striper, kantfarge –
+    // leser av dette tallet i stedet for selve knappen.
+    var turboGlod = 0;
+
     function kamerarist(styrke) {
       ristX = styrke;
       ristY = styrke * 0.7;
@@ -100,6 +108,33 @@ var Kjoring = (function () {
         gnist(x, y - 6, Math.cos(vi) * f, Math.sin(vi) * f * 0.7,
               6 + Math.random() * 12, '#d8c8a4', 0.5 + Math.random() * 0.4, 260);
       }
+    }
+
+    /*
+     * Turboflammen kommer ut bak bilen, langs dens egen retning. Den er det
+     * eneste som sier at knappen gjorde noe: kraften er med vilje beskjeden,
+     * så det er flammen, ristingen og stripene som bærer følelsen.
+     */
+    function turboflamme(x, y, vinkel) {
+      for (var i = 0; i < 3; i++) {
+        var ut = vinkel + Math.PI + (Math.random() - 0.5) * 0.55;
+        var f = 240 + Math.random() * 340;
+        gnist(x - Math.cos(vinkel) * BILBREDDE * 0.42,
+              y - Math.sin(vinkel) * BILBREDDE * 0.42 - 16,
+              Math.cos(ut) * f, Math.sin(ut) * f,
+              7 + Math.random() * 11,
+              Math.random() < 0.45 ? '#ffd45a' : '#ff7b3a',
+              0.22 + Math.random() * 0.2, 40);
+      }
+    }
+
+    // Gnister langs bilen mens den snurrer. Uten dem er en salto bare et
+    // bilde som roterer; med dem ser det ut som noe som koster krefter.
+    function saltognist(x, y) {
+      var vi = Math.random() * Math.PI * 2;
+      gnist(x + Math.cos(vi) * 70, y + Math.sin(vi) * 70,
+            Math.cos(vi) * 120, Math.sin(vi) * 120,
+            3 + Math.random() * 4, '#cfe4ff', 0.3 + Math.random() * 0.2, 0);
     }
 
     function myntsprut(x, y) {
@@ -167,6 +202,27 @@ var Kjoring = (function () {
         var q = fys.posisjon();
         stov(q.x - BILBREDDE * 0.3, q.y, b.v);
       }
+
+      turboGlod += ((b.turboPaa ? 1 : 0) - turboGlod) * Math.min(1, 9 * dt);
+
+      /*
+       * Flammen doseres på tid og ikke per fysikksteg. `sePaaHendelser` kjøres
+       * 120 ganger i sekundet, så tre gnister per steg ble 360 i sekundet –
+       * de fylte hele partikkelbudsjettet og skjøv både støv og myntgnister ut
+       * av lista mens turboen brant.
+       */
+      if (b.turboPaa) {
+        if (Math.random() < dt * 55) {
+          var t = fys.posisjon();
+          turboflamme(t.x, t.y, b.vinkel);
+        }
+        if (ristX < 5) kamerarist(5);
+      }
+
+      if (b.flyr && Math.abs(b.spinn) > 3 && Math.random() < dt * 26) {
+        var s = fys.posisjon();
+        saltognist(s.x, s.y - 30);
+      }
     }
 
     function seEtterTatteMynter() {
@@ -187,9 +243,11 @@ var Kjoring = (function () {
       var fart = b.flyr ? Math.hypot(b.fvx, b.fvy) : b.v;
 
       // Fart trekker bildet litt ut, så det føles raskere uten at bilen
-      // blir borte.
+      // blir borte. Turboen trekker det et hakk til – det er det billigste
+      // som gjør et lite krafttillegg til noe som *kjennes*.
       var skala = Math.max(bredde / SYNSBREDDE, hoyde / SYNSHOYDE) *
-                  (1 - Math.min(0.11, fart / 14000));
+                  (1 - Math.min(0.11, fart / 14000)) *
+                  (1 - 0.055 * turboGlod);
 
       var kamX = pos.x + framsyn + ristX * (Math.random() - 0.5) * 2;
       var kamY = pos.y - 40 + ristY * (Math.random() - 0.5) * 2;
@@ -226,6 +284,7 @@ var Kjoring = (function () {
 
       fartsstriper(bredde, hoyde, fart);
       vignett(bredde, hoyde);
+      turbokant(bredde, hoyde);
     }
 
     /*
@@ -357,8 +416,8 @@ var Kjoring = (function () {
      * kameraet ville vandret rundt i bildet.
      */
     function fartsstriper(bredde, hoyde, fart) {
-      if (fart < 700) return;
-      var styrke = Math.min(1, (fart - 700) / 900);
+      var styrke = Math.min(1, Math.max(0, (fart - 700) / 900) + turboGlod * 0.7);
+      if (styrke <= 0.01) return;
       ctx.lineCap = 'butt';
       for (var i = 0; i < 12; i++) {
         // Høyden er fast per stripe. Et tidlig forsøk lot dem gli nedover
@@ -406,6 +465,30 @@ var Kjoring = (function () {
       ctx.fillRect(0, 0, bredde, hoyde);
     }
 
+    var turbomaske = null, turboMaal = '';
+
+    /*
+     * Varm kant mens turboen brenner. Den ligger utenpå vignetten, så bildet
+     * gløder innenfra i stedet for å bli lysere overalt – det leser som varme
+     * fra motoren og ikke som at noen skrudde opp lysstyrken.
+     */
+    function turbokant(bredde, hoyde) {
+      if (turboGlod < 0.02) return;
+      var nokkel = bredde + 'x' + hoyde;
+      if (turboMaal !== nokkel) {
+        turbomaske = ctx.createRadialGradient(
+          bredde * 0.45, hoyde * 0.55, Math.min(bredde, hoyde) * 0.42,
+          bredde * 0.45, hoyde * 0.55, Math.max(bredde, hoyde) * 0.78);
+        turbomaske.addColorStop(0, 'rgba(255,150,50,0)');
+        turbomaske.addColorStop(1, 'rgba(255,132,40,0.26)');
+        turboMaal = nokkel;
+      }
+      ctx.globalAlpha = turboGlod;
+      ctx.fillStyle = turbomaske;
+      ctx.fillRect(0, 0, bredde, hoyde);
+      ctx.globalAlpha = 1;
+    }
+
     /* ---------- sløyfe ---------- */
 
     function bilderute(na) {
@@ -421,9 +504,18 @@ var Kjoring = (function () {
        */
       var dt = Math.max(0, Math.min(0.1, (na - sistTid) / 1000 || 0));
       sistTid = na;
+
+      /*
+       * `sdt` er simulert tid, `dt` er virkelig tid. Alt som hører til
+       * verden går på `sdt` og blir dermed langsommere sammen: bilen, støvet,
+       * dollartegnene. Blinkefasen går på `dt`, for den skal holde takten med
+       * CSS-animasjonen i garasjen – et lys som blinker i sakte film et sted
+       * og normalt et annet, ser ut som en feil.
+       */
+      var sdt = dt * Fysikk.TIDSSKALA;
       tid += dt;
-      rest += dt;
-      snurr(dt);
+      rest += sdt;
+      snurr(sdt);
 
       var vakt = 0;
       while (rest >= Fysikk.DT && vakt++ < 40) {
@@ -439,10 +531,10 @@ var Kjoring = (function () {
       var mal = Math.min(150, fart * 0.10);
       framsyn += (mal - framsyn) * Math.min(1, 2.5 * dt);
 
-      oppdaterPartikler(dt);
+      oppdaterPartikler(sdt);
 
       for (var i = popper.length - 1; i >= 0; i--) {
-        popper[i].alder += dt;
+        popper[i].alder += sdt;
         if (popper[i].alder > (popper[i].stor ? 1.2 : 0.6)) popper.splice(i, 1);
       }
 

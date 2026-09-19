@@ -274,6 +274,24 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **Gassen har lavgir, og det er ikke pynt.** Den bratteste rampa er 45 grader
   og koster mer enn en umodifisert motor gir. Uten lavgiret blir bilen stående,
   og appen ser ut som den har hengt seg midt i en app som ikke kan tapes.
+- **Gass og brems gjør noe annet i lufta enn på bakken.** De snurrer bilen
+  bakover og forover. Det er slik det finnes noe å gjøre gjennom hele turen
+  uten en fjerde knapp.
+- **Saltoen betales ved landing, ikke i lufta.** Og bare hvis bilen lander
+  innenfor `SALTOVINDU`. Betaler man i det runden fullføres, får en maksbil
+  som bare holder gassen åtte saltoer per tur og tjener 33 % mer uten å gjøre
+  noe. Prøven `maks.saltoer === 0` står der for å hindre akkurat det. En bom
+  koster ingenting — det er en uteblitt bonus, aldri en straff.
+- **Turbokraften må tone ut mot sitt eget tak.** Den myke toppfartsbremsen
+  bremser med 2,2 per sekund og holder ikke igjen en fast kraft: et første
+  forsøk ga en maksbil likevekt over 2000, og den fløy 8745 enheter tvers
+  gjennom løypa. Taket er dessuten bare 15 % over toppfarten, fordi myntbuene
+  er regnet ut fra en målt avsprangsfart.
+- **Farten senkes med `TIDSSKALA`, aldri ved å skru på tallene.** Alt i
+  `fysikk.js` er stemt av mot alt annet. En tidsskala senker hele verden likt;
+  et lavere motortall river opp hopplengder, myntbuer og økonomi på én gang.
+  `resultat().tid` er simulerte sekunder — virkelig varighet er
+  `tid / TIDSSKALA`.
 - **Tilbehøret på taket stables etter hvor mye som allerede ligger der.**
   Faste lag ga en sirene som hang i lufta hvis kofferten under ikke var
   kjøpt. `TAK`-marginen i viewBoxen hører sammen med dette: uten den blir

@@ -55,13 +55,26 @@ var ALT = {
 };
 var BONUS_MAKS = Bil.bonus(ALT);
 
-function tur(oppg, bonus, gass) {
-  return Fysikk.simuler(Lope.bygg(Fysikk.G), oppg, bonus, gass);
+function tur(oppg, bonus, gass, turbo) {
+  return Fysikk.simuler(Lope.bygg(Fysikk.G), oppg, bonus, gass, turbo);
 }
+
+var ALLTID = function () { return true; };
+
+/*
+ * «Flink» er et barn som har skjønt saltoen: gass hele veien, men slipp i
+ * lufta så snart bilen har fått en hel runde rundt, så den lander på hjulene.
+ * Det er den øvre grensa for hva som kan tjenes på én tur, og det er den som
+ * må holde seg innenfor det økonomien tåler.
+ */
+var FLINK = function (t) { return !t.flyr || t.runder === 0; };
 
 var lope = Lope.bygg(Fysikk.G);
 var naken = tur(NAKEN, BONUS_NAKEN);
 var maks = tur(MAKS, BONUS_MAKS);
+var nakenAlt = tur(NAKEN, BONUS_NAKEN, FLINK, ALLTID);
+var maksFlink = tur(MAKS, BONUS_MAKS, FLINK);
+var maksAlt = tur(MAKS, BONUS_MAKS, FLINK, ALLTID);
 
 function avsprang(res) { return res.hendelser.filter(function (h) { return h.type === 'avsprang'; }); }
 function landinger(res) { return res.hendelser.filter(function (h) { return h.type === 'landing'; }); }
@@ -179,10 +192,76 @@ krev(lope.looper.length >= 4, 'løypa har færre enn fire looper', lope.looper.l
 krev(lope.lengde > 16000, 'løypa er kortere enn 16 000 enheter', Math.round(lope.lengde));
 krev(naken.looper === lope.looper.length,
      'en umodifisert bil kom ikke rundt alle loopene', naken.looper + ' av ' + lope.looper.length);
-krev(naken.tid > 18 && naken.tid < 45,
-     'en tur tar urimelig lang eller kort tid', naken.tid.toFixed(1) + ' s');
+/*
+ * Varigheten måles i *virkelige* sekunder, ikke simulerte. Fysikken kjøres
+ * gjennom `TIDSSKALA`, så de to er ikke samme tall – og det er det barnet
+ * sitter og venter på som skal ligge innenfor.
+ */
+var nakenEkte = naken.tid / Fysikk.TIDSSKALA;
+var maksEkte = maks.tid / Fysikk.TIDSSKALA;
+krev(nakenEkte > 22 && nakenEkte < 48,
+     'en tur med den svakeste bilen tar urimelig lang eller kort tid',
+     nakenEkte.toFixed(1) + ' s');
+krev(maksEkte > 15,
+     'en maksbil raser gjennom løypa for fort til å se noe av den',
+     maksEkte.toFixed(1) + ' s');
 
-/* ---------- 7: økonomien ---------- */
+/* ---------- 7: saltoen og turboen ---------- */
+
+overskrift('Kjørekontrollene');
+
+/*
+ * Saltoen skal være noe man *gjør*. Holder man bare gassen, snurrer bilen
+ * videre og lander på taket: en maksbil med gassen i bunn hele veien skal
+ * derfor ikke få en eneste. Slipper man i lufta, skal alle fire sitte.
+ */
+krev(maks.saltoer === 0,
+     'en maksbil som bare holder gassen får saltoer gratis', maks.saltoer);
+krev(maksFlink.saltoer >= ramper.length,
+     'en bil som slipper gassen i lufta lander ikke saltoene sine',
+     maksFlink.saltoer + ' av ' + ramper.length);
+krev(maksFlink.penger > maks.penger * 1.1,
+     'det lønner seg ikke nok å lande saltoene',
+     maksFlink.penger + ' mot ' + maks.penger);
+
+landinger(maks).forEach(function (h, i) {
+  krev(h.runder >= 1, 'hopp ' + (i + 1) + ' gir ikke luft nok til en hel runde', h.runder);
+});
+
+/*
+ * Turboen må ikke flytte avsprangsfarten mer enn myntbuene tåler. Buene er
+ * regnet ut fra REFERANSEFART, og en turbo som ga vesentlig mer fart ville
+ * sendt bilen i en bue langt over sine egne mynter. Et første forsøk la på
+ * en fast kraft: maksbilen fant likevekt over 2000 og fløy 8745 enheter.
+ */
+avsprang(nakenAlt).forEach(function (a, i) {
+  krev(Math.abs(a.v - 750) < 130,
+       'avsprangsfart ' + (i + 1) + ' med turbo ligger langt fra REFERANSEFART',
+       Math.round(a.v) + ' mot 750');
+});
+
+krev(nakenAlt.kjortFerdig && maksAlt.kjortFerdig,
+     'en bil som bruker turbo kom ikke i mål');
+
+// Turboen skal heller ikke kunne skyte noen gjennom en loop.
+avsprang(maksAlt).forEach(function (a, i) {
+  var l = landinger(maksAlt)[i];
+  if (!l) return;
+  var traff = loopX.filter(function (x) { return x > a.x + 40 && x < a.x + l.lengde - 40; });
+  krev(traff.length === 0,
+       'en maksbil med turbo flyr gjennom en loop på hopp ' + (i + 1),
+       'hopp ' + Math.round(l.lengde) + ' fra x=' + Math.round(a.x));
+});
+
+// En umodifisert bil skal fortsatt ikke nå målet fra siste hopp, uansett
+// hvor mye turbo den bruker.
+var altSisteA = avsprang(nakenAlt)[avsprang(nakenAlt).length - 1];
+var altSisteL = landinger(nakenAlt)[landinger(nakenAlt).length - 1];
+krev(altSisteA.x + altSisteL.lengde < maalX - 400,
+     'en umodifisert bil med turbo når målet fra siste hopp',
+     Math.round(maalX - altSisteA.x - altSisteL.lengde) + ' enheter til overs');
+
+/* ---------- 8: økonomien ---------- */
 
 overskrift('Økonomien');
 
@@ -196,17 +275,32 @@ var oppgraderinger = Fysikk.OPPGRADERINGER.reduce(function (sum, o) {
 console.log('  naken tur $' + naken.penger + ' | maks tur $' + maks.penger +
             ' | katalog $' + katalog + ' | oppgraderinger $' + oppgraderinger);
 console.log('  naken: ' + naken.mynter + ' mynter, ' + naken.looper + ' looper, ' +
-            naken.hopp + ' hopp, lengste ' + naken.lengsteHopp);
+            naken.hopp + ' hopp, lengste ' + naken.lengsteHopp +
+            ', ' + nakenEkte.toFixed(1) + ' s');
 console.log('  maks:  ' + maks.mynter + ' mynter, ' + maks.looper + ' looper, ' +
-            maks.hopp + ' hopp, lengste ' + maks.lengsteHopp);
+            maks.hopp + ' hopp, lengste ' + maks.lengsteHopp +
+            ', ' + maksEkte.toFixed(1) + ' s');
+console.log('  med salto og turbo: naken $' + nakenAlt.penger +
+            ' (' + nakenAlt.saltoer + ' salto) | maks $' + maksAlt.penger +
+            ' (' + maksAlt.saltoer + ' salto)');
 
 // Stilbonusen skal ligge rundt x2,1 med alt på. Legger noen til en kategori
 // uten å justere nevneren i Bil.bonus(), vokser inntekten i løypa av seg selv.
 krev(BONUS_MAKS > 1.95 && BONUS_MAKS < 2.25,
      'stilbonusen med alt på har drevet vekk fra x2,1', '×' + BONUS_MAKS.toFixed(2));
 
-krev(naken.penger > 500 && naken.penger < 900,
+/*
+ * Båndet gjelder en umodifisert bil som bare holder gassen. Det flyttet seg
+ * opp da saltoen kom til – den er en ny inntekt, og den skal være verdt å
+ * lære seg. `nakenAlt` er taket: samme bil, men kjørt av en som lander
+ * saltoene og bruker turboen. Klarer den å doble seg, er det ikke lenger en
+ * bonus, det er en ny økonomi.
+ */
+krev(naken.penger > 700 && naken.penger < 1050,
      'en umodifisert tur ligger utenfor det README-en lover', naken.penger);
+krev(nakenAlt.penger < naken.penger * 1.4,
+     'salto og turbo gir for mye på en umodifisert bil',
+     nakenAlt.penger + ' mot ' + naken.penger);
 krev(maks.penger > naken.penger * 1.5,
      'en fullt utstyrt bil tjener ikke nok mer enn en naken', maks.penger + ' mot ' + naken.penger);
 krev(maks.penger < naken.penger * 4,

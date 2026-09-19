@@ -49,6 +49,80 @@ opp etter 1,2 sekunder. En bil som er blitt stående i en motbakke ser ut som
 en app som har hengt seg, og det er den eneste måten dette spillet kan se ut
 som det er slutt uten å være det.
 
+## Kontrollene: tre knapper, og ulik jobb på bakken og i lufta
+
+Gass og brems gjør to forskjellige ting avhengig av hvor bilen er. Det er det
+som gjør at det finnes noe å gjøre hele veien, uten en fjerde knapp:
+
+| | På bakken | I lufta |
+| --- | --- | --- |
+| Gass | framover, med lavgir | snurrer bilen **bakover** |
+| Brems | bremser | snurrer bilen **forover** |
+| Turbo | ekstra kraft, tømmer måleren | ingenting — ingen bakke under hjulene |
+
+### Saltoen er en kontroll, ikke en utbetaling
+
+En hel runde rundt i lufta er en salto, og den betales **bare hvis bilen lander
+noenlunde rett** — innenfor `SALTOVINDU` på 0,75 radianer. Det er det som gjør
+den til noe man gjør og ikke til gratis penger: holder man bare gassen,
+fortsetter bilen å snurre og lander på taket. Slipper man begge knappene,
+demper spinnet seg og bilen søker mot nærmeste hele runde. **Spinn opp, slipp,
+land flatt.**
+
+Et første forsøk betalte saltoen i det runden ble fullført, midt i lufta. Da
+fikk en maksbil som bare holdt gassen åtte saltoer per tur og tjente 33 % mer
+uten å gjøre noe — prøven `maks.saltoer === 0` står der for å hindre at det
+kommer tilbake.
+
+En bom koster ingenting. Det er hele premisset: her finnes det ingen måte å
+tape på, så en mislykket salto er en uteblitt bonus, aldri en straff. Det
+eneste som skjer, er at bilen retter seg opp igjen på bakken — og den
+vrikningen er nettopp signalet om at den ikke satt.
+
+Hintet kommer i to trinn, og bare til barnet har landet sin første:
+«Hold gass i lufta = salto!» mens den snurrer, så «Slipp, så lander du rett!»
+så snart runden er i boks.
+
+### Turboen fylles av det man plukker
+
+Måleren fylles av mynter (`TURBOMYNT`) og looper (`TURBOLOOP`), så det man
+samler underveis blir til noe man kan bruke. Den kan ikke *tennes* under 22 %,
+men en turbo som allerede brenner får tømme tanken — uten det unntaket slukner
+den midt i en bakke med en fjerdedel igjen.
+
+To tall er verdt å vite hvorfor står der:
+
+* **Taket er bare 15 % over toppfarten.** Myntbuene over hoppene er regnet ut
+  fra en *målt* avsprangsfart (`REFERANSEFART` i `lope.js`), og en turbo som ga
+  vesentlig mer fart ville sendt bilen i en bue langt over sine egne mynter.
+* **Kraften toner ut mot det taket**, slik lavgiret toner ut mot toppfarten.
+  Et første forsøk la på en fast kraft og stolte på den myke toppfartsbremsen.
+  Den bremser med 2,2 per sekund; en maksbil med turbo fant likevekt over 2000,
+  fløy 8745 enheter, hoppet over to ramper og seilte tvers gjennom løypa.
+
+Det finnes et gulv på 0,15 i uttoningen, så knappen aldri kjennes død: en bil
+som allerede ligger på taket sitt skal fortsatt få et dytt og et flammesprut.
+
+**Turboen er ikke gratis å spamme.** På en fullt oppgradert bil er rampene bare
+rundt 330 enheter fra å nås av forrige hopp, og turboen spiser den marginen: en
+maksbil med turboen inne hele veien flyr *forbi* en rampe og taper hoppet.
+Det er en ekte avveining, ikke en feil.
+
+## Farten: én skala, ikke nye tall
+
+Alt i `fysikk.js` er stemt av mot alt annet — rampevinkler, hopplengder,
+myntbuer, økonomi. Farten kan derfor ikke settes ned ved å skru på tallene
+uten å rive opp hele avstemmingen.
+
+`TIDSSKALA` (0,78) senker i stedet *hele verden* likt: bilen bruker lenger tid
+på samme løype, og ingen avstand, bue eller sum endrer seg. Hastighetsmåleren
+i HUD-en ganges med den samme skalaen, for et tall som sier 160 mens bilen
+tydelig går saktere, leser som at måleren er ødelagt.
+
+`tid` i resultatet er **simulerte** sekunder. Virkelig varighet er
+`tid / TIDSSKALA`, og det er det tallet `tester/lope.js` måler mot: en
+umodifisert bil bruker rundt 40 sekunder, en maksbil rundt 22.
+
 ## Økonomien: én pott, og stil som ganger opp
 
 Eieren ba om **én pott** — samme penger til både oppgraderinger og pynt. Den
@@ -67,8 +141,10 @@ Tallene er kalibrert slik:
 | | |
 | --- | --- |
 | Startkapital | $250 |
-| Umodifisert bil, én tur | ~$798 |
+| Umodifisert bil, én tur | ~$890 |
+| Umodifisert bil, kjørt godt (saltoer landet, turbo brukt) | ~$981 |
 | Fullt utstyrt bil, én tur | ~$2002 |
+| Fullt utstyrt bil, saltoene landet | ~$2370 |
 | Hele designkatalogen | $5790 |
 | Alle oppgraderinger | $17 050 |
 
@@ -88,6 +164,11 @@ midten; de henger sammen.
 
 Merk at en sterkere bil ikke bare tjener mer: den flyr også over strekninger
 og mister mynter underveis. Det er en tilsiktet motvekt, ikke en feil.
+
+Saltoen er den største enkeltutbetalingen i spillet — $45 mot $35 for en loop
+og $4 for en mynt. Det er med vilje: den er det eneste som krever at barnet
+gjør noe annet enn å holde gassen. Taket på hva én tur kan gi, måles som
+`nakenAlt` i prøven, og skal ikke kunne dobles av salto og turbo alene.
 
 ## Filene
 
