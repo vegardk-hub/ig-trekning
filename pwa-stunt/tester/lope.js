@@ -361,6 +361,42 @@ Fysikk.OPPGRADERINGER.forEach(function (o) {
 });
 
 /*
+ * En bil som var fullt utbygd på den gamle sjunivå-skalaen skal begynne på
+ * *starten av tier 2*. Versjon 2 ganget i stedet det gamle nivået med TRINN,
+ * og da landet en maksbil rett på trinn 30 – ferdig utbygd i samme øyeblikk
+ * som appen oppdaterte seg. Begge veiene inn må gi samme svar, for versjon 2
+ * rakk å bli lagret hos dem som åpnet appen mens den lå ute.
+ */
+var UMIGRERT = undefined, V2 = 2;
+
+krev(Fysikk.fraGammelLagring(6, UMIGRERT) === Fysikk.TRINN,
+     'en maksa bil fra den gamle skalaen havner ikke på starten av tier 2',
+     Fysikk.fraGammelLagring(6, UMIGRERT));
+krev(Fysikk.fraGammelLagring(Fysikk.MAKSNIVA, V2) === Fysikk.TRINN,
+     'en bil som allerede fikk versjon 2-migreringen, blir ikke rettet tilbake',
+     Fysikk.fraGammelLagring(Fysikk.MAKSNIVA, V2));
+krev(Fysikk.tierInfo(Fysikk.fraGammelLagring(6, UMIGRERT)).n === 2,
+     'en maksa bil starter ikke i tier 2');
+krev(Fysikk.tierInfo(Fysikk.fraGammelLagring(6, UMIGRERT)).trinn === 0,
+     'en maksa bil starter ikke på *begynnelsen* av tier 2');
+krev(Fysikk.fraGammelLagring(0, UMIGRERT) === 0, 'en ubrukt bil fikk nivåer den ikke hadde');
+
+// De to veiene inn må være enige om hvert eneste gamle nivå.
+for (var gl = 0; gl <= 6; gl++) {
+  krev(Fysikk.fraGammelLagring(gl, UMIGRERT) === Fysikk.fraGammelLagring(gl * Fysikk.TRINN, V2),
+       'de to migreringsveiene er uenige om gammelt nivå ' + gl,
+       Fysikk.fraGammelLagring(gl, UMIGRERT) + ' mot ' +
+       Fysikk.fraGammelLagring(gl * Fysikk.TRINN, V2));
+  krev(Fysikk.fraGammelLagring(gl, UMIGRERT) <= Fysikk.TRINN,
+       'gammelt nivå ' + gl + ' havner forbi starten av tier 2');
+}
+
+// En lagring som allerede er på dagens skala, skal stå urørt.
+krev(Fysikk.fraGammelLagring(17, 3) === 17, 'en fersk lagring ble migrert om igjen');
+krev(Fysikk.fraGammelLagring(Fysikk.MAKSNIVA, 3) === Fysikk.MAKSNIVA,
+     'en ferdig bygd bil på dagens skala ble skrudd ned');
+
+/*
  * Selve progresjonen. Den spilles gjennom med en grådig kjøper: kjør en tur,
  * kjøp alt man har råd til, billigste først. Det er her de tre tallene som
  * henger sammen – ytelsestak, prisstigning og teknikkbonus – faktisk møtes,

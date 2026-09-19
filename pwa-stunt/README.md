@@ -199,11 +199,35 @@ To ting som kostet tid:
   de ble til fem like rosa klatter. Bilen rett over lista viser hvordan det
   faktisk ser ut.
 
-En lagring fra den gamle skalaen ganges med `TRINN` ved innlasting
-(`versjon`-feltet i `app.js`). Da blir *andelen* av veien man hadde gått den
-samme, og siden begge skalaene går fra samme bunn til samme tak, er ytelsen
-uendret. Uten det ville en bil med gammelt nivå 6 stått igjen på trinn 6 av 30
-og mistet nesten hele motoren sin.
+### En gammel lagring begynner på tier 2
+
+`Fysikk.fraGammelLagring()` regner om en lagring fra den gamle sjunivå-skalaen.
+En bil som var **fullt utbygd der, begynner på starten av tier 2** — ikke på
+toppen av tier 6.
+
+Det er en retting, ikke den opprinnelige planen. Første forsøk ganget det
+gamle nivået med `TRINN`, og da landet en maksbil rett på trinn 30: ferdig
+utbygd i samme øyeblikk som appen oppdaterte seg, med hele det nye systemet
+oppbrukt før det var prøvd. Eierens to barn hadde begge maksa bilen, og fikk
+seks tiere de aldri kom til å spille.
+
+Begge veiene inn må derfor rettes, for `versjon: 2` rakk å bli lagret hos dem
+som åpnet appen mens den lå ute:
+
+| Lagringen sier | Hva som gjøres |
+| --- | --- |
+| ingen `versjon` | gammelt nivå 0–6 skaleres inn i tier 1 |
+| `versjon: 2` | deles på `TRINN` først, så samme skalering |
+| `versjon: 3` og opp | står som det er |
+
+De to første veiene må gi **nøyaktig samme svar** for hvert gamle nivå — de
+kommer fra de samme dataene — og prøven går gjennom alle sju og sier fra hvis
+de er uenige.
+
+Taket på `TRINN` er det som gjør at «makset» blir nøyaktig tier 2, trinn null.
+**Penger, design og rekord røres ikke**: det er bare ytelsen som spoles
+tilbake, for det er den progresjonen som skal spilles på nytt. En bil som var
+maksa, har som regel noen tusen spart, og de er et godt forsprang inn i tier 2.
 
 ## Økonomien: én pott, og stil som ganger opp
 

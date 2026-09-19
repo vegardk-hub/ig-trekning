@@ -38,7 +38,8 @@
 
   function last() {
     var s = { penger: STARTPENGER, eid: {}, valgt: Bil.standard(),
-              oppg: { motor: 0, gir: 0, dekk: 0 }, beste: 0, turer: 0, versjon: 2 };
+              oppg: { motor: 0, gir: 0, dekk: 0 }, beste: 0, turer: 0,
+              versjon: Fysikk.LAGRINGSVERSJON };
     try {
       var lagret = JSON.parse(localStorage.getItem(NOKKEL));
       if (lagret && typeof lagret === 'object') {
@@ -58,18 +59,11 @@
         if (!Array.isArray(s.valgt.ekstra)) s.valgt.ekstra = [];
         if (lagret.oppg) for (var o in s.oppg) if (typeof lagret.oppg[o] === 'number') s.oppg[o] = lagret.oppg[o];
 
-        /*
-         * Oppgraderingene gikk fra sju nivåer til seks tiere à fem trinn.
-         * Et lagret nivå fra den gamle skalaen ganges med `TRINN`, så
-         * *andelen* av veien man hadde gått, blir den samme – og ytelsen
-         * dermed uendret, siden begge skalaene går fra samme bunn til samme
-         * tak. Uten dette ville en bil med gammelt nivå 6 stått igjen på
-         * trinn 6 av 30 og mistet nesten hele motoren sin.
-         */
-        if (!lagret.versjon) {
-          for (var m in s.oppg) s.oppg[m] = Math.min(Fysikk.MAKSNIVA, s.oppg[m] * Fysikk.TRINN);
-        }
-        s.versjon = 2;
+        // Oppgraderingene gikk fra sju nivåer til seks tiere à fem trinn.
+        // `Fysikk.fraGammelLagring()` eier hele omregningen og sier hvorfor
+        // en maksa bil skal begynne på tier 2 og ikke på toppen av tier 6.
+        for (var m in s.oppg) s.oppg[m] = Fysikk.fraGammelLagring(s.oppg[m], lagret.versjon);
+        s.versjon = Fysikk.LAGRINGSVERSJON;
       }
     } catch (f) { /* ødelagt lagring skal ikke stoppe spillet */ }
 

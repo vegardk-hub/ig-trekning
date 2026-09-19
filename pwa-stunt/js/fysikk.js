@@ -158,6 +158,39 @@ var Fysikk = (function () {
     };
   }
 
+  /* ---------- fra en gammel lagring til dagens skala ---------- */
+
+  /*
+   * Før tierne hadde hver del sju nivåer, 0 til 6. En bil som var fullt
+   * utbygd der, skal begynne på **starten av tier 2** – ikke på toppen av
+   * tier 6.
+   *
+   * Det er en retting av en tidligere migrering, ikke en ny idé. Versjon 2
+   * ganget det gamle nivået med `TRINN`, og da landet en maksbil rett på
+   * trinn 30: ferdig utbygd i samme øyeblikk som appen oppdaterte seg, med
+   * hele det nye systemet oppbrukt før det var prøvd. Eierens to barn hadde
+   * begge maksa bilen, og fikk seks tiere de aldri kom til å spille.
+   *
+   * Begge veiene inn må derfor rettes, for versjon 2 rakk å bli lagret hos
+   * dem som åpnet appen mens den lå ute:
+   *
+   *   ingen versjon   gammelt nivå 0..6        → skaleres inn i tier 1
+   *   versjon 2       gammelt nivå ganget ×5   → deles på TRINN først
+   *   versjon 3+      allerede dagens skala    → står som det er
+   *
+   * Taket på `TRINN` er det som gjør at «makset» blir nøyaktig tier 2, trinn
+   * null. Penger, design og rekord røres ikke: det er bare ytelsen som
+   * spoles tilbake, og det er den progresjonen som skal spilles på nytt.
+   */
+  var GAMMEL_TOPP = 6;
+
+  function fraGammelLagring(nivaa, versjon) {
+    var n = Math.max(0, Number(nivaa) || 0);
+    if (versjon >= 3) return grense(n);
+    if (versjon === 2) n = n / TRINN;
+    return Math.min(TRINN, Math.round(n * TRINN / GAMMEL_TOPP));
+  }
+
   var MOTOR = {
     navn: 'Motor', tegn: '🔧', hva: 'Toppfart',
     fra: 700, til: 1280, grunnpris: 150
@@ -597,6 +630,8 @@ var Fysikk = (function () {
     TRINN: TRINN,
     MAKSNIVA: MAKSNIVA,
     tierInfo: tierInfo,
+    fraGammelLagring: fraGammelLagring,
+    LAGRINGSVERSJON: 3,
     pris: pris,
     verdi: niva,
     teknikkbonus: teknikkbonus,

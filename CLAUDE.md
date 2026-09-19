@@ -304,6 +304,17 @@ Fire ting som ser ut som detaljer og har en grunn:
   gjennom hele spillet med en grådig kjøper og teller turer (~69). Det er det
   eneste som setter ytelsestak, prisstigning og teknikkbonus opp mot hverandre.
   Endrer du ett av de tre, les hva den sier før du velger.
+- **En maksa bil fra den gamle skalaen begynner på starten av tier 2.**
+  `Fysikk.fraGammelLagring()` eier omregningen. Første forsøk ganget det gamle
+  nivået med `TRINN`, og da landet en maksbil rett på trinn 30 — ferdig utbygd
+  i samme øyeblikk som appen oppdaterte seg, med hele det nye systemet
+  oppbrukt før det var prøvd. Eierens to barn hadde begge maksa bilen.
+  **Begge veiene inn må rettes** (`versjon` mangler, og `versjon: 2`, som rakk
+  å bli lagret), og de må gi samme svar for hvert gamle nivå. Penger, design
+  og rekord røres ikke — det er bare ytelsen som spoles tilbake.
+- **En migrering som allerede har vært ute, må rettes for begge tilstander.**
+  Den som ikke har åpnet appen ennå, og den som har. Nøkkelen på `versjon`
+  alene fanger bare den første.
 - **`HJULBOKS` hører sammen med glorien på dekk-tier 6.** Glorien rekker ut
   til 1,29 ganger hjulradien; boksen må være videre enn det. Med den gamle på
   1,1 ble hele neonringen skåret bort — og bare i løypa, for i garasjen er
