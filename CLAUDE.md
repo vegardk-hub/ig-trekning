@@ -292,6 +292,25 @@ Fire ting som ser ut som detaljer og har en grunn:
   et lavere motortall river opp hopplengder, myntbuer og økonomi på én gang.
   `resultat().tid` er simulerte sekunder — virkelig varighet er
   `tid / TIDSSKALA`.
+- **Seks tiere à fem trinn gir finere trinn, ikke en raskere bil.** Taket på
+  ytelsen er det samme som før tierne kom, og det *må* det være: 1280 i
+  toppfart er målt mot hopplengdene. Trenger du mer progresjon, legg den i
+  prisene og i `teknikkbonus()`, aldri i `MOTOR.til`.
+- **Teknikkbonusen er ikke pynt, den er det som gjør de siste tierne mulige.**
+  Prisene i tier 6 er hundre ganger dem i tier 1, mens ytelsen har et tak — en
+  halvferdig bil kjører nesten like fort som en ferdig. Uten en inntekt som
+  ganges opp av hvert kjøpte trinn, blir tier 5 og 6 en vegg.
+- **Progresjonen er en prøve, ikke en magefølelse.** `tester/lope.js` spiller
+  gjennom hele spillet med en grådig kjøper og teller turer (~69). Det er det
+  eneste som setter ytelsestak, prisstigning og teknikkbonus opp mot hverandre.
+  Endrer du ett av de tre, les hva den sier før du velger.
+- **`HJULBOKS` hører sammen med glorien på dekk-tier 6.** Glorien rekker ut
+  til 1,29 ganger hjulradien; boksen må være videre enn det. Med den gamle på
+  1,1 ble hele neonringen skåret bort — og bare i løypa, for i garasjen er
+  bilen en SVG uten noen boks å klippes mot.
+- **Hjulprøvene i verkstedslista tegnes uten dekk-tier.** Lista finnes for å
+  skille de fem designene fra hverandre, og glorien gjorde alle fem til like
+  rosa klatter. Bilen over lista viser tieret.
 - **Tilbehøret på taket stables etter hvor mye som allerede ligger der.**
   Faste lag ga en sirene som hang i lufta hvis kofferten under ikke var
   kjøpt. `TAK`-marginen i viewBoxen hører sammen med dette: uten den blir

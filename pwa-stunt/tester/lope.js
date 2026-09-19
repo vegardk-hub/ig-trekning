@@ -45,7 +45,7 @@ function overskrift(t) { console.log('\n' + t); }
 /* ---------- biler å måle med ---------- */
 
 var NAKEN = { motor: 0, gir: 0, dekk: 0 };
-var MAKS = { motor: 6, gir: 6, dekk: 6 };
+var MAKS = { motor: Fysikk.MAKSNIVA, gir: Fysikk.MAKSNIVA, dekk: Fysikk.MAKSNIVA };
 
 var BONUS_NAKEN = Bil.bonus(Bil.standard());
 var ALT = {
@@ -269,7 +269,8 @@ var katalog = Bil.KATEGORIER.reduce(function (sum, k) {
   return sum + k.liste.reduce(function (a, d) { return a + d.pris; }, 0);
 }, 0);
 var oppgraderinger = Fysikk.OPPGRADERINGER.reduce(function (sum, o) {
-  return sum + o.data.priser.reduce(function (a, p) { return a + p; }, 0);
+  for (var n = 0; n < Fysikk.MAKSNIVA; n++) sum += Fysikk.pris(o.data, n);
+  return sum;
 }, 0);
 
 console.log('  naken tur $' + naken.penger + ' | maks tur $' + maks.penger +
@@ -301,10 +302,119 @@ krev(naken.penger > 700 && naken.penger < 1050,
 krev(nakenAlt.penger < naken.penger * 1.4,
      'salto og turbo gir for mye på en umodifisert bil',
      nakenAlt.penger + ' mot ' + naken.penger);
-krev(maks.penger > naken.penger * 1.5,
-     'en fullt utstyrt bil tjener ikke nok mer enn en naken', maks.penger + ' mot ' + naken.penger);
-krev(maks.penger < naken.penger * 4,
-     'en fullt utstyrt bil tjener urimelig mye mer', maks.penger + ' mot ' + naken.penger);
+/*
+ * Avstanden mellom den første og den siste bilen er nå mye større enn før,
+ * og det er hele poenget med teknikkbonusen: prisene i tier 6 er hundre
+ * ganger dem i tier 1, og uten en inntekt som følger etter, blir de siste
+ * tierne en vegg. Båndet holder likevel igjen – blir det mer enn tolv
+ * ganger, er tidlige turer ikke verdt å kjøre.
+ */
+krev(maks.penger > naken.penger * 6,
+     'en fullt utbygd bil tjener ikke nok mer enn en naken – de siste tierne blir en vegg',
+     maks.penger + ' mot ' + naken.penger);
+krev(maks.penger < naken.penger * 12,
+     'en fullt utbygd bil tjener urimelig mye mer', maks.penger + ' mot ' + naken.penger);
+
+/* ---------- 9: tierne og hvor lenge de varer ---------- */
+
+overskrift('Tiere og progresjon');
+
+krev(Fysikk.TIERE === 6, 'det skal være seks tiere', Fysikk.TIERE);
+krev(Fysikk.MAKSNIVA === Fysikk.TIERE * Fysikk.TRINN, 'maksnivået stemmer ikke med tiere × trinn');
+
+/*
+ * Siste trinn i et tier *flytter* bilen opp. Nivå 5 er «tier 2, null av fem»
+ * og ikke «tier 1, fem av fem» – det er det som gjør at kjøpet man sparte til,
+ * gir en ny farge med en gang. Toppen er unntaket og blir stående i tier 6.
+ */
+krev(Fysikk.tierInfo(0).n === 1, 'nivå 0 skal være tier 1');
+krev(Fysikk.tierInfo(Fysikk.TRINN - 1).n === 1, 'siste trinn før et tierskifte hoppet for tidlig');
+krev(Fysikk.tierInfo(Fysikk.TRINN).n === 2, 'et fullført tier løfter ikke bilen opp i neste');
+krev(Fysikk.tierInfo(Fysikk.MAKSNIVA).n === Fysikk.TIERE, 'toppen havnet utenfor siste tier');
+krev(Fysikk.tierInfo(Fysikk.MAKSNIVA).trinn === Fysikk.TRINN, 'toppen viser ikke fullt tier');
+krev(Fysikk.pris(Fysikk.MOTOR, Fysikk.MAKSNIVA) === null, 'det går an å kjøpe forbi toppen');
+
+// Alle seks tierne skal ha hver sin farge og sitt eget navn.
+var farger = {}, navn = {};
+for (var t = 0; t < Fysikk.TIERE; t++) {
+  var info = Fysikk.tierInfo(t * Fysikk.TRINN);
+  farger[info.farge] = 1;
+  navn[info.navn] = 1;
+}
+krev(Object.keys(farger).length === Fysikk.TIERE, 'to tiere deler farge', Object.keys(farger).length);
+krev(Object.keys(navn).length === Fysikk.TIERE, 'to tiere deler navn', Object.keys(navn).length);
+
+// Ytelsen har samme tak som før tierne kom. Flere tiere skal gi *finere*
+// trinn, ikke en raskere bil – hopplengdene er stemt av mot toppen.
+krev(Math.abs(Fysikk.verdi(Fysikk.MOTOR, Fysikk.MAKSNIVA) - 1280) < 1,
+     'toppfarten har flyttet seg, og da stemmer ikke lengdene i lope.js',
+     Fysikk.verdi(Fysikk.MOTOR, Fysikk.MAKSNIVA));
+
+// Hvert tier må koste mer enn det forrige, ellers er de bare farger.
+Fysikk.OPPGRADERINGER.forEach(function (o) {
+  for (var i = 1; i < Fysikk.TIERE; i++) {
+    var for_ = Fysikk.pris(o.data, (i - 1) * Fysikk.TRINN);
+    var na = Fysikk.pris(o.data, i * Fysikk.TRINN);
+    krev(na > for_ * 1.8,
+         o.id + ': tier ' + (i + 1) + ' koster ikke nok mer enn tier ' + i, for_ + ' → ' + na);
+  }
+});
+
+/*
+ * Selve progresjonen. Den spilles gjennom med en grådig kjøper: kjør en tur,
+ * kjøp alt man har råd til, billigste først. Det er her de tre tallene som
+ * henger sammen – ytelsestak, prisstigning og teknikkbonus – faktisk møtes,
+ * og det eneste som fanger opp at de har drevet fra hverandre.
+ */
+function spillGjennom() {
+  var penger = 250, turer;
+  var eid = {}, valgt = Bil.standard(), oppg = { motor: 0, gir: 0, dekk: 0 };
+  Bil.KATEGORIER.forEach(function (k) { eid[k.id] = []; });
+  var merke = {};
+
+  for (turer = 1; turer <= 500; turer++) {
+    penger += Fysikk.simuler(lope, oppg, Bil.bonus(valgt)).penger;
+
+    var bud = [];
+    Fysikk.OPPGRADERINGER.forEach(function (o) {
+      var p = Fysikk.pris(o.data, oppg[o.id]);
+      if (p !== null) bud.push({ pris: p, gjor: function () { oppg[o.id]++; } });
+    });
+    Bil.KATEGORIER.forEach(function (k) {
+      k.liste.forEach(function (d) {
+        if (d.pris <= 0 || eid[k.id].indexOf(d.id) >= 0) return;
+        bud.push({ pris: d.pris, gjor: function () {
+          eid[k.id].push(d.id);
+          if (k.flere) valgt[k.id].push(d.id); else valgt[k.id] = d.id;
+        } });
+      });
+    });
+    bud.sort(function (a, b) { return a.pris - b.pris; });
+    if (!bud.length) break;
+    while (bud.length && bud[0].pris <= penger) {
+      penger -= bud[0].pris;
+      bud[0].gjor();
+      bud.shift();
+    }
+    // Når nådde motoren hvert tier?
+    var t = Fysikk.tierInfo(oppg.motor).n;
+    if (!merke[t]) merke[t] = turer;
+  }
+  return { turer: turer, merke: merke };
+}
+
+var gjennom = spillGjennom();
+console.log('  tier nådd på tur: ' + Object.keys(gjennom.merke).map(function (t) {
+  return 'T' + t + '@' + gjennom.merke[t];
+}).join(' '));
+console.log('  alt eid etter ' + gjennom.turer + ' turer');
+
+krev(gjennom.turer > 45 && gjennom.turer < 110,
+     'det tar urimelig få eller mange turer å bygge bilen ferdig', gjennom.turer + ' turer');
+krev(gjennom.merke[Fysikk.TIERE] !== undefined, 'siste tier ble aldri nådd');
+krev(gjennom.merke[2] !== undefined && gjennom.merke[2] <= 12,
+     'det tar for lang tid å se det andre tieret – første farge må komme tidlig',
+     'tur ' + gjennom.merke[2]);
 
 /* ---------- oppsummering ---------- */
 

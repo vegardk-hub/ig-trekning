@@ -310,23 +310,145 @@ var Bil = (function () {
     return ut;
   }
 
-  function hjulTegning(h, hj, i, fase) {
-    var g = '<g>';
+  /* ---------- hjulet, og hva dekk-tieret gjør med det ---------- */
+
+  /*
+   * Dekktieret er den eneste oppgraderingen man *ser*. Motor og girkasse er
+   * tall; felgen er et bilde, og den er det som gjør at et nytt tier kjennes
+   * som noe og ikke bare som en dyrere pipe i en meter.
+   *
+   * Lagene stables: et tier legger til noe, det fjerner aldri noe. Slik blir
+   * tier 6 summen av alt, og barnet kjenner igjen det det allerede hadde.
+   *
+   *   1  Stål     – som før: dekk, felg, eiker, nav
+   *   2  Smaragd  – slipt felgkant og boltring
+   *   3  Safir    – bremseskive bak eikene, farget navkapsel
+   *   4  Ametyst  – neonring i tierfargen, blinker
+   *   5  Magma    – doble ringer i motfase og glødende eiker
+   *   6  Plasma   – full glorie, krom i felgen og gnister rundt kanten
+   *
+   * Ingen `<filter>`. Glød lages av tre konsentriske streker med fallende
+   * bredde og stigende ugjennomsiktighet. Et SVG-filter ville vært penere,
+   * men tegningen serialiseres til en data-URL og rastreres per designbytte –
+   * filtre er både trege og upålitelige den veien.
+   */
+  var STANDARDTIER = { n: 1, farge: '#9aa7bd' };
+
+  // Tre streker utenpå hverandre leser som lys. Bredden faller og
+  // ugjennomsiktigheten stiger innover, så kanten er skarp og halo-en myk.
+  function glorie(x, y, r, farge, bredde, styrke, b) {
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r.toFixed(1) +
+             '" fill="none" stroke="' + farge + '" stroke-width="' + (bredde * 3.4).toFixed(1) +
+             '" stroke-opacity="' + (0.13 * styrke).toFixed(2) + '"' + b + '/>' +
+           '<circle cx="' + x + '" cy="' + y + '" r="' + r.toFixed(1) +
+             '" fill="none" stroke="' + farge + '" stroke-width="' + (bredde * 1.9).toFixed(1) +
+             '" stroke-opacity="' + (0.3 * styrke).toFixed(2) + '"' + b + '/>' +
+           '<circle cx="' + x + '" cy="' + y + '" r="' + r.toFixed(1) +
+             '" fill="none" stroke="' + farge + '" stroke-width="' + bredde.toFixed(1) +
+             '" stroke-opacity="' + (0.95 * styrke).toFixed(2) + '"' + b + '/>';
+  }
+
+  function hjulTegning(h, hj, i, fase, tier) {
+    var t = tier || STANDARDTIER;
+    var niva = t.n || 1;
+    var tf = t.farge || STANDARDTIER.farge;
+    var g = '<g>', e, v;
+
+    // Tier 6: halo utenfor selve dekket, så hjulet lyser opp asfalten rundt seg.
+    if (niva >= 6) {
+      g += glorie(h.x, h.y, h.r * 1.12, tf, h.r * 0.10, 1, blink('a', fase));
+    }
+
     g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + h.r + '" fill="' + hj.dekk + '"/>';
     if (hj.grov) {
       g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r - 5) + '" fill="none" stroke="' +
            hj.dekk + '" stroke-width="12" stroke-dasharray="10 9"/>';
     }
-    g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.62).toFixed(1) + '" fill="' + hj.felg + '"/>';
-    for (var e = 0; e < hj.eiker; e++) {
-      var v = (e * 360 / hj.eiker + i * 18) * Math.PI / 180;
-      g += '<line x1="' + (h.x + Math.cos(v) * h.r * 0.18).toFixed(1) +
-           '" y1="' + (h.y + Math.sin(v) * h.r * 0.18).toFixed(1) +
-           '" x2="' + (h.x + Math.cos(v) * h.r * 0.55).toFixed(1) +
-           '" y2="' + (h.y + Math.sin(v) * h.r * 0.55).toFixed(1) +
-           '" stroke="' + hj.dekk + '" stroke-width="' + (h.r * 0.12).toFixed(1) + '" stroke-linecap="round"/>';
+
+    /*
+     * Skyggen i dekket, fra tier 2. En bue langs innsiden av gummien i stedet
+     * for en hel ring: lys ovenfra betyr skygge nederst, og en jevn ring rundt
+     * hele dekket leser som en strek og ikke som rundhet.
+     */
+    if (niva >= 2) {
+      g += '<path d="M' + (h.x - h.r * 0.82).toFixed(1) + ' ' + (h.y + h.r * 0.28).toFixed(1) +
+           ' A ' + (h.r * 0.87).toFixed(1) + ' ' + (h.r * 0.87).toFixed(1) + ' 0 0 0 ' +
+           (h.x + h.r * 0.82).toFixed(1) + ' ' + (h.y + h.r * 0.28).toFixed(1) +
+           '" fill="none" stroke="#000000" stroke-opacity="0.34" stroke-width="' +
+           (h.r * 0.16).toFixed(1) + '" stroke-linecap="round"/>';
     }
+
+    // Tier 3: bremseskive bak eikene, i tierfargen.
+    if (niva >= 3) {
+      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.70).toFixed(1) +
+           '" fill="' + tf + '" fill-opacity="0.22"/>';
+    }
+
+    g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.62).toFixed(1) + '" fill="' + hj.felg + '"/>';
+
+    // Tier 2: slipt kant på felgen og en ring med bolter.
+    if (niva >= 2) {
+      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.62).toFixed(1) +
+           '" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="' +
+           (h.r * 0.05).toFixed(1) + '"/>';
+      for (e = 0; e < 6; e++) {
+        v = (e * 60 + i * 18) * Math.PI / 180;
+        g += '<circle cx="' + (h.x + Math.cos(v) * h.r * 0.30).toFixed(1) +
+             '" cy="' + (h.y + Math.sin(v) * h.r * 0.30).toFixed(1) +
+             '" r="' + (h.r * 0.045).toFixed(1) + '" fill="#ffffff" fill-opacity="0.55"/>';
+      }
+    }
+
+    for (e = 0; e < hj.eiker; e++) {
+      v = (e * 360 / hj.eiker + i * 18) * Math.PI / 180;
+      var x1 = (h.x + Math.cos(v) * h.r * 0.18).toFixed(1);
+      var y1 = (h.y + Math.sin(v) * h.r * 0.18).toFixed(1);
+      var x2 = (h.x + Math.cos(v) * h.r * 0.55).toFixed(1);
+      var y2 = (h.y + Math.sin(v) * h.r * 0.55).toFixed(1);
+      g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
+           '" stroke="' + hj.dekk + '" stroke-width="' + (h.r * 0.12).toFixed(1) +
+           '" stroke-linecap="round"/>';
+      // Tier 5: lys midt i hver eike, i motfase av ringene.
+      if (niva >= 5) {
+        g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
+             '" stroke="' + tf + '" stroke-width="' + (h.r * 0.05).toFixed(1) +
+             '" stroke-linecap="round"' + blink('b', fase) + '/>';
+      }
+    }
+
     g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.17).toFixed(1) + '" fill="' + hj.dekk + '"/>';
+
+    // Tier 3: farget navkapsel oppå navet.
+    if (niva >= 3) {
+      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.11).toFixed(1) +
+           '" fill="' + tf + '"/>';
+    }
+
+    // Tier 4: neonring inne i felgen. Tier 5 legger en til lenger ut, i motfase.
+    if (niva >= 4) {
+      g += glorie(h.x, h.y, h.r * 0.50, tf, h.r * 0.055, 1, blink('a', fase));
+    }
+    if (niva >= 5) {
+      g += glorie(h.x, h.y, h.r * 0.68, tf, h.r * 0.045, 0.85, blink('b', fase));
+    }
+
+    /*
+     * Tier 6: gnister rundt felgkanten. De står fast i forhold til hjulet, så
+     * de snurrer med det i løypa – et mønster som ikke fulgte hjulet, ville
+     * sett ut som et lag som lå og flimret oppå.
+     */
+    if (niva >= 6) {
+      for (e = 0; e < 10; e++) {
+        v = (e * 36 + i * 18) * Math.PI / 180;
+        g += '<circle cx="' + (h.x + Math.cos(v) * h.r * 0.86).toFixed(1) +
+             '" cy="' + (h.y + Math.sin(v) * h.r * 0.86).toFixed(1) +
+             '" r="' + (h.r * 0.06).toFixed(1) + '" fill="#ffffff"' +
+             blink(e % 2 ? 'a' : 'b', fase) + '/>';
+      }
+    }
+
+    // Designhjulets egen glød ligger ytterst, så den ikke forsvinner under
+    // tierlagene. Den er valgt og betalt for, og skal fortsatt synes.
     if (hj.glod) {
       g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.78).toFixed(1) +
            '" fill="none" stroke="' + hj.glod + '" stroke-width="3"' + blink('a', fase) + '/>';
@@ -689,7 +811,9 @@ var Bil = (function () {
          ' fill-opacity="0.4"' + blink('b', opts.fase) + '/>';
 
     if (!opts.utenHjul) {
-      for (var i = 0; i < f.hjul.length; i++) s += hjulTegning(f.hjul[i], d.hjul, i, opts.fase);
+      for (var i = 0; i < f.hjul.length; i++) {
+        s += hjulTegning(f.hjul[i], d.hjul, i, opts.fase, opts.tier);
+      }
     }
 
     return s;
@@ -698,14 +822,21 @@ var Bil = (function () {
   // Hjulene er den eneste kategorien der navnet ikke sier noe om hvordan
   // delen ser ut. Lista viser derfor selve hjulet, tegnet med sine egne
   // farger, i stedet for det samme symbolet fem ganger.
+  /*
+   * Prøven i lista tegnes **uten** dekk-tier, og det er med vilje. Lista
+   * finnes for å skille de fem designene fra hverandre – navnet sier
+   * ingenting om hvordan felgen ser ut – og på tier 6 la glorien seg over
+   * alle fem så de ble til fem like rosa klatter. Bilen rett over lista viser
+   * hvordan hjulet faktisk ser ut med tieret på.
+   */
   function miniHjul(hj) {
     return '<svg viewBox="0 0 100 100" width="38" height="38" aria-hidden="true">' +
            hjulTegning({ x: 50, y: 50, r: 46 }, hj, 0) + '</svg>';
   }
 
-  function svg(valgt, pre, klasse) {
+  function svg(valgt, pre, klasse, tier) {
     return '<svg class="' + (klasse || '') + '" viewBox="0 ' + (-TAK) + ' ' + B + ' ' + (H + 10 + TAK) +
-           '" xmlns="http://www.w3.org/2000/svg">' + tegning(valgt, pre) + '</svg>';
+           '" xmlns="http://www.w3.org/2000/svg">' + tegning(valgt, pre, { tier: tier }) + '</svg>';
   }
 
   /*
@@ -717,12 +848,16 @@ var Bil = (function () {
    * Begge lages én gang når designet endres. Å serialisere SVG-en per
    * bilderute ville drept bildefrekvensen på telefon.
    *
-   * Hjulboksen er litt større enn hjulet (55 mot 50), for mønsteret på de
-   * grove dekkene stikker noen enheter utenfor radien og ville blitt klippet.
+   * Hjulboksen er større enn hjulet (75 mot 50). Mønsteret på de grove
+   * dekkene stikker noen enheter utenfor radien, og glorien på dekk-tier 6
+   * rekker ut til 1,29 ganger radien. Med den gamle boksen på 55 ble hele
+   * neonringen skåret bort i løypa – og bare der, for i garasjen er bilen en
+   * SVG uten noen boks å klippes mot. Endrer du glorien, må dette tallet
+   * følge etter.
    */
-  var HJULBOKS = 110, HJULRADIUS = 50;
+  var HJULBOKS = 150, HJULRADIUS = 50;
 
-  function tegninger(valgt, klar) {
+  function tegninger(valgt, klar, tier) {
     var f = finn(FORMER, valgt.form);
     var hj = finn(HJUL, valgt.hjul);
 
@@ -731,13 +866,13 @@ var Bil = (function () {
     function kroppSvg(fase) {
       return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (B * 2) + '" height="' + (full * 2) +
              '" viewBox="0 ' + (-TAK) + ' ' + B + ' ' + full + '">' +
-             tegning(valgt, 'c' + fase, { utenHjul: true, utenSkygge: true, fase: fase }) + '</svg>';
+             tegning(valgt, 'c' + fase, { utenHjul: true, utenSkygge: true, fase: fase, tier: tier }) + '</svg>';
     }
 
     function hjulSvg(fase) {
       return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (HJULBOKS * 2) + '" height="' + (HJULBOKS * 2) +
              '" viewBox="0 0 ' + HJULBOKS + ' ' + HJULBOKS + '">' +
-             hjulTegning({ x: HJULBOKS / 2, y: HJULBOKS / 2, r: HJULRADIUS }, hj, 0, fase) + '</svg>';
+             hjulTegning({ x: HJULBOKS / 2, y: HJULBOKS / 2, r: HJULRADIUS }, hj, 0, fase, tier) + '</svg>';
     }
 
     // Forholdet mellom bildets *halve* bredde og hjulets radius. Tegner man

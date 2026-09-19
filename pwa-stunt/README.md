@@ -123,6 +123,88 @@ tydelig går saktere, leser som at måleren er ødelagt.
 `tid / TIDSSKALA`, og det er det tallet `tester/lope.js` måler mot: en
 umodifisert bil bruker rundt 40 sekunder, en maksbil rundt 22.
 
+## Oppgraderinger: seks tiere à fem trinn
+
+Motor, girkasse og dekk hadde sju nivåer hver, og bilen var ferdig utbygd
+etter rundt tjue turer. Nå er det **seks tiere med fem trinn i hvert** — tretti
+kjøpbare trinn per del, nitti i alt. Hvert tier har sin egen farge og sitt eget
+navn, og siste trinn i et tier løfter bilen inn i det neste:
+
+| Tier | | Farge |
+| --- | --- | --- |
+| 1 | Stål | `#9aa7bd` |
+| 2 | Smaragd | `#4ade80` |
+| 3 | Safir | `#38bdf8` |
+| 4 | Ametyst | `#c084fc` |
+| 5 | Magma | `#ff8a2b` |
+| 6 | Plasma | `#ff2d95` |
+
+Tre tall henger sammen her, og ingen av dem går an alene:
+
+* **Ytelsen har samme tak som før.** Toppfarten på siste trinn er fortsatt
+  1280. Den *må* være det: farten går inn i hopplengden i annen potens, og et
+  forsøk med 1650 ga en maksbil som fløy 5000 enheter og seilte over både
+  neste rampe og alt som lå mellom. Flere tiere gir altså **finere trinn, ikke
+  en raskere bil** — «litt og litt bedre».
+* **Prisene ganges med 2,35 for hvert tier** (`TIERFAKTOR`), og med 30 % for
+  hvert trinn inne i et tier. Første motortrinn koster $150, første trinn i
+  tier 6 koster $10 800.
+* **Inntekten må følge etter.** Derfor `teknikkbonus()`: hvert kjøpte trinn
+  ganger opp alt man tjener i løypa, opp til ×4,0 med alt bygd. Uten den blir
+  de siste tierne en vegg, for ytelsen har jo et tak — en halvferdig bil
+  kjører nesten like fort som en ferdig og ville tjent omtrent det samme.
+
+`tester/lope.js` spiller gjennom hele progresjonen med en grådig kjøper og
+teller turer. Det er den eneste prøven som faktisk setter de tre tallene opp
+mot hverandre, og den sier fra hvis de driver fra hverandre:
+
+```
+tier nådd på tur: T1@1 T2@6 T3@11 T4@16 T5@23 T6@39
+alt eid etter 69 turer
+```
+
+Hvert tier varer lenger enn det forrige. Det er meningen: de første fargene
+skal komme raskt nok til at et barn skjønner at det finnes flere, og den siste
+skal være noe man sparer til.
+
+### Dekk-tieret er det eneste man ser
+
+Motor og girkasse er tall. Felgen er et bilde, og den er det som gjør et nytt
+tier til noe annet enn en dyrere pipe i en meter. Lagene **stables** — et tier
+legger til noe, det fjerner aldri noe — så tier 6 er summen av alt, og barnet
+kjenner igjen det det allerede hadde:
+
+| Tier | Legger til |
+| --- | --- |
+| 1 | dekk, felg, eiker, nav |
+| 2 | skygge i gummien, slipt felgkant, boltring |
+| 3 | bremseskive bak eikene, farget navkapsel |
+| 4 | neonring i tierfargen, blinker |
+| 5 | ytterligere en ring i motfase, og lys i eikene |
+| 6 | full glorie utenfor dekket og gnister rundt felgkanten |
+
+Ingen `<filter>`. Glød lages av tre konsentriske streker med fallende bredde og
+stigende ugjennomsiktighet (`glorie()`). Et SVG-filter ville vært penere, men
+tegningen serialiseres til en data-URL og rastreres per designbytte — filtre er
+både trege og upålitelige den veien.
+
+To ting som kostet tid:
+
+* **`HJULBOKS` måtte fra 110 til 150.** Glorien på tier 6 rekker ut til 1,29
+  ganger radien, og den gamle boksen stoppet på 1,1. Hele neonringen ble skåret
+  bort — og bare i løypa, for i garasjen er bilen en SVG uten noen boks å
+  klippes mot. Endrer du glorien, må tallet følge etter.
+* **Hjulprøvene i verkstedslista tegnes uten tier.** Lista finnes for å skille
+  de fem designene fra hverandre, og på tier 6 la glorien seg over alle fem så
+  de ble til fem like rosa klatter. Bilen rett over lista viser hvordan det
+  faktisk ser ut.
+
+En lagring fra den gamle skalaen ganges med `TRINN` ved innlasting
+(`versjon`-feltet i `app.js`). Da blir *andelen* av veien man hadde gått den
+samme, og siden begge skalaene går fra samme bunn til samme tak, er ytelsen
+uendret. Uten det ville en bil med gammelt nivå 6 stått igjen på trinn 6 av 30
+og mistet nesten hele motoren sin.
+
 ## Økonomien: én pott, og stil som ganger opp
 
 Eieren ba om **én pott** — samme penger til både oppgraderinger og pynt. Den
@@ -143,14 +225,24 @@ Tallene er kalibrert slik:
 | Startkapital | $250 |
 | Umodifisert bil, én tur | ~$890 |
 | Umodifisert bil, kjørt godt (saltoer landet, turbo brukt) | ~$981 |
-| Fullt utstyrt bil, én tur | ~$2002 |
-| Fullt utstyrt bil, saltoene landet | ~$2370 |
+| Fullt utbygd bil, én tur | ~$8056 |
 | Hele designkatalogen | $5790 |
-| Alle oppgraderinger | $17 050 |
+| Alle oppgraderinger (90 trinn) | $396 980 |
+| Turer til alt er eid | ~69 |
+
+Avstanden mellom den første og den siste bilen er ni ganger, og det er
+teknikkbonusen som gjør det: prisene i tier 6 er hundre ganger dem i tier 1.
+Blir den mye større, er de første turene ikke verdt å kjøre; blir den mindre,
+er de siste tierne en vegg. Prøven holder den mellom seks og tolv.
 
 Tallene måles av `tester/lope.js`, som feiler hvis de driver utenfor rammene.
-Å eie alt tar rundt tjue turer, og de siste oppgraderingstrinnene er noe man
-sparer til over flere økter — det er meningen.
+Å eie alt tar rundt sytti turer, og de siste tierne er noe man sparer til over
+mange økter — det er meningen.
+
+**De to bonusene ganges sammen.** Stil kommer fra pynt, teknikk fra
+oppgraderinger, og de er to uavhengige måter å tjene mer på. Begge skal lønne
+seg uten å gjøre den andre unødig; derfor er det `bonus × teknikkbonus` og
+ikke den største av dem.
 
 Nakne bilen ligger på ×1,04 i stilbonus, en bil med alt på ×2,07. Nevneren i
 `Bil.bonus()` er satt etter det taket: legger du til en dekortype, øker maks

@@ -156,7 +156,7 @@ var Garasje = (function () {
 
   /* ---------- hele rommet ---------- */
 
-  function svg(valgt, pre) {
+  function svg(valgt, pre, tier) {
     pre = pre || 'g';
 
     var s = '<svg class="garasjescene" viewBox="0 0 ' + B + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
@@ -230,7 +230,7 @@ var Garasje = (function () {
     s += '<g clip-path="url(#' + pre + 'gulvklipp)" opacity="0.19">' +
          '<g transform="translate(' + tx + ',' + (2 * GULV - ty).toFixed(1) +
          ') scale(' + BILSKALA + ',' + (-BILSKALA) + ')">' +
-         Bil.innhold(valgt, pre + 'speil') + '</g></g>';
+         Bil.innhold(valgt, pre + 'speil', { tier: tier }) + '</g></g>';
     s += '<rect x="0" y="' + GULV + '" width="' + B + '" height="' + (H - GULV) +
          '" fill="url(#' + pre + 'demp)"/>';
     s += lyspytt(148, pre) + lyspytt(332, pre);
@@ -239,7 +239,7 @@ var Garasje = (function () {
     s += '<ellipse cx="' + (B / 2) + '" cy="' + (GULV + 6) + '" rx="116" ry="11" fill="#0c1020" opacity="0.42"/>';
 
     s += '<g transform="translate(' + tx + ',' + ty.toFixed(1) + ') scale(' + BILSKALA + ')">' +
-         Bil.innhold(valgt, pre + 'bil') + '</g>';
+         Bil.innhold(valgt, pre + 'bil', { tier: tier }) + '</g>';
 
     /* --- portrammen, foran alt --- */
 

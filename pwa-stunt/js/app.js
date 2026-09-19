@@ -26,7 +26,7 @@
 
   var e = {};
   ['skjermGarasje', 'skjermVerksted', 'skjermDeler', 'skjermLop', 'skjermResultat',
-   'garasjeBil', 'garasjePenger', 'garasjeStil', 'garasjeBeste',
+   'garasjeBil', 'garasjePenger', 'garasjeStil', 'garasjeTeknikk', 'garasjeBeste',
    'verkstedBil', 'verkstedPenger', 'kategorier', 'valgene', 'stilLinje',
    'delerPenger', 'delerListe', 'delerBil',
    'lerret', 'hudPenger', 'hudFart', 'framdrift', 'hudHint',
@@ -37,7 +37,8 @@
   /* ---------- lagring ---------- */
 
   function last() {
-    var s = { penger: STARTPENGER, eid: {}, valgt: Bil.standard(), oppg: { motor: 0, gir: 0, dekk: 0 }, beste: 0, turer: 0 };
+    var s = { penger: STARTPENGER, eid: {}, valgt: Bil.standard(),
+              oppg: { motor: 0, gir: 0, dekk: 0 }, beste: 0, turer: 0, versjon: 2 };
     try {
       var lagret = JSON.parse(localStorage.getItem(NOKKEL));
       if (lagret && typeof lagret === 'object') {
@@ -56,6 +57,19 @@
         if (!Array.isArray(s.valgt.dekor)) s.valgt.dekor = [];
         if (!Array.isArray(s.valgt.ekstra)) s.valgt.ekstra = [];
         if (lagret.oppg) for (var o in s.oppg) if (typeof lagret.oppg[o] === 'number') s.oppg[o] = lagret.oppg[o];
+
+        /*
+         * Oppgraderingene gikk fra sju nivåer til seks tiere à fem trinn.
+         * Et lagret nivå fra den gamle skalaen ganges med `TRINN`, så
+         * *andelen* av veien man hadde gått, blir den samme – og ytelsen
+         * dermed uendret, siden begge skalaene går fra samme bunn til samme
+         * tak. Uten dette ville en bil med gammelt nivå 6 stått igjen på
+         * trinn 6 av 30 og mistet nesten hele motoren sin.
+         */
+        if (!lagret.versjon) {
+          for (var m in s.oppg) s.oppg[m] = Math.min(Fysikk.MAKSNIVA, s.oppg[m] * Fysikk.TRINN);
+        }
+        s.versjon = 2;
       }
     } catch (f) { /* ødelagt lagring skal ikke stoppe spillet */ }
 
@@ -89,22 +103,28 @@
 
   function penger() { return '$' + stat.penger; }
 
+  // Felgen viser dekk-tieret. Alt som tegner bilen går gjennom denne, så
+  // garasjen, verkstedet, delelista, resultatet og løypa aldri kan vise
+  // hvert sitt hjul.
+  function dekktier() { return Fysikk.tierInfo(stat.oppg.dekk); }
+
   /* ---------- garasje ---------- */
 
   function tegnGarasje() {
     // Garasjen tegner bilen inni seg, i sin egen koordinatverden – derfor
     // ikke `Bil.svg()` her.
-    e.garasjeBil.innerHTML = Garasje.svg(stat.valgt, 'g');
+    e.garasjeBil.innerHTML = Garasje.svg(stat.valgt, 'g', dekktier());
     e.garasjePenger.textContent = penger();
     var b = Bil.bonus(stat.valgt);
     e.garasjeStil.textContent = '×' + b.toFixed(2);
+    e.garasjeTeknikk.textContent = '×' + Fysikk.teknikkbonus(stat.oppg).toFixed(2);
     e.garasjeBeste.textContent = stat.beste ? '$' + stat.beste : '–';
   }
 
   /* ---------- verksted ---------- */
 
   function tegnVerksted() {
-    e.verkstedBil.innerHTML = Bil.svg(stat.valgt, 'v', 'bilbilde');
+    e.verkstedBil.innerHTML = Bil.svg(stat.valgt, 'v', 'bilbilde', dekktier());
     e.verkstedPenger.textContent = penger();
 
     e.kategorier.innerHTML = '';
@@ -196,27 +216,39 @@
     e.delerPenger.textContent = penger();
     // Bilen står også her. Oppgraderinger er tall, og et barn som ser bilen
     // mens det bruker pengene, vet hva tallene gjelder.
-    e.delerBil.innerHTML = Bil.svg(stat.valgt, 'd', 'bilbilde');
+    e.delerBil.innerHTML = Bil.svg(stat.valgt, 'd', 'bilbilde', dekktier());
     e.delerListe.innerHTML = '';
 
     Fysikk.OPPGRADERINGER.forEach(function (o) {
       var niva = stat.oppg[o.id];
-      var maks = o.data.priser.length - 1;
+      var t = Fysikk.tierInfo(niva);
+      var pris = Fysikk.pris(o.data, niva);
+
       var rad = document.createElement('div');
       rad.className = 'delrad';
+      // Fargen settes fra tieret og ikke fra en klasse per tier: seks tiere
+      // × tre deler ville blitt atten regler i CSS-en for én farge.
+      rad.style.setProperty('--tierfarge', t.farge);
 
+      /*
+       * Pipene viser trinnene i *dette* tieret, ikke alle tretti. Tretti piper
+       * på en telefonrad blir en stripe man ikke kan telle, og poenget med
+       * tiere er nettopp at man alltid ser en kort vei til neste farge.
+       */
       var pipper = '';
-      for (var i = 1; i <= maks; i++) {
-        pipper += '<span class="pip' + (i <= niva ? ' fylt' : '') + '"></span>';
+      for (var i = 1; i <= t.av; i++) {
+        pipper += '<span class="pip' + (i <= t.trinn ? ' fylt' : '') + '"></span>';
       }
 
-      var knapp = niva >= maks
+      var knapp = pris === null
         ? '<span class="fullt">Fullt utbygd</span>'
-        : '<button class="kjopknapp" data-id="' + o.id + '">$' + o.data.priser[niva + 1] + '</button>';
+        : '<button class="kjopknapp" data-id="' + o.id + '">$' + pris + '</button>';
 
       rad.innerHTML =
         '<span class="deltegn" aria-hidden="true">' + o.data.tegn + '</span>' +
-        '<span class="delnavn">' + o.data.navn + '<small>' + o.data.hva + '</small></span>' +
+        '<span class="delnavn">' + o.data.navn +
+          '<small><span class="tiermerke">Tier ' + t.n + ' · ' + t.navn + '</span> ' +
+          o.data.hva + '</small></span>' +
         '<span class="pipper">' + pipper + '</span>' + knapp;
 
       e.delerListe.appendChild(rad);
@@ -230,16 +262,26 @@
   function kjopOppgradering(id) {
     var o = null;
     Fysikk.OPPGRADERINGER.forEach(function (x) { if (x.id === id) o = x; });
-    var niva = stat.oppg[id], neste = niva + 1;
-    if (neste >= o.data.priser.length) return;
-    var pris = o.data.priser[neste];
+    var niva = stat.oppg[id];
+    var pris = Fysikk.pris(o.data, niva);
+    if (pris === null) return;
     if (stat.penger < pris) { rist(e.delerPenger); return; }
 
+    var for_ = Fysikk.tierInfo(niva).n;
     stat.penger -= pris;
-    stat.oppg[id] = neste;
+    stat.oppg[id] = niva + 1;
     lagre();
     tegnDeler();
     blafr(e.delerPenger);
+
+    // Et nytt tier er det eneste kjøpet som endrer hvordan bilen ser ut.
+    // Da skal hele raden si fra, ellers går fargeskiftet på felgen tapt for
+    // et barn som ser på knappen det nettopp trykket.
+    if (Fysikk.tierInfo(stat.oppg[id]).n > for_) {
+      var rad = e.delerListe.querySelectorAll('.delrad')[
+        Fysikk.OPPGRADERINGER.map(function (x) { return x.id; }).indexOf(id)];
+      if (rad) blafr(rad);
+    }
   }
 
   /* ---------- svar på et trykk ---------- */
@@ -285,7 +327,7 @@
       lop = Kjoring.lag(e.lerret, lope, bilder, stat.oppg, Bil.bonus(stat.valgt));
       lop.start(ferdigLop);
       oppdaterHud();
-    });
+    }, dekktier());
   }
 
   function oppdaterHud() {
@@ -313,7 +355,7 @@
     lagre();
 
     e.resultatSum.textContent = '$' + res.penger;
-    e.resultatBil.innerHTML = Bil.svg(stat.valgt, 'r', 'bilbilde');
+    e.resultatBil.innerHTML = Bil.svg(stat.valgt, 'r', 'bilbilde', dekktier());
     e.resultatRekord.textContent = res.penger >= stat.beste ? 'Ny rekord! 🏆' : 'Rekord: $' + stat.beste;
 
     var b = Bil.bonus(stat.valgt);

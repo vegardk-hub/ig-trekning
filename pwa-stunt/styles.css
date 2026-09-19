@@ -181,23 +181,35 @@ body {
 .nokkeltall {
   flex: 0 0 auto;
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
+/*
+ * Etiketten står *over* tallet, ikke ved siden av. Med tre tall på rad –
+ * stil, teknikk og rekord – rant «Rekord $42000» ut av skjermkanten på en
+ * telefon så snart rekorden ble femsifret, og tierne gjør nettopp det.
+ */
 .tall {
   flex: 1 1 0;
+  min-width: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
   border: 2px solid var(--panel-kant);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   border-radius: 15px;
-  padding: 8px 12px;
+  padding: 7px 6px;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
 }
 
-.talletikett { color: var(--dempet); font-size: 14px; }
-.tall strong { font-size: 19px; }
+.talletikett { color: var(--dempet); font-size: 12px; }
+.tall strong {
+  font-size: 18px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .gronn { color: var(--gronn); }
 
 /* ---------- knapper ---------- */
@@ -405,7 +417,28 @@ body {
   background: rgba(255, 255, 255, 0.13);
 }
 
-.pip.fylt { background: var(--gronn); box-shadow: 0 0 8px rgba(77, 252, 154, 0.55); }
+/*
+ * Pipene og tiermerket tar fargen fra `--tierfarge`, som `tegnDeler()` setter
+ * på raden. Seks tiere × tre deler ville ellers blitt atten regler her for én
+ * eneste farge.
+ */
+.pip.fylt {
+  background: var(--tierfarge, var(--gronn));
+  box-shadow: 0 0 8px var(--tierfarge, var(--gronn));
+}
+
+.delrad { border-color: color-mix(in srgb, var(--tierfarge, #fff) 40%, transparent); }
+
+.tiermerke {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #10131f;
+  background: var(--tierfarge, var(--gronn));
+}
 
 .kjopknapp {
   border: none;

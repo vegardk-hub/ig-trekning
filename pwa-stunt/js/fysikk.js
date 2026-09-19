@@ -89,35 +89,88 @@ var Fysikk = (function () {
   var TURBOMIN = 0.22;       // laveste stand som kan tennes
   var TURBOSTART = 0.35;     // med i tanken fra start, så den kan prøves tidlig
 
+  /* ---------- oppgraderinger: seks tiere à fem trinn ---------- */
+
   /*
-   * Sju nivåer per del. Det var fire, og da var bilen ferdig utbygd før
-   * barnet var ferdig med å spille. Trinnene over det fjerde koster mer enn
-   * hele designkatalogen til sammen, og det er meningen: de siste er noe å
-   * spare til, ikke noe man passerer.
+   * Det var sju nivåer per del, og bilen var ferdig utbygd etter rundt tjue
+   * turer. Nå er det seks *tiere* med fem trinn i hver – tretti kjøpbare
+   * trinn per del, nitti i alt. Hvert tier har sin egen farge, og siste trinn
+   * i et tier løfter bilen inn i det neste.
    *
-   * Toppfarten på siste trinn er valgt slik at bilen rekker fra det siste
-   * hoppet og helt i mål. Den er også med vilje *ikke* høyere enn det: farten
-   * går inn i rekkevidden i annen potens, og et første forsøk med 1650 ga en
-   * maksbil som fløy 5000 enheter og seilte over både neste rampe og alt som
-   * lå mellom. Endrer du den, må avstandene i `lope.js` følge etter –
-   * `tester/lope.js` sier fra hvis de ikke stemmer.
+   * Tre ting henger sammen her, og det ene går ikke an uten det andre:
+   *
+   *   Ytelsen har *samme tak som før*. Toppfarten på siste trinn er den
+   *   samme 1280 som den måtte være: farten går inn i hopplengden i annen
+   *   potens, og et forsøk med 1650 ga en maksbil som fløy 5000 enheter og
+   *   seilte over både neste rampe og alt som lå mellom. Flere tiere gir
+   *   altså *finere* trinn, ikke en raskere bil – «litt og litt bedre».
+   *
+   *   Prisene dobler seg nesten for hvert tier. Uten det er tier 6 kjøpt opp
+   *   på et par turer, og de fem første var bare en teller.
+   *
+   *   Inntekten må følge etter, ellers blir de siste tierne en vegg. Derfor
+   *   `teknikkbonus()`: hvert kjøpte trinn ganger opp alt man tjener, akkurat
+   *   som stilbonusen gjør for pynt. Det er dette som gjør at man tjener mer
+   *   og mer jo lenger man kommer.
+   *
+   * `tester/lope.js` spiller gjennom hele progresjonen og sier fra hvis de tre
+   * driver fra hverandre.
    */
+  var TIERE = 6;
+  var TRINN = 5;                      // kjøpbare trinn i hvert tier
+  var MAKSNIVA = TIERE * TRINN;       // 30 per del
+
+  // Navnene og fargene brukes både på felgen og i verkstedet, så et tier ser
+  // likt ut uansett hvor barnet møter det.
+  var TIER = [
+    { navn: 'Stål',    farge: '#9aa7bd' },
+    { navn: 'Smaragd', farge: '#4ade80' },
+    { navn: 'Safir',   farge: '#38bdf8' },
+    { navn: 'Ametyst', farge: '#c084fc' },
+    { navn: 'Magma',   farge: '#ff8a2b' },
+    { navn: 'Plasma',  farge: '#ff2d95' }
+  ];
+
+  /*
+   * Tieret et nivå hører til. Merk at siste trinn i et tier *flytter* bilen
+   * opp: nivå 5 er «tier 2, null av fem», ikke «tier 1, fem av fem». Det er
+   * det som gjør at kjøpet man sparte til, gir en ny farge med en gang.
+   * Unntaket er toppen: nivå 30 blir stående som tier 6, fullt utbygd.
+   */
+  function tierAv(nivaa) {
+    return Math.min(TIERE, Math.floor(grense(nivaa) / TRINN) + 1);
+  }
+
+  function grense(nivaa) {
+    return Math.max(0, Math.min(MAKSNIVA, nivaa | 0));
+  }
+
+  function tierInfo(nivaa) {
+    var n = grense(nivaa);
+    var t = tierAv(n);
+    return {
+      n: t,
+      navn: TIER[t - 1].navn,
+      farge: TIER[t - 1].farge,
+      trinn: n - (t - 1) * TRINN,     // 0..TRINN
+      av: TRINN,
+      full: n >= MAKSNIVA
+    };
+  }
+
   var MOTOR = {
     navn: 'Motor', tegn: '🔧', hva: 'Toppfart',
-    priser:  [0, 150, 350, 650, 1000, 1500, 2200],
-    verdier: [700, 790, 880, 970, 1060, 1160, 1280]
+    fra: 700, til: 1280, grunnpris: 150
   };
   var GIR = {
     navn: 'Girkasse', tegn: '⚙️', hva: 'Akselerasjon',
-    priser:  [0, 120, 300, 600, 950, 1450, 2100],
-    verdier: [620, 760, 900, 1040, 1190, 1350, 1520]
+    fra: 620, til: 1520, grunnpris: 120
   };
   var DEKK = {
     navn: 'Dekk', tegn: '🛞', hva: 'Grep i landing',
-    priser:  [0, 130, 320, 620, 980, 1480, 2150],
     // Hvor mye fart en skjev landing spiser. Aldri helt til null: da ville
     // det siste trinnet fjerne en regel i stedet for å myke den opp.
-    verdier: [0.45, 0.38, 0.31, 0.25, 0.19, 0.13, 0.07]
+    fra: 0.45, til: 0.07, grunnpris: 130
   };
 
   var OPPGRADERINGER = [
@@ -126,8 +179,49 @@ var Fysikk = (function () {
     { id: 'dekk', data: DEKK }
   ];
 
+  // Ytelsen går rett fra bunn til tak over de tretti trinnene. Ingen kurve:
+  // et tier skal kjennes likt uansett hvilket det er, og det er prisen og
+  // fargen som skiller dem, ikke hvor mye hvert trinn gir.
   function niva(data, n) {
-    return data.verdier[Math.max(0, Math.min(data.verdier.length - 1, n | 0))];
+    return data.fra + (data.til - data.fra) * (grense(n) / MAKSNIVA);
+  }
+
+  var TIERFAKTOR = 2.35;      // hvor mye dyrere hvert tier er enn det forrige
+  var TRINNOKNING = 0.30;     // hvor mye dyrere hvert trinn er inne i et tier
+
+  /*
+   * Hva det koster å gå fra `nivaa` til `nivaa + 1`. Tieret er det man står i
+   * mens man kjøper, altså `tierAv(nivaa)` og ikke tieret man havner i.
+   * Avrundingen til nærmeste femmer er bare for at tallene skal være til å se
+   * på; på de øverste tierne runder den av til hundre.
+   */
+  function pris(data, nivaa) {
+    var n = grense(nivaa);
+    if (n >= MAKSNIVA) return null;
+    var t = tierAv(n);
+    var i = n - (t - 1) * TRINN;
+    var p = data.grunnpris * Math.pow(TIERFAKTOR, t - 1) * (1 + TRINNOKNING * i);
+    var steg = p > 5000 ? 100 : 5;
+    return Math.round(p / steg) * steg;
+  }
+
+  /*
+   * Teknikkbonusen. Den ganger opp alt man tjener i løypa, på samme måte som
+   * stilbonusen fra pynt – og den er svaret på «man tjener mer og mer penger
+   * etter hvert som man oppgraderer».
+   *
+   * Den må være der. Ytelsen har et tak, så en ferdig bygd bil kjører ikke
+   * nevneverdig fortere enn en halvferdig og ville tjent omtrent det samme –
+   * mens prisene i tier 6 er hundre ganger dem i tier 1.
+   */
+  var TEKNIKK = 3.0;          // hvor mye fullt utbygd ganger opp
+
+  function teknikkbonus(oppg) {
+    var sum = 0;
+    for (var i = 0; i < OPPGRADERINGER.length; i++) {
+      sum += grense(oppg ? oppg[OPPGRADERINGER[i].id] : 0);
+    }
+    return 1 + TEKNIKK * sum / (OPPGRADERINGER.length * MAKSNIVA);
   }
 
   function lag(lope, oppg, bonus) {
@@ -157,6 +251,10 @@ var Fysikk = (function () {
     var kraft = niva(GIR, oppg.gir);
     var landingstap = niva(DEKK, oppg.dekk);
 
+    // De to bonusene ganges sammen: pynt og teknikk er to uavhengige måter å
+    // tjene mer på, og begge skal lønne seg uten å gjøre den andre unødig.
+    var sats = bonus * teknikkbonus(oppg);
+
     for (var i = 0; i < lope.mynter.length; i++) lope.mynter[i].tatt = false;
     for (i = 0; i < lope.looper.length; i++) lope.looper[i].betalt = false;
 
@@ -169,7 +267,7 @@ var Fysikk = (function () {
      * strekninger og mister mynter, så den tjener ikke proporsjonalt mer.
      */
     function betal(sum, tekst, x, y, stor) {
-      var belop = Math.max(1, Math.round(sum * bonus));
+      var belop = Math.max(1, Math.round(sum * sats));
       penger += belop;
       popper.push({ x: x, y: y, tekst: tekst, belop: belop, alder: 0, stor: !!stor });
     }
@@ -495,6 +593,13 @@ var Fysikk = (function () {
     DT: DT,
     TIDSSKALA: TIDSSKALA,
     TURBOMIN: TURBOMIN,
+    TIERE: TIERE,
+    TRINN: TRINN,
+    MAKSNIVA: MAKSNIVA,
+    tierInfo: tierInfo,
+    pris: pris,
+    verdi: niva,
+    teknikkbonus: teknikkbonus,
     MOTOR: MOTOR,
     GIR: GIR,
     DEKK: DEKK,
