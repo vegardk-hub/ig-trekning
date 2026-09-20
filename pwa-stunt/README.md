@@ -1,8 +1,8 @@
 # Stuntgarasjen
 
-Bygg og design en stuntbil, kjør den gjennom en løype med looper og hopp, og
-tjen penger til flere deler. PWA, som de andre appene her — ingen
-avhengigheter, ingen byggesteg, alt lagret lokalt.
+Bygg og design en stuntbil, kjør den gjennom baner med looper, hopp, is,
+gjørme, tunneler og broer, og tjen penger til flere deler. PWA, som de andre
+appene her — ingen avhengigheter, ingen byggesteg, alt lagret lokalt.
 
 ## Premisset: man kan ikke tape
 
@@ -342,11 +342,12 @@ gjør noe annet enn å holde gassen. Taket på hva én tur kan gi, måles som
 | --- | --- |
 | `js/bil.js` | Delekatalogen og tegningen av bilen |
 | `js/garasje.js` | Rommet bilen står i på garasjeskjermen |
-| `js/lope.js` | Løypa: punktlista, myntene, oppslag langs kurven |
+| `js/lope.js` | Banekatalogen, byggesettet, punktlista, myntene, sonene |
+| `js/banekart.js` | Høydeprofilen på kortet i banevelgeren |
 | `js/fysikk.js` | Simuleringen: fart, hopp, mynter, penger, oppgraderinger |
-| `js/kulisse.js` | Himmel, landskap, asfalt og mål — alt som ikke er bilen |
+| `js/kulisse.js` | Himmel, landskap, asfalt, soner og mål — alt som ikke er bilen |
 | `js/kjoring.js` | Kamera, bil, partikler og sløyfa |
-| `js/app.js` | De fem skjermene, butikken, lagringen |
+| `js/app.js` | De seks skjermene, butikken, lagringen |
 
 **Fysikken ligger for seg selv, uten et eneste piksel.** Den ble skilt ut fra
 `kjoring.js` fordi løypa må stemmes av mot tall bare simuleringen kjenner:
@@ -604,11 +605,82 @@ Skal du legge til en del, er det én rad i en tabell. Skal du legge til en
 og da er det verdt å rendre hele arket av form × spoiler og form × dekor og se
 på det, for det er der feilene sitter.
 
-## Løypa
+## Banene
 
-Bygges av segmenter i `Lope.bygg()`: `flat`, `kul`, `trapp`, `bolger`, `loop`,
-`rampe` og `gap`. Én løype, rundt 19 600 enheter lang: fire looper, fire hopp
-og bakker opp og ned hele veien. En umodifisert bil bruker vel 30 sekunder.
+Fem baner, og de skal kjennes forskjellige — ikke bare se det. Hver av dem har
+et eget *premiss*, ikke bare en annen rekkefølge på de samme bakkene:
+
+| Bane | Premiss | Innhold |
+| --- | --- | --- |
+| 🏁 Stuntløypa | Originalen | 4 looper, 4 hopp |
+| 🧊 Frostruta | Isen gjør bilen glatt | 4 looper, 3 hopp, is |
+| 🕳️ Gruvegangen | Trangt, mørkt og tungt | 3 looper, 3 hopp, tunnel, bro, gjørme |
+| 🚀 Rakettrampa | Bare hopp, ingen looper | 6 hopp, rumlefelt |
+| 🌀 Korketrekkeren | Nesten ingen rett strekning | 8 looper, 2 hopp, rumlefelt |
+
+Banevelgeren ligger bak 🗺️-knappen i garasjen. Et trykk på et kort velger
+banen **og** starter den: velgeren er ikke en innstilling man går ut av igjen.
+
+### Å legge til en bane
+
+Skriv én ny post i `BANER` i `js/lope.js`, med en `bygg`-funksjon som får
+byggesettet. Alt annet følger av seg selv:
+
+* kortet i velgeren, med farge og tegn fra posten
+* høydeprofilen, som `js/banekart.js` tegner av løypas egne punkter
+* merkene som sier hva banen inneholder — de **telles ut av punktlista**, så
+  de kan ikke bli uenige med det man faktisk kjører
+* rekorden, som lagres per bane (`stat.rekord[baneId]`)
+* hele prøvesettet i `tester/lope.js`, som går gjennom *alle* banene
+
+### Byggesettet
+
+`flat`, `kul`, `trapp`, `bolger`, `loop`, `rampe` og `gap` som før, pluss:
+
+* **`korketrekker(r, drift, antall)`** — flere looper rett etter hverandre,
+  uten flatt mellom. Radien krymper åtte per runde, så spiralen strammer seg i
+  stedet for å se ut som den samme loopen klistret opp to ganger.
+* **`rumlefelt(lengde, antall)`** — vaskebrett. Korte, tette bølger i sonen
+  `rumle`, som spiser fart og rister kameraet.
+* **`sone(navn, f)`** — alt som lages inne i `f` får sonen. Den tas av igjen
+  etterpå i stedet for å slås på og av med to setninger: en sone som ble glemt
+  påslått, ville farget resten av banen, og det ser man ikke før man har kjørt
+  helt til mål.
+
+### Sonene
+
+Soner er underlag og byggverk, og de er den ene tingen som gjør at to baner med
+de samme bakkene kjennes som to steder. Tabellen ligger i `Lope.SONER`;
+`fysikk.js` leser `friksjon` og `brems`, `kulisse.js` tegner dem.
+
+| Sone | Friksjon | Brems | Hva den gjør |
+| --- | --- | --- | --- |
+| Is | ×0,35 | ×0,30 | Bilen glir langt, bremsen biter nesten ikke |
+| Gjørme | ×2,40 | ×1 | Spiser farten — her betyr lavgiret og turboen noe |
+| Rumlefelt | ×1,35 | ×1 | Rister kameraet, spiser litt fart |
+| Tunnel | ×1 | ×1 | Bare tegning: lavt fjelltak med lamper |
+| Bro | ×1 | ×1 | Fast grunn **uten jord under** (`luft: true`) |
+
+Fire ting som ser ut som detaljer og har en grunn:
+
+* **Ramper står på bar asfalt, med lang innkjøring.** En rampe rett etter en
+  isstrekning ga en avsprangsfart langt over `REFERANSEFART`, og da henger
+  myntbuen et sted bilen aldri kommer. Frostruta har derfor `flat(900)` foran
+  hver rampe, og prøven håndhever grensa på ±130 for *hver* bane.
+* **Jorda brytes ved hopp og ved `luft`-soner, aldri ved looper.** Bryter man
+  på loop-punktene, får bakken et loddrett hull i loopens bredde og man ser
+  himmelen gjennom jorda. Veien går derimot over broene som over alt annet, så
+  den har sin egen strekningsliste.
+* **Hver loop skriver seg selv opp.** Før ble loop-strekningene funnet ved å
+  lete etter sammenhengende punkter uten bakke, og det holdt så lenge det
+  alltid var asfalt mellom to looper. I en korketrekker er det ikke det: de to
+  rundene smeltet sammen til én strekning, og barnet fikk betalt én gang for
+  to looper.
+* **Ingen bane skal være den åpenbare pengemaskinen.** Er én vesentlig bedre
+  betalt enn de andre, velges den hver gang og de fire andre er pynt. Prøven
+  krever at både en naken og en maks tur ligger innenfor ±25 % av Stuntløypa.
+  Tallene i dag: naken $496/$493/$466/$577/$476, maks $5725/$5156/$4962/
+  $5550/$4342.
 
 ### To regler for hvor ting kan ligge
 
@@ -634,9 +706,10 @@ nakne ikke gjør det.
   egentlig bare er tilbake der den startet.
 * **Punktene i en loop er merket `bakke: false`.** Bilen kan ikke lande i en
   loop, og jorda tegnes ikke under den.
-* **Løypa deles i strekninger som brytes ved hopp, og bare der.** Et tidlig
-  forsøk brøt på loop-punktene i stedet, og da fikk bakken et loddrett hull i
-  hele loopens bredde — man så himmelen gjennom jorda.
+* **Jorda deles i strekninger som brytes ved hopp og ved `luft`-soner.** Et
+  tidlig forsøk brøt på loop-punktene i stedet, og da fikk bakken et loddrett
+  hull i hele loopens bredde — man så himmelen gjennom jorda. Veien har sin
+  egen liste, som bare brytes ved hopp: den går over broene.
 * **Myntene ligger langs normalen, som peker innover i en loop.** Det er det
   som gjør at en loop lønner seg: man plukker et dusin mynter på en runde man
   uansett skulle kjørt.
@@ -653,10 +726,6 @@ nakne ikke gjør det.
   mens bilen i praksis nådde 154 og landet flere hundre enheter forbi der buen
   sluttet. Myntene hang både for høyt og på feil sted, og hoppet så ut som om
   bilen ignorerte dem.
-* **Begge loopene ligger før begge hoppene.** En fullt utstyrt bil flyr nesten
-  2000 enheter. Lå en loop innenfor den rekkevidden, seilte bilen tvers gjennom
-  loopens asfalt i lufta — den kan bare lande på fast grunn, så loopen er ikke
-  noe den treffer, bare noe den klipper gjennom.
 * **Utrullingen er lang med vilje.** En maksbil lander nesten 1900 enheter
   etter den siste rampa og skal rekke ned før målstreken.
 
@@ -674,6 +743,13 @@ ingen loop ligger i en flybane, at maksbilen når målet fra siste hopp og at
 den nakne ikke gjør det. **Kjør dem etter hver endring i `lope.js` eller
 `fysikk.js`** — priser, rampevinkler og motorverdier henger sammen på måter
 det ikke går an å se på koden.
+
+Den siste bolken går gjennom **hver bane i katalogen** og krever det samme av
+alle: begge biler i mål, en bil uten gass som *ikke* kommer i mål, alle gap
+klart med margin, avsprangsfart innenfor ±130 av `REFERANSEFART`, ingen loop i
+en flybane (heller ikke med turbo), rimelig varighet, og en utbetaling
+innenfor ±25 % av Stuntløypa. Det er det som gjør at en ny post i `BANER` blir
+prøvd av seg selv.
 
 Feiler prøven på `REFERANSEFART`, er det myntbuene som har sluttet å følge
 bilen: buene regnes ut av den farten, og feilmeldingen sier hva den faktiske

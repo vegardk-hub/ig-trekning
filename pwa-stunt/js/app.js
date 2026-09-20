@@ -19,13 +19,14 @@
   var STARTPENGER = 250;
 
   var stat = last();
-  var lope = Lope.bygg(Fysikk.G);
+  var lope = Lope.bygg(Fysikk.G, stat.bane);
   var lop = null;          // aktiv kjøring
   var bilbilde = null;      // karosseri + hjul som bilder, til løypa
   var aktivKategori = 'form';
 
   var e = {};
   ['skjermGarasje', 'skjermVerksted', 'skjermDeler', 'skjermLop', 'skjermResultat',
+   'skjermBaner', 'baneListe', 'banerPenger', 'baneNavn',
    'garasjeBil', 'garasjePenger', 'garasjeStil', 'garasjeTeknikk', 'garasjeBeste',
    'verkstedBil', 'verkstedPenger', 'kategorier', 'valgene', 'stilLinje',
    'delerPenger', 'delerListe', 'delerBil',
@@ -39,6 +40,7 @@
   function last() {
     var s = { penger: STARTPENGER, eid: {}, valgt: Bil.standard(),
               oppg: { motor: 0, gir: 0, dekk: 0 }, beste: 0, turer: 0,
+              bane: Lope.BANER[0].id, rekord: {},
               versjon: Fysikk.LAGRINGSVERSJON };
     try {
       var lagret = JSON.parse(localStorage.getItem(NOKKEL));
@@ -47,6 +49,19 @@
         s.eid = lagret.eid || {};
         s.beste = lagret.beste || 0;
         s.turer = lagret.turer || 0;
+
+        /*
+         * Rekorden var ett tall før det fantes flere baner. Den hører til
+         * Stuntløypa, for det er den eneste som er kjørt – legges den på alle
+         * banene, møter barnet en rekord det aldri har satt på en bane det
+         * aldri har sett.
+         */
+        s.rekord = lagret.rekord || {};
+        if (!lagret.rekord && s.beste) s.rekord[Lope.BANER[0].id] = s.beste;
+
+        // En bane som er fjernet fra katalogen, skal ikke låse appen på en
+        // løype som ikke finnes. `Lope.finn()` faller tilbake på den første.
+        s.bane = Lope.finn(lagret.bane).id;
         if (lagret.valgt) for (var k in s.valgt) if (lagret.valgt[k]) s.valgt[k] = lagret.valgt[k];
 
         // Dekor var én valgt del før, og er nå en liste. En lagring fra den
@@ -86,13 +101,15 @@
 
   /* ---------- skjermbytte ---------- */
 
-  var SKJERMER = ['skjermGarasje', 'skjermVerksted', 'skjermDeler', 'skjermLop', 'skjermResultat'];
+  var SKJERMER = ['skjermGarasje', 'skjermVerksted', 'skjermDeler', 'skjermLop',
+                  'skjermResultat', 'skjermBaner'];
 
   function vis(navn) {
     SKJERMER.forEach(function (s) { e[s].hidden = (s !== navn); });
     if (navn === 'skjermGarasje') tegnGarasje();
     if (navn === 'skjermVerksted') tegnVerksted();
     if (navn === 'skjermDeler') tegnDeler();
+    if (navn === 'skjermBaner') tegnBaner();
   }
 
   /*
@@ -112,6 +129,11 @@
   // hvert sitt hjul.
   function dekktier() { return Fysikk.tierInfo(stat.oppg.dekk); }
 
+  // Rekorden er per bane. En felles rekord ville gjort de korteste banene
+  // meningsløse å prøve: tallet sto der fra den lengste, og ingenting man
+  // kjørte på Korketrekkeren kunne noen gang slå det.
+  function rekord(id) { return stat.rekord[id] || 0; }
+
   /* ---------- garasje ---------- */
 
   function tegnGarasje() {
@@ -122,7 +144,86 @@
     var b = Bil.bonus(stat.valgt);
     e.garasjeStil.textContent = '×' + b.toFixed(2);
     e.garasjeTeknikk.textContent = '×' + Fysikk.teknikkbonus(stat.oppg).toFixed(2);
-    e.garasjeBeste.textContent = stat.beste ? kr(stat.beste) : '–';
+    e.garasjeBeste.textContent = rekord(stat.bane) ? kr(rekord(stat.bane)) : '–';
+
+    /*
+     * Baneknappen sier hvilken bane som er valgt. Uten navnet på knappen må
+     * barnet inn i velgeren bare for å se hva KJØR-knappen kommer til å gjøre.
+     *
+     * Tegnet blir stående på kartet og bytter *ikke* til banens eget: de to
+     * andre knappene har et fast tegn og en etikett, og en knapp som skifter
+     * begge deler leser som en tilstand i stedet for som en vei videre.
+     */
+    e.baneNavn.textContent = Lope.finn(stat.bane).navn;
+  }
+
+  /* ---------- banevelgeren ---------- */
+
+  /*
+   * Løypene bygges én gang og blir liggende. Fem baner er noen tusen punkter
+   * til sammen, og kortene trenger dem uansett for å tegne høydeprofilen –
+   * men de skal ikke bygges på nytt hver gang skjermen vises.
+   */
+  var bygde = {};
+
+  function bygg(id) {
+    if (!bygde[id]) bygde[id] = Lope.bygg(Fysikk.G, id);
+    return bygde[id];
+  }
+
+  function tegnBaner() {
+    e.banerPenger.textContent = penger();
+    e.baneListe.innerHTML = '';
+
+    Lope.BANER.forEach(function (bane, n) {
+      var L = bygg(bane.id);
+      var inn = Lope.innhold(L);
+
+      /*
+       * Merkene telles ut av løypa, ikke skrevet inn i katalogen. En bane som
+       * får en loop til, sier det på kortet uten at noen må huske å rette
+       * teksten – og det kan aldri stå noe der som ikke finnes i løypa.
+       */
+      var merker = '';
+      if (inn.looper) merker += lite('🔁', inn.looper + (inn.looper === 1 ? ' loop' : ' looper'));
+      if (inn.hopp) merker += lite('🛫', inn.hopp + ' hopp');
+      for (var s in inn.soner) {
+        merker += lite(Lope.SONER[s].tegn, Lope.SONER[s].navn);
+      }
+
+      var r = rekord(bane.id);
+
+      var kort = document.createElement('button');
+      kort.className = 'banekortet' + (bane.id === stat.bane ? ' valgt' : '');
+      kort.style.setProperty('--banefarge', bane.farge);
+      kort.setAttribute('aria-pressed', bane.id === stat.bane ? 'true' : 'false');
+      kort.innerHTML =
+        '<span class="banetegn" aria-hidden="true">' + bane.tegn + '</span>' +
+        '<span class="banetittel">' + bane.navn + '</span>' +
+        '<span class="banerekord">' + (r ? 'Rekord ' + kr(r) : 'Ikke kjørt') + '</span>' +
+        Banekart.svg(L, bane.farge, String(n)) +
+        '<span class="baneomtale">' + bane.omtale + '</span>' +
+        '<span class="banemerker">' + merker + '</span>';
+
+      kort.onclick = function () { velgBane(bane.id); };
+      e.baneListe.appendChild(kort);
+    });
+  }
+
+  function lite(tegn, tekst) {
+    return '<span class="banemerke"><span aria-hidden="true">' + tegn + '</span> ' + tekst + '</span>';
+  }
+
+  /*
+   * Et trykk på et kort velger banen *og* starter den. Velgeren er ikke en
+   * innstilling man går ut av igjen – man er der for å kjøre, og et kort som
+   * bare huket av ville krevd et trykk til på en KJØR-knapp lenger ned enn
+   * kortene rekker.
+   */
+  function velgBane(id) {
+    stat.bane = id;
+    lagre();
+    startLop();
   }
 
   /* ---------- verksted ---------- */
@@ -327,7 +428,9 @@
 
     Bil.tegninger(stat.valgt, function (bilder) {
       bilbilde = bilder;
-      lope = Lope.bygg(Fysikk.G);
+      // Løypa bygges på nytt for hver tur. `looper[].betalt` står igjen fra
+      // forrige runde, og en gjenbrukt løype ville betalt loopene én gang.
+      lope = bygde[stat.bane] = Lope.bygg(Fysikk.G, stat.bane);
       lop = Kjoring.lag(e.lerret, lope, bilder, stat.oppg, Bil.bonus(stat.valgt));
       lop.start(ferdigLop);
       oppdaterHud();
@@ -353,17 +456,23 @@
   }
 
   function ferdigLop(res) {
+    var ny = res.penger > rekord(stat.bane);
     stat.penger += res.penger;
     stat.turer++;
+    if (ny) stat.rekord[stat.bane] = res.penger;
     if (res.penger > stat.beste) stat.beste = res.penger;
     lagre();
 
     e.resultatSum.textContent = kr(res.penger);
     e.resultatBil.innerHTML = Bil.svg(stat.valgt, 'r', 'bilbilde', dekktier());
-    e.resultatRekord.textContent = res.penger >= stat.beste ? 'Ny rekord! 🏆' : 'Rekord: ' + kr(stat.beste);
+    e.resultatRekord.textContent = ny
+      ? 'Ny rekord på ' + Lope.finn(stat.bane).navn + '! 🏆'
+      : 'Rekord: ' + kr(rekord(stat.bane));
 
     var b = Bil.bonus(stat.valgt);
+    var bane = Lope.finn(stat.bane);
     e.resultatDetaljer.innerHTML =
+      linje(bane.tegn, bane.navn) +
       linje('🟢', res.mynter + ' mynter') +
       linje('🔁', res.looper + (res.looper === 1 ? ' loop' : ' looper')) +
       linje('🛫', res.hopp + (res.hopp === 1 ? ' hopp' : ' hopp') +
@@ -421,8 +530,10 @@
   Array.prototype.forEach.call(document.querySelectorAll('.kjorknapp'), function (k) {
     k.onclick = startLop;
   });
+  document.getElementById('knappBaner').onclick = function () { vis('skjermBaner'); };
   document.getElementById('knappTilbakeVerksted').onclick = function () { vis('skjermGarasje'); };
   document.getElementById('knappTilbakeDeler').onclick = function () { vis('skjermGarasje'); };
+  document.getElementById('knappTilbakeBaner').onclick = function () { vis('skjermGarasje'); };
   document.getElementById('knappAvbryt').onclick = avbryt;
   document.getElementById('knappIgjen').onclick = startLop;
   document.getElementById('knappGarasje').onclick = function () { vis('skjermGarasje'); };

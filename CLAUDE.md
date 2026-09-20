@@ -13,7 +13,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-poengtavle/` | Ukens poengtavle — husholdningsoppgaver med kroner, PWA |
 | `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
 | `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
-| `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den i looper og hopp, PWA |
+| `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den på fem baner, PWA |
 | `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
@@ -350,9 +350,12 @@ Fire ting som ser ut som detaljer og har en grunn:
   liste. Gjør du den om til én id igjen, mister barnet pynt det har betalt
   for hver gang det setter på noe nytt. Sonene er det som gjør at seks ting
   får plass på en bilside uten å legge seg oppå hverandre.
-- **Jorda brytes ved hopp, ikke ved looper.** Bryter man på loop-punktene,
-  får bakken et loddrett hull i loopens bredde og man ser himmelen gjennom
-  jorda.
+- **Jorda brytes ved hopp og ved broer, aldri ved looper.** Bryter man på
+  loop-punktene, får bakken et loddrett hull i loopens bredde og man ser
+  himmelen gjennom jorda. Broa er motsatt: den er fast grunn *uten* fylling
+  under, så uten bruddet står den på en haug og stillaset henger i den. Veien
+  har derfor sin egen strekningsliste, som bare brytes ved hopp — den går over
+  broene som over alt annet.
 - **Fysikken ligger i `fysikk.js`, uten et eneste piksel.** Det er det som
   gjør at `tester/lope.js` kan svare på hvor langt bilen flyr og om en
   maksbil når målet, på et sekund. Slår du den sammen med tegnekoden igjen,
@@ -382,6 +385,24 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **Ingen loop må ligge innenfor rekkevidden til et hopp.** Bilen lander bare
   på fast grunn, så en loop i flybanen blir noe den seiler tvers gjennom.
   Derfor ligger alle loopene før det første hoppet. Prøven sier fra.
+- **En bane er én post i `BANER`, og resten følger av seg selv.** Kortet,
+  høydeprofilen, merkene, rekorden per bane og hele prøvesettet leses ut av
+  løypa. Merkene *telles* ut av punktlista i stedet for å skrives i katalogen,
+  nettopp for at de aldri skal kunne si noe annet enn det man kjører.
+- **Ramper står på bar asfalt, med lang innkjøring.** En rampe rett etter en
+  isstrekning ga en avsprangsfart langt over `REFERANSEFART`, og da henger
+  myntbuen et sted bilen aldri kommer. Prøven krever ±130 for hver bane.
+- **Hver loop skriver seg selv opp i `b.loop`.** Før ble loop-strekningene
+  funnet ved å lete etter sammenhengende punkter uten bakke, og det holdt så
+  lenge det alltid var asfalt mellom to looper. I en korketrekker er det ikke
+  det: de to rundene smeltet sammen til én strekning, og barnet fikk betalt én
+  gang for to looper.
+- **Ingen bane skal være den åpenbare pengemaskinen.** Er én vesentlig bedre
+  betalt enn de andre, velges den hver gang og resten er pynt. Prøven krever
+  at både en naken og en maks tur ligger innenfor ±25 % av Stuntløypa.
+- **Tunneltaket er et bånd, ikke en fjellmasse.** Et første forsøk fylte helt
+  opp til 900 enheter over veien, og siden en tunnel er lengre enn en skjerm,
+  ble hele halve bildet en flat mørk plate med en loddrett kant i munningen.
 
 Endrer du priser eller utbetalinger, kjør både en umodifisert og en fullt
 utstyrt bil gjennom løypa og se at summene ligger der tabellen i

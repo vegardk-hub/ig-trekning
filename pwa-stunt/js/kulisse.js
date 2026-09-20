@@ -114,6 +114,8 @@ var Kulisse = (function () {
      * Strekninger som indeksområder, brutt ved hopp og bare der. Et tidlig
      * forsøk brøt på loop-punktene, og da fikk bakken et loddrett hull i
      * loopens bredde – man så himmelen gjennom jorda.
+     *
+     * Dette er veien. Den går over broene som over alt annet.
      */
     var STREKK = [];
     (function () {
@@ -122,6 +124,54 @@ var Kulisse = (function () {
         if (p[i].hopp) { STREKK.push({ fra: fra, til: i }); fra = i + 1; }
       }
       STREKK.push({ fra: fra, til: p.length - 1 });
+    })();
+
+    /*
+     * Jorda under veien er en annen liste, for den brytes ett sted til: en
+     * bro er fast grunn *uten* fylling under. Tegnes jorda der også, står
+     * broa på en haug og stillaset henger i den.
+     *
+     * `apen0`/`apen1` sier om enden skal strekkes 4000 enheter utover. Det
+     * skal den bare når den er løypas egen ende – en ende mot et gap eller en
+     * bro er en ekte kant, og strekkes den, legger jorda seg tvers under
+     * hoppet.
+     */
+    var JORDSTREKK = [];
+    (function () {
+      // `luft` på sonen, ikke navnet «bro». En ny sone som henger fritt –
+      // en planke over en kløft, et stillas – skal få hullet sitt uten at
+      // noen må huske å nevne den her også.
+      function luft(i) {
+        var s = Lope.SONER[p[i].sone];
+        return p[i].hopp || !!(s && s.luft);
+      }
+      var fra = 0, apen = true;
+      for (var i = 0; i < p.length; i++) {
+        if (!luft(i)) continue;
+        JORDSTREKK.push({ fra: fra, til: i - 1, apen0: apen, apen1: false });
+        while (i < p.length && luft(i)) i++;
+        fra = i;
+        apen = false;
+      }
+      JORDSTREKK.push({ fra: fra, til: p.length - 1, apen0: apen, apen1: true });
+    })();
+
+    /*
+     * Soner som sammenhengende indeksområder. De tegnes hver for seg oppå
+     * asfalten, og de er den ene tingen som gjør at to baner med de samme
+     * bakkene ser ut som to steder.
+     */
+    var SONESTREKK = [];
+    (function () {
+      var fra = -1;
+      for (var i = 0; i <= p.length; i++) {
+        var s = i < p.length ? p[i].sone : null;
+        if (fra >= 0 && s !== p[fra].sone) {
+          SONESTREKK.push({ sone: p[fra].sone, fra: fra, til: i - 1 });
+          fra = -1;
+        }
+        if (s && fra < 0) fra = i;
+      }
     })();
 
     /*
@@ -376,9 +426,10 @@ var Kulisse = (function () {
       var dyp = lope.lavest + 2200;
       var k;
 
-      for (var s = 0; s < STREKK.length; s++) {
-        var fra = Math.max(STREKK[s].fra, omr.a);
-        var til = Math.min(STREKK[s].til, omr.b);
+      for (var s = 0; s < JORDSTREKK.length; s++) {
+        var R = JORDSTREKK[s];
+        var fra = Math.max(R.fra, omr.a);
+        var til = Math.min(R.til, omr.b);
         if (til - fra < 1) continue;
 
         // Bare fast grunn danner overkanten. En loop skal ha himmel under seg.
@@ -392,9 +443,8 @@ var Kulisse = (function () {
          * og ved startstreken sto bilen på en grønn flate med himmel rett
          * bak seg.
          */
-        var v = (s === 0 || fra > STREKK[s].fra) ? g[0].x - 4000 : g[0].x;
-        var h = (s === STREKK.length - 1 || til < STREKK[s].til)
-              ? g[g.length - 1].x + 4000 : g[g.length - 1].x;
+        var v = (R.apen0 || fra > R.fra) ? g[0].x - 4000 : g[0].x;
+        var h = (R.apen1 || til < R.til) ? g[g.length - 1].x + 4000 : g[g.length - 1].x;
 
         // Fjellet går helt til bunnen, så dybden er et absolutt tall og ikke
         // en tykkelse: `dyp` ligger langt under laveste punkt i løypa.
@@ -478,6 +528,23 @@ var Kulisse = (function () {
      */
     var VEIBREDDE = 15;
 
+    // Punktet `ut` enheter ut fra veien langs normalen. Negativ `ut` er
+    // undersiden. Alt som legger seg på veien – soner, rekkverk, rumleriller –
+    // går gjennom denne, så det følger loopene av seg selv.
+    function utX(i, ut) { return p[i].x + Math.sin(p[i].vinkel) * ut; }
+    function utY(i, ut) { return p[i].y - Math.cos(p[i].vinkel) * ut; }
+
+    // Lukket bane langs et stykke vei, `ut` på hver side.
+    function bandbane(ctx, fra, til, ut) {
+      ctx.beginPath();
+      for (var i = fra; i <= til; i++) {
+        if (i === fra) ctx.moveTo(utX(i, ut), utY(i, ut));
+        else ctx.lineTo(utX(i, ut), utY(i, ut));
+      }
+      for (i = til; i >= fra; i--) ctx.lineTo(utX(i, -ut), utY(i, -ut));
+      ctx.closePath();
+    }
+
     function veibaand(ctx, omr, ut, farge, kant) {
       for (var s = 0; s < STREKK.length; s++) {
         var fra = Math.max(STREKK[s].fra, omr.a);
@@ -485,30 +552,16 @@ var Kulisse = (function () {
         if (til - fra < 1) continue;
 
         ctx.fillStyle = farge;
-        ctx.beginPath();
-        for (var i = fra; i <= til; i++) {
-          var n = p[i].vinkel;
-          var nx = Math.sin(n) * ut, ny = -Math.cos(n) * ut;
-          if (i === fra) ctx.moveTo(p[i].x + nx, p[i].y + ny);
-          else ctx.lineTo(p[i].x + nx, p[i].y + ny);
-        }
-        for (i = til; i >= fra; i--) {
-          n = p[i].vinkel;
-          nx = -Math.sin(n) * ut; ny = Math.cos(n) * ut;
-          ctx.lineTo(p[i].x + nx, p[i].y + ny);
-        }
-        ctx.closePath();
+        bandbane(ctx, fra, til, ut);
         ctx.fill();
 
         if (kant) {
           ctx.strokeStyle = kant;
           ctx.lineWidth = 3;
           ctx.beginPath();
-          for (i = fra; i <= til; i++) {
-            n = p[i].vinkel;
-            nx = Math.sin(n) * ut; ny = -Math.cos(n) * ut;
-            if (i === fra) ctx.moveTo(p[i].x + nx, p[i].y + ny);
-            else ctx.lineTo(p[i].x + nx, p[i].y + ny);
+          for (var i = fra; i <= til; i++) {
+            if (i === fra) ctx.moveTo(utX(i, ut), utY(i, ut));
+            else ctx.lineTo(utX(i, ut), utY(i, ut));
           }
           ctx.stroke();
         }
@@ -535,6 +588,259 @@ var Kulisse = (function () {
         ctx.stroke();
       }
       ctx.setLineDash([]);
+    }
+
+    /* ---------- sonene ---------- */
+
+    /*
+     * Hver sone tegnes oppå asfalten, etter at veien står. De er delt i to
+     * grupper av en grunn: is, gjørme og rumlefelt er *underlag* og legger seg
+     * på veibåndet, mens tunnel og bro er *byggverk* som rekker langt utenfor
+     * det. Rekkefølgen under følger det – byggverkene sist, så de får ligge
+     * oppå.
+     */
+
+    function is(ctx, fra, til) {
+      ctx.fillStyle = '#cfeeff';
+      bandbane(ctx, fra, til, VEIBREDDE + 3);
+      ctx.fill();
+
+      // Blankskuret midt i sporet. Isen er det eneste underlaget som skal se
+      // *glatt* ut, og et hvitt høylys midt på båndet er det som sier det.
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      bandbane(ctx, fra, til, VEIBREDDE * 0.4);
+      ctx.fill();
+
+      // Istapper under kanten. De henger bare på undersiden, så de leser som
+      // is og ikke som en hvit strek noen har malt.
+      ctx.fillStyle = 'rgba(207,238,255,0.85)';
+      for (var i = fra; i <= til; i += 9) {
+        var h = 8 + slump(i) * 22;
+        ctx.beginPath();
+        ctx.moveTo(utX(i, -VEIBREDDE - 2), utY(i, -VEIBREDDE - 2));
+        ctx.lineTo(utX(i + 3, -VEIBREDDE - 2), utY(i + 3, -VEIBREDDE - 2));
+        ctx.lineTo(utX(i + 1, -VEIBREDDE - 2 - h), utY(i + 1, -VEIBREDDE - 2 - h));
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    function gjorme(ctx, fra, til) {
+      ctx.fillStyle = '#4a3422';
+      bandbane(ctx, fra, til, VEIBREDDE + 4);
+      ctx.fill();
+
+      /*
+       * Sølepytter og hjulspor. Uten de lyse flekkene ser gjørma bare ut som
+       * asfalt i en annen farge. De klippes mot gjørmebåndet: uten klippet la
+       * de seg utover torva langs veien, og gresset fikk brune prikker der
+       * det ikke er noen gjørme.
+       */
+      ctx.save();
+      bandbane(ctx, fra, til, VEIBREDDE + 4);
+      ctx.clip();
+      for (var i = fra; i <= til; i += 5) {
+        var r = 3 + slump(i * 3) * 9;
+        var av = (slump(i + 5) - 0.5) * VEIBREDDE * 1.4;
+        ctx.fillStyle = slump(i) > 0.55 ? 'rgba(122,92,58,0.9)' : 'rgba(30,22,14,0.8)';
+        ctx.beginPath();
+        ctx.arc(utX(i, av), utY(i, av), r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function rumle(ctx, fra, til) {
+      /*
+       * Riller på tvers. De er det eneste av de tre underlagene som ikke
+       * farger veien om – rumlefeltet er asfalt, bare frest opp. Derfor må de
+       * stå glissent: tett nok til å lese som riller, og med asfalt imellom.
+       * Et første forsøk hadde dem hvert fjerde punkt og fem brede, og da ble
+       * strekningen en svart renne det så ut som veien manglet.
+       */
+      ctx.strokeStyle = 'rgba(12,14,20,0.55)';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'butt';
+      ctx.beginPath();
+      for (var i = fra; i <= til; i += 7) {
+        ctx.moveTo(utX(i, VEIBREDDE), utY(i, VEIBREDDE));
+        ctx.lineTo(utX(i, -VEIBREDDE), utY(i, -VEIBREDDE));
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255,214,90,0.5)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (i = fra; i <= til; i += 7) {
+        ctx.moveTo(utX(i, VEIBREDDE + 2), utY(i, VEIBREDDE + 2));
+        ctx.lineTo(utX(i, VEIBREDDE + 9), utY(i, VEIBREDDE + 9));
+      }
+      ctx.stroke();
+    }
+
+    /*
+     * Tunnelen er en fjellmasse over veien, og den må lukke seg ned mot
+     * asfalten i begge ender – ellers er den et tak som svever, ikke en
+     * åpning inn i et fjell. Taket tegnes derfor med en høyde som toner ut
+     * mot null de siste hundre punktene.
+     */
+    /*
+     * Taket ligger lavt med vilje. Kameraet ser 1260 enheter i høyden, så et
+     * tak 260 over veien havner nesten en tredjedels skjerm opp – og da så
+     * bilen ut til å kjøre under en mørk sky i stedet for inne i et fjell.
+     * 150 er omtrent halvannen bilhøyde: trangt, men bilen er tydelig inni.
+     */
+    var TUNNELHOYDE = 150;
+
+    function tunnelTak(i, fra, til) {
+      var inn = Math.min(i - fra, til - i) / 34;
+      var h = TUNNELHOYDE * Math.min(1, inn);
+      return h * (0.82 + 0.18 * Math.sin(i * 0.11));
+    }
+
+    function tunnel(ctx, fra, til, kam) {
+      var i;
+
+      // Mørket inne i tunnelen. Det ligger under fjellet, så veien fortsatt
+      // skimtes – en helsvart tunnel er en tunnel man ikke ser bilen i.
+      ctx.fillStyle = 'rgba(8,6,14,0.62)';
+      ctx.beginPath();
+      for (i = fra; i <= til; i++) {
+        var h = tunnelTak(i, fra, til);
+        if (i === fra) ctx.moveTo(utX(i, h), utY(i, h));
+        else ctx.lineTo(utX(i, h), utY(i, h));
+      }
+      for (i = til; i >= fra; i--) ctx.lineTo(utX(i, -VEIBREDDE), utY(i, -VEIBREDDE));
+      ctx.closePath();
+      ctx.fill();
+
+      /*
+       * Fjellet er et *bånd* over taket, ikke en masse som går opp og ut av
+       * bildet. Et første forsøk fylte helt opp til 900 enheter over veien, og
+       * siden en tunnel er lengre enn en skjerm, ble hele venstre halvdel av
+       * bildet en flat mørk plate med en loddrett kant i tunnelmunningen.
+       * Med et bånd ser man himmelen over, og det leser som en fjellhall.
+       */
+      ctx.fillStyle = '#2b2533';
+      ctx.beginPath();
+      for (i = fra; i <= til; i++) {
+        h = tunnelTak(i, fra, til);
+        if (i === fra) ctx.moveTo(utX(i, h), utY(i, h));
+        else ctx.lineTo(utX(i, h), utY(i, h));
+      }
+      for (i = til; i >= fra; i--) {
+        h = tunnelTak(i, fra, til);
+        // Den ujevne oversida er det som skiller fjell fra en malt stripe.
+        var tykk = h > 4 ? h + 230 + 70 * Math.sin(i * 0.037) : h;
+        ctx.lineTo(utX(i, tykk), utY(i, tykk));
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Lamper i taket. De er den eneste varme fargen i gruva, og de er det
+      // som gjør tunnelen til et sted noen har bygd.
+      for (i = fra + 36; i < til - 36; i += 38) {
+        h = tunnelTak(i, fra, til);
+        var lx = utX(i, h - 10), ly = utY(i, h - 10);
+        var g = ctx.createRadialGradient(lx, ly, 2, lx, ly, 120);
+        g.addColorStop(0, 'rgba(255,208,120,0.55)');
+        g.addColorStop(1, 'rgba(255,190,90,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 120, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffd98a';
+        ctx.beginPath();
+        ctx.arc(lx, ly, 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    /*
+     * Broa er fast grunn uten jord under. `JORDSTREKK` sørger for hullet;
+     * her kommer det som står i det – dekke, bukker og kryssbånd, ned mot
+     * bunnen av dalen.
+     */
+    function bro(ctx, fra, til) {
+      var bunn = lope.lavest + 900;
+      var i;
+
+      ctx.strokeStyle = '#4a3a2c';
+      ctx.lineCap = 'round';
+
+      for (i = fra + 4; i < til - 4; i += 16) {
+        var fx = utX(i, -VEIBREDDE), fy = utY(i, -VEIBREDDE);
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy);
+        ctx.lineTo(fx - 26, bunn);
+        ctx.moveTo(fx, fy);
+        ctx.lineTo(fx + 26, bunn);
+        ctx.stroke();
+
+        // Kryssbånd mellom bukkene, så de leser som ett byggverk.
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        for (var k = 1; k <= 3; k++) {
+          var y = fy + (bunn - fy) * (k / 4);
+          var ut = 26 * (k / 4);
+          ctx.moveTo(fx - ut, y);
+          ctx.lineTo(fx + ut, y);
+        }
+        ctx.stroke();
+      }
+
+      // Dekket helt til slutt, så bukkene forsvinner under det.
+      ctx.fillStyle = '#6b5136';
+      bandbane(ctx, fra, til, VEIBREDDE + 7);
+      ctx.fill();
+      ctx.fillStyle = '#3c4454';
+      bandbane(ctx, fra, til, VEIBREDDE);
+      ctx.fill();
+
+      // Rekkverk på oversiden. Det er det som sier «her er det langt ned».
+      ctx.strokeStyle = '#8a6a44';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (i = fra; i <= til; i++) {
+        if (i === fra) ctx.moveTo(utX(i, VEIBREDDE + 34), utY(i, VEIBREDDE + 34));
+        else ctx.lineTo(utX(i, VEIBREDDE + 34), utY(i, VEIBREDDE + 34));
+      }
+      ctx.stroke();
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      for (i = fra; i <= til; i += 10) {
+        ctx.moveTo(utX(i, VEIBREDDE), utY(i, VEIBREDDE));
+        ctx.lineTo(utX(i, VEIBREDDE + 36), utY(i, VEIBREDDE + 36));
+      }
+      ctx.stroke();
+    }
+
+    var TEGNERE = { is: is, gjorme: gjorme, rumle: rumle };
+
+    function soner(ctx, kam, omr) {
+      var s, S, fra, til;
+
+      for (s = 0; s < SONESTREKK.length; s++) {
+        S = SONESTREKK[s];
+        fra = Math.max(S.fra, omr.a);
+        til = Math.min(S.til, omr.b);
+        if (til - fra < 2) continue;
+        if (TEGNERE[S.sone]) TEGNERE[S.sone](ctx, fra, til);
+      }
+
+      /*
+       * Byggverkene tegnes med *hele* sitt strekk, ikke bare den synlige
+       * biten. Et tunneltak som ble klippet i skjermkanten, lukket seg ned
+       * mot veien der og så ut som at tunnelen sluttet midt i fjellet.
+       */
+      for (s = 0; s < SONESTREKK.length; s++) {
+        S = SONESTREKK[s];
+        if (S.sone !== 'tunnel' && S.sone !== 'bro') continue;
+        if (p[S.til].x < kam.venstre - 400 || p[S.fra].x > kam.hoyre + 400) continue;
+        if (S.sone === 'tunnel') tunnel(ctx, S.fra, S.til, kam);
+        else bro(ctx, S.fra, S.til);
+      }
     }
 
     /* ---------- målet ---------- */
@@ -578,6 +884,7 @@ var Kulisse = (function () {
         stillas(ctx, kam);
         bakke(ctx, kam, omr);
         vei(ctx, kam, omr);
+        soner(ctx, kam, omr);
         maal(ctx, kam);
         return omr;
       }

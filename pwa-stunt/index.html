@@ -37,9 +37,26 @@
     <button id="knappDeler" class="valgknapp">
       <span class="ikon" aria-hidden="true">🔧</span><span>Oppgrader</span>
     </button>
+    <button id="knappBaner" class="valgknapp">
+      <span class="ikon" aria-hidden="true">🗺️</span><span id="baneNavn">Baner</span>
+    </button>
   </nav>
 
   <button id="knappKjor" class="storknapp kjorknapp">KJØR! 🏁</button>
+</section>
+
+<!-- ---------- banevelgeren ---------- -->
+<section id="skjermBaner" class="skjerm" hidden>
+  <header class="topp">
+    <button id="knappTilbakeBaner" class="rundknapp" aria-label="Tilbake til garasjen">
+      <span aria-hidden="true">←</span>
+    </button>
+    <h1 class="tittel">Velg bane</h1>
+    <div id="banerPenger" class="pengemerke">$0</div>
+  </header>
+
+  <p class="hjelpetekst">Trykk på en bane for å kjøre den.</p>
+  <div id="baneListe" class="banekort"></div>
 </section>
 
 <!-- ---------- verkstedet ---------- -->
@@ -140,6 +157,7 @@
 <script src="js/bil.js"></script>
 <script src="js/garasje.js"></script>
 <script src="js/lope.js"></script>
+<script src="js/banekart.js"></script>
 <script src="js/fysikk.js"></script>
 <script src="js/kulisse.js"></script>
 <script src="js/kjoring.js"></script>

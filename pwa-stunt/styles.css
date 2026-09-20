@@ -222,6 +222,7 @@ body {
 
 .valgknapp {
   flex: 1 1 0;
+  min-width: 0;
   border: 2px solid var(--panel-kant);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
   color: var(--tekst);
@@ -240,6 +241,30 @@ body {
 .valgknapp:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
 
 .valgknapp .ikon { font-size: 24px; }
+
+/*
+ * Baneknappen viser navnet på den valgte banen, og det navnet er lengre enn de
+ * to andre etikettene. Den får derfor en større andel av rada – ellers står
+ * det «Korketr…» på hver eneste telefonbredde, og barnet kan ikke lese hvilken
+ * bane KJØR-knappen kommer til å starte. Kuttet er sikringen bakerst: et navn
+ * som *likevel* ikke får plass, skal ikke dytte de to andre knappene ut av rad.
+ */
+#knappBaner { flex-grow: 1.5; }
+#baneNavn { font-size: 13.5px; }
+
+/* På de smaleste telefonene må all tre etikettene ned et hakk for at både
+   «Oppgrader» og det lengste banenavnet skal stå helt. */
+@media (max-width: 374px) {
+  .valgknapp { font-size: 12.5px; }
+  #baneNavn { font-size: 12px; }
+}
+
+.valgknapp > span:not(.ikon) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .storknapp {
   flex: 0 0 auto;
@@ -456,6 +481,104 @@ body {
 }
 
 .fullt { font-size: 13px; color: var(--gronn); font-weight: 700; white-space: nowrap; }
+
+/* ---------- banevelgeren ---------- */
+
+/*
+ * Kortene ligger i én kolonne på telefon og to fra 560 px. Ett kort per rad
+ * er det som gjør at høydeprofilen blir bred nok til å se forskjell på fem
+ * baner – to smale kolonner på en telefon ga fem like taggete striper.
+ */
+.banekort {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-content: start;
+}
+
+@media (min-width: 560px) {
+  .banekort { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.banekortet {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 10px;
+  text-align: left;
+  color: var(--tekst);
+  font: inherit;
+  cursor: pointer;
+  padding: 12px 14px 14px;
+  border-radius: 20px;
+  border: 2px solid color-mix(in srgb, var(--banefarge, #fff) 35%, transparent);
+  background:
+    radial-gradient(120% 90% at 50% 0%,
+      color-mix(in srgb, var(--banefarge, #fff) 16%, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.banekortet:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+
+/* Den valgte banen får sin egen farge i kanten og en glød. Det er samme
+   grepet som tierfargen i oppgraderingslista: fargen kommer fra dataene, så
+   en ny bane trenger ingen ny regel her. */
+.banekortet.valgt {
+  border-color: var(--banefarge, #fff);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3),
+              0 0 18px color-mix(in srgb, var(--banefarge, #fff) 45%, transparent),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.banetegn { font-size: 26px; grid-row: 1; }
+.banetittel { font-size: 18px; font-weight: 800; align-self: center; grid-row: 1; }
+
+.banerekord {
+  grid-row: 1;
+  align-self: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dempet);
+  white-space: nowrap;
+}
+
+/* Profilen får hele bredden under overskriften. Høyden er fast, for kortene
+   skal være like høye uansett hvor kupert banen er. */
+.banekart {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 74px;
+  margin: 4px 0 2px;
+  display: block;
+}
+
+.baneomtale {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--dempet);
+}
+
+.banemerker {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.banemerke {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  color: var(--tekst);
+  background: color-mix(in srgb, var(--banefarge, #fff) 22%, rgba(255, 255, 255, 0.06));
+}
 
 /* ---------- løypa ---------- */
 

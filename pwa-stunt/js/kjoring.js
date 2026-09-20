@@ -201,6 +201,18 @@ var Kjoring = (function () {
         stov(q.x - BILBREDDE * 0.3, q.y, b.v);
       }
 
+      /*
+       * Rumlefeltet skal *kjennes*, ikke bare ses. Ristingen holdes lav og
+       * etterfylles hver rute i stedet for å settes som et smell: et vaskebrett
+       * er en jevn dirring, og et enkelt utslag ville lest som en landing.
+       * Den skaleres med farten, så et rumlefelt man kryper over, er stille.
+       */
+      var underlag = Lope.SONER[b.sone];
+      if (underlag && underlag.rister && !b.flyr) {
+        var styrke = 3 + Math.min(7, b.v / 120);
+        if (ristX < styrke) kamerarist(styrke);
+      }
+
       turboGlod += ((b.turboPaa ? 1 : 0) - turboGlod) * Math.min(1, 9 * dt);
 
       /*

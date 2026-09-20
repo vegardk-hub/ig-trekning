@@ -52,6 +52,10 @@ var Fysikk = (function () {
    * rett. Det er samme regel som at ingenting kan gå galt i en loop: her
    * finnes det ingen måte å tape på, så en salto kan bare gi noe.
    */
+  // Bar asfalt: det ingen sone endrer på. Alle tallene i `Lope.SONER` er
+  // ganger mot denne, så en bane uten soner kjører nøyaktig som før sonene fantes.
+  var ASFALT = { friksjon: 1, brems: 1 };
+
   var LUFTKRAFT = 7.5;       // rad/s² fra gass eller brems i lufta
   var MAKSSPINN = 8.0;       // rad/s
   var SALTOLONN = 45;
@@ -314,6 +318,7 @@ var Fysikk = (function () {
       luftvinkel: 0, spinn: 0, snurret: 0, runder: 0, retting: 0,
       turbo: TURBOSTART, turboPaa: false,
       hoppFra: 0, hoppStart: 0, hoppTid: 0,
+      sone: null,
       ferdig: false
     };
 
@@ -375,6 +380,20 @@ var Fysikk = (function () {
     function stegBakke() {
       var pkt = Lope.ved(lope, b.s);
       var loop = Lope.iLoop(lope, b.s);
+
+      /*
+       * Underlaget er det som gjør at to baner med de samme bakkene kjennes
+       * forskjellige. Is har en tredjedel av luftmotstanden og nesten ingen
+       * brems – bilen glir og glir. Gjørme har mer enn det dobbelte og spiser
+       * farten, så lavgiret og turboen betyr noe der de ellers ikke gjør det.
+       *
+       * Sonen legges på `b` fordi tegningen trenger den: rumlefeltet rister
+       * kameraet, og tunnelen mørklegger. Uten den ville kjøringen måttet slå
+       * opp punktet en gang til hver bilderute.
+       */
+      var underlag = Lope.SONER[lope.punkter[pkt.i].sone] || ASFALT;
+      b.sone = lope.punkter[pkt.i].sone || null;
+
       var brenner = turboSteg();
       var tak = toppfart * (brenner ? TURBOTAK : 1);
       var a = 0;
@@ -401,12 +420,12 @@ var Fysikk = (function () {
        * bare langsomt hvis den er svak.
        */
       if (inn.gass) a += kraft * (1 + 1.3 * (1 - Math.min(1, b.v / toppfart)));
-      if (inn.brems) a -= b.v > 0 ? kraft * 1.4 : 0;
+      if (inn.brems) a -= b.v > 0 ? kraft * 1.4 * underlag.brems : 0;
 
       // Positiv vinkel = løypa peker nedover på skjermen, og da drar
       // tyngdekraften bilen framover.
       a += G * Math.sin(pkt.vinkel) * (loop ? LOOPSTOTTE : 1);
-      a -= b.v * 0.30;
+      a -= b.v * 0.30 * underlag.friksjon;
 
       b.v += a * DT;
 
@@ -468,6 +487,7 @@ var Fysikk = (function () {
       b.runder = 0;
       b.retting = 0;
       b.turboPaa = false;   // ingen motorkraft uten bakke under hjulene
+      b.sone = null;        // og ingen underlag å rumle mot
       hendelser.push({
         type: 'avsprang', x: pkt.x, v: b.v,
         grader: pkt.vinkel * 180 / Math.PI

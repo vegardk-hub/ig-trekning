@@ -483,6 +483,123 @@ krev(gjennom.varte[Fysikk.TIERE - 1] > gjennom.varte[2] * 4,
      'det siste tieret er ikke vesentlig lengre enn det tredje',
      gjennom.varte[2] + ' mot ' + gjennom.varte[Fysikk.TIERE - 1] + ' turer');
 
+/* ---------- 10: alle banene ---------- */
+
+/*
+ * Kravene over gjelder Stuntløypa i detalj. Dette går gjennom *hver* bane i
+ * katalogen og krever det samme av alle. Det er hele forberedelsen på at det
+ * kommer flere baner: en ny post i `Lope.BANER` blir prøvd av seg selv, og
+ * en bane som ikke kan kjøres, slipper ikke ut.
+ */
+
+overskrift('Katalogen');
+
+var ider = {}, banenavn = {};
+Lope.BANER.forEach(function (bane) {
+  krev(!ider[bane.id], 'to baner deler id', bane.id);
+  krev(!banenavn[bane.navn], 'to baner deler navn', bane.navn);
+  ider[bane.id] = banenavn[bane.navn] = 1;
+  krev(!!bane.tegn && !!bane.farge && !!bane.omtale,
+       bane.id + ': mangler tegn, farge eller omtale');
+});
+krev(Lope.finn('finnesikke').id === Lope.BANER[0].id,
+     'en ukjent bane-id faller ikke tilbake på den første');
+
+Lope.BANER.forEach(function (bane) {
+  overskrift('Banen «' + bane.navn + '»');
+
+  var L = Lope.bygg(Fysikk.G, bane.id);
+  var n = Fysikk.simuler(L, NAKEN, BONUS_NAKEN);
+  var m = Fysikk.simuler(L, MAKS, BONUS_MAKS, FLINK);
+  var mt = Fysikk.simuler(L, MAKS, BONUS_MAKS, FLINK, ALLTID);
+  var inn = Lope.innhold(L);
+  var ramp = L.punkter.filter(function (q) { return q.hopp; });
+
+  console.log('  ' + Math.round(L.lengde) + ' enheter, ' + inn.looper + ' looper, ' +
+              inn.hopp + ' hopp, soner: ' + (Object.keys(inn.soner).join(', ') || 'ingen') +
+              ' | naken $' + n.penger + ' maks $' + m.penger);
+
+  krev(n.kjortFerdig, bane.navn + ': en umodifisert bil kom ikke i mål');
+  krev(m.kjortFerdig, bane.navn + ': en maksbil kom ikke i mål');
+  krev(!Fysikk.simuler(L, NAKEN, BONUS_NAKEN, function () { return false; }).kjortFerdig,
+       bane.navn + ': en bil uten gass kom i mål av seg selv');
+
+  krev(L.lengde > 14000, bane.navn + ': banen er for kort', Math.round(L.lengde));
+  krev(inn.looper + inn.hopp >= 3,
+       bane.navn + ': banen har for få elementer til å kjennes som en bane');
+  krev(n.looper === L.looper.length,
+       bane.navn + ': en umodifisert bil kom ikke rundt alle loopene',
+       n.looper + ' av ' + L.looper.length);
+  krev(n.hopp === ramp.length,
+       bane.navn + ': en umodifisert bil traff ikke alle rampene',
+       n.hopp + ' av ' + ramp.length);
+
+  // Alle soner banen bruker, må finnes i tabellen – ellers får den verken
+  // friksjon, tegning eller et merke på kortet, og ingenting sier fra.
+  for (var s in inn.soner) {
+    krev(!!Lope.SONER[s], bane.navn + ': bruker en ukjent sone', s);
+  }
+
+  // Hvert gap klares med god margin av den svakeste bilen.
+  var g = [];
+  L.punkter.forEach(function (q, i) {
+    if (q.hopp && L.punkter[i + 1]) g.push(L.punkter[i + 1].x - q.x);
+  });
+  avsprang(n).forEach(function (a, i) {
+    var l = landinger(n)[i];
+    krev(a.grader < -25, bane.navn + ': avsprang ' + (i + 1) + ' peker ikke oppover',
+         a.grader.toFixed(1) + '°');
+    krev(l && l.lengde > g[i] + 90,
+         bane.navn + ': hopp ' + (i + 1) + ' klarer så vidt gapet',
+         l && ('fløy ' + l.lengde + ' over et gap på ' + Math.round(g[i])));
+    /*
+     * Myntbuene er regnet ut fra REFERANSEFART. Isen på Frostruta er grunnen
+     * til at dette må prøves per bane: en rampe rett etter en lang isstrekning
+     * ga en avsprangsfart langt over referansen, og da henger buen et sted
+     * bilen aldri kommer. Rampene står derfor på bar asfalt med innkjøring.
+     */
+    krev(Math.abs(a.v - Lope.REFERANSEFART) < 130,
+         bane.navn + ': avsprangsfart ' + (i + 1) + ' ligger langt fra REFERANSEFART',
+         Math.round(a.v) + ' mot ' + Lope.REFERANSEFART);
+  });
+
+  // Ingen loop innenfor en flybane, hverken med eller uten turbo.
+  var lx = L.punkter.filter(function (q) { return !q.bakke; }).map(function (q) { return q.x; });
+  [m, mt].forEach(function (res, nr) {
+    avsprang(res).forEach(function (a, i) {
+      var l = landinger(res)[i];
+      if (!l) return;
+      var traff = lx.filter(function (x) { return x > a.x + 40 && x < a.x + l.lengde - 40; });
+      krev(traff.length === 0,
+           bane.navn + ': maksbilen' + (nr ? ' med turbo' : '') +
+           ' flyr gjennom en loop på hopp ' + (i + 1),
+           'hopp ' + Math.round(l.lengde) + ' fra x=' + Math.round(a.x));
+    });
+  });
+
+  krev(n.mynter > L.mynter.length * 0.55,
+       bane.navn + ': en umodifisert bil plukker for få mynter',
+       n.mynter + ' av ' + L.mynter.length);
+
+  var ekte = n.tid / Fysikk.TIDSSKALA, ekteM = m.tid / Fysikk.TIDSSKALA;
+  krev(ekte > 22 && ekte < 50, bane.navn + ': en tur tar urimelig lang eller kort tid',
+       ekte.toFixed(1) + ' s');
+  krev(ekteM > 12, bane.navn + ': en maksbil raser gjennom for fort til å se noe',
+       ekteM.toFixed(1) + ' s');
+
+  /*
+   * Ingen bane skal være den åpenbare pengemaskinen. Er én av dem vesentlig
+   * bedre betalt enn de andre, velges den hver gang, og de fire andre er
+   * pynt. Båndet måles mot Stuntløypa, som er den økonomien er stemt av mot.
+   */
+  krev(n.penger > naken.penger * 0.75 && n.penger < naken.penger * 1.25,
+       bane.navn + ': en umodifisert tur betaler for ulikt Stuntløypa',
+       n.penger + ' mot ' + naken.penger);
+  krev(m.penger > maksFlink.penger * 0.75 && m.penger < maksFlink.penger * 1.25,
+       bane.navn + ': en maksbil tjener for ulikt Stuntløypa',
+       m.penger + ' mot ' + maksFlink.penger);
+});
+
 /* ---------- oppsummering ---------- */
 
 console.log('\n' + (feil ? feil + ' feil av ' + gjort + ' krav' : 'alle ' + gjort + ' krav ok'));
