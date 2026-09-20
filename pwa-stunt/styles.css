@@ -220,6 +220,16 @@ body {
   gap: 10px;
 }
 
+/*
+ * Garasjen har fire valg, og fire på rad gir etiketter man ikke kan lese på en
+ * telefon. To og to er det som får både «Oppgrader» og det lengste banenavnet
+ * til å stå helt. Resultatskjermens to knapper står fortsatt på rad.
+ */
+#skjermGarasje .hovedvalg {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .valgknapp {
   flex: 1 1 0;
   min-width: 0;
@@ -579,6 +589,52 @@ body {
   color: var(--tekst);
   background: color-mix(in srgb, var(--banefarge, #fff) 22%, rgba(255, 255, 255, 0.06));
 }
+
+/* ---------- kjøretøyene ---------- */
+
+/*
+ * Kortene arver banekortenes rutenett (`.banekort` på beholderen), men har sin
+ * egen innmat: her er det bilen selv som er bildet, ikke en høydeprofil.
+ */
+.kjoretoykort {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 10px;
+  text-align: left;
+  color: var(--tekst);
+  font: inherit;
+  cursor: pointer;
+  padding: 12px 14px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--panel-kant);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.kjoretoykort:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+
+.kjoretoykort.valgt {
+  border-color: var(--gronn);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3),
+              0 0 18px color-mix(in srgb, var(--gronn) 40%, transparent),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Det man ikke har råd til, står dempet – men det er fortsatt synlig. Et
+   kjøretøy man sparer til, er et mål, og et mål man ikke ser er ikke et mål. */
+.kjoretoykort.dyr { opacity: 0.62; }
+
+.kjoretoykort .pris,
+.kjoretoykort .eid,
+.kjoretoykort .paa { align-self: center; white-space: nowrap; }
+
+.kjoretoybil {
+  grid-column: 1 / -1;
+  display: block;
+  margin: 2px 0;
+}
+
+.kjoretoybil svg { display: block; width: 100%; height: auto; }
 
 /* ---------- løypa ---------- */
 

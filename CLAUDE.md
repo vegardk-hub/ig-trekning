@@ -13,7 +13,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-poengtavle/` | Ukens poengtavle — husholdningsoppgaver med kroner, PWA |
 | `pwa-lesing/` | Monstergiret — les høyt, bygg monstertrucker, PWA |
 | `pwa-lesestjerna/` | Lesestjerna — les høyt, tjen mynter til huset. **Kun Edge** |
-| `pwa-stunt/` | Stuntgarasjen — design en bil, kjør den på fem baner, PWA |
+| `pwa-stunt/` | Stuntgarasjen — fem kjøretøy, fem baner, design og oppgradering, PWA |
 | `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
@@ -403,6 +403,35 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **Tunneltaket er et bånd, ikke en fjellmasse.** Et første forsøk fylte helt
   opp til 900 enheter over veien, og siden en tunnel er lengre enn en skjerm,
   ble hele halve bildet en flat mørk plate med en loddrett kant i munningen.
+- **En form er pynt, et kjøretøy er en egen bil.** Formene (0–320) hører alle
+  til Stuntbilen og rører ikke motoren. Et kjøretøy har **sine egne
+  oppgraderinger**, og et nytt begynner på null — `stat.biler[<id>]`. Blander
+  du de to, nullstiller et formbytte til 120 kroner hele bilen.
+- **Et dyrere kjøretøy tjener mer, det kjører ikke fortere.** Taket på 1280 i
+  toppfart er målt mot hopplengdene; et kjøretøy med mer motor ville seilt
+  tvers gjennom looper og forbi ramper. Derfor er `inntekt` den eneste knappen,
+  og utseendet den andre.
+- **Den gamle bilen blir stående, og det er det som gjør «begynner på null»
+  trygt.** Man bytter fram og tilbake på ett trykk, og den maksa bilen tjener
+  like mye dagen etter kjøpet. Fjerner du vekslingen, blir et kjøp på 40 000
+  det som gjør spillet tregest — stikk i strid med at ingenting her kan tapes.
+- **Kjøretøyet teller ikke på stilen.** Det har sin egen ganger. Teller det
+  begge steder, ganges den samme fordelen opp to ganger, og kalibreringen av
+  `Bil.bonus()` ryker uten at noe sier fra.
+- **Formfanen forsvinner når kjøretøyet eier karosseriet.** En fane som ikke
+  endrer noe er verre enn ingen fane: barnet trykker på en racer, og bilen over
+  lista blir stående som et romfartøy.
+- **Ett snurretall per hjul.** Jetbilen har 44 i radius bak og 22 foran. Med én
+  felles vinkel snurret det lille hjulet altfor sakte for farten, og bilen så ut
+  til å skli på forhjulet hele veien.
+- **Flammen tegnes bak karosseriet, røret foran.** Både Jetbilen og
+  Romfartøyet har hale eller skrog akkurat der flammen skal ut. Tegnes hele
+  dysa etter kroppen, blir bare en flis av flammen synlig, og jetmotoren ser ut
+  som en grå kloss.
+- **Hjulene tegnes helt til slutt, og store hjul deler bilen i to.** Jetbilens
+  drivhjul var først 54 i radius, og da rakk gummien over hele dekket mellom
+  hala og kupeen — bilen leste som to løsrevne biter. 44 mot 22 foran gir
+  fortsatt dobbel kontrast, og det er den som leser som dragster.
 
 Endrer du priser eller utbetalinger, kjør både en umodifisert og en fullt
 utstyrt bil gjennom løypa og se at summene ligger der tabellen i

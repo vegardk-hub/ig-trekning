@@ -41,8 +41,14 @@ var Kjoring = (function () {
     // fast nevner (det første forsøket delte på 26) snurrer et lite hjul for
     // sakte og et monsterhjul for fort, og bilen ser ut til å skli.
     var bilskala = BILBREDDE / bilder.bredde;
-    var hjulradius = bilder.plasser[0].r * bilskala;
-    var hjulsnurr = 0;
+
+    /*
+     * Ett snurretall per hjul. Jetbilen har 56 i radius bak og 24 foran, og
+     * med én felles vinkel ville det lille hjulet snurret altfor sakte for
+     * farten – bilen ville sett ut til å skli på forhjulet hele veien. Samme
+     * regel som før, bare regnet ut for hvert hjul for seg: dθ = v·dt / r.
+     */
+    var hjulsnurr = bilder.plasser.map(function () { return 0; });
 
     /*
      * ...men bare opp til et tak. Et femeikers hjul gjentar seg hver 72.
@@ -171,7 +177,10 @@ var Kjoring = (function () {
 
     function snurr(dt) {
       var fart = Math.abs(b.flyr ? b.fvx : b.v);
-      hjulsnurr += Math.min(fart / hjulradius, MAKSSNURR) * dt;
+      for (var i = 0; i < hjulsnurr.length; i++) {
+        var r = bilder.plasser[i].r * bilskala;
+        hjulsnurr[i] += Math.min(fart / r, MAKSSNURR) * dt;
+      }
     }
 
     /* ---------- hendelser å reagere på ---------- */
@@ -401,7 +410,7 @@ var Kjoring = (function () {
         var r = p.r * bilskala * bilder.hjulboks;
         ctx.save();
         ctx.translate(-BILBREDDE * 0.5 + p.x * bilskala, topp + p.y * bilskala);
-        ctx.rotate(hjulsnurr);
+        ctx.rotate(hjulsnurr[i]);
         ctx.drawImage(bilder.hjul[fase], -r, -r, r * 2, r * 2);
         ctx.restore();
       }

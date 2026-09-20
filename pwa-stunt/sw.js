@@ -5,7 +5,7 @@
  * først ville servert gammel kode i det uendelige etter en oppdatering.
  */
 
-const CACHE = 'stuntgarasjen-v16';
+const CACHE = 'stuntgarasjen-v17';
 const FILER = [
   './',
   './index.html',

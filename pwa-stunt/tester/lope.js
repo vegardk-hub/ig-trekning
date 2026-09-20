@@ -600,6 +600,118 @@ Lope.BANER.forEach(function (bane) {
        m.penger + ' mot ' + maksFlink.penger);
 });
 
+/* ---------- 11: kjøretøyene ---------- */
+
+/*
+ * Et kjøretøy er en egen bil med sine egne oppgraderinger, og en ny begynner
+ * på null. Ytelsen kan ikke skrus opp – taket på 1280 i toppfart er målt mot
+ * hopplengdene – så det som skiller dem er `inntekt` og hvordan de ser ut.
+ *
+ * Det gjør økonomien til det eneste som kan måles her, og den må holde to ting
+ * samtidig: hvert kjøretøy skal være verdt prisen sin, og et nytt skal aldri
+ * gjøre spillet så mye tregere at barnet angrer på kjøpet.
+ */
+
+overskrift('Kjøretøyene');
+
+var KJ = Bil.KJORETOY;
+
+krev(KJ.length >= 5, 'det skal finnes minst fem kjøretøy', KJ.length);
+krev(KJ[0].pris === 0, 'det første kjøretøyet må være gratis', KJ[0].pris);
+krev(!KJ[0].kropp, 'Stuntbilen skal hente karosseriet fra form-kategorien');
+
+var kids = {};
+KJ.forEach(function (k, i) {
+  krev(!kids[k.id], 'to kjøretøy deler id', k.id);
+  kids[k.id] = 1;
+  krev(!!k.navn && !!k.tegn && !!k.omtale, k.id + ': mangler navn, tegn eller omtale');
+  if (i === 0) return;
+
+  krev(k.pris > KJ[i - 1].pris, k.id + ': koster ikke mer enn det forrige',
+       KJ[i - 1].pris + ' → ' + k.pris);
+  krev(k.inntekt > KJ[i - 1].inntekt, k.id + ': tjener ikke mer enn det forrige',
+       KJ[i - 1].inntekt + ' → ' + k.inntekt);
+
+  /*
+   * Et kjøretøy uten eget karosseri ville falt stille tilbake på formen, og da
+   * er det bare en dyr ganger: barnet betaler 40 000 og bilen ser lik ut.
+   */
+  krev(!!k.kropp, k.id + ': mangler eget karosseri og faller tilbake på formen');
+
+  // Feltene tegnerutinen slår opp uten å sjekke. Et glemt felt kaster først
+  // når bilen skal tegnes, altså etter at kjøpet er gjort.
+  ['hjul', 'dekorboks', 'spoilerfeste', 'strek', 'lykt', 'tak', 'bakluke',
+   'panser', 'eksosfeste'].forEach(function (felt) {
+    krev(k[felt] !== undefined, k.id + ': mangler festepunktet «' + felt + '»');
+  });
+  krev(k.hjul.length === 2, k.id + ': skal ha to hjul', k.hjul.length);
+});
+
+krev(Bil.finnKjoretoy('finnesikke').id === KJ[0].id,
+     'en ukjent kjøretøy-id faller ikke tilbake på den første');
+
+/*
+ * Kjøretøyet skal ikke telle på stilen. Det har sin egen ganger, og teller det
+ * begge steder, ganges den samme fordelen opp to ganger – og da ryker
+ * kalibreringen av `Bil.bonus()` uten at noe sier fra.
+ */
+var stilStunt = Bil.stil({ kjoretoy: 'stunt', form: 'racer', lakk: 'rod',
+                           hjul: 'standard', dekor: [], spoiler: 'ingen', ekstra: [] });
+var stilRom = Bil.stil({ kjoretoy: KJ[KJ.length - 1].id, form: 'racer', lakk: 'rod',
+                         hjul: 'standard', dekor: [], spoiler: 'ingen', ekstra: [] });
+krev(stilRom <= stilStunt, 'kjøretøyet teller på stilen i tillegg til sin egen ganger',
+     stilStunt + ' mot ' + stilRom);
+
+/* ---------- hva de tjener ---------- */
+
+function kjoretoyValgt(id) {
+  var v = Bil.standard();
+  for (var f in ALT) v[f] = ALT[f];
+  v.kjoretoy = id;
+  return v;
+}
+
+function kjoretoyTur(id, oppgrad) {
+  var v = kjoretoyValgt(id);
+  return Fysikk.simuler(lope, oppgrad, Bil.bonus(v) * Bil.kjoretoyBonus(v)).penger;
+}
+
+var maksStunt = kjoretoyTur(KJ[0].id, MAKS);
+
+KJ.forEach(function (k, i) {
+  var fersk = kjoretoyTur(k.id, NAKEN);
+  var full = kjoretoyTur(k.id, MAKS);
+  console.log('  ' + k.navn + ': $' + k.pris + ' | ×' + k.inntekt.toFixed(2) +
+              ' | fersk $' + fersk + ' | maksa $' + full +
+              (i ? ' | fersk = ' + Math.round(fersk / maksStunt * 100) + ' % av maksa Stuntbil' : ''));
+
+  if (!i) return;
+
+  krev(fersk > kjoretoyTur(KJ[i - 1].id, NAKEN),
+       k.id + ': en fersk bil tjener ikke mer enn en fersk av den forrige');
+  krev(full > kjoretoyTur(KJ[i - 1].id, MAKS),
+       k.id + ': en maksa bil tjener ikke mer enn en maksa av den forrige');
+
+  /*
+   * Steget ned rett etter kjøpet. Det *skal* være der – oppgraderingene
+   * begynner på null, og det er hele poenget – men blir det for stort, er et
+   * kjøp barnet gledet seg til det som gjør spillet tregest. En fjerdedel av
+   * det den gamle bilen tjente er grensa, og den gamle bilen står igjen i
+   * garasjen og tjener like mye som før uansett.
+   */
+  krev(fersk > maksStunt * 0.25,
+       k.id + ': en fersk bil tjener så lite at kjøpet straffer seg',
+       '$' + fersk + ' mot $' + maksStunt);
+
+  /*
+   * Og den må være verdt prisen. Et kjøretøy som aldri tjener inn det det
+   * kostet, er en felle – barnet har spart lenge til det.
+   */
+  krev(full - maksStunt > k.pris / 40,
+       k.id + ': tjener for lite ekstra til å forsvare prisen',
+       '$' + (full - maksStunt) + ' mer per tur, pris $' + k.pris);
+});
+
 /* ---------- oppsummering ---------- */
 
 console.log('\n' + (feil ? feil + ' feil av ' + gjort + ' krav' : 'alle ' + gjort + ' krav ok'));

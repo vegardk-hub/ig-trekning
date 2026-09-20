@@ -347,7 +347,7 @@ gjør noe annet enn å holde gassen. Taket på hva én tur kan gi, måles som
 | `js/fysikk.js` | Simuleringen: fart, hopp, mynter, penger, oppgraderinger |
 | `js/kulisse.js` | Himmel, landskap, asfalt, soner og mål — alt som ikke er bilen |
 | `js/kjoring.js` | Kamera, bil, partikler og sløyfa |
-| `js/app.js` | De seks skjermene, butikken, lagringen |
+| `js/app.js` | De sju skjermene, butikken, lagringen |
 
 **Fysikken ligger for seg selv, uten et eneste piksel.** Den ble skilt ut fra
 `kjoring.js` fordi løypa må stemmes av mot tall bare simuleringen kjenner:
@@ -402,12 +402,78 @@ Fire feller dette har gått i, som alle ville kommet tilbake:
   på den samme gruppa ble klipperuta tolket i speilvendt rom og fjernet hele
   refleksjonen. Klippet må ligge på en ytre gruppe uten transform.
 
+## Kjøretøyene: fem biler, ikke fem skall
+
+En **form** er pynt: fire karosserier til 0–320 kroner som alle hører til den
+samme bilen. Et **kjøretøy** er en egen bil, og den skillelinja er hele
+poenget — et kjøretøy har **sine egne oppgraderinger, og et nytt begynner på
+null**.
+
+| | Pris | Ganger | Hva den er |
+| --- | --- | --- | --- |
+| 🏎️ Stuntbilen | $0 | ×1,00 | Bilen man starter med. Den eneste som kan bytte form. |
+| 👹 Beistet | $10 000 | ×1,35 | Monstertruck med rullebur og de største hjulene i katalogen. |
+| 🛡️ Panservogna | $20 000 | ×1,75 | Kantete, naglet, med sikteglugger i stedet for vinduer. |
+| 🔥 Jetbilen | $30 000 | ×2,30 | Dragster med jetdyse, svære drivhjul og bitte små forhjul. |
+| 🛸 Romfartøyet | $40 000 | ×3,00 | Glasskuppel, neonlys under skroget og antenne. |
+
+### Hvorfor inntekt og ikke ytelse
+
+Et dyrere kjøretøy kunne fått mer motor. Det går ikke: **taket på 1280 i
+toppfart er målt mot hopplengdene**, og et kjøretøy som fløy lengre ville
+seilt tvers gjennom looper og forbi ramper. Prøvene ville sagt fra, men det er
+ikke en avveining — det er et tak.
+
+Så et dyrere kjøretøy **tjener mer per tur** i stedet, og *ser* tøffere ut.
+Begge deler er ting et barn ser med én gang, og ingen av dem rører fysikken.
+
+### Hvorfor «begynner på null» ikke er et tap
+
+**Den gamle bilen blir stående i garasjen, ferdig bygd.** Man bytter fram og
+tilbake på ett trykk, og den maksa Stuntbilen tjener like mye dagen etter
+kjøpet som dagen før. Et nytt kjøretøy er derfor noe man bygger opp *fordi man
+vil*, ikke noe man blir tvunget gjennom.
+
+Steget ned rett etter kjøpet er målt, og prøven holder det i sjakk: en fersk
+bil skal tjene mer enn en fjerdedel av det en maksa Stuntbil gjør.
+
+| | Fersk | Maksa |
+| --- | --- | --- |
+| Stuntbilen | $1 085 | $4 841 |
+| Beistet | $1 357 (28 %) | $6 216 |
+| Panservogna | $1 781 (37 %) | $8 088 |
+| Jetbilen | $2 393 (49 %) | $10 614 |
+| Romfartøyet | $3 084 (64 %) | $13 839 |
+
+### Tre ting som ser ut som detaljer
+
+* **Kjøretøyet teller ikke på stilen.** Det har sin egen ganger, og teller det
+  begge steder, ganges den samme fordelen opp to ganger — og da ryker
+  kalibreringen av `Bil.bonus()` uten at noe sier fra. Prøven håndhever det.
+* **Formfanen forsvinner når kjøretøyet eier sitt eget karosseri.** En fane
+  som ikke endrer noe er verre enn ingen fane: barnet trykker på en racer og
+  bilen over lista blir stående som et romfartøy. Valget står igjen urørt til
+  man bytter tilbake til Stuntbilen.
+* **Ett snurretall per hjul.** Jetbilen har 56 i radius bak og 24 foran. Med
+  én felles vinkel snurret det lille hjulet altfor sakte for farten, og bilen
+  så ut til å skli på forhjulet hele veien.
+
+### Å legge til et kjøretøy
+
+Én ny post i `KJORETOY` i `js/bil.js`. Den bruker de samme feltene som en form
+(`kropp`, `hjul`, `dekorboks`, `spoilerfeste`, `lykt`, `tak`, `bakluke`,
+`panser`, `eksosfeste`, `strek`) pluss `pris`, `inntekt`, `tegn` og `omtale`.
+Valgfrie lag: `understell`, `bur`/`burstag`, `nagler`, `dyse`, `neon`,
+`antenne`. Kortet, kjøpet, den egne oppgraderingstilstanden og prøvene følger
+av seg selv.
+
 ## Bilen tegnes, den lastes ikke ned
 
 Som truckene i Monstergiret: én tegnerutine og en tabell. Seks kategorier som
-kan settes sammen fritt — form, lakk, hjul, dekor, spoiler, ekstra. To av dem
-er lister der hvilken som helst kombinasjon kan stå på: seks dekortyper (2⁶)
-og åtte tilbehør (2⁸). Til sammen 4 × 9 × 5 × 64 × 5 × 256 = **14,7 millioner**
+kan settes sammen fritt — form, lakk, hjul, dekor, spoiler, ekstra — og fem
+kjøretøy som hver eier sitt eget karosseri. To av kategoriene er lister der
+hvilken som helst kombinasjon kan stå på: seks dekortyper (2⁶) og åtte
+tilbehør (2⁸). Til sammen 8 × 9 × 5 × 64 × 5 × 256 = **29,5 millioner**
 forskjellige biler uten en eneste bildefil.
 
 ## Dekor er den eneste kategorien der flere kan stå på samtidig

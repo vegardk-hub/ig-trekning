@@ -27,6 +27,7 @@
   var e = {};
   ['skjermGarasje', 'skjermVerksted', 'skjermDeler', 'skjermLop', 'skjermResultat',
    'skjermBaner', 'baneListe', 'banerPenger', 'baneNavn',
+   'skjermKjoretoy', 'kjoretoyListe', 'kjoretoyPenger', 'kjoretoyNavn',
    'garasjeBil', 'garasjePenger', 'garasjeStil', 'garasjeTeknikk', 'garasjeBeste',
    'verkstedBil', 'verkstedPenger', 'kategorier', 'valgene', 'stilLinje',
    'delerPenger', 'delerListe', 'delerBil',
@@ -39,7 +40,7 @@
 
   function last() {
     var s = { penger: STARTPENGER, eid: {}, valgt: Bil.standard(),
-              oppg: { motor: 0, gir: 0, dekk: 0 }, beste: 0, turer: 0,
+              biler: {}, beste: 0, turer: 0,
               bane: Lope.BANER[0].id, rekord: {},
               versjon: Fysikk.LAGRINGSVERSJON };
     try {
@@ -72,12 +73,26 @@
         }
         if (!Array.isArray(s.valgt.dekor)) s.valgt.dekor = [];
         if (!Array.isArray(s.valgt.ekstra)) s.valgt.ekstra = [];
-        if (lagret.oppg) for (var o in s.oppg) if (typeof lagret.oppg[o] === 'number') s.oppg[o] = lagret.oppg[o];
 
-        // Oppgraderingene gikk fra sju nivåer til tiere à fem trinn.
-        // `Fysikk.fraGammelLagring()` eier hele omregningen og sier hvorfor
-        // en maksa bil skal begynne på tier 2 og ikke på toppen av stigen.
-        for (var m in s.oppg) s.oppg[m] = Fysikk.fraGammelLagring(s.oppg[m], lagret.versjon);
+        /*
+         * Oppgraderingene er per kjøretøy. Før fantes det bare ett, og da lå
+         * de i `oppg` rett på toppnivået – den lagringen er Stuntbilens, for
+         * det er den eneste bilen som har vært kjørt.
+         */
+        s.biler = (lagret.biler && typeof lagret.biler === 'object') ? lagret.biler : {};
+        if (!lagret.biler && lagret.oppg) s.biler[Bil.KJORETOY[0].id] = lagret.oppg;
+
+        // Et kjøretøy som er fjernet fra katalogen skal ikke låse appen på en
+        // bil som ikke finnes. `finnKjoretoy()` faller tilbake på den første.
+        s.valgt.kjoretoy = Bil.finnKjoretoy(s.valgt.kjoretoy).id;
+
+        for (var kid in s.biler) {
+          var o = s.biler[kid] || {};
+          // Oppgraderingene gikk fra sju nivåer til tiere à fem trinn.
+          // `Fysikk.fraGammelLagring()` eier hele omregningen og sier hvorfor
+          // en maksa bil skal begynne på tier 2 og ikke på toppen av stigen.
+          for (var m in o) o[m] = Fysikk.fraGammelLagring(o[m], lagret.versjon);
+        }
         s.versjon = Fysikk.LAGRINGSVERSJON;
       }
     } catch (f) { /* ødelagt lagring skal ikke stoppe spillet */ }
@@ -90,6 +105,28 @@
         if (del.pris === 0 && s.eid[kat.id].indexOf(del.id) < 0) s.eid[kat.id].push(del.id);
       });
     });
+
+    // Kjøretøyene eies i samme liste som resten, men de står ikke i
+    // `KATEGORIER` – de kjøpes på sin egen skjerm, ikke i verkstedet.
+    if (!Array.isArray(s.eid.kjoretoy)) s.eid.kjoretoy = [];
+    Bil.KJORETOY.forEach(function (k) {
+      if (k.pris === 0 && s.eid.kjoretoy.indexOf(k.id) < 0) s.eid.kjoretoy.push(k.id);
+    });
+
+    /*
+     * Hvert eid kjøretøy har sine egne oppgraderinger, og et nytt begynner på
+     * null. Det er det som gjør at en ny bil er noe å bygge opp og ikke bare
+     * et nytt skall utenpå den gamle motoren.
+     */
+    s.eid.kjoretoy.forEach(function (id) {
+      var o = s.biler[id] || {};
+      s.biler[id] = {
+        motor: typeof o.motor === 'number' ? o.motor : 0,
+        gir: typeof o.gir === 'number' ? o.gir : 0,
+        dekk: typeof o.dekk === 'number' ? o.dekk : 0
+      };
+    });
+    if (s.eid.kjoretoy.indexOf(s.valgt.kjoretoy) < 0) s.valgt.kjoretoy = Bil.KJORETOY[0].id;
     return s;
   }
 
@@ -99,10 +136,26 @@
 
   function eier(kat, id) { return stat.eid[kat].indexOf(id) >= 0; }
 
+  /*
+   * Oppgraderingene til den bilen som står i garasjen nå. Alt som spør om
+   * motor, gir eller dekk går gjennom denne – ellers ville et bytte av
+   * kjøretøy måttet huskes ett sted til for hver skjerm som viser et tall.
+   */
+  function oppg() { return stat.biler[stat.valgt.kjoretoy]; }
+
+  function kjoretoy() { return Bil.finnKjoretoy(stat.valgt.kjoretoy); }
+
+  /*
+   * Alt som ganger opp det man tjener, i ett tall. Stilbonusen kommer fra
+   * pynten, kjøretøygangeren fra bilen selv, og fysikken legger teknikkbonusen
+   * oppå. De tre er uavhengige, og derfor ganges de sammen.
+   */
+  function inntektsbonus() { return Bil.bonus(stat.valgt) * Bil.kjoretoyBonus(stat.valgt); }
+
   /* ---------- skjermbytte ---------- */
 
   var SKJERMER = ['skjermGarasje', 'skjermVerksted', 'skjermDeler', 'skjermLop',
-                  'skjermResultat', 'skjermBaner'];
+                  'skjermResultat', 'skjermBaner', 'skjermKjoretoy'];
 
   function vis(navn) {
     SKJERMER.forEach(function (s) { e[s].hidden = (s !== navn); });
@@ -110,6 +163,7 @@
     if (navn === 'skjermVerksted') tegnVerksted();
     if (navn === 'skjermDeler') tegnDeler();
     if (navn === 'skjermBaner') tegnBaner();
+    if (navn === 'skjermKjoretoy') tegnKjoretoy();
   }
 
   /*
@@ -127,7 +181,7 @@
   // Felgen viser dekk-tieret. Alt som tegner bilen går gjennom denne, så
   // garasjen, verkstedet, delelista, resultatet og løypa aldri kan vise
   // hvert sitt hjul.
-  function dekktier() { return Fysikk.tierInfo(stat.oppg.dekk); }
+  function dekktier() { return Fysikk.tierInfo(oppg().dekk); }
 
   // Rekorden er per bane. En felles rekord ville gjort de korteste banene
   // meningsløse å prøve: tallet sto der fra den lengste, og ingenting man
@@ -143,7 +197,7 @@
     e.garasjePenger.textContent = penger();
     var b = Bil.bonus(stat.valgt);
     e.garasjeStil.textContent = '×' + b.toFixed(2);
-    e.garasjeTeknikk.textContent = '×' + Fysikk.teknikkbonus(stat.oppg).toFixed(2);
+    e.garasjeTeknikk.textContent = '×' + Fysikk.teknikkbonus(oppg()).toFixed(2);
     e.garasjeBeste.textContent = rekord(stat.bane) ? kr(rekord(stat.bane)) : '–';
 
     /*
@@ -155,6 +209,96 @@
      * begge deler leser som en tilstand i stedet for som en vei videre.
      */
     e.baneNavn.textContent = Lope.finn(stat.bane).navn;
+    e.kjoretoyNavn.textContent = kjoretoy().navn;
+  }
+
+  /* ---------- kjøretøyene ---------- */
+
+  /*
+   * Et kjøretøy er en *egen bil*: den har sine egne oppgraderinger, og en ny
+   * begynner på null. Den gamle blir stående i garasjen, ferdig bygd, og man
+   * kan bytte fram og tilbake når som helst.
+   *
+   * Det er den vekslingen som gjør at «begynner på null» ikke er et tap. Uten
+   * den ville et kjøp på 40 000 gjort bilen langsom med én gang, og barnet
+   * hadde brukt alt det eide på å gjøre spillet tregere – stikk i strid med at
+   * ingenting her skal kunne gå galt.
+   */
+  function tegnKjoretoy() {
+    e.kjoretoyPenger.textContent = penger();
+    e.kjoretoyListe.innerHTML = '';
+
+    Bil.KJORETOY.forEach(function (k, n) {
+      var har = stat.eid.kjoretoy.indexOf(k.id) >= 0;
+      var paa = k.id === stat.valgt.kjoretoy;
+      var raad = stat.penger >= k.pris;
+
+      /*
+       * Kortet viser bilen slik den faktisk blir, med barnets egen lakk og
+       * pynt – ikke et ikon. Da ser man hva pengene kjøper før man bruker dem.
+       * Dekk-tieret er kjøretøyets eget, så et nytt kjøretøy viser nakne felger
+       * og sier med det samme at oppgraderingene begynner på nytt.
+       */
+      var vis_ = {};
+      for (var f in stat.valgt) vis_[f] = stat.valgt[f];
+      vis_.kjoretoy = k.id;
+      var egneOppg = stat.biler[k.id];
+
+      var kort = document.createElement('button');
+      kort.className = 'kjoretoykort' + (paa ? ' valgt' : '') + (!har && !raad ? ' dyr' : '');
+      kort.setAttribute('aria-pressed', paa ? 'true' : 'false');
+
+      var under;
+      if (paa) under = '<span class="paa">✓ Denne kjører du</span>';
+      else if (har) under = '<span class="eid">Bytt til denne</span>';
+      else under = '<span class="pris">' + kr(k.pris) + '</span>';
+
+      // Tilstanden på *den* bilen, ikke på den som står i garasjen nå.
+      var tilstand = har
+        ? (egneOppg && (egneOppg.motor + egneOppg.gir + egneOppg.dekk)
+            ? 'Bygd til tier ' + Fysikk.tierInfo(egneOppg.motor).n
+            : 'Uten oppgraderinger')
+        : 'Begynner uten oppgraderinger';
+
+      kort.innerHTML =
+        '<span class="banetegn" aria-hidden="true">' + k.tegn + '</span>' +
+        '<span class="banetittel">' + k.navn + '</span>' +
+        under +
+        '<span class="kjoretoybil">' +
+          Bil.svg(vis_, 'kv' + n, '', Fysikk.tierInfo(har ? egneOppg.dekk : 0)) +
+        '</span>' +
+        '<span class="baneomtale">' + k.omtale + '</span>' +
+        '<span class="banemerker">' +
+          '<span class="banemerke">💰 ×' + k.inntekt.toFixed(2) + ' på alt du tjener</span>' +
+          '<span class="banemerke">🔧 ' + tilstand + '</span>' +
+        '</span>';
+
+      kort.onclick = function () { velgKjoretoy(k); };
+      e.kjoretoyListe.appendChild(kort);
+    });
+  }
+
+  function velgKjoretoy(k) {
+    if (stat.eid.kjoretoy.indexOf(k.id) < 0) {
+      if (stat.penger < k.pris) { rist(e.kjoretoyPenger); return; }
+      stat.penger -= k.pris;
+      stat.eid.kjoretoy.push(k.id);
+      // Et nytt kjøretøy begynner på null. Det er hele premisset.
+      stat.biler[k.id] = { motor: 0, gir: 0, dekk: 0 };
+      blafr(e.kjoretoyPenger);
+    }
+    stat.valgt.kjoretoy = k.id;
+
+    /*
+     * Formen hører til Stuntbilen. Kjører man noe annet, skal valget stå igjen
+     * urørt til man bytter tilbake – ellers mister barnet en form det har
+     * betalt for hver gang det prøver et nytt kjøretøy, samme lærdom som
+     * dekorlista.
+     */
+    if (aktivKategori === 'form' && Bil.finnKjoretoy(k.id).kropp) aktivKategori = 'lakk';
+
+    lagre();
+    tegnKjoretoy();
   }
 
   /* ---------- banevelgeren ---------- */
@@ -232,8 +376,21 @@
     e.verkstedBil.innerHTML = Bil.svg(stat.valgt, 'v', 'bilbilde', dekktier());
     e.verkstedPenger.textContent = penger();
 
+    /*
+     * Formfanen gjelder bare Stuntbilen. De dyre kjøretøyene eier sitt eget
+     * karosseri, og en fane som ikke endret noe ville vært verre enn ingen
+     * fane: barnet trykker på en racer og bilen over lista blir stående som
+     * et romfartøy.
+     */
+    var kategorier = Bil.KATEGORIER.filter(function (kat) {
+      return kat.id !== 'form' || !kjoretoy().kropp;
+    });
+    if (!kategorier.some(function (kat) { return kat.id === aktivKategori; })) {
+      aktivKategori = kategorier[0].id;
+    }
+
     e.kategorier.innerHTML = '';
-    Bil.KATEGORIER.forEach(function (kat) {
+    kategorier.forEach(function (kat) {
       var k = document.createElement('button');
       k.className = 'fane' + (kat.id === aktivKategori ? ' valgt' : '');
       k.innerHTML = '<span class="fanetegn" aria-hidden="true">' + kat.tegn + '</span>' +
@@ -244,7 +401,7 @@
     });
 
     var kat = null;
-    Bil.KATEGORIER.forEach(function (k) { if (k.id === aktivKategori) kat = k; });
+    kategorier.forEach(function (k) { if (k.id === aktivKategori) kat = k; });
 
     e.valgene.innerHTML = '';
     kat.liste.forEach(function (del) {
@@ -325,7 +482,7 @@
     e.delerListe.innerHTML = '';
 
     Fysikk.OPPGRADERINGER.forEach(function (o) {
-      var niva = stat.oppg[o.id];
+      var niva = oppg()[o.id];
       var t = Fysikk.tierInfo(niva);
       var pris = Fysikk.pris(o.data, niva);
 
@@ -367,14 +524,14 @@
   function kjopOppgradering(id) {
     var o = null;
     Fysikk.OPPGRADERINGER.forEach(function (x) { if (x.id === id) o = x; });
-    var niva = stat.oppg[id];
+    var niva = oppg()[id];
     var pris = Fysikk.pris(o.data, niva);
     if (pris === null) return;
     if (stat.penger < pris) { rist(e.delerPenger); return; }
 
     var for_ = Fysikk.tierInfo(niva).n;
     stat.penger -= pris;
-    stat.oppg[id] = niva + 1;
+    oppg()[id] = niva + 1;
     lagre();
     tegnDeler();
     blafr(e.delerPenger);
@@ -382,7 +539,7 @@
     // Et nytt tier er det eneste kjøpet som endrer hvordan bilen ser ut.
     // Da skal hele raden si fra, ellers går fargeskiftet på felgen tapt for
     // et barn som ser på knappen det nettopp trykket.
-    if (Fysikk.tierInfo(stat.oppg[id]).n > for_) {
+    if (Fysikk.tierInfo(oppg()[id]).n > for_) {
       var rad = e.delerListe.querySelectorAll('.delrad')[
         Fysikk.OPPGRADERINGER.map(function (x) { return x.id; }).indexOf(id)];
       if (rad) blafr(rad);
@@ -431,7 +588,7 @@
       // Løypa bygges på nytt for hver tur. `looper[].betalt` står igjen fra
       // forrige runde, og en gjenbrukt løype ville betalt loopene én gang.
       lope = bygde[stat.bane] = Lope.bygg(Fysikk.G, stat.bane);
-      lop = Kjoring.lag(e.lerret, lope, bilder, stat.oppg, Bil.bonus(stat.valgt));
+      lop = Kjoring.lag(e.lerret, lope, bilder, oppg(), inntektsbonus());
       lop.start(ferdigLop);
       oppdaterHud();
     }, dekktier());
@@ -478,7 +635,10 @@
       linje('🛫', res.hopp + (res.hopp === 1 ? ' hopp' : ' hopp') +
                  (res.lengsteHopp ? ', lengste ' + res.lengsteHopp : '')) +
       (res.saltoer ? linje('🔄', res.saltoer + (res.saltoer === 1 ? ' salto' : ' saltoer')) : '') +
-      linje('✨', 'Stilbonus ×' + b.toFixed(2));
+      linje('✨', 'Stilbonus ×' + b.toFixed(2)) +
+      (kjoretoy().inntekt > 1
+        ? linje(kjoretoy().tegn, kjoretoy().navn + ' ×' + kjoretoy().inntekt.toFixed(2))
+        : '');
 
     // Litt pause, så det siste dollartegnet rekker å bli sett.
     setTimeout(function () { vis('skjermResultat'); }, 700);
@@ -531,9 +691,11 @@
     k.onclick = startLop;
   });
   document.getElementById('knappBaner').onclick = function () { vis('skjermBaner'); };
+  document.getElementById('knappKjoretoy').onclick = function () { vis('skjermKjoretoy'); };
   document.getElementById('knappTilbakeVerksted').onclick = function () { vis('skjermGarasje'); };
   document.getElementById('knappTilbakeDeler').onclick = function () { vis('skjermGarasje'); };
   document.getElementById('knappTilbakeBaner').onclick = function () { vis('skjermGarasje'); };
+  document.getElementById('knappTilbakeKjoretoy').onclick = function () { vis('skjermGarasje'); };
   document.getElementById('knappAvbryt').onclick = avbryt;
   document.getElementById('knappIgjen').onclick = startLop;
   document.getElementById('knappGarasje').onclick = function () { vis('skjermGarasje'); };

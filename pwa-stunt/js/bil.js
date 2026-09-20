@@ -139,6 +139,177 @@ var Bil = (function () {
     }
   ];
 
+  /* ---------- kjøretøy ---------- */
+
+  /*
+   * Et kjøretøy er noe annet enn en form, selv om det tegnes av de samme
+   * feltene. Formene er pynt: de koster småpenger, og alle fire hører til den
+   * samme bilen. Et kjøretøy er en **egen bil** – den har sine egne
+   * oppgraderinger, og en ny en begynner på null.
+   *
+   * Det er derfor de ikke ligger i `FORMER` selv om de kunne tegnes derfra:
+   * et bytte av form skal ikke røre motoren, og et bytte av kjøretøy skal
+   * gjøre nettopp det.
+   *
+   * Den gamle bilen blir stående i garasjen, og man kan bytte tilbake når som
+   * helst. Det er hele grunnen til at et nytt kjøretøy kan begynne på null
+   * uten å være et tap: den maksa bilen er der fortsatt og tjener like mye som
+   * før, så det å bygge opp en ny er noe man gjør *fordi man vil*, ikke noe
+   * man blir tvunget gjennom.
+   *
+   * `inntekt` er grunnen til å gjøre det. Ytelsen kan ikke skrus opp – taket
+   * på 1280 i toppfart er målt mot hopplengdene, og et kjøretøy som fløy
+   * lengre ville seilt gjennom looper og forbi ramper. Så et dyrere kjøretøy
+   * tjener mer per tur i stedet, og *ser* tøffere ut. Begge deler er ting et
+   * barn ser med en gang.
+   */
+  var KJORETOY = [
+    {
+      id: 'stunt', navn: 'Stuntbilen', tegn: '🏎️', pris: 0, inntekt: 1,
+      omtale: 'Bilen du startet med. Den eneste som kan bytte form i verkstedet.',
+      // Ingen `kropp`: den henter karosseriet fra form-kategorien.
+      former: true
+    },
+
+    {
+      id: 'beist', navn: 'Beistet', tegn: '👹', pris: 10000, inntekt: 1.35,
+      omtale: 'Dekk så høye at bilen ser ned på alt annet. Rullebur og høyt understell.',
+      hjul: [{ x: 112, y: BAKKE - 62, r: 62 }, { x: 296, y: BAKKE - 62, r: 62 }],
+      dekorboks: { x: 92, y: 62, b: 214, h: 42 },
+      spoilerfeste: { x: 74, y: 78 },
+      understell: 'M82 104 L332 104 L332 136 L82 136 Z',
+      kropp: 'M58 112 L62 74 Q70 58 94 56 L138 52 L174 28 Q182 20 200 20 ' +
+             'L252 20 Q268 20 276 30 L304 52 L348 58 Q374 62 374 86 L374 112 Z',
+      rute: 'M146 50 L174 30 Q180 24 192 24 L202 24 L202 50 Z' +
+            '~M216 24 L250 24 Q262 24 268 32 L284 50 L216 50 Z',
+      /*
+       * Rullebur over kupeen, som på buggyen. Det må stå *over* taklinja, ikke
+       * langs den: et første forsøk la buret i samme høyde som karosseriet, og
+       * siden det tegnes i den mørke lakken, forsvant det rett inn i bilen.
+       * Mot himmelen er det det som sier «dette er ikke en vanlig bil».
+       */
+      bur: 'M98 58 L148 2 L266 2 L306 60',
+      burstag: 'M148 2 L148 54~M266 2 L266 54',
+      strek: 'M62 80 L374 86',
+      lykt: { x: 364, y: 78 },
+      tak: { x: 206, y: 2 }, bakluke: { x: 76, y: 64 },
+      panser: { x: 324, y: 58 }, eksosfeste: { x: 84, y: 96 }
+    },
+
+    {
+      id: 'panser', navn: 'Panservogna', tegn: '🛡️', pris: 20000, inntekt: 1.75,
+      omtale: 'Platekledd og lav. Sikteglugger i stedet for vinduer, og nagler hele veien.',
+      hjul: [{ x: 104, y: BAKKE - 46, r: 46 }, { x: 300, y: BAKKE - 46, r: 46 }],
+      dekorboks: { x: 92, y: 96, b: 218, h: 30 },
+      spoilerfeste: { x: 58, y: 92 },
+      // Panserskjørt over hjulene. Det er det som gjør at vogna ser tung ut:
+      // hjulene er halvt gjemt bak stål i stedet for å stå fritt.
+      understell: 'M62 124 L346 124 L346 158 L62 158 Z',
+      /*
+       * Kantete med vilje. Alt annet i katalogen er rundet, så en form uten en
+       * eneste kurve leser som pansret uten at det trengs en detalj til. Den
+       * skrå fronten er en glacisplate, som på et ekte pansret kjøretøy.
+       */
+      kropp: 'M28 152 L28 100 L58 86 L134 86 L152 48 L264 48 L286 86 L342 96 L382 132 L382 152 Z',
+      // Sikteglugger, ikke vinduer. To smale slisser sier mer om hva dette er
+      // enn all pansringen til sammen.
+      rute: 'M170 60 L226 60 L226 72 L170 72 Z~M240 60 L266 60 L274 72 L240 72 Z',
+      // Naglene. De er det som gjør plater av flater.
+      nagler: [
+        { x: 40, y: 104 }, { x: 40, y: 126 }, { x: 40, y: 144 },
+        { x: 78, y: 94 }, { x: 112, y: 94 }, { x: 160, y: 56 }, { x: 208, y: 56 },
+        { x: 256, y: 56 }, { x: 300, y: 100 }, { x: 330, y: 106 },
+        { x: 356, y: 130 }, { x: 372, y: 144 },
+        { x: 88, y: 134 }, { x: 160, y: 134 }, { x: 232, y: 134 }, { x: 304, y: 134 }
+      ],
+      strek: 'M28 112 L382 140',
+      lykt: { x: 364, y: 124 },
+      tak: { x: 198, y: 48 }, bakluke: { x: 44, y: 96 },
+      panser: { x: 318, y: 92 }, eksosfeste: { x: 46, y: 140 }
+    },
+
+    {
+      id: 'jet', navn: 'Jetbilen', tegn: '🔥', pris: 30000, inntekt: 2.30,
+      omtale: 'Lang, lav og med en jetmotor bak. Små hjul foran, svære bak.',
+      /*
+       * Ulike hjul foran og bak er det som gjør en dragster til en dragster:
+       * svære drivhjul bak, små styrehjul foran. Drivhjulet står lenger fram
+       * enn man skulle tro, og det er med vilje – det må stå av veien for hala.
+       */
+      hjul: [{ x: 150, y: BAKKE - 44, r: 44 }, { x: 348, y: BAKKE - 22, r: 22 }],
+      dekorboks: { x: 208, y: 108, b: 128, h: 26 },
+      spoilerfeste: { x: 124, y: 96 },
+      /*
+       * Hala er en del av karosseriet, ikke en finne oppå det. Et første
+       * forsøk tegnet finna som en egen trekant bak drivhjulet, og siden
+       * hjulene tegnes helt til slutt, dekket gummien nederste halvdel – finna
+       * så ut til å sveve løst over bilen.
+       */
+      /*
+       * Drivhjulet er 44 og ikke 54 i radius, selv om en dragster har større.
+       * Med 54 rakk hjulet over dekket mellom hala og kupeen, og siden hjulene
+       * tegnes helt til slutt, delte gummien bilen i to løsrevne biter – en
+       * hale og en kupé med ingenting imellom. Kontrasten mot forhjulet på 22
+       * er fortsatt dobbel, og det er den som leser som dragster.
+       */
+      kropp: 'M72 160 L72 62 Q72 52 86 52 L110 52 Q122 52 126 64 L136 96 L206 94 ' +
+             'L228 60 Q236 52 254 52 L282 52 Q296 52 302 62 L318 94 L368 136 ' +
+             'Q390 144 390 160 Z',
+      rute: 'M234 92 L252 66 Q256 62 266 62 L272 62 L272 92 Z' +
+            '~M284 62 L288 62 Q296 62 300 70 L310 92 L284 92 Z',
+      strek: 'M76 122 L382 152',
+      /*
+       * Jetdysa i bunnen av hala. Hala begynner på x=72 og ikke helt ute i
+       * kanten nettopp for dette: flammen tegnes bak karosseriet, og med hala
+       * lenger til venstre ble det ikke plass til noe flamme å se.
+       */
+      dyse: { x: 78, y: 130 },
+      lykt: { x: 378, y: 152 },
+      tak: { x: 262, y: 54 }, bakluke: { x: 86, y: 70 },
+      panser: { x: 338, y: 126 }, eksosfeste: { x: 96, y: 148 }
+    },
+
+    {
+      id: 'rom', navn: 'Romfartøyet', tegn: '🛸', pris: 40000, inntekt: 3.00,
+      omtale: 'Glasskuppel, neonlys under og tre motorer bak. Det tøffeste i garasjen.',
+      hjul: [{ x: 132, y: BAKKE - 40, r: 40 }, { x: 300, y: BAKKE - 40, r: 40 }],
+      dekorboks: { x: 112, y: 106, b: 200, h: 30 },
+      spoilerfeste: { x: 86, y: 100 },
+      // Bredt, flatt skrog. Ingen rette linjer i det hele tatt – det er det
+      // som skiller den fra alt annet i garasjen.
+      kropp: 'M82 150 Q74 112 118 100 L158 90 Q174 52 222 52 Q270 52 284 90 ' +
+             'L352 102 Q392 112 386 150 Z',
+      // Kuppelen tegnes som rute, så den får glasset sin egen farge.
+      rute: 'M170 88 Q182 58 222 58 Q262 58 274 88 Z',
+      strek: 'M88 118 L382 126',
+      dyse: { x: 88, y: 122 },
+      /*
+       * Neonstripe *under* skroget, ikke på det. Den er det som gjør at
+       * fartøyet ser ut til å sveve i stedet for å stå. Ligger den oppå,
+       * leser den bare som en stripe i lakken.
+       */
+      neon: 'M112 156 L346 156',
+      // Antenne på kuppelen, med en blinkende kule.
+      antenne: { x: 256, y: 60 },
+      lykt: { x: 372, y: 126 },
+      tak: { x: 222, y: 52 }, bakluke: { x: 96, y: 104 },
+      panser: { x: 330, y: 100 }, eksosfeste: { x: 100, y: 136 }
+    }
+  ];
+
+  function finnKjoretoy(id) { return finn(KJORETOY, id); }
+
+  /*
+   * Karosseriet til det kjøretøyet som er valgt. Stuntbilen henter det fra
+   * form-kategorien, de andre eier sitt eget. Alt som tegner bilen går gjennom
+   * denne, så garasjen, verkstedet, delelista og løypa aldri kan vise hvert
+   * sitt karosseri.
+   */
+  function karosseri(valgt) {
+    var k = finnKjoretoy(valgt.kjoretoy);
+    return k.kropp ? k : finn(FORMER, valgt.form);
+  }
+
   /* ---------- lakk ---------- */
   // `mork` brukes til skygge og understell, `pynt` til detaljer som skal lyse
   // mot karosseriet.
@@ -272,7 +443,8 @@ var Bil = (function () {
 
   function deler(valgt) {
     return {
-      form: finn(FORMER, valgt.form),
+      form: karosseri(valgt),
+      kjoretoy: finnKjoretoy(valgt.kjoretoy),
       lakk: finn(LAKKER, valgt.lakk),
       hjul: finn(HJUL, valgt.hjul),
       dekor: valgtDekor(valgt),
@@ -284,12 +456,29 @@ var Bil = (function () {
   // Stilpoengene summeres over alle fem kategoriene. Bonusen er med vilje
   // flat nok til at ingen enkeltdel avgjør alt: full pynt gir omtrent
   // dobbelt så mye per mynt som en helt naken bil.
+  /*
+   * Stilpoengene er *bare* pynt man har skrudd på. Kjøretøyet teller ikke med,
+   * selv om et romfartøy er tøffere enn en racer: det har sin egen
+   * `inntekt`-ganger, og teller det i tillegg på stilen, ganges den samme
+   * fordelen opp to ganger. Ett kjøretøy, ett tall.
+   *
+   * `d.form` er kjøretøyet selv når kjøretøyet eier karosseriet, så
+   * formpoengene hentes bare når det er Stuntbilen som kjører.
+   */
   function stil(valgt) {
     var d = deler(valgt);
-    var sum = d.form.stil + d.lakk.stil + d.hjul.stil + d.spoiler.stil;
+    var sum = (d.kjoretoy.kropp ? 0 : d.form.stil) +
+              d.lakk.stil + d.hjul.stil + d.spoiler.stil;
     for (var i = 0; i < d.dekor.length; i++) sum += d.dekor[i].stil;
     for (i = 0; i < d.ekstra.length; i++) sum += d.ekstra[i].stil;
     return sum;
+  }
+
+  // Kjøretøyets egen ganger på alt man tjener. Den er grunnen til å bygge opp
+  // en ny bil fra null: ytelsen har et tak som ikke kan røres, inntekten har
+  // ikke det.
+  function kjoretoyBonus(valgt) {
+    return finnKjoretoy(valgt.kjoretoy).inntekt;
   }
 
   // Nevneren er satt slik at en fullt pyntet bil lander rundt ×2,1. Legger du
@@ -807,7 +996,57 @@ var Bil = (function () {
     s += '<g clip-path="url(#' + pre + 'kropp)">' + pynt + '</g>';
     s += '<path d="' + f.kropp + '" fill="none" stroke="' + lakk.mork + '" stroke-width="4"/>';
 
+    /*
+     * Dysa er delt i to, og det er ikke en detalj: **flammen tegnes bak
+     * karosseriet, selve røret foran.** Et første forsøk tegnet hele dysa
+     * etter kroppen, og siden både Jetbilen og Romfartøyet har hale eller
+     * skrog akkurat der flammen skal ut, ble bare en centimeters flis av
+     * flammen synlig – jetmotoren så ut som en grå kloss.
+     */
+    if (f.dyse) {
+      var dx = f.dyse.x, dy = f.dyse.y;
+      // To lag som blinker i motfase. Ett lag alene pulserer av og på; to lag
+      // i motfase leser som en flamme som står og brenner.
+      s += '<path d="M' + dx + ' ' + (dy - 17) + ' l-70 17 l70 17 z" fill="#ff8a1e"' +
+           blink('a', opts.fase) + '/>';
+      s += '<path d="M' + dx + ' ' + (dy - 10) + ' l-44 10 l44 10 z" fill="#ffe27a"' +
+           blink('b', opts.fase) + '/>';
+    }
+
+    if (f.finne) s += '<path d="' + f.finne + '" fill="' + lakk.mork + '"/>';
+
     if (f.rute) s += baner(f.rute, 'fill="#8fd0e8" opacity="0.92"');
+
+    // Naglene gjør flater om til plater. Uten dem er Panservogna bare en
+    // kantete bil i samme lakk som alle de andre.
+    if (f.nagler) {
+      for (var g = 0; g < f.nagler.length; g++) {
+        s += '<circle cx="' + f.nagler[g].x + '" cy="' + f.nagler[g].y + '" r="4" fill="' + lakk.mork + '"/>';
+        s += '<circle cx="' + (f.nagler[g].x - 1) + '" cy="' + (f.nagler[g].y - 1) +
+             '" r="1.6" fill="' + lakk.pynt + '" opacity="0.8"/>';
+      }
+    }
+
+    if (f.neon) {
+      s += baner(f.neon, 'fill="none" stroke="#5ddcff" stroke-width="14" stroke-linecap="round" opacity="0.22"');
+      s += baner(f.neon, 'fill="none" stroke="#bff2ff" stroke-width="5" stroke-linecap="round"' +
+                         blink('a', opts.fase));
+    }
+
+    if (f.antenne) {
+      s += '<path d="M' + f.antenne.x + ' ' + f.antenne.y + ' L' + (f.antenne.x - 6) +
+           ' ' + (f.antenne.y - 34) + '" stroke="' + lakk.mork + '" stroke-width="4" fill="none"/>';
+      s += '<circle cx="' + (f.antenne.x - 6) + '" cy="' + (f.antenne.y - 38) + '" r="7" fill="#ff4d6d"' +
+           blink('b', opts.fase) + '/>';
+    }
+
+    if (f.dyse) {
+      s += '<rect x="' + (f.dyse.x - 6) + '" y="' + (f.dyse.y - 21) +
+           '" width="38" height="42" rx="10" fill="#48505c"/>';
+      s += '<rect x="' + (f.dyse.x - 6) + '" y="' + (f.dyse.y - 21) +
+           '" width="11" height="42" rx="5" fill="#2f3540"/>';
+    }
+
     if (f.bur) {
       s += baner(f.burstag, 'fill="none" stroke="' + lakk.mork + '" stroke-width="8" stroke-linecap="round"');
       s += baner(f.bur, 'fill="none" stroke="' + lakk.mork + '" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"');
@@ -880,7 +1119,7 @@ var Bil = (function () {
   var HJULBOKS = 150, HJULRADIUS = 50;
 
   function tegninger(valgt, klar, tier) {
-    var f = finn(FORMER, valgt.form);
+    var f = karosseri(valgt);
     var hj = finn(HJUL, valgt.hjul);
 
     var full = H + 10 + TAK;
@@ -938,12 +1177,17 @@ var Bil = (function () {
   }
 
   function standard() {
-    return { form: 'racer', lakk: 'rod', hjul: 'standard', dekor: [], spoiler: 'ingen', ekstra: [] };
+    return { kjoretoy: 'stunt', form: 'racer', lakk: 'rod', hjul: 'standard',
+             dekor: [], spoiler: 'ingen', ekstra: [] };
   }
 
   return {
     KATEGORIER: KATEGORIER,
     FORMER: FORMER,
+    KJORETOY: KJORETOY,
+    finnKjoretoy: finnKjoretoy,
+    karosseri: karosseri,
+    kjoretoyBonus: kjoretoyBonus,
     BAKKE: BAKKE,
     bredde: B,
     hoyde: H + 10,

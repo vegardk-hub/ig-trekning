@@ -40,6 +40,9 @@
     <button id="knappBaner" class="valgknapp">
       <span class="ikon" aria-hidden="true">🗺️</span><span id="baneNavn">Baner</span>
     </button>
+    <button id="knappKjoretoy" class="valgknapp">
+      <span class="ikon" aria-hidden="true">🚚</span><span id="kjoretoyNavn">Kjøretøy</span>
+    </button>
   </nav>
 
   <button id="knappKjor" class="storknapp kjorknapp">KJØR! 🏁</button>
@@ -57,6 +60,21 @@
 
   <p class="hjelpetekst">Trykk på en bane for å kjøre den.</p>
   <div id="baneListe" class="banekort"></div>
+</section>
+
+<!-- ---------- kjøretøyene ---------- -->
+<section id="skjermKjoretoy" class="skjerm" hidden>
+  <header class="topp">
+    <button id="knappTilbakeKjoretoy" class="rundknapp" aria-label="Tilbake til garasjen">
+      <span aria-hidden="true">←</span>
+    </button>
+    <h1 class="tittel">Kjøretøy</h1>
+    <div id="kjoretoyPenger" class="pengemerke">$0</div>
+  </header>
+
+  <p class="hjelpetekst">Et nytt kjøretøy begynner uten oppgraderinger — men den
+    gamle bilen står i garasjen, ferdig bygd, og venter når du vil tilbake.</p>
+  <div id="kjoretoyListe" class="banekort"></div>
 </section>
 
 <!-- ---------- verkstedet ---------- -->
