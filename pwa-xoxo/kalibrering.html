@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalibrering – brikkesettet</title>
+<link rel="stylesheet" href="kalibrering.css?v=1">
+</head>
+<body>
+
+<header>
+  <h1>Kalibrering av brikkesettet</h1>
+  <p class="ingress">
+    Legg esken ved siden av skjermen og se om de ti brikkene stemmer. Det er
+    <strong>formene og merkene</strong> som skal sammenlignes – fargene under er
+    ti tydelig forskjellige farger, ikke de fem parene i esken.
+  </p>
+</header>
+
+<section>
+  <h2>1. Brettet</h2>
+  <p>Fem rader og ti kolonner, femti ruter. Stemmer det med brettet i esken?</p>
+  <div id="brett" class="brettboks"></div>
+</section>
+
+<section>
+  <h2>2. De ti brikkene</h2>
+  <p>
+    Hver brikke har fem ruter. <strong>Forsiden</strong> er til venstre,
+    <strong>baksiden</strong> til høyre – snudd om den loddrette aksen. Legg
+    merke til at baksiden har motsatt merking: der forsiden har et kryss, har
+    baksiden en ring.
+  </p>
+  <div id="brikker" class="rutenett"></div>
+</section>
+
+<section>
+  <h2>3. Det som må stemme</h2>
+  <ul class="sjekk">
+    <li>Ti brikker, fem ruter i hver.</li>
+    <li>Hver form over finnes nøyaktig én gang i esken.</li>
+    <li>Snur du en brikke, bytter hvert kryss og hver ring plass.</li>
+    <li>Brikke 1 er en rett stripe på fem. Brikke 10 er en hestesko.</li>
+    <li>Brikke 7 er den eneste med en rute som stikker ut midt på en stripe på tre.</li>
+  </ul>
+  <p class="fotnote">Avviker noe, si hvilket nummer – da rettes settet før oppgavebanken lages.</p>
+</section>
+
+<script src="js/brikker.js?v=1"></script>
+<script src="js/tegning.js?v=1"></script>
+<script>
+'use strict';
+document.getElementById('brett').innerHTML = Tegning.brett(Brikker.RAD, Brikker.KOL);
+
+// Baksiden er speilvendt om den loddrette aksen, og da bytter merkene plass.
+function bakside(celler) {
+  return Brikker.normaliser(celler.map(function (c) { return [c[0], -c[1], 1 - c[2]]; }));
+}
+
+document.getElementById('brikker').innerHTML = Brikker.alle.map(function (b) {
+  var o = Tegning.omfang(b.celler);
+  var bredde = Math.min(150, 26 * o.kolonner + 30);
+  return '<figure class="kort">' +
+    '<figcaption><span class="nr">' + b.nr + '</span> ' + b.navn + '</figcaption>' +
+    '<div class="sider">' +
+      '<div class="side"><span>forside</span>' +
+        Tegning.brikke(b.celler, b.farge, { bredde: bredde, tekst: b.navn + ', forside' }) + '</div>' +
+      '<div class="side"><span>bakside</span>' +
+        Tegning.brikke(bakside(b.celler), b.farge, { bredde: bredde, tekst: b.navn + ', bakside' }) + '</div>' +
+    '</div></figure>';
+}).join('');
+</script>
+</body>
+</html>

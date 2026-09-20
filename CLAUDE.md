@@ -16,6 +16,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-stunt/` | Stuntgarasjen — fem kjøretøy, fem baner, design og oppgradering, PWA |
 | `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
+| `pwa-xoxo/` | Kryss & Ring — puslespill med kryss og ringer på 5x10. **Under arbeid** |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
