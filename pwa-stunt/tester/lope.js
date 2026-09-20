@@ -644,11 +644,69 @@ KJ.forEach(function (k, i) {
    'panser', 'eksosfeste'].forEach(function (felt) {
     krev(k[felt] !== undefined, k.id + ': mangler festepunktet «' + felt + '»');
   });
-  krev(k.hjul.length === 2, k.id + ': skal ha to hjul', k.hjul.length);
+  /*
+   * Minst to hjul, men ikke nødvendigvis to: Panservogna har seks veihjul inne
+   * i beltet. Kravet finnes for å fange en tom eller glemt hjulliste, ikke for
+   * å binde alle kjøretøy til å være en bil.
+   */
+  krev(k.hjul.length >= 2, k.id + ': har for få hjul', k.hjul.length);
+
+  /*
+   * Alle hjulene på ett kjøretøy må ha samme stil. Løypa tegner *ett*
+   * hjulbilde og gjenbruker det for alle plasseringene, så et kjøretøy med et
+   * beltehjul og et gummihjul ville fått samme bilde begge steder – og bare i
+   * løypa, ikke i garasjen, der hvert hjul tegnes for seg.
+   */
+  var stiler = {};
+  k.hjul.forEach(function (h) { stiler[h.stil || 'dekk'] = 1; });
+  krev(Object.keys(stiler).length === 1,
+       k.id + ': blander hjulstiler, og løypa tegner bare én',
+       Object.keys(stiler).join(','));
 });
 
 krev(Bil.finnKjoretoy('finnesikke').id === KJ[0].id,
      'en ukjent kjøretøy-id faller ikke tilbake på den første');
+
+/*
+ * Tegningen må være gyldig XML, og den ene måten den lett slutter å være det
+ * på, er at samme attributt settes to ganger i én tagg.
+ *
+ * Det skjedde: `blink()` setter `opacity`, og et lag som allerede hadde
+ * `opacity="0.5"` fikk to. En SVG som ikke lar seg parse blir et **ødelagt
+ * bilde**, og det viste seg bare i løypa – der tegningen lastes som en
+ * data-URI. I garasjen gir `blink()` en CSS-klasse i stedet, så der så alt
+ * riktig ut, og bilen forsvant først når man trykket KJØR.
+ *
+ * Begge fasene må prøves: feilen finnes bare når `fase` er satt.
+ */
+overskrift('Tegningen er gyldig XML');
+
+KJ.forEach(function (k) {
+  [0, 1].forEach(function (fase) {
+    var svg = Bil.innhold(kjoretoyValgtRatt(k.id), 'p' + k.id + fase,
+                          { fase: fase, tier: Fysikk.tierInfo(Fysikk.MAKSNIVA) });
+
+    krev(!/NaN|undefined|Infinity/.test(svg),
+         k.id + ': tegningen inneholder et ugyldig tall (fase ' + fase + ')');
+
+    (svg.match(/<[a-z]+[^>]*>/g) || []).forEach(function (tagg) {
+      var navn = (tagg.match(/[a-zA-Z-]+=/g) || []).map(function (a) { return a.slice(0, -1); });
+      var sett = {}, dobbel = '';
+      navn.forEach(function (n) { if (sett[n]) dobbel = n; sett[n] = 1; });
+      krev(!dobbel, k.id + ': attributtet «' + dobbel + '» settes to ganger i samme tagg',
+           tagg.slice(0, 110));
+    });
+  });
+});
+
+// Bil.innhold() trenger et fullt `valgt`; her med all pynt på, så alle lagene
+// faktisk blir tegnet.
+function kjoretoyValgtRatt(id) {
+  var v = Bil.standard();
+  for (var f in ALT) v[f] = ALT[f];
+  v.kjoretoy = id;
+  return v;
+}
 
 /*
  * Kjøretøyet skal ikke telle på stilen. Det har sin egen ganger, og teller det

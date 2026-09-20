@@ -421,9 +421,30 @@ Fire ting som ser ut som detaljer og har en grunn:
 - **Formfanen forsvinner når kjøretøyet eier karosseriet.** En fane som ikke
   endrer noe er verre enn ingen fane: barnet trykker på en racer, og bilen over
   lista blir stående som et romfartøy.
-- **Ett snurretall per hjul.** Jetbilen har 44 i radius bak og 22 foran. Med én
+- **Ett snurretall per hjul.** Jetbilen har 46 i radius bak og 18 foran. Med én
   felles vinkel snurret det lille hjulet altfor sakte for farten, og bilen så ut
   til å skli på forhjulet hele veien.
+- **Et kjøretøy må bryte med bil-formen, ikke pynte på den.** Første utgave var
+  fem rundede karosserier med to like hjul og en frontrute hver — de så like ut
+  uansett hvor mange detaljer som ble lagt på. Nå har hvert sitt drag:
+  Beistet har luft mellom ramma og gummien, Panservogna har belter og ingen
+  frontrute, Jetbilen har turbinen som *hele* kjøretøyet, og Romfartøyet har et
+  linseformet skrog uten hjulbuer. Legger du til et kjøretøy, finn draget først.
+- **Beltebåndet er et bånd med hull i, tegnet med karosseriet.** Hjulene tegnes
+  aller sist, så et bånd tegnet over dem skjuler dem, og et bånd tegnet etter
+  legger gummien oppå stålet. Veihjulene står inne i hullet.
+- **En glødende skive alene leser fortsatt som et hjul.** Det som gjør at
+  Romfartøyet svever, er lyskjeglene ned mot asfalten — og at eikene tegnes i
+  glødefargen. Svarte eiker er det tydeligste hjul-signalet som finnes.
+- **Alle hjul på ett kjøretøy må ha samme stil.** Løypa tegner *ett* hjulbilde
+  og gjenbruker det for hver plassering. To stiler ser riktig ut i garasjen,
+  der hvert hjul tegnes for seg, og feil i løypa. Prøven håndhever det.
+- **`blink()` setter `opacity`, så et lag som trenger sin egen gjennomsikt må
+  bruke `fill-opacity`.** To like attributter i samme tagg er ugyldig XML, og
+  en SVG som ikke lar seg parse blir et **ødelagt bilde** — noe man bare ser i
+  løypa, der tegningen lastes som en data-URI. I garasjen gir `blink()` en
+  CSS-klasse i stedet, så der så alt riktig ut, og bilen forsvant først når man
+  trykket KJØR. `tester/lope.js` leter nå etter doble attributter i hver tagg.
 - **Flammen tegnes bak karosseriet, røret foran.** Både Jetbilen og
   Romfartøyet har hale eller skrog akkurat der flammen skal ut. Tegnes hele
   dysa etter kroppen, blir bare en flis av flammen synlig, og jetmotoren ser ut

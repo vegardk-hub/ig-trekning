@@ -173,127 +173,155 @@ var Bil = (function () {
 
     {
       id: 'beist', navn: 'Beistet', tegn: '👹', pris: 10000, inntekt: 1.35,
-      omtale: 'Dekk så høye at bilen ser ned på alt annet. Rullebur og høyt understell.',
-      hjul: [{ x: 112, y: BAKKE - 62, r: 62 }, { x: 296, y: BAKKE - 62, r: 62 }],
-      dekorboks: { x: 92, y: 62, b: 214, h: 42 },
-      spoilerfeste: { x: 74, y: 78 },
-      understell: 'M82 104 L332 104 L332 136 L82 136 Z',
-      kropp: 'M58 112 L62 74 Q70 58 94 56 L138 52 L174 28 Q182 20 200 20 ' +
-             'L252 20 Q268 20 276 30 L304 52 L348 58 Q374 62 374 86 L374 112 Z',
-      rute: 'M146 50 L174 30 Q180 24 192 24 L202 24 L202 50 Z' +
-            '~M216 24 L250 24 Q262 24 268 32 L284 50 L216 50 Z',
+      omtale: 'Ekte monstertruck: dekk i mannshøyde, synlige dempere og to eksosstakker.',
       /*
-       * Rullebur over kupeen, som på buggyen. Det må stå *over* taklinja, ikke
-       * langs den: et første forsøk la buret i samme høyde som karosseriet, og
-       * siden det tegnes i den mørke lakken, forsvant det rett inn i bilen.
-       * Mot himmelen er det det som sier «dette er ikke en vanlig bil».
+       * En monstertruck er *ikke* en bil med store hjul. Det som gjør den til
+       * en monstertruck, er avstanden: et lite førerhus høyt oppe på en smal
+       * ramme, med luft mellom karosseriet og gummien, og fjæringa synlig i
+       * hullet. Uten det ser den bare ut som en oppjekket varebil.
        */
-      bur: 'M98 58 L148 2 L266 2 L306 60',
-      burstag: 'M148 2 L148 54~M266 2 L266 54',
-      strek: 'M62 80 L374 86',
-      lykt: { x: 364, y: 78 },
-      tak: { x: 206, y: 2 }, bakluke: { x: 76, y: 64 },
-      panser: { x: 324, y: 58 }, eksosfeste: { x: 84, y: 96 }
+      hjul: [{ x: 92, y: BAKKE - 66, r: 66 }, { x: 312, y: BAKKE - 66, r: 66 }],
+      dekorboks: { x: 118, y: 52, b: 168, h: 40 },
+      spoilerfeste: { x: 98, y: 66 },
+      /*
+       * Ramma er smal og ligger høyt, og hjulene står *utenfor* den. Det er
+       * lufta mellom karosseriet og gummien som gjør bilen til en
+       * monstertruck – uten den er det bare en oppjekket varebil.
+       */
+      understell: 'M112 98 L296 98 L296 116 L112 116 Z',
+      // Dempere ut til hvert hjul, tegnet som ei saks. Et første forsøk hadde
+      // dem tynne og rett ned, og da forsvant de rett inn i skyggen under bilen.
+      fjaering: 'M124 112 L92 152~M156 112 L92 152~M284 112 L312 152~M252 112 L312 152' +
+                '~M112 118 L296 118~M92 128 L92 156~M312 128 L312 156',
+      kropp: 'M114 102 L118 62 Q124 48 146 46 L178 42 L200 18 Q208 10 222 10 ' +
+             'L258 10 Q270 10 278 20 L298 42 L322 48 Q338 52 338 72 L338 102 Z',
+      rute: 'M182 40 L202 20 Q208 14 216 14 L222 14 L222 40 Z' +
+            '~M234 14 L256 14 Q264 14 270 22 L282 40 L234 40 Z',
+      bur: 'M134 46 L178 -2 L266 -2 L302 48',
+      burstag: 'M178 -2 L178 42~M266 -2 L266 42',
+      // Stakkene stikker rett opp gjennom panseret, som på en ekte pullingtruck.
+      stakker: [{ x: 306, y: 50, h: 56 }, { x: 324, y: 56, h: 46 }],
+      strek: 'M118 68 L338 72',
+      lykt: { x: 330, y: 64 },
+      tak: { x: 222, y: -2 }, bakluke: { x: 126, y: 54 },
+      panser: { x: 314, y: 48 }, eksosfeste: { x: 120, y: 90 }
     },
 
     {
       id: 'panser', navn: 'Panservogna', tegn: '🛡️', pris: 20000, inntekt: 1.75,
-      omtale: 'Platekledd og lav. Sikteglugger i stedet for vinduer, og nagler hele veien.',
-      hjul: [{ x: 104, y: BAKKE - 46, r: 46 }, { x: 300, y: BAKKE - 46, r: 46 }],
-      dekorboks: { x: 92, y: 96, b: 218, h: 30 },
-      spoilerfeste: { x: 58, y: 92 },
-      // Panserskjørt over hjulene. Det er det som gjør at vogna ser tung ut:
-      // hjulene er halvt gjemt bak stål i stedet for å stå fritt.
-      understell: 'M62 124 L346 124 L346 158 L62 158 Z',
+      omtale: 'Beltegående, med tårn og kanon. Ingen vinduer — bare sikteglugger i stålet.',
       /*
-       * Kantete med vilje. Alt annet i katalogen er rundet, så en form uten en
-       * eneste kurve leser som pansret uten at det trengs en detalj til. Den
-       * skrå fronten er en glacisplate, som på et ekte pansret kjøretøy.
+       * Belter, ikke hjul. Seks små veihjul ruller inne i et beltebånd som
+       * tegnes med karosseriet, og det er den ene endringen som gjør at dette
+       * ikke lenger leser som en bil: silhuetten har ingen hjulbuer.
+       *
+       * Veihjulene får `stil: 'belte'`, så gummikanten er smal – det man ser,
+       * er stålet utenfor, ikke dekket.
        */
-      kropp: 'M28 152 L28 100 L58 86 L134 86 L152 48 L264 48 L286 86 L342 96 L382 132 L382 152 Z',
-      // Sikteglugger, ikke vinduer. To smale slisser sier mer om hva dette er
-      // enn all pansringen til sammen.
-      rute: 'M170 60 L226 60 L226 72 L170 72 Z~M240 60 L266 60 L274 72 L240 72 Z',
-      // Naglene. De er det som gjør plater av flater.
-      nagler: [
-        { x: 40, y: 104 }, { x: 40, y: 126 }, { x: 40, y: 144 },
-        { x: 78, y: 94 }, { x: 112, y: 94 }, { x: 160, y: 56 }, { x: 208, y: 56 },
-        { x: 256, y: 56 }, { x: 300, y: 100 }, { x: 330, y: 106 },
-        { x: 356, y: 130 }, { x: 372, y: 144 },
-        { x: 88, y: 134 }, { x: 160, y: 134 }, { x: 232, y: 134 }, { x: 304, y: 134 }
+      hjul: [
+        { x: 84, y: BAKKE - 28, r: 21, stil: 'belte' },
+        { x: 132, y: BAKKE - 28, r: 21, stil: 'belte' },
+        { x: 180, y: BAKKE - 28, r: 21, stil: 'belte' },
+        { x: 228, y: BAKKE - 28, r: 21, stil: 'belte' },
+        { x: 276, y: BAKKE - 28, r: 21, stil: 'belte' },
+        { x: 324, y: BAKKE - 28, r: 21, stil: 'belte' }
       ],
-      strek: 'M28 112 L382 140',
-      lykt: { x: 364, y: 124 },
-      tak: { x: 198, y: 48 }, bakluke: { x: 44, y: 96 },
-      panser: { x: 318, y: 92 }, eksosfeste: { x: 46, y: 140 }
+      belte: { x0: 84, x1: 324, y: BAKKE - 28, r: 34 },
+      dekorboks: { x: 92, y: 106, b: 216, h: 26 },
+      spoilerfeste: { x: 56, y: 104 },
+      /*
+       * Skroget er lavt, langt og kantete, med en skrå glacisplate foran.
+       * Ikke én kurve i hele formen – alt annet i garasjen er rundet, så en
+       * form uten kurver leser som pansret helt av seg selv.
+       */
+      kropp: 'M36 150 L36 106 L70 92 L288 92 L322 102 L382 130 L382 150 Z',
+      // Ingen `rute`: et pansret kjøretøy har ikke frontrute. Gluggene sitter
+      // i tårnet og tegnes i stål-mørkt, ikke i glassblått.
+      nagler: [
+        { x: 48, y: 112 }, { x: 48, y: 134 }, { x: 48, y: 146 },
+        { x: 86, y: 100 }, { x: 130, y: 100 }, { x: 246, y: 100 }, { x: 290, y: 100 },
+        { x: 322, y: 110 }, { x: 348, y: 122 }, { x: 372, y: 138 },
+        { x: 100, y: 142 }, { x: 170, y: 142 }, { x: 240, y: 142 }, { x: 310, y: 142 }
+      ],
+      // Tårnet: en avkortet pyramide, og kanonen som peker framover.
+      taarn: 'M138 92 L152 54 L236 54 L252 92 Z',
+      kanon: { x: 240, y: 64, lengde: 138 },
+      glugge: 'M168 62 L214 62 L214 72 L168 72 Z',
+      strek: 'M36 118 L382 140',
+      lykt: { x: 364, y: 128 },
+      tak: { x: 194, y: 54 }, bakluke: { x: 44, y: 100 },
+      panser: { x: 318, y: 98 }, eksosfeste: { x: 46, y: 140 }
     },
 
     {
       id: 'jet', navn: 'Jetbilen', tegn: '🔥', pris: 30000, inntekt: 2.30,
-      omtale: 'Lang, lav og med en jetmotor bak. Små hjul foran, svære bak.',
+      omtale: 'En jetmotor med hjul på. Førerhuset er en boble foran turbinen.',
       /*
-       * Ulike hjul foran og bak er det som gjør en dragster til en dragster:
-       * svære drivhjul bak, små styrehjul foran. Drivhjulet står lenger fram
-       * enn man skulle tro, og det er med vilje – det må stå av veien for hala.
+       * Her er motoren *hele* kjøretøyet. En dragster med et panser oppå ville
+       * bare vært en lang bil; en turbin med et lite førerhus foran seg er noe
+       * annet, og det er forskjellen barnet ser.
        */
-      hjul: [{ x: 150, y: BAKKE - 44, r: 44 }, { x: 348, y: BAKKE - 22, r: 22 }],
-      dekorboks: { x: 208, y: 108, b: 128, h: 26 },
-      spoilerfeste: { x: 124, y: 96 },
+      hjul: [{ x: 120, y: BAKKE - 46, r: 46 }, { x: 352, y: BAKKE - 18, r: 18 }],
+      dekorboks: { x: 250, y: 120, b: 110, h: 22 },
+      spoilerfeste: { x: 58, y: 72 },
+      // Selve ramma: en tynn bjelke fra turbinen og fram til forhjulet.
+      kropp: 'M50 150 L50 96 L84 88 L246 92 L284 116 L376 142 Q392 146 392 154 L392 160 Z',
       /*
-       * Hala er en del av karosseriet, ikke en finne oppå det. Et første
-       * forsøk tegnet finna som en egen trekant bak drivhjulet, og siden
-       * hjulene tegnes helt til slutt, dekket gummien nederste halvdel – finna
-       * så ut til å sveve løst over bilen.
+       * Boblekupé foran turbinen, ikke et bilvindu. Den lå først bak
+       * innsuget og ble til en liten blå flekk – nå står den godt foran, med
+       * hele boblen i friluft.
        */
-      /*
-       * Drivhjulet er 44 og ikke 54 i radius, selv om en dragster har større.
-       * Med 54 rakk hjulet over dekket mellom hala og kupeen, og siden hjulene
-       * tegnes helt til slutt, delte gummien bilen i to løsrevne biter – en
-       * hale og en kupé med ingenting imellom. Kontrasten mot forhjulet på 22
-       * er fortsatt dobbel, og det er den som leser som dragster.
-       */
-      kropp: 'M72 160 L72 62 Q72 52 86 52 L110 52 Q122 52 126 64 L136 96 L206 94 ' +
-             'L228 60 Q236 52 254 52 L282 52 Q296 52 302 62 L318 94 L368 136 ' +
-             'Q390 144 390 160 Z',
-      rute: 'M234 92 L252 66 Q256 62 266 62 L272 62 L272 92 Z' +
-            '~M284 62 L288 62 Q296 62 300 70 L310 92 L284 92 Z',
-      strek: 'M76 122 L382 152',
-      /*
-       * Jetdysa i bunnen av hala. Hala begynner på x=72 og ikke helt ute i
-       * kanten nettopp for dette: flammen tegnes bak karosseriet, og med hala
-       * lenger til venstre ble det ikke plass til noe flamme å se.
-       */
-      dyse: { x: 78, y: 130 },
-      lykt: { x: 378, y: 152 },
-      tak: { x: 262, y: 54 }, bakluke: { x: 86, y: 70 },
-      panser: { x: 338, y: 126 }, eksosfeste: { x: 96, y: 148 }
+      rute: 'M266 112 Q272 76 300 76 Q328 76 334 114 Z',
+      turbin: { x: 58, y: 60, b: 182, h: 58 },
+      // Halefinne over turbinen, som på et fly.
+      finne: 'M54 64 L80 12 L108 12 L112 64 Z',
+      strek: 'M54 128 L386 154',
+      dyser: [{ x: 58, y: 89, lengde: 86 }],
+      lykt: { x: 382, y: 152 },
+      tak: { x: 300, y: 76 }, bakluke: { x: 62, y: 72 },
+      panser: { x: 348, y: 130 }, eksosfeste: { x: 88, y: 142 }
     },
 
     {
       id: 'rom', navn: 'Romfartøyet', tegn: '🛸', pris: 40000, inntekt: 3.00,
-      omtale: 'Glasskuppel, neonlys under og tre motorer bak. Det tøffeste i garasjen.',
-      hjul: [{ x: 132, y: BAKKE - 40, r: 40 }, { x: 300, y: BAKKE - 40, r: 40 }],
-      dekorboks: { x: 112, y: 106, b: 200, h: 30 },
-      spoilerfeste: { x: 86, y: 100 },
-      // Bredt, flatt skrog. Ingen rette linjer i det hele tatt – det er det
-      // som skiller den fra alt annet i garasjen.
-      kropp: 'M82 150 Q74 112 118 100 L158 90 Q174 52 222 52 Q270 52 284 90 ' +
-             'L352 102 Q392 112 386 150 Z',
-      // Kuppelen tegnes som rute, så den får glasset sin egen farge.
-      rute: 'M170 88 Q182 58 222 58 Q262 58 274 88 Z',
-      strek: 'M88 118 L382 126',
-      dyse: { x: 88, y: 122 },
+      omtale: 'Linseformet skrog, glasskuppel og tre motorer. Det svever — det har ikke dekk.',
       /*
-       * Neonstripe *under* skroget, ikke på det. Den er det som gjør at
-       * fartøyet ser ut til å sveve i stedet for å stå. Ligger den oppå,
-       * leser den bare som en stripe i lakken.
+       * Ingen hjulbuer, ingen panserlinje, ingen frontrute: et skrog som er
+       * spisst i begge ender og tykkest på midten. Det er linseformen som gjør
+       * at den ikke leser som en bil, uansett hvor mye neon man legger på.
+       *
+       * «Hjulene» er svevende puter (`stil: 'sveve'`) – en glødende skive i
+       * hjuldesignets egen farge i stedet for gummi. Da virker både
+       * hjulvalget og dekk-tieret på et fartøy som ikke har dekk.
        */
-      neon: 'M112 156 L346 156',
-      // Antenne på kuppelen, med en blinkende kule.
-      antenne: { x: 256, y: 60 },
-      lykt: { x: 372, y: 126 },
-      tak: { x: 222, y: 52 }, bakluke: { x: 96, y: 104 },
-      panser: { x: 330, y: 100 }, eksosfeste: { x: 100, y: 136 }
+      hjul: [
+        { x: 124, y: BAKKE - 32, r: 32, stil: 'sveve' },
+        { x: 282, y: BAKKE - 32, r: 32, stil: 'sveve' }
+      ],
+      dekorboks: { x: 116, y: 106, b: 180, h: 26 },
+      spoilerfeste: { x: 70, y: 96 },
+      kropp: 'M18 124 Q70 82 204 78 Q338 82 390 124 Q338 152 204 156 Q70 152 18 124 Z',
+      // Kuppelen, ikke en frontrute.
+      rute: 'M152 80 Q170 34 222 34 Q274 34 292 80 Z',
+      // Svevefinne bak, svakt tilbakestrøket.
+      finne: 'M58 106 L96 44 L126 44 L114 100 Z',
+      strek: 'M40 114 L378 118',
+      // Tre motorer i hekken, ikke én.
+      dyser: [
+        { x: 44, y: 104, lengde: 56 },
+        { x: 34, y: 124, lengde: 72 },
+        { x: 44, y: 144, lengde: 56 }
+      ],
+      /*
+       * Neonstripa ligger *under* skroget. Der leser den som at fartøyet
+       * svever; oppå skroget er den bare en stripe i lakken.
+       */
+      neon: 'M96 160 L322 160',
+      kjegler: [{ x: 124, y: 150, b: 44 }, { x: 282, y: 150, b: 44 }],
+      antenne: { x: 250, y: 40 },
+      lykt: { x: 372, y: 122 },
+      tak: { x: 222, y: 34 }, bakluke: { x: 60, y: 100 },
+      panser: { x: 332, y: 96 }, eksosfeste: { x: 70, y: 140 }
     }
   ];
 
@@ -557,10 +585,31 @@ var Bil = (function () {
       g += glorie(h.x, h.y, h.r * 1.12, tf, h.r * 0.10, 1, blink('a', fase));
     }
 
-    g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + h.r + '" fill="' + hj.dekk + '"/>';
-    if (hj.grov) {
-      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r - 5) + '" fill="none" stroke="' +
-           hj.dekk + '" stroke-width="12" stroke-dasharray="10 9"/>';
+    /*
+     * Gummien, og de to kjøretøyene som ikke har gummi.
+     *
+     * `h.stil` kommer fra kjøretøyets egen hjulliste og er det som gjør at et
+     * belteknekt og et svevefartøy kan bruke den *samme* tegnerutinen som en
+     * bil. Alt annet – felg, eiker, nav og alle ti tier-lagene – er likt, så
+     * barnets valgte hjuldesign og dekk-tier vises på alle fem kjøretøyene.
+     */
+    if (h.stil === 'sveve') {
+      // Svevepute: ingen gummi i det hele tatt, bare en glødende skive. Et
+      // romfartøy med dekk er ikke et romfartøy.
+      var gl = hj.glod || hj.felg;
+      g += glorie(h.x, h.y, h.r * 0.92, gl, h.r * 0.20, 0.9, '');
+      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.80).toFixed(1) +
+           '" fill="' + gl + '" fill-opacity="0.30"/>';
+    } else if (h.stil === 'belte') {
+      // Veihjul inne i beltet: bare en smal gummikant, for beltebåndet
+      // utenfor er det man faktisk ser.
+      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + h.r + '" fill="' + hj.dekk + '"/>';
+    } else {
+      g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + h.r + '" fill="' + hj.dekk + '"/>';
+      if (hj.grov) {
+        g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r - 5) + '" fill="none" stroke="' +
+             hj.dekk + '" stroke-width="12" stroke-dasharray="10 9"/>';
+      }
     }
 
     /*
@@ -568,7 +617,7 @@ var Bil = (function () {
      * for en hel ring: lys ovenfra betyr skygge nederst, og en jevn ring rundt
      * hele dekket leser som en strek og ikke som rundhet.
      */
-    if (niva >= 2) {
+    if (niva >= 2 && h.stil !== 'sveve') {
       g += '<path d="M' + (h.x - h.r * 0.82).toFixed(1) + ' ' + (h.y + h.r * 0.28).toFixed(1) +
            ' A ' + (h.r * 0.87).toFixed(1) + ' ' + (h.r * 0.87).toFixed(1) + ' 0 0 0 ' +
            (h.x + h.r * 0.82).toFixed(1) + ' ' + (h.y + h.r * 0.28).toFixed(1) +
@@ -582,7 +631,8 @@ var Bil = (function () {
            '" fill="' + tf + '" fill-opacity="0.22"/>';
     }
 
-    g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.62).toFixed(1) + '" fill="' + hj.felg + '"/>';
+    g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.62).toFixed(1) +
+         '" fill="' + hj.felg + '"' + (h.stil === 'sveve' ? ' fill-opacity="0.45"' : '') + '/>';
 
     /*
      * Tier 2: felgkant i tierfargen. Dette er det første stedet fargen vises,
@@ -610,6 +660,12 @@ var Bil = (function () {
       }
     }
 
+    /*
+     * Eikene. På en svevepute tegnes de i glødefargen i stedet for i den
+     * svarte gummifargen: svarte eiker er det tydeligste hjul-signalet som
+     * finnes, og med dem så puta ut som et hjul uansett hvor mye den glødet.
+     */
+    var eikefarge = h.stil === 'sveve' ? (hj.glod || hj.felg) : hj.dekk;
     for (e = 0; e < hj.eiker; e++) {
       v = (e * 360 / hj.eiker + i * 18) * Math.PI / 180;
       var x1 = (h.x + Math.cos(v) * h.r * 0.18).toFixed(1);
@@ -617,7 +673,7 @@ var Bil = (function () {
       var x2 = (h.x + Math.cos(v) * h.r * 0.55).toFixed(1);
       var y2 = (h.y + Math.sin(v) * h.r * 0.55).toFixed(1);
       g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
-           '" stroke="' + hj.dekk + '" stroke-width="' + (h.r * 0.12).toFixed(1) +
+           '" stroke="' + eikefarge + '" stroke-width="' + (h.r * 0.12).toFixed(1) +
            '" stroke-linecap="round"/>';
       // Tier 7: lys midt i hver eike, i motfase av ringene.
       if (niva >= 7) {
@@ -627,7 +683,8 @@ var Bil = (function () {
       }
     }
 
-    g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.17).toFixed(1) + '" fill="' + hj.dekk + '"/>';
+    g += '<circle cx="' + h.x + '" cy="' + h.y + '" r="' + (h.r * 0.17).toFixed(1) +
+         '" fill="' + eikefarge + '"/>';
 
     // Tier 5: farget navkapsel oppå navet.
     if (niva >= 5) {
@@ -987,6 +1044,77 @@ var Bil = (function () {
     // Spoileren bak karosseriet, ellers ser stagene ut som de er limt utenpå.
     s += spoilerTegning(d.spoiler.id, f.spoilerfeste, lakk, opts.fase);
 
+    /*
+     * ---------- alt som skal ligge *bak* karosseriet ----------
+     *
+     * Rekkefølgen her er ikke smak. Hjulene tegnes aller sist, så et beltebånd
+     * må være et bånd med hull i, med veihjulene inni hullet: tegnes båndet
+     * over hjulene, forsvinner de, og tegnes det etter, ligger gummien oppå
+     * stålet. Flammer og fjæring må bak av samme grunn – de kommer ut fra noe.
+     */
+
+    // Beltebånd. Et stadion-formet bånd langs en midtlinje, med hull i midten
+    // der veihjulene står.
+    if (f.belte) {
+      var bl = f.belte;
+      s += '<line x1="' + bl.x0 + '" y1="' + bl.y + '" x2="' + bl.x1 + '" y2="' + bl.y +
+           '" stroke="#23262b" stroke-width="' + (bl.r * 2) +
+           '" stroke-linecap="round"/>';
+      // Beltetenner. En stiplet strek langs samme linje gir mønsteret gratis.
+      s += '<line x1="' + bl.x0 + '" y1="' + bl.y + '" x2="' + bl.x1 + '" y2="' + bl.y +
+           '" stroke="#12141a" stroke-width="' + (bl.r * 2 - 6) +
+           '" stroke-linecap="round" stroke-dasharray="9 11"/>';
+      s += '<line x1="' + bl.x0 + '" y1="' + bl.y + '" x2="' + bl.x1 + '" y2="' + bl.y +
+           '" stroke="' + lakk.mork + '" stroke-width="' + (bl.r * 2 - 26) +
+           '" stroke-linecap="round"/>';
+    }
+
+    /*
+     * Lyskjegler ned mot bakken. Det er det ene som gjør at noe *svever* i
+     * stedet for å stå: en glødende skive alene leser fortsatt som et hjul,
+     * men et lysskjær ned mot asfalten gjør det ikke.
+     */
+    if (f.kjegler) {
+      for (var lk = 0; lk < f.kjegler.length; lk++) {
+        var kx = f.kjegler[lk].x, ky = f.kjegler[lk].y, kb = f.kjegler[lk].b || 46;
+        s += '<path d="M' + (kx - kb * 0.45) + ' ' + ky + ' L' + (kx + kb * 0.45) + ' ' + ky +
+             ' L' + (kx + kb) + ' ' + (BAKKE + 8) + ' L' + (kx - kb) + ' ' + (BAKKE + 8) +
+             ' Z" fill="#5ddcff" opacity="0.16"/>';
+        /*
+         * `fill-opacity` og ikke `opacity` her, for `blink()` setter `opacity`.
+         * To like attributter i samme tagg er ugyldig XML, og en SVG som ikke
+         * kan parses blir et *ødelagt bilde* – noe man bare ser i løypa, der
+         * tegningen lastes som en data-URI. I garasjen gir `blink()` en klasse
+         * i stedet, så der så alt riktig ut.
+         */
+        s += '<path d="M' + (kx - kb * 0.22) + ' ' + ky + ' L' + (kx + kb * 0.22) + ' ' + ky +
+             ' L' + (kx + kb * 0.5) + ' ' + (BAKKE + 8) + ' L' + (kx - kb * 0.5) + ' ' + (BAKKE + 8) +
+             ' Z" fill="#bff2ff" fill-opacity="0.18"' + blink('b', opts.fase) + '/>';
+      }
+    }
+
+    // Fjæring: synlige dempere og armer mellom ramma og hjulet.
+    if (f.fjaering) {
+      s += baner(f.fjaering, 'fill="none" stroke="#3a4048" stroke-width="11" stroke-linecap="round"');
+      s += baner(f.fjaering, 'fill="none" stroke="#6e7885" stroke-width="4" stroke-linecap="round"');
+    }
+
+    /*
+     * Flammene. De tegnes bak karosseriet og røret foran – både Jetbilen og
+     * Romfartøyet har hale eller skrog akkurat der flammen skal ut, og tegnes
+     * hele dysa etter kroppen, blir bare en flis av flammen synlig.
+     */
+    var dyser = f.dyser || (f.dyse ? [f.dyse] : []);
+    for (var dd = 0; dd < dyser.length; dd++) {
+      var dx = dyser[dd].x, dy = dyser[dd].y, dl = dyser[dd].lengde || 70;
+      // To lag i motfase. Ett lag alene pulserer av og på; to lag leser som en
+      // flamme som står og brenner.
+      s += '<path d="M' + dx + ' ' + (dy - dl * 0.24) + ' l' + (-dl) + ' ' + (dl * 0.24) +
+           ' l' + dl + ' ' + (dl * 0.24) + ' z" fill="#ff8a1e"' + blink('a', opts.fase) + '/>';
+      s += '<path d="M' + dx + ' ' + (dy - dl * 0.14) + ' l' + (-dl * 0.63) + ' ' + (dl * 0.14) +
+           ' l' + (dl * 0.63) + ' ' + (dl * 0.14) + ' z" fill="#ffe27a"' + blink('b', opts.fase) + '/>';
+    }
+
     if (f.understell) s += '<path d="' + f.understell + '" fill="' + lakk.mork + '"/>';
     s += '<path d="' + f.kropp + '" fill="' + fyll + '"/>';
     var pynt = '';
@@ -996,24 +1124,33 @@ var Bil = (function () {
     s += '<g clip-path="url(#' + pre + 'kropp)">' + pynt + '</g>';
     s += '<path d="' + f.kropp + '" fill="none" stroke="' + lakk.mork + '" stroke-width="4"/>';
 
+    if (f.finne) s += '<path d="' + f.finne + '" fill="' + lakk.mork + '"/>';
+
     /*
-     * Dysa er delt i to, og det er ikke en detalj: **flammen tegnes bak
-     * karosseriet, selve røret foran.** Et første forsøk tegnet hele dysa
-     * etter kroppen, og siden både Jetbilen og Romfartøyet har hale eller
-     * skrog akkurat der flammen skal ut, ble bare en centimeters flis av
-     * flammen synlig – jetmotoren så ut som en grå kloss.
+     * Turbinen. På en jetdragster er motoren ikke noe som ligger under et
+     * panser – den *er* kjøretøyet, og alt annet henger på den.
      */
-    if (f.dyse) {
-      var dx = f.dyse.x, dy = f.dyse.y;
-      // To lag som blinker i motfase. Ett lag alene pulserer av og på; to lag
-      // i motfase leser som en flamme som står og brenner.
-      s += '<path d="M' + dx + ' ' + (dy - 17) + ' l-70 17 l70 17 z" fill="#ff8a1e"' +
-           blink('a', opts.fase) + '/>';
-      s += '<path d="M' + dx + ' ' + (dy - 10) + ' l-44 10 l44 10 z" fill="#ffe27a"' +
+    if (f.turbin) {
+      var t = f.turbin;
+      s += '<rect x="' + t.x + '" y="' + t.y + '" width="' + t.b + '" height="' + t.h +
+           '" rx="' + (t.h / 2) + '" fill="#4a525f"/>';
+      s += '<rect x="' + t.x + '" y="' + (t.y + 4) + '" width="' + t.b + '" height="' + (t.h * 0.32) +
+           '" rx="' + (t.h * 0.16) + '" fill="#79838f" opacity="0.55"/>';
+      // Bånd rundt kassa, som på en ekte turbin.
+      for (var tb = 1; tb <= 3; tb++) {
+        var bx = t.x + t.b * tb / 4;
+        s += '<rect x="' + bx + '" y="' + (t.y - 3) + '" width="7" height="' + (t.h + 6) +
+             '" rx="3" fill="#333a44"/>';
+      }
+      // Innsuget foran: en ring man ser inn i.
+      s += '<ellipse cx="' + (t.x + t.b) + '" cy="' + (t.y + t.h / 2) + '" rx="' + (t.h * 0.22) +
+           '" ry="' + (t.h / 2) + '" fill="#2a3038"/>';
+      // `fill-opacity`, ikke `opacity`: `blink()` setter `opacity`, og to like
+      // attributter i samme tagg gjør hele SVG-en uleselig.
+      s += '<ellipse cx="' + (t.x + t.b) + '" cy="' + (t.y + t.h / 2) + '" rx="' + (t.h * 0.13) +
+           '" ry="' + (t.h * 0.33) + '" fill="#8fd0e8" fill-opacity="0.5"' +
            blink('b', opts.fase) + '/>';
     }
-
-    if (f.finne) s += '<path d="' + f.finne + '" fill="' + lakk.mork + '"/>';
 
     if (f.rute) s += baner(f.rute, 'fill="#8fd0e8" opacity="0.92"');
 
@@ -1040,11 +1177,46 @@ var Bil = (function () {
            blink('b', opts.fase) + '/>';
     }
 
-    if (f.dyse) {
-      s += '<rect x="' + (f.dyse.x - 6) + '" y="' + (f.dyse.y - 21) +
-           '" width="38" height="42" rx="10" fill="#48505c"/>';
-      s += '<rect x="' + (f.dyse.x - 6) + '" y="' + (f.dyse.y - 21) +
-           '" width="11" height="42" rx="5" fill="#2f3540"/>';
+    // Selve rørene, foran karosseriet.
+    for (var dr = 0; dr < dyser.length; dr++) {
+      var rl = dyser[dr].lengde || 70;
+      var rh = Math.round(rl * 0.60), rb = Math.round(rl * 0.54);
+      s += '<rect x="' + (dyser[dr].x - 6) + '" y="' + (dyser[dr].y - rh / 2) +
+           '" width="' + rb + '" height="' + rh + '" rx="' + Math.round(rh / 4) + '" fill="#48505c"/>';
+      s += '<rect x="' + (dyser[dr].x - 6) + '" y="' + (dyser[dr].y - rh / 2) +
+           '" width="' + Math.round(rb * 0.3) + '" height="' + rh + '" rx="' + Math.round(rh / 8) +
+           '" fill="#2f3540"/>';
+    }
+
+    /*
+     * Tårnet med kanon. Det er det ene draget som gjør en kantete bil til et
+     * pansret kjøretøy – uten kanonen er Panservogna bare en firkantet bil.
+     */
+    if (f.taarn) {
+      var k = f.kanon;
+      if (k) {
+        s += '<rect x="' + k.x + '" y="' + (k.y - 7) + '" width="' + k.lengde +
+             '" height="14" rx="6" fill="#3a4048"/>';
+        s += '<rect x="' + (k.x + k.lengde - 26) + '" y="' + (k.y - 11) +
+             '" width="26" height="22" rx="6" fill="#565f6c"/>';
+        s += '<rect x="' + k.x + '" y="' + (k.y - 7) + '" width="' + k.lengde +
+             '" height="4" rx="2" fill="#7e8794" opacity="0.6"/>';
+      }
+      s += '<path d="' + f.taarn + '" fill="' + fyll + '"/>';
+      s += '<path d="' + f.taarn + '" fill="none" stroke="' + lakk.mork + '" stroke-width="4"/>';
+      if (f.glugge) s += baner(f.glugge, 'fill="#16181e"');
+    }
+
+    // Eksosstakker rett opp gjennom panseret.
+    if (f.stakker) {
+      for (var st = 0; st < f.stakker.length; st++) {
+        var sx = f.stakker[st].x, sy = f.stakker[st].y, sh = f.stakker[st].h;
+        s += '<rect x="' + (sx - 8) + '" y="' + (sy - sh) + '" width="16" height="' + sh +
+             '" rx="7" fill="#3a4048"/>';
+        s += '<rect x="' + (sx - 8) + '" y="' + (sy - sh) + '" width="6" height="' + sh +
+             '" rx="3" fill="#6e7885"/>';
+        s += '<ellipse cx="' + sx + '" cy="' + (sy - sh) + '" rx="9" ry="4" fill="#16181e"/>';
+      }
     }
 
     if (f.bur) {
@@ -1131,9 +1303,13 @@ var Bil = (function () {
     }
 
     function hjulSvg(fase) {
+      // Hjulstilen hentes fra kjøretøyets første hjul. Alle hjulene på ett
+      // kjøretøy har samme stil – ett bilde gjenbrukes for alle sammen.
+      var stil = f.hjul.length ? f.hjul[0].stil : undefined;
       return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (HJULBOKS * 2) + '" height="' + (HJULBOKS * 2) +
              '" viewBox="0 0 ' + HJULBOKS + ' ' + HJULBOKS + '">' +
-             hjulTegning({ x: HJULBOKS / 2, y: HJULBOKS / 2, r: HJULRADIUS }, hj, 0, fase, tier) + '</svg>';
+             hjulTegning({ x: HJULBOKS / 2, y: HJULBOKS / 2, r: HJULRADIUS, stil: stil },
+                         hj, 0, fase, tier) + '</svg>';
     }
 
     // Forholdet mellom bildets *halve* bredde og hjulets radius. Tegner man

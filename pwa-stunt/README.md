@@ -412,10 +412,50 @@ null**.
 | | Pris | Ganger | Hva den er |
 | --- | --- | --- | --- |
 | 🏎️ Stuntbilen | $0 | ×1,00 | Bilen man starter med. Den eneste som kan bytte form. |
-| 👹 Beistet | $10 000 | ×1,35 | Monstertruck med rullebur og de største hjulene i katalogen. |
-| 🛡️ Panservogna | $20 000 | ×1,75 | Kantete, naglet, med sikteglugger i stedet for vinduer. |
-| 🔥 Jetbilen | $30 000 | ×2,30 | Dragster med jetdyse, svære drivhjul og bitte små forhjul. |
-| 🛸 Romfartøyet | $40 000 | ×3,00 | Glasskuppel, neonlys under skroget og antenne. |
+| 👹 Beistet | $10 000 | ×1,35 | Monstertruck: dekk på 66, smal ramme høyt oppe, synlige dempere, to eksosstakker. |
+| 🛡️ Panservogna | $20 000 | ×1,75 | Beltegående, med tårn og kanon. Ingen vinduer — bare en glugge i stålet. |
+| 🔥 Jetbilen | $30 000 | ×2,30 | En turbin med hjul på. Boblekupé foran, halefinne over, flamme bak. |
+| 🛸 Romfartøyet | $40 000 | ×3,00 | Linseformet skrog, glasskuppel, tre motorer og svevende puter. |
+
+### De skal ikke se ut som fem biler
+
+Første utgave var det: fem rundede karosserier med to like hjul og en
+frontrute hver, bare i ulik lengde. Det som skiller dem nå, er **silhuetten**,
+og hvert av dem bryter med bil-formen på hver sin måte:
+
+* **Beistet** har luft mellom karosseriet og gummien. Hjulene står *utenfor*
+  ramma, og fjæringa er synlig i hullet. Uten den lufta er det bare en
+  oppjekket varebil.
+* **Panservogna** har ingen hjulbuer. Seks små veihjul ruller inne i et
+  beltebånd, og den har ingen frontrute i det hele tatt — et pansret kjøretøy
+  har sikteglugger. Kanonen er det ene draget som gjør en kantete bil til en
+  stridsvogn.
+* **Jetbilen** har motoren som *hele* kjøretøyet. En dragster med et panser
+  oppå er bare en lang bil; en turbin med et lite førerhus foran seg er noe
+  annet.
+* **Romfartøyet** har et skrog som er spisst i begge ender og tykkest på
+  midten. Ingen hjulbuer, ingen panserlinje, ingen frontrute — og det svever,
+  så det har ingen dekk.
+
+Alt dette tegnes av de samme feltene som formene bruker, pluss noen valgfrie
+lag: `belte`, `taarn` + `kanon` + `glugge`, `turbin`, `fjaering`, `stakker`,
+`dyser`, `finne`, `kjegler`, `nagler`, `neon` og `antenne`.
+
+### Hjulstiler
+
+Barnets hjuldesign og dekk-tier skal virke på **alle** kjøretøyene, også dem
+som ikke har dekk. Derfor er det én tegnerutine med tre stiler, satt per hjul
+i kjøretøyets `hjul`-liste:
+
+| `stil` | Hva som tegnes | Hvem |
+| --- | --- | --- |
+| *(ingen)* | Gummidekk, med mønster hvis designet er grovt | Stuntbilen, Beistet, Jetbilen |
+| `'belte'` | Smal gummikant — beltebåndet utenfor er det man ser | Panservogna |
+| `'sveve'` | Glødende skive uten gummi, eiker og nav i glødefargen | Romfartøyet |
+
+Alle hjulene på ett kjøretøy må ha samme stil: løypa tegner **ett** hjulbilde
+og gjenbruker det for hver plassering, så to stiler på samme kjøretøy ville
+sett riktig ut i garasjen og feil i løypa. Prøven håndhever det.
 
 ### Hvorfor inntekt og ikke ytelse
 
@@ -454,18 +494,29 @@ bil skal tjene mer enn en fjerdedel av det en maksa Stuntbil gjør.
   som ikke endrer noe er verre enn ingen fane: barnet trykker på en racer og
   bilen over lista blir stående som et romfartøy. Valget står igjen urørt til
   man bytter tilbake til Stuntbilen.
-* **Ett snurretall per hjul.** Jetbilen har 56 i radius bak og 24 foran. Med
+* **Ett snurretall per hjul.** Jetbilen har 46 i radius bak og 18 foran. Med
   én felles vinkel snurret det lille hjulet altfor sakte for farten, og bilen
   så ut til å skli på forhjulet hele veien.
+* **Beltebåndet er et bånd med hull i.** Hjulene tegnes aller sist, så båndet
+  må tegnes *med karosseriet*, med veihjulene inne i hullet. Tegnes båndet
+  over hjulene, forsvinner de; tegnes det etter, ligger gummien oppå stålet.
+* **En glødende skive alene leser fortsatt som et hjul.** Det som gjør at
+  Romfartøyet *svever*, er lyskjeglene ned mot asfalten — og at eikene tegnes
+  i glødefargen. Svarte eiker er det tydeligste hjul-signalet som finnes.
 
 ### Å legge til et kjøretøy
 
 Én ny post i `KJORETOY` i `js/bil.js`. Den bruker de samme feltene som en form
 (`kropp`, `hjul`, `dekorboks`, `spoilerfeste`, `lykt`, `tak`, `bakluke`,
 `panser`, `eksosfeste`, `strek`) pluss `pris`, `inntekt`, `tegn` og `omtale`.
-Valgfrie lag: `understell`, `bur`/`burstag`, `nagler`, `dyse`, `neon`,
-`antenne`. Kortet, kjøpet, den egne oppgraderingstilstanden og prøvene følger
-av seg selv.
+Valgfrie lag: `understell`, `bur`/`burstag`, `nagler`, `belte`, `taarn`,
+`kanon`, `glugge`, `turbin`, `fjaering`, `stakker`, `dyser`, `finne`,
+`kjegler`, `neon` og `antenne`. Kortet, kjøpet, den egne
+oppgraderingstilstanden og prøvene følger av seg selv.
+
+Det viktigste rådet: **finn ett drag som bryter med bil-formen**, og bygg
+resten rundt det. Et kjøretøy som er en bil med en ny detalj på, blir liggende
+og se ut som de andre uansett hvor mange detaljer man legger til.
 
 ## Bilen tegnes, den lastes ikke ned
 
