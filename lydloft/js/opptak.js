@@ -29,12 +29,40 @@ var LydOpptak = (function () {
   var workletLastet = null;
 
   function lydkontekst() {
+    if (kontekst && kontekst.state === 'closed') kontekst = null;
     if (!kontekst) {
       var K = window.AudioContext || window.webkitAudioContext;
       kontekst = new K();
+      // AudioWorklet-modulen hører til konteksten, ikke siden.
+      workletLastet = null;
     }
-    if (kontekst.state === 'suspended') kontekst.resume();
+    // Ikke bare «suspended»: Safari har en egen tilstand, «interrupted», når
+    // iOS har gitt lyden til noe annet (en annen app, en samtale).
+    if (kontekst.state !== 'running') {
+      var svar = kontekst.resume();
+      if (svar && svar.catch) svar.catch(function () { /* prøves igjen ved neste trykk */ });
+    }
     return kontekst;
+  }
+
+  /*
+   * Kalles fra et trykk. Har en annen app tatt lyden — musikk som spilte på
+   * samme iPhone mens opptaket gikk — kan Safari la konteksten bli stående i
+   * «interrupted» også etter at den andre appen er stille, og da hjelper ikke
+   * `resume()`. En ny kontekst laget inne i trykket gjør det. Alt som er
+   * bygget i den gamle (effektkjeden, lydbufferne), må bygges på nytt; det er
+   * kallerens jobb, og `generasjon` sier fra om at det er nødvendig.
+   */
+  var generasjon = 0;
+  function friskKontekst() {
+    if (kontekst && kontekst.state === 'interrupted') {
+      try { kontekst.close(); } catch (e) { /* allerede lukket */ }
+      kontekst = null;
+    }
+    var for_ = kontekst;
+    var k = lydkontekst();
+    if (k !== for_) generasjon++;
+    return k;
   }
 
   function stottes() {
@@ -101,7 +129,7 @@ var LydOpptak = (function () {
   function startRaa(valg) {
     var ctx = lydkontekst();
     if (!workletLastet) {
-      workletLastet = ctx.audioWorklet.addModule('js/opptaker-worklet.js?v=3')
+      workletLastet = ctx.audioWorklet.addModule('js/opptaker-worklet.js?v=4')
         .catch(function (e) { workletLastet = null; throw e; });
     }
     return Promise.all([workletLastet, hentStrom(valg.behandling, valg.enhet)]).then(function (svar) {
@@ -283,6 +311,7 @@ var LydOpptak = (function () {
   return {
     stottes: stottes,
     lydkontekst: lydkontekst,
+    friskKontekst: friskKontekst,
     enheter: enheter,
     start: start,
     lesFil: lesFil,

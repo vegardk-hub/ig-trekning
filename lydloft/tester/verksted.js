@@ -181,6 +181,25 @@ async function ventPaaLyd(side) {
     await side.click('#spill');
     krev((await side.textContent('#spill')).includes('Spill'), 'pause skal stoppe');
 
+    // iOS: en annen app tar lyden, og konteksten blir stående. Her lukkes den
+    // helt — det strengeste tilfellet — og et nytt trykk må bygge kjeden og
+    // bufferne på nytt i en frisk kontekst og spille.
+    await side.evaluate(() => LydOpptak.lydkontekst().suspend());
+    await side.click('#spill');
+    await side.waitForTimeout(600);
+    krev(await side.evaluate(() => LydOpptak.lydkontekst().state) === 'running', 'en stoppet kontekst skal vekkes av spill');
+    await side.click('#spill');
+    await side.evaluate(() => LydOpptak.lydkontekst().close());
+    await side.click('#spill');
+    await side.waitForTimeout(800);
+    const etter = await side.evaluate(() => ({ state: LydOpptak.lydkontekst().state }));
+    krev(etter.state === 'running', 'en lukket kontekst skal erstattes av en ny', etter);
+    const p0 = await side.$eval('#posisjon', e => Number(e.value));
+    await side.waitForTimeout(600);
+    krev(await side.$eval('#posisjon', e => Number(e.value)) !== p0, 'og lyden skal gå i den nye');
+    krev(!(await side.textContent('#strekkstatus')).includes('iOS'), 'uten melding om at iOS holder lyden');
+    await side.click('#spill');
+
     bolk('Lagre');
     await side.click('.valgbrikke[data-id="kirke"]');
     await side.click('#lagre');

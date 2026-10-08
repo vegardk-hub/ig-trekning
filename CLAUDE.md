@@ -602,6 +602,10 @@ internt bruk. Rytme og takt utover tempo (swing, vals) er ikke laget.
 - **Posisjonen er en andel, ikke sekunder**, så den står stille når tempoet
   endrer lengden.
 - **En karakter nullstiller effektene, men ikke tempo og tonehøyde.**
+- **Alt i lydkonteksten må kunne bygges på nytt.** iOS kan la konteksten stå
+  i `interrupted` etter at en annen app har spilt lyd, og spill-knappen bytter
+  den da ut. Kjeden, bufferne og AudioWorklet-modulen hører til én kontekst;
+  lagrer du noe bygget i den, sjekk at det tilhører den som gjelder nå.
 
 Testbenken (`testbenk.html`) står igjen fra da målet var å gjøre opptak bedre:
 

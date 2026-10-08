@@ -69,8 +69,15 @@
   /* -------------------------------------------------------- lydkonteksten */
 
   function ctx() { return LydOpptak.lydkontekst(); }
+  // Kjeden hører til én lydkontekst. Byttes konteksten (se friskKontekst),
+  // bygges kjeden på nytt med verdiene slik de står.
   function sorgForKjede() {
-    if (!fx) fx = E.bygg(ctx(), ctx().destination, verdier);
+    var c = ctx();
+    if (!fx || fx.ctx !== c) {
+      if (fx) fx.riv();
+      fx = E.bygg(c, c.destination, verdier);
+      fx.ctx = c;
+    }
     return fx;
   }
   function p() { return Math.pow(2, verdier.halvtoner / 12); }
@@ -79,7 +86,7 @@
 
   var strekker = null, strekkVent = {}, strekkNr = 0, sisteStrekk = 0;
   try {
-    strekker = new Worker('js/strekk-arbeider.js?v=3');
+    strekker = new Worker('js/strekk-arbeider.js?v=4');
     strekker.onmessage = function (e) {
       var v = strekkVent[e.data.id];
       delete strekkVent[e.data.id];
@@ -167,8 +174,10 @@
     if (spiller) { spiller.node.onended = null; try { spiller.node.stop(); } catch (e) { /* stoppet */ } spiller.node.disconnect(); }
     var original = horOriginal;
     var kildeLyd = original ? { kanaler: kilde.kanaler, fs: kilde.fs, p: 1 } : lyd;
-    if (!original && !lyd.buffer) lyd.buffer = lagBuffer(c, lyd);
-    var buffer = original ? (kilde.buffer || (kilde.buffer = lagBuffer(c, kildeLyd))) : lyd.buffer;
+    // Bufferne hører også til konteksten de ble laget i.
+    if (!original && (!lyd.buffer || lyd.buffer.ctx !== c)) { lyd.buffer = lagBuffer(c, lyd); lyd.buffer.ctx = c; }
+    if (original && (!kilde.buffer || kilde.buffer.ctx !== c)) { kilde.buffer = lagBuffer(c, kildeLyd); kilde.buffer.ctx = c; }
+    var buffer = original ? kilde.buffer : lyd.buffer;
     var node = c.createBufferSource();
     node.buffer = buffer;
     node.playbackRate.value = kildeLyd.p;
@@ -188,7 +197,11 @@
     $('spill').textContent = '❚❚ Pause';
   }
 
+  var IOS_HOLDER = 'iOS slipper ikke til lyden. Stopp musikk eller video som spiller i andre apper, og trykk spill igjen.';
   setInterval(function () {
+    var holdt = spiller && ctx().state !== 'running';
+    if (holdt && $('strekkstatus').textContent !== IOS_HOLDER) status('strekkstatus', IOS_HOLDER, true);
+    if (!holdt && $('strekkstatus').textContent === IOS_HOLDER) status('strekkstatus', '');
     if (!spiller) return;
     var a = naaAndel();
     $('posisjon').value = Math.round(a * 1000);
@@ -371,7 +384,7 @@
   var analysator = null;
   function grunnAnalyse(kanaler, fs) {
     if (!analysator) {
-      try { analysator = new Worker('js/analyse-arbeider.js?v=3'); } catch (e) { analysator = null; }
+      try { analysator = new Worker('js/analyse-arbeider.js?v=4'); } catch (e) { analysator = null; }
     }
     if (!analysator) return Promise.resolve(null);
     return new Promise(function (ok) {
@@ -521,8 +534,14 @@
     });
 
     $('spill').addEventListener('click', function () {
-      ctx();
-      if (spiller) stopp(); else start(andelNaa);
+      // Står det spill, men lyden er holdt igjen av iOS, er det ikke en
+      // pause brukeren ber om — da skal lyden startes i en frisk kontekst.
+      var holdt = spiller && ctx().state !== 'running';
+      if (spiller && !holdt) { stopp(); return; }
+      var fra = spiller ? naaAndel() : andelNaa;
+      if (spiller) stopp();
+      LydOpptak.friskKontekst();
+      start(fra);
     });
     $('original').addEventListener('click', function () {
       horOriginal = !horOriginal;

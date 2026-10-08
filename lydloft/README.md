@@ -45,6 +45,15 @@ Tre ting som ser ut som detaljer og har en grunn:
   «Kirke» etter «Telefon» en kirke i telefonen, og ekornet mister farten
   hver gang man bytter rom.
 
+- **iOS kan holde igjen lydkonteksten.** Spiller en annen app musikk på
+  samme iPhone mens opptaket går, tar iOS lyden fra Safari, og konteksten blir
+  stående i Safaris egen tilstand `interrupted` – også etter at den andre
+  appen er stille. `resume()` hjelper ikke da. Spill-knappen lager i stedet en
+  ny kontekst inne i trykket (`LydOpptak.friskKontekst`), og effektkjeden og
+  lydbufferne bygges på nytt i den. AudioWorklet-modulen hører også til
+  konteksten og må lastes igjen. Første opptak på 12 sekunder virket, og ett
+  på 50 med musikk fra telefonen ville ikke spille.
+
 Kutt-filtrene er dobbelt opp (24 dB/oktav). Med ett andreordens filter er
 telefon og radio for snille – det slipper gjennom for mye bass til å høres ut
 som en liten høyttaler.

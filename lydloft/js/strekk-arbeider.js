@@ -7,7 +7,7 @@
  */
 'use strict';
 
-importScripts('strekk.js?v=3');
+importScripts('strekk.js?v=4');
 
 self.onmessage = function (e) {
   var d = e.data;
