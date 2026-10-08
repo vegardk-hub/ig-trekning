@@ -26,7 +26,11 @@ var LydEffekter = (function () {
     bass: 0, mellom: 0, diskant: 0, lavkutt: 20, toppkutt: 20000, volum: 0,
     tempo: 1, halvtoner: 0, baklengs: false,
     romklang: 0, romstorrelse: 1.8, ekko: 0, ekkotid: 0.35,
-    forvrengning: 0, chorus: 0, chorusfart: 1.2, lofi: 0, knitring: 0, robot: 0
+    forvrengning: 0, chorus: 0, chorusfart: 1.2, lofi: 0, knitring: 0, robot: 0,
+    // Stil og trommer: hvilket mønster, takten trommene følger (BPM i
+    // opptaket før tempoendringen) og hvor høyt. Brukes av verkstedet, ikke
+    // av kjeden her.
+    stil: 'ingen', slagBpm: 0, trommer: 0.6
   };
 
   // Karakterene er utgangspunkter, ikke låste valg: de setter glidebryterne,

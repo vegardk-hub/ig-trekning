@@ -30,6 +30,7 @@
     { gruppe: 'tone', navn: 'volum', etikett: 'Volum', min: -20, max: 6, steg: 0.5, vis: db },
     { gruppe: 'tempo', navn: 'tempo', etikett: 'Tempo', min: 0.5, max: 2, log: true, vis: prosent },
     { gruppe: 'tempo', navn: 'halvtoner', etikett: 'Tonehøyde', min: -12, max: 12, steg: 1, vis: halvtoner },
+    { gruppe: 'tempo', navn: 'trommer', etikett: 'Trommer', min: 0, max: 1, steg: 0.01, vis: andel },
     { gruppe: 'effekter', navn: 'romklang', etikett: 'Romklang', min: 0, max: 1, steg: 0.01, vis: andel },
     { gruppe: 'effekter', navn: 'romstorrelse', etikett: 'Romstørrelse', min: 0.3, max: 6, steg: 0.1, vis: sek },
     { gruppe: 'effekter', navn: 'ekko', etikett: 'Ekko', min: 0, max: 1, steg: 0.01, vis: andel },
@@ -42,6 +43,8 @@
     { gruppe: 'effekter', navn: 'robot', etikett: 'Robot', min: 0, max: 1, steg: 0.01, vis: andel }
   ];
   var LYDENDRENDE = { tempo: 1, halvtoner: 1, baklengs: 1 };
+  // Det en karakter (Robot, Kirke …) ikke rører: farten og stilen.
+  var IKKE_KARAKTER = { tempo: 1, halvtoner: 1, baklengs: 1, stil: 1, slagBpm: 1, trommer: 1 };
 
   function db(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',') + ' dB'; }
   function hz(v) { return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace('.', ',') + ' kHz' : Math.round(v) + ' Hz'; }
@@ -86,12 +89,12 @@
 
   var strekker = null, strekkVent = {}, strekkNr = 0, sisteStrekk = 0;
   try {
-    strekker = new Worker('js/strekk-arbeider.js?v=5');
+    strekker = new Worker('js/strekk-arbeider.js?v=6');
     strekker.onmessage = function (e) {
       var v = strekkVent[e.data.id];
       delete strekkVent[e.data.id];
       if (!v) return;
-      if (e.data.feil) v.nei(new Error(e.data.feil)); else v.ok(e.data.kanaler);
+      if (e.data.feil) v.nei(new Error(e.data.feil)); else v.ok(e.data);
     };
   } catch (e) { strekker = null; }
 
@@ -104,7 +107,71 @@
       var id = ++strekkNr;
       strekkVent[id] = { ok: ok, nei: nei };
       strekker.postMessage({ id: id, kanaler: kanaler, fs: fs, faktor: faktor, baklengs: baklengs });
-    });
+    }).then(function (svar) { return svar.kanaler; });
+  }
+
+  function finnTakt(kanaler, fs) {
+    if (!strekker) return Promise.resolve(window.LydTakt ? LydTakt.finnTempo(kanaler, fs) : null);
+    return new Promise(function (ok, nei) {
+      var id = ++strekkNr;
+      strekkVent[id] = { ok: ok, nei: nei };
+      strekker.postMessage({ id: id, type: 'tempo', kanaler: kanaler, fs: fs });
+    }).then(function (svar) { return svar.takt; });
+  }
+
+  /* -------------------------------------------------------------- trommer */
+
+  /*
+   * Trommene spilles som én takt i sløyfe ved siden av lyden, inn i samme
+   * effektkjede — under vann blir trommene også våte. De følger tempoet:
+   * `slagBpm` er takten i opptaket slik den ble funnet (i oktaven nærmest
+   * stilen), og trommene går i slagBpm · tempo. Skrur noen på tempoet eller
+   * trykker Ekorn, følger trommene med.
+   */
+  function harTrommer() { return verdier.stil !== 'ingen' && verdier.trommer > 0 && verdier.slagBpm > 0; }
+  function trommeBpm() { return verdier.slagBpm * verdier.tempo; }
+
+  // Sekunder inn i den nye lyden der et slag ligger — taktens ener.
+  function trommeFase() {
+    var t = kilde && kilde.takt;
+    if (!t || !t.tydelig) return 0;
+    var lengde = kilde.kanaler[0].length / kilde.fs;
+    var inn = verdier.baklengs ? lengde - t.forsteSlag : t.forsteSlag;
+    return inn / verdier.tempo;
+  }
+
+  var trommeNivaa = {};
+  // Trommene legges et par dB under opptaket, uansett hvor høyt det er tatt opp.
+  function trommeForsterkning() {
+    var id = verdier.stil;
+    if (trommeNivaa[id] === undefined) {
+      var takt = LydTrommer.lagTakt(id, LydTrommer.finnStil(id).bpm, 48000);
+      var fire = new Float32Array(takt.length * 4);
+      for (var i = 0; i < 4; i++) fire.set(takt, i * takt.length);
+      trommeNivaa[id] = LydDsp.lufs([fire], 48000);
+    }
+    var musikk = kilde && isFinite(kilde.lufs) ? kilde.lufs : -20;
+    var db = musikk - trommeNivaa[id] - 3 + 20 * Math.log10(verdier.trommer / 0.6);
+    return Math.pow(10, Math.min(24, db) / 20);
+  }
+
+  var trommeBuffer = null;
+  function lagTrommeKilde(c, utTid) {
+    var bpm = trommeBpm(), nokkel = verdier.stil + '|' + bpm.toFixed(4);
+    if (!trommeBuffer || trommeBuffer.nokkel !== nokkel || trommeBuffer.ctx !== c) {
+      var x = LydTrommer.lagTakt(verdier.stil, bpm, c.sampleRate);
+      var b = c.createBuffer(1, x.length, c.sampleRate);
+      b.getChannelData(0).set(x);
+      trommeBuffer = { nokkel: nokkel, ctx: c, buffer: b };
+    }
+    var node = c.createBufferSource();
+    node.buffer = trommeBuffer.buffer;
+    node.loop = true;
+    var takt = node.buffer.duration;
+    var g = c.createGain();
+    g.gain.value = trommeForsterkning();
+    node.connect(g);
+    return { node: node, g: g, offset: (((utTid - trommeFase()) % takt) + takt) % takt };
   }
   function LydStrekkReserve(k, fs, faktor) {
     return window.LydStrekk ? window.LydStrekk.strekk(k, fs, faktor) : k;
@@ -161,10 +228,18 @@
     andelNaa = naaAndel();
     var s = spiller;
     spiller = null;
+    stoppNoder(s);
+    visSpiller(false);
+  }
+
+  function stoppNoder(s) {
     s.node.onended = null;
     try { s.node.stop(); } catch (e) { /* allerede stoppet */ }
     s.node.disconnect();
-    visSpiller(false);
+    if (s.trommer) {
+      try { s.trommer.node.stop(); } catch (e) { /* allerede stoppet */ }
+      s.trommer.node.disconnect(); s.trommer.g.disconnect();
+    }
   }
 
   function naaAndel() {
@@ -172,13 +247,13 @@
     var c = ctx();
     var forlop = (c.currentTime - spiller.start) * spiller.fart / spiller.bufferSek;
     var a = spiller.offset + forlop;
-    return $('sloyfe').checked ? a - Math.floor(a) : Math.min(1, a);
+    return Math.min(1, a);
   }
 
   function start(fra) {
     if (!lyd) return;
     var c = ctx();
-    if (spiller) { spiller.node.onended = null; try { spiller.node.stop(); } catch (e) { /* stoppet */ } spiller.node.disconnect(); }
+    if (spiller) stoppNoder(spiller);
     var original = horOriginal;
     var kildeLyd = original ? { kanaler: kilde.kanaler, fs: kilde.fs, p: 1 } : lyd;
     // Bufferne hører også til konteksten de ble laget i.
@@ -188,7 +263,10 @@
     var node = c.createBufferSource();
     node.buffer = buffer;
     node.playbackRate.value = kildeLyd.p;
-    node.loop = $('sloyfe').checked;
+    // Ingen `loop` på lyden: gjentakelsen skjer i `onended`, så trommene
+    // startes på nytt i takt med den. En sløyfe på lyden alene ville latt
+    // trommene gli ut av takt ved hver runde.
+    node.loop = false;
     // Baklengs: originalen spilles fra speilvendt posisjon, så A/B treffer
     // samme sted i stykket.
     var a = fra >= 1 ? 0 : fra;
@@ -200,7 +278,17 @@
     }
     node.start(0, bufAndel * buffer.duration);
     spiller = { node: node, start: c.currentTime, offset: a, fart: kildeLyd.p, bufferSek: buffer.duration, original: original };
-    node.onended = function () { if (spiller && spiller.node === node) { spiller = null; andelNaa = 0; visSpiller(false); } };
+    if (!original && harTrommer()) {
+      var t = lagTrommeKilde(c, a * varighetUt());
+      t.g.connect(sorgForKjede().inngang);
+      t.node.start(0, t.offset);
+      spiller.trommer = t;
+    }
+    node.onended = function () {
+      if (!spiller || spiller.node !== node) return;
+      if ($('sloyfe').checked) { start(0); return; }
+      stoppNoder(spiller); spiller = null; andelNaa = 0; visSpiller(false);
+    };
     visSpiller(true);
   }
 
@@ -271,22 +359,34 @@
     if (x && !fraGliderSelv) x.inp.value = tilGlider(x.g, v);
     visVerdi(navn);
     if (LYDENDRENDE[navn]) lagLyd();
+    else if (navn === 'trommer') oppdaterTrommer();
     else if (fx) fx.sett(navn, v);
     markerValg();
     foreslaNavn();
   }
 
+  // Volumet kan glide mens det spiller; skrus trommene på fra null, eller
+  // byttes stilen, må de startes på nytt fra riktig sted.
+  function oppdaterTrommer() {
+    if (!spiller || spiller.original) return;
+    if (spiller.trommer && harTrommer()) {
+      spiller.trommer.g.gain.setTargetAtTime(trommeForsterkning(), ctx().currentTime, 0.03);
+    } else if (!!spiller.trommer !== harTrommer()) start(naaAndel());
+  }
+
   function settAlle(nye) {
-    var lydEndres = false;
+    var lydEndres = false, stilEndres = false;
     Object.keys(nye).forEach(function (k) {
       if (LYDENDRENDE[k] && verdier[k] !== nye[k]) lydEndres = true;
+      if ((k === 'stil' || k === 'slagBpm' || k === 'trommer') && verdier[k] !== nye[k]) stilEndres = true;
       verdier[k] = nye[k];
       var x = inputs[k];
       if (x) x.inp.value = tilGlider(x.g, nye[k]);
       visVerdi(k);
-      if (!LYDENDRENDE[k] && fx) fx.sett(k, nye[k]);
+      if (!IKKE_KARAKTER[k] && fx) fx.sett(k, nye[k]);
     });
     if (lydEndres) lagLyd();
+    else if (stilEndres && spiller && !spiller.original) start(naaAndel());
     markerValg();
     foreslaNavn();
   }
@@ -325,7 +425,7 @@
       $('karakterer').appendChild(flis(k.id, k.navn, k.id, neon(i), function () {
         // En karakter starter fra null, men rører ikke tempo og tonehøyde.
         var nye = {};
-        Object.keys(E.STANDARD).forEach(function (n) { if (!LYDENDRENDE[n]) nye[n] = E.STANDARD[n]; });
+        Object.keys(E.STANDARD).forEach(function (n) { if (!IKKE_KARAKTER[n]) nye[n] = E.STANDARD[n]; });
         Object.keys(k.verdier).forEach(function (n) { nye[n] = k.verdier[n]; });
         settAlle(nye);
       }));
@@ -333,17 +433,58 @@
     E.FART.forEach(function (f, i) {
       $('fart').appendChild(flis(f.id, f.navn, f.id, neon(i + 3), function () { settAlle(kopi(f.verdier)); }));
     });
+    var ingen = flis('ingenstil', 'Ingen stil', 'ingenstil', neon(5), function () { velgStil('ingenstil'); });
+    ingen.classList.add('stilflis');
+    $('stiler').appendChild(ingen);
+    LydTrommer.STILER.forEach(function (st, i) {
+      var b = flis(st.id, st.navn, st.id, neon(i + 6), function () { velgStil(st.id); });
+      b.classList.add('stilflis');
+      var tall = document.createElement('span');
+      tall.className = 'bpm';
+      tall.textContent = st.bpm + ' BPM';
+      b.appendChild(tall);
+      $('stiler').appendChild(b);
+    });
     var bak = flis('baklengs', 'Baklengs', 'baklengs', neon(2), function () { settVerdi('baklengs', !verdier.baklengs); });
     bak.id = 'baklengs';
     bak.classList.remove('valgbrikke');
     $('fart').appendChild(bak);
   }
 
+  /*
+   * En stil setter tempoet så opptaket går i stilens BPM, og legger på
+   * trommene. Opptakets takt tolkes i den oktaven som ligger nærmest, så rock
+   * på et stykke målt til 62 BPM blir 124 → 120 og ikke en dobling av farten.
+   * Uten tydelig takt står tempoet, og trommene går i stilens eget.
+   */
+  function velgStil(id) {
+    if (id === 'ingenstil') { settAlle({ stil: 'ingen', slagBpm: 0, tempo: 1 }); return; }
+    var st = LydTrommer.finnStil(id), t = kilde && kilde.takt;
+    if (t && t.tydelig) {
+      var grunn = LydTakt.naermesteOktav(t.bpm, st.bpm);
+      settAlle({ stil: id, slagBpm: grunn, tempo: Math.max(0.5, Math.min(2, st.bpm / grunn)) });
+    } else {
+      settAlle({ stil: id, slagBpm: st.bpm, tempo: 1 });
+    }
+  }
+
+  function visTakt() {
+    var t = kilde && kilde.takt, el = $('taktinfo');
+    if (!kilde) { el.textContent = ''; return; }
+    if (t === undefined) el.textContent = 'Lytter etter takten …';
+    else if (t && t.tydelig) el.textContent = 'Opptaket går i ca. ' + Math.round(t.bpm) + ' slag i minuttet. Velg en stil, så går det i stilens tempo.';
+    else el.textContent = 'Fant ingen tydelig takt i opptaket. Stilene legger på trommer i sitt eget tempo.';
+  }
+
   function markerValg() {
-    var utenomFart = kopi(LYDENDRENDE);
+    var utenomFart = kopi(IKKE_KARAKTER);
     $('karakterer').querySelectorAll('.valgbrikke').forEach(function (b) {
       var k = E.KARAKTERER.filter(function (x) { return x.id === b.dataset.id; })[0];
       b.setAttribute('aria-pressed', passer(k, utenomFart) ? 'true' : 'false');
+    });
+    $('stiler').querySelectorAll('.stilflis').forEach(function (b) {
+      var valgt = b.dataset.id === 'ingenstil' ? verdier.stil === 'ingen' : verdier.stil === b.dataset.id;
+      b.setAttribute('aria-pressed', valgt ? 'true' : 'false');
     });
     $('fart').querySelectorAll('.valgbrikke').forEach(function (b) {
       var f = E.FART.filter(function (x) { return x.id === b.dataset.id; })[0];
@@ -355,9 +496,17 @@
   function foreslaNavn() {
     if (navnEndretSelv || !kilde) return;
     var deler = [];
-    var k = E.KARAKTERER.filter(function (x) { return x.id !== 'ingen' && passer(x, LYDENDRENDE); })[0];
+    var k = E.KARAKTERER.filter(function (x) { return x.id !== 'ingen' && passer(x, IKKE_KARAKTER); })[0];
     if (k) deler.push(k.navn);
-    else if (!passer(E.KARAKTERER[0], LYDENDRENDE)) deler.push('egen miks');
+    else if (!passer(E.KARAKTERER[0], IKKE_KARAKTER)) deler.push('egen miks');
+    var stil = LydTrommer.finnStil(verdier.stil);
+    if (stil) {
+      deler.push(stil.navn);
+      if (verdier.halvtoner) deler.push(halvtoner(verdier.halvtoner));
+      if (verdier.baklengs) deler.push('baklengs');
+      $('versjonsnavn').value = kilde.navn + ' – ' + deler.join(', ');
+      return;
+    }
     var f = E.FART.filter(function (x) { return x.id !== 'normal' && lik(verdier.tempo, x.verdier.tempo) && lik(verdier.halvtoner, x.verdier.halvtoner); })[0];
     if (f) deler.push(f.navn);
     else {
@@ -419,7 +568,17 @@
     status('status', 'Henter ' + m.navn + ' …');
     return LydLager.hentLyd(id).then(function (l) {
       if (!l) throw new Error('lyden mangler');
-      kilde = { id: id, navn: m.navn, kanaler: l.kanaler, fs: m.fs, buffer: null };
+      var lufs = m.analyse && m.analyse.grunn ? m.analyse.grunn.lufs : null;
+      if (typeof lufs !== 'number') lufs = LydDsp.lufs(l.kanaler, m.fs);
+      kilde = { id: id, navn: m.navn, kanaler: l.kanaler, fs: m.fs, buffer: null, lufs: lufs, takt: undefined };
+      visTakt();
+      finnTakt(l.kanaler, m.fs).then(function (t) {
+        if (!kilde || kilde.id !== id) return;
+        kilde.takt = t || null;
+        visTakt();
+        // Var en stil valgt før takten var kjent, regnes tempoet ut på nytt.
+        if (verdier.stil !== 'ingen') velgStil(verdier.stil);
+      }).catch(function () { if (kilde && kilde.id === id) { kilde.takt = null; visTakt(); } });
       andelNaa = 0;
       $('posisjon').value = 0;
       $('kildenavn').textContent = m.navn;
@@ -438,7 +597,7 @@
   var analysator = null;
   function grunnAnalyse(kanaler, fs) {
     if (!analysator) {
-      try { analysator = new Worker('js/analyse-arbeider.js?v=5'); } catch (e) { analysator = null; }
+      try { analysator = new Worker('js/analyse-arbeider.js?v=6'); } catch (e) { analysator = null; }
     }
     if (!analysator) return Promise.resolve(null);
     return new Promise(function (ok) {
@@ -536,6 +695,12 @@
     node.playbackRate.value = l.p;
     node.connect(kjede.inngang);
     node.start(0);
+    if (harTrommer()) {
+      var t = lagTrommeKilde(off, 0);
+      t.g.connect(kjede.inngang);
+      t.node.start(0, t.offset);
+      t.node.stop(l.kanaler[0].length / l.fs / l.p);
+    }
     return off.startRendering().then(function (buf) {
       var kanaler = [new Float32Array(buf.getChannelData(0)), new Float32Array(buf.getChannelData(1))];
       // Samme lydstyrke som strømmetjenestene, men aldri over −1 dBTP.
@@ -640,7 +805,7 @@
       if (spiller) start(andelNaa);
       $('naa').textContent = tid(andelNaa * varighetUt());
     });
-    $('sloyfe').addEventListener('change', function () { if (spiller) spiller.node.loop = this.checked; });
+    // Gjentakelsen leses i `onended`, så avkrysningen trenger ingen lytter.
 
     $('versjonsnavn').addEventListener('input', function () { navnEndretSelv = true; });
     $('nullstill').addEventListener('click', function () { navnEndretSelv = false; settAlle(kopi(E.STANDARD)); });
@@ -670,6 +835,7 @@
     lastBibliotek();
   }
 
-  window.LydVerksted = { verdier: function () { return kopi(verdier); }, render: render, velg: velg };
+  window.LydVerksted = { verdier: function () { return kopi(verdier); }, render: render, velg: velg,
+    takt: function () { return kilde && kilde.takt; } };
   koble();
 })();

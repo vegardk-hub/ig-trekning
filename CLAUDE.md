@@ -153,12 +153,14 @@ veien til å virke der.
 Lydløft har prøver på målekjeden, tidsstrekkingen, testbenken og
 verkstedet. De to første trenger verken nettleser eller server; kjør
 `analyse.js` etter endringer i `dsp.js`, `testsignal.js` eller `analyse.js`,
-og `strekk.js` etter endringer i `strekk.js`. `verksted.js` skal kjøres etter
-hver endring i `effekter.js` eller `verksted.js`:
+`strekk.js` etter endringer i `strekk.js`, og `takt.js` etter endringer i
+`takt.js` eller `trommer.js`. `verksted.js` skal kjøres etter hver endring i
+`effekter.js` eller `verksted.js`:
 
 ```
 node lydloft/tester/analyse.js
 node lydloft/tester/strekk.js
+node lydloft/tester/takt.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/benk.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/verksted.js
 ```
@@ -592,7 +594,8 @@ fellene. **Eieren vil ikke forbedre eksisterende sanger** og ikke konkurrere
 med Suno. Han vil ha en app som *endrer* opptak: filtre og karakterer, bass og
 diskant, tempo og tonehøyde, nye versjoner. Opptakene er instrumentale (barna
 som spiller, eller lyd fra en høyttaler), tatt opp på iPhone eller i Edge. Til
-internt bruk. Rytme og takt utover tempo (swing, vals) er ikke laget.
+internt bruk. Stilene (samba, rock, hip hop …) setter tempoet til stilens BPM
+og legger på trommer; taktart og swing på selve opptaket er ikke laget.
 
 - **Forhåndslyttingen og lagringen bygger samme kjede** (`LydEffekter.bygg`),
   i sanntid og i en `OfflineAudioContext`. En egen eksportvei vil gli fra det
@@ -606,6 +609,10 @@ internt bruk. Rytme og takt utover tempo (swing, vals) er ikke laget.
   i `ikoner.js` (ikke emoji, de kan ikke farges og ser ulike ut fra iPhone til
   Windows), og glidebryterne gjemt bak «Egne innstillinger». Legger du til en
   karakter, trenger den et ikon med samme id.
+- **En stil er et tempo *og* et trommemønster.** Takten i opptaket finnes med
+  `takt.js` (energi per frekvensbånd — per FFT-bin så en jevn akkord ut som en
+  takt), tolkes i oktaven nærmest stilen, og trommene går i
+  `slagBpm · tempo` slik at Ekorn og tempobryteren tar dem med.
 - **Alt i lydkonteksten må kunne bygges på nytt.** iOS kan la konteksten stå
   i `interrupted` etter at en annen app har spilt lyd, og spill-knappen bytter
   den da ut. Kjeden, bufferne og AudioWorklet-modulen hører til én kontekst;

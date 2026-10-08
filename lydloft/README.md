@@ -76,9 +76,35 @@ Kutt-filtrene er dobbelt opp (24 dB/oktav). Med ett andreordens filter er
 telefon og radio for snille – det slipper gjennom for mye bass til å høres ut
 som en liten høyttaler.
 
-**Ikke laget ennå: rytme og takt.** Tempo er løst; å gjøre en firedelt takt om
-til vals eller legge swing på krever at slagene finnes først og lyden klippes
-opp etter dem. Det er neste store del.
+## Stil og takt
+
+Åtte stiler – ballade 70, reggae 76, hip hop 90, samba 100, rock 120, disco
+124, techno 130, drum & bass 174 BPM. En stil gjør to ting: setter tempoet så
+opptaket går i stilens BPM, og legger på trommer i stilens mønster.
+
+- **Et tempo alene er ikke en stil.** 100 BPM gjør ikke noe til samba; det gjør
+  surdoen, tamborimen og risten. Derfor har hver stil et trommemønster
+  (`trommer.js`), syntetisert i nettleseren uten lydfiler, én takt i sløyfe.
+- **Takten finnes i opptaket** (`takt.js`): endring i energi per frekvensbånd,
+  autokorrelasjon og en kam som finner både avstand og første slag. Svaret kan
+  være dobbelt eller halvt; verkstedet bruker oktaven nærmest stilen, så rock
+  på et stykke målt til 62 BPM blir 124 → 120, ikke en dobling av farten.
+- **Båndene, ikke binnene.** Første forsøk målte endring per FFT-bin, og en
+  jevn akkord fikk «tydelig takt» 0,40: binnene vugger med fasen tonen har i
+  vinduet, og den vuggingen er periodisk. Energien i et bånd står stille.
+- **Uten tydelig takt står tempoet**, og trommene går i stilens eget. Å jage en
+  takt som ikke finnes, gir trommer som slår mellom tonene.
+- **Trommene følger tempoet** (`slagBpm · tempo`), så Ekorn og tempobryteren
+  tar trommene med seg. De går inn i samme effektkjede: under vann blir
+  trommene også våte.
+- **Gjentakelsen skjer i `onended`, ikke med `loop` på lyden.** Ellers glir
+  trommesløyfa ut av takt ved hver runde.
+- **En karakter rører ikke stilen** (`IKKE_KARAKTER`), og «Ingen stil» setter
+  tempoet tilbake.
+
+**Ikke laget: taktart og swing på selve opptaket.** Å gjøre en firedelt takt
+om til vals krever at lyden klippes opp etter slagene. Stilene legger trommer
+*på*; de endrer ikke rytmen i det barnet spilte.
 
 # Testbenken
 
@@ -170,6 +196,7 @@ Analysen kjører i en egen tråd (`analyse-arbeider.js`), så siden fryser ikke.
 ```
 node lydloft/tester/analyse.js
 node lydloft/tester/strekk.js
+node lydloft/tester/takt.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/benk.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/verksted.js
 ```

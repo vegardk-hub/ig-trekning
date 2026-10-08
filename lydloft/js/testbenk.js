@@ -97,7 +97,7 @@
 
   var arbeider = null, ventende = {}, neste = 1;
   try {
-    arbeider = new Worker('js/analyse-arbeider.js?v=5');
+    arbeider = new Worker('js/analyse-arbeider.js?v=6');
     arbeider.onmessage = function (e) {
       var v = ventende[e.data.id];
       delete ventende[e.data.id];

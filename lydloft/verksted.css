@@ -137,14 +137,17 @@ a { color: var(--cyan); }
 
 /* --------------------------------------------------------------- fliser */
 
-.fliser { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
-@media (min-width: 560px) { .fliser { grid-template-columns: repeat(4, 1fr); } }
-@media (min-width: 760px) { .fliser { grid-template-columns: repeat(5, 1fr); } }
+/* minmax(0, 1fr), ikke 1fr: en flis med navn og BPM er høyere enn den er
+   bred, og med aspect-ratio overføres den høyden til bredden — kolonnen
+   vokste til 408 px på en skjerm på 390. */
+.fliser { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+@media (min-width: 560px) { .fliser { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 760px) { .fliser { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
 .flis {
   --farge: var(--cyan);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem;
-  aspect-ratio: 1 / 1; padding: .5rem .3rem;
+  aspect-ratio: 1 / 1; min-width: 0; padding: .5rem .3rem;
   border-radius: 1.2rem; border: 2px solid color-mix(in srgb, var(--farge) 40%, transparent);
   background: linear-gradient(160deg, color-mix(in srgb, var(--farge) 10%, transparent), rgba(255, 255, 255, .02));
   color: var(--tekst); font: inherit; font-weight: 800; font-size: .85rem; line-height: 1.1; text-align: center;
@@ -160,6 +163,9 @@ a { color: var(--cyan); }
   transform: translateY(-2px);
 }
 .flis[aria-pressed="true"] .ikon { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px var(--farge)); }
+
+.flis .bpm { font-size: .72rem; font-weight: 700; color: var(--farge); opacity: .9; margin-top: -.2rem; }
+.taktinfo { color: var(--dempet); font-size: .9rem; margin: -.3rem 0 .7rem; min-height: 1.2em; }
 
 /* ------------------------------------------------------ egne innstillinger */
 

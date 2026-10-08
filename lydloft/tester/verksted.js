@@ -48,6 +48,16 @@ function bolk(navn) { console.log('\n' + navn); }
 
 const LydDsp = new Function(fs.readFileSync(path.join(ROT, 'lydloft', 'js', 'dsp.js'), 'utf8') + '; return LydDsp;')();
 
+function klikk100() {
+  const fs_ = 48000, n = fs_ * 8, x = new Float32Array(n);
+  for (let t = 0.25; t < 7.9; t += 0.6) {
+    const p = Math.round(t * fs_);
+    for (let i = 0; i < 2400; i++) x[p + i] += 0.6 * Math.exp(-i / 400) * Math.sin(2 * Math.PI * 900 * i / fs_);
+  }
+  return Buffer.from(LydDsp.lagWav([x], fs_));
+}
+function oktavlik(malt, sann, tol) { return [0.5, 1, 2].some(f => Math.abs(malt / (sann * f) - 1) < tol); }
+
 function treToner() {
   const fs_ = 48000, n = fs_ * 4, x = new Float32Array(n);
   for (let i = 0; i < n; i++) {
@@ -76,7 +86,8 @@ async function maal(side) {
       kHz1498: niva(1498.3) - ref, kHz1000: ref,
       lengde: k.length / fs, lydLengde: slutt / fs,
       lufs: LydDsp.lufs(r.kanaler, fs), topp: 20 * Math.log10(topp),
-      nan: r.kanaler.some(c => c.some(v => !isFinite(v)))
+      nan: r.kanaler.some(c => c.some(v => !isFinite(v))),
+      takt: LydTakt.finnTempo(r.kanaler, fs)
     };
   });
 }
@@ -225,10 +236,61 @@ async function ventPaaLyd(side) {
     krev(await side.locator('#toast').isVisible(), 'en melding skal si at den er lagret');
     await side.screenshot({ path: path.join(require('os').tmpdir(), 'lydloft-verksted.png'), fullPage: true });
 
+    bolk('Stil på et opptak uten takt');
+    await side.waitForFunction(() => /takt/.test(document.getElementById('taktinfo').textContent) && !/Lytter/.test(document.getElementById('taktinfo').textContent));
+    krev(/ingen tydelig takt/.test(await side.textContent('#taktinfo')), 'tre jevne toner har ingen takt, og det skal stå', await side.textContent('#taktinfo'));
+    krev(await side.$$eval('#stiler .flis', bs => bs.length) === 9, 'åtte stiler og «ingen stil»');
+    await side.click('.valgbrikke[data-id="ingen"]');
+    await side.click('.stilflis[data-id="rock"]');
+    await ventPaaLyd(side);
+    const rockUten = await maal(side);
+    krev(Math.abs(rockUten.lydLengde - 4) < 0.15, 'uten takt i opptaket står tempoet', rockUten.lydLengde);
+    krev(rockUten.takt.tydelig && oktavlik(rockUten.takt.bpm, 120, 0.02), 'og trommene går i rockens 120 BPM', rockUten.takt.bpm);
+    krev(await side.getAttribute('.stilflis[data-id="rock"]', 'aria-pressed') === 'true', 'rock-flisen lyser');
+    await side.click('.stilflis[data-id="ingenstil"]');
+    const ingenTrommer = await maal(side);
+    krev(!ingenTrommer.takt.tydelig, '«Ingen stil» tar bort trommene igjen', ingenTrommer.takt.sikkerhet);
+
+    bolk('Stil på et opptak med takt');
+    await side.setInputFiles('#fil', { name: 'klikk-100.wav', mimeType: 'audio/wav', buffer: klikk100() });
+    await side.waitForFunction(() => /ca\. 100 slag/.test(document.getElementById('taktinfo').textContent), null, { timeout: 30000 });
+    krev(true, 'klikk på 100 BPM skal finnes som ca. 100');
+    await side.click('.stilflis[data-id="samba"]');
+    await ventPaaLyd(side);
+    krev((await side.textContent('#g-tempo .gliderboks')).includes('100 %'), 'samba (100) på et stykke i 100 skal la tempoet stå', await side.textContent('#g-tempo .gliderboks'));
+    await side.click('.stilflis[data-id="rock"]');
+    await ventPaaLyd(side);
+    krev((await side.textContent('#g-tempo .gliderboks')).includes('120 %'), 'rock (120) skal skru tempoet til 120 %');
+    const rock = await maal(side);
+    krev(Math.abs(rock.lydLengde - 8 / 1.2) < 0.35, '8 s i 100 BPM blir 6,7 s i 120', rock.lydLengde);
+    krev(rock.takt.tydelig && oktavlik(rock.takt.bpm, 120, 0.02), 'den nye versjonen går i 120 BPM', rock.takt.bpm);
+    // Klikkene lå 0,25 s inn, hver 0,6 s; i 120 BPM blir det 0,208 s + n · 0,5 s.
+    // Trommene skal ligge oppå dem, ikke mellom.
+    const periode = 60 / rock.takt.bpm;
+    const d = (((rock.takt.forsteSlag - 0.25 / 1.2) % periode) + periode) % periode;
+    krev(Math.min(d, periode - d) < 0.04, 'trommene skal slå sammen med klikkene', (Math.min(d, periode - d) * 1000).toFixed(0) + ' ms');
+    krev((await side.$eval('#versjonsnavn', e => e.value)) === 'klikk-100 – Rock', 'navnet sier stilen', await side.$eval('#versjonsnavn', e => e.value));
+    await side.click('.stilflis[data-id="hiphop"]');
+    await ventPaaLyd(side);
+    krev((await side.textContent('#g-tempo .gliderboks')).includes('90 %'), 'hip hop (90) skal skru tempoet til 90 %');
+    await side.click('.valgbrikke[data-id="robot"]');
+    krev(await side.getAttribute('.stilflis[data-id="hiphop"]', 'aria-pressed') === 'true', 'en karakter skal ikke ta bort stilen');
+    await side.click('#spill');
+    await side.waitForTimeout(600);
+    krev((await side.textContent('#spill')).includes('Pause'), 'avspilling med trommer skal gå');
+    await settGlider(side, 'trommer', 0);
+    await side.waitForTimeout(200);
+    await settGlider(side, 'trommer', 0.8);
+    await side.waitForTimeout(200);
+    krev((await side.textContent('#spill')).includes('Pause'), 'og tåle at trommene skrus av og på');
+    await side.click('#spill');
+    await side.click('.stilflis[data-id="ingenstil"]');
+    krev((await side.textContent('#g-tempo .gliderboks')).includes('100 %'), '«Ingen stil» setter tempoet tilbake');
+
     bolk('Testbenken tåler versjonene');
     await side.goto(`http://127.0.0.1:${PORT}/lydloft/testbenk.html`);
     await side.waitForSelector('#liste li');
-    krev((await side.locator('#liste li').first().innerText()).includes('Ny versjon fra verkstedet'), 'testbenken viser versjonen med riktig navn på kilden');
+    krev((await side.locator('#liste').innerText()).includes('Ny versjon fra verkstedet'), 'testbenken viser versjonen med riktig navn på kilden');
 
     bolk('Konsollen');
     krev(konsoll.length === 0, 'ingen feil i konsollen', konsoll);

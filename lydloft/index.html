@@ -9,7 +9,7 @@
 <meta name="color-scheme" content="dark">
 <!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
      index.html kan ellers stå med ti minutter gammel CSS og JS. -->
-<link rel="stylesheet" href="verksted.css?v=5">
+<link rel="stylesheet" href="verksted.css?v=6">
 </head>
 <body>
 
@@ -50,6 +50,12 @@
   <section class="blokk" aria-labelledby="t-magi">
     <h2 id="t-magi">Gjør den om til …</h2>
     <div class="fliser" id="karakterer"></div>
+  </section>
+
+  <section class="blokk" aria-labelledby="t-stil">
+    <h2 id="t-stil">Stil og takt</h2>
+    <p class="taktinfo" id="taktinfo" aria-live="polite"></p>
+    <div class="fliser" id="stiler"></div>
   </section>
 
   <section class="blokk" aria-labelledby="t-fart">
@@ -111,15 +117,17 @@
 
 <footer class="bunn">
   <label class="bryter"><input type="checkbox" id="sloyfe" checked> Spill på repeat</label>
-  <span>Lydløft · versjon 5 · <a href="testbenk.html">Testbenk</a></span>
+  <span>Lydløft · versjon 6 · <a href="testbenk.html">Testbenk</a></span>
 </footer>
 
-<script src="js/dsp.js?v=5"></script>
-<script src="js/lager.js?v=5"></script>
-<script src="js/testsignal.js?v=5"></script>
-<script src="js/opptak.js?v=5"></script>
-<script src="js/effekter.js?v=5"></script>
-<script src="js/ikoner.js?v=5"></script>
-<script src="js/verksted.js?v=5"></script>
+<script src="js/dsp.js?v=6"></script>
+<script src="js/lager.js?v=6"></script>
+<script src="js/testsignal.js?v=6"></script>
+<script src="js/opptak.js?v=6"></script>
+<script src="js/effekter.js?v=6"></script>
+<script src="js/takt.js?v=6"></script>
+<script src="js/trommer.js?v=6"></script>
+<script src="js/ikoner.js?v=6"></script>
+<script src="js/verksted.js?v=6"></script>
 </body>
 </html>
