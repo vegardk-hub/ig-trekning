@@ -32,7 +32,7 @@ var LydEffekter = (function () {
   // Karakterene er utgangspunkter, ikke låste valg: de setter glidebryterne,
   // og alt kan skrus videre derfra.
   var KARAKTERER = [
-    { id: 'ingen', navn: 'Ingen', verdier: {} },
+    { id: 'ingen', navn: 'Vanlig', verdier: {} },
     { id: 'bassboost', navn: 'Mer bass', verdier: { bass: 10, diskant: 3 } },
     { id: 'radio', navn: 'Gammel radio', verdier: { lavkutt: 300, toppkutt: 4500, mellom: 4, forvrengning: 0.25, knitring: 0.15 } },
     { id: 'telefon', navn: 'Telefon', verdier: { lavkutt: 400, toppkutt: 3400, mellom: 6, forvrengning: 0.15 } },
@@ -43,13 +43,13 @@ var LydEffekter = (function () {
     { id: 'undervann', navn: 'Under vann', verdier: { toppkutt: 600, bass: 6, chorus: 0.6, chorusfart: 0.3, romklang: 0.3 } },
     { id: 'robot', navn: 'Robot', verdier: { robot: 0.8, toppkutt: 8000, ekko: 0.2, ekkotid: 0.08 } },
     { id: 'romskip', navn: 'Romskip', verdier: { chorus: 0.7, chorusfart: 2.5, ekko: 0.4, ekkotid: 0.38, romklang: 0.4, romstorrelse: 3 } },
-    { id: 'gitar', navn: 'Gitarforsterker', verdier: { forvrengning: 0.7, lavkutt: 90, toppkutt: 6000, mellom: 5, romklang: 0.15 } },
+    { id: 'gitar', navn: 'Elgitar', verdier: { forvrengning: 0.7, lavkutt: 90, toppkutt: 6000, mellom: 5, romklang: 0.15 } },
     { id: '8bit', navn: '8-bit', verdier: { lofi: 0.75, toppkutt: 7000 } },
-    { id: 'naborom', navn: 'Fra naborommet', verdier: { toppkutt: 1200, romklang: 0.4, volum: -6 } }
+    { id: 'naborom', navn: 'Naborommet', verdier: { toppkutt: 1200, romklang: 0.4, volum: -6 } }
   ];
 
   var FART = [
-    { id: 'normal', navn: 'Normal', verdier: { tempo: 1, halvtoner: 0 } },
+    { id: 'normal', navn: 'Vanlig fart', verdier: { tempo: 1, halvtoner: 0 } },
     { id: 'ekorn', navn: 'Ekorn', verdier: { tempo: 1.15, halvtoner: 7 } },
     { id: 'troll', navn: 'Troll', verdier: { tempo: 0.9, halvtoner: -7 } },
     { id: 'sakte', navn: 'Sakte film', verdier: { tempo: 0.6, halvtoner: 0 } },

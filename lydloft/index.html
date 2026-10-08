@@ -3,104 +3,123 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lydløft – lydverksted</title>
-<meta name="description" content="Ta opp eller last opp lyd, og lag nye versjoner: bass og diskant, tempo og tonehøyde, romklang, ekko og karakterer som radio, kassett og robot.">
-<meta name="theme-color" content="#1f4e5f">
+<title>Lydløft</title>
+<meta name="description" content="Ta opp lyd og gjør den om: robot, vinyl, kirke, ekorn, troll og mye mer.">
+<meta name="theme-color" content="#0a0618">
+<meta name="color-scheme" content="dark">
 <!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
      index.html kan ellers stå med ti minutter gammel CSS og JS. -->
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="verksted.css?v=5">
 </head>
 <body>
 
-<header class="topp">
-  <h1>Lydløft <span class="merke">verksted</span></h1>
-  <p>Ta opp noe, og lag nye versjoner av det: mer bass, et annet tempo, en kirke rundt det,
-    eller en gammel radio. Alt skjer her i nettleseren. <a href="testbenk.html">Til testbenken</a></p>
+<header class="logo">
+  <h1><span class="l1">Lyd</span><span class="l2">løft</span></h1>
+  <p>Ta opp en lyd. Gjør den om.</p>
 </header>
 
 <main>
 
-<section class="kort" aria-labelledby="t-lyd">
-  <h2 id="t-lyd">1 · Velg lyd</h2>
-  <div class="opptaksrad">
-    <button type="button" id="opptak" class="opptaksknapp"><span class="prikk"></span><span id="opptakstekst">Ta opp</span></button>
+<!-- Opptak: én stor knapp. Opplasting er en liten knapp ved siden av. -->
+<section class="scene" aria-label="Ta opp">
+  <div class="opptakshjul">
+    <button type="button" id="opptak" class="opptaksknapp" aria-label="Ta opp">
+      <span id="opptaksikon"></span>
+    </button>
+    <span id="opptakstekst" class="opptakstekst">Ta opp</span>
+  </div>
+  <div class="opptaksinfo">
     <div class="maaler" aria-hidden="true"><div id="maalerfyll"></div></div>
     <span id="tid" class="tid">0:00</span>
-  </div>
-  <div class="rad">
-    <label class="valg bred">Fra biblioteket
-      <select id="bibliotek"><option value="">Velg et opptak …</option></select>
-    </label>
-    <label class="knapp fil selvstendig">Last opp lydfil
+    <label class="rundknapp" id="lastOppKnapp" title="Last opp en lydfil">
+      <span id="lastOppIkon"></span><span>Last opp</span>
       <input type="file" id="fil" accept="audio/*,.wav,.m4a,.caf,.mp3,.aif,.aiff,.flac">
     </label>
   </div>
   <p class="status" id="status" role="status" aria-live="polite"></p>
 </section>
 
+<section class="blokk" aria-labelledby="t-lyder">
+  <h2 id="t-lyder">Mine lyder</h2>
+  <p class="tomt" id="tomtBibliotek">Ingen lyder ennå. Trykk på den store knappen og ta opp noe!</p>
+  <div class="lyder" id="lyder" role="list"></div>
+</section>
+
 <div id="verksted" hidden>
 
-<section class="kort spiller" aria-label="Avspilling">
-  <div class="spillrad">
-    <button type="button" id="spill" class="knapp primaer stor">▶ Spill</button>
-    <button type="button" id="original" class="knapp" aria-pressed="false">Hør originalen</button>
-    <label class="bryter liten"><input type="checkbox" id="sloyfe" checked> Gjenta</label>
-  </div>
-  <input type="range" id="posisjon" min="0" max="1000" value="0" aria-label="Posisjon">
-  <div class="tidsrad"><span id="naa">0:00</span><span id="kildenavn"></span><span id="lengde">0:00</span></div>
-  <p class="status" id="strekkstatus" aria-live="polite"></p>
-</section>
+  <section class="blokk" aria-labelledby="t-magi">
+    <h2 id="t-magi">Gjør den om til …</h2>
+    <div class="fliser" id="karakterer"></div>
+  </section>
 
-<section class="kort" aria-labelledby="t-karakter">
-  <h2 id="t-karakter">2 · Karakter</h2>
-  <div class="brikkerad" id="karakterer"></div>
-</section>
+  <section class="blokk" aria-labelledby="t-fart">
+    <h2 id="t-fart">Fart og stemme</h2>
+    <div class="fliser" id="fart"></div>
+  </section>
 
-<section class="kort" aria-labelledby="t-tone">
-  <h2 id="t-tone">3 · Tone</h2>
-  <div class="glidere" id="g-tone"></div>
-</section>
+  <section class="blokk">
+    <button type="button" id="egneKnapp" class="egneknapp" aria-expanded="false" aria-controls="egne">
+      <span id="egneIkon"></span><span>Egne innstillinger</span><span class="pil" aria-hidden="true">▾</span>
+    </button>
+    <div id="egne" class="egne" hidden>
+      <h3 class="g-tone">Tone</h3>
+      <div class="glidere" id="g-tone"></div>
+      <h3 class="g-tempo">Tempo og tonehøyde</h3>
+      <div class="glidere" id="g-tempo"></div>
+      <h3 class="g-effekter">Effekter</h3>
+      <div class="glidere" id="g-effekter"></div>
+      <button type="button" id="nullstill" class="knapp"><span id="nullstillIkon"></span>Nullstill alt</button>
+      <p class="hint">Dobbelttrykk på et navn for å sette det tilbake.</p>
+    </div>
+  </section>
 
-<section class="kort" aria-labelledby="t-tempo">
-  <h2 id="t-tempo">4 · Tempo og tonehøyde</h2>
-  <div class="brikkerad" id="fart"></div>
-  <div class="glidere" id="g-tempo"></div>
-  <label class="bryter"><input type="checkbox" id="baklengs"> Spill baklengs</label>
-</section>
-
-<section class="kort" aria-labelledby="t-effekter">
-  <h2 id="t-effekter">5 · Effekter</h2>
-  <div class="glidere" id="g-effekter"></div>
-</section>
-
-<section class="kort" aria-labelledby="t-lagre">
-  <h2 id="t-lagre">6 · Lagre</h2>
-  <div class="rad">
-    <label class="valg bred">Navn på den nye versjonen
-      <input id="versjonsnavn" type="text" autocomplete="off">
-    </label>
-  </div>
-  <div class="knapper">
-    <button type="button" id="lagre" class="knapp primaer">Lagre som ny versjon</button>
-    <button type="button" id="lastNed" class="knapp">Last ned WAV</button>
-    <button type="button" id="nullstill" class="knapp">Nullstill alt</button>
-  </div>
-  <p class="forklaring">Versjonen lagres i biblioteket her i nettleseren, med samme lydstyrke som
-    strømmetjenestene (−14 LUFS). Den kan velges som utgangspunkt for en ny runde.</p>
-  <p class="status" id="lagrestatus" aria-live="polite"></p>
-</section>
+  <section class="blokk lagreblokk" aria-labelledby="t-lagre">
+    <h2 id="t-lagre">Lagre</h2>
+    <input id="versjonsnavn" class="navnefelt" type="text" autocomplete="off" aria-label="Navn på den nye lyden">
+    <div class="knapper">
+      <button type="button" id="lagre" class="knapp stor rosa"><span id="lagreIkon"></span><span>Lagre</span></button>
+      <button type="button" id="lastNed" class="knapp stor cyan"><span id="lastNedIkon"></span><span>Last ned</span></button>
+    </div>
+    <p class="status" id="lagrestatus" aria-live="polite"></p>
+  </section>
 
 </div>
 
 </main>
 
-<footer class="bunn">Lydløft · verksted · versjon 4 · alt lagres bare i denne nettleseren</footer>
+<!-- Spilleren står fast nederst, så den kan nås mens man blar i flisene. -->
+<div class="spiller" id="spiller" hidden>
+  <button type="button" id="spill" class="spillknapp" aria-label="Spill">
+    <span id="spillikon"></span><span class="skjult" id="spilltekst">Spill</span>
+  </button>
+  <div class="spillmidt">
+    <div class="spilltopp">
+      <span class="utjevner" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span id="kildenavn" class="kildenavn"></span>
+      <span class="tider"><span id="naa">0:00</span> / <span id="lengde">0:00</span></span>
+    </div>
+    <input type="range" id="posisjon" min="0" max="1000" value="0" aria-label="Hvor i lyden">
+    <p class="status liten" id="strekkstatus" aria-live="polite"></p>
+  </div>
+  <div class="forEtter" role="group" aria-label="Hør før eller etter">
+    <button type="button" id="for" aria-pressed="false">Før</button>
+    <button type="button" id="etter" aria-pressed="true">Etter</button>
+  </div>
+</div>
 
-<script src="js/dsp.js?v=4"></script>
-<script src="js/lager.js?v=4"></script>
-<script src="js/testsignal.js?v=4"></script>
-<script src="js/opptak.js?v=4"></script>
-<script src="js/effekter.js?v=4"></script>
-<script src="js/verksted.js?v=4"></script>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<footer class="bunn">
+  <label class="bryter"><input type="checkbox" id="sloyfe" checked> Spill på repeat</label>
+  <span>Lydløft · versjon 5 · <a href="testbenk.html">Testbenk</a></span>
+</footer>
+
+<script src="js/dsp.js?v=5"></script>
+<script src="js/lager.js?v=5"></script>
+<script src="js/testsignal.js?v=5"></script>
+<script src="js/opptak.js?v=5"></script>
+<script src="js/effekter.js?v=5"></script>
+<script src="js/ikoner.js?v=5"></script>
+<script src="js/verksted.js?v=5"></script>
 </body>
 </html>

@@ -129,7 +129,7 @@ var LydOpptak = (function () {
   function startRaa(valg) {
     var ctx = lydkontekst();
     if (!workletLastet) {
-      workletLastet = ctx.audioWorklet.addModule('js/opptaker-worklet.js?v=4')
+      workletLastet = ctx.audioWorklet.addModule('js/opptaker-worklet.js?v=5')
         .catch(function (e) { workletLastet = null; throw e; });
     }
     return Promise.all([workletLastet, hentStrom(valg.behandling, valg.enhet)]).then(function (svar) {

@@ -109,7 +109,16 @@ async function ventPaaLyd(side) {
     await side.setInputFiles('#fil', { name: 'tre-toner.wav', mimeType: 'audio/wav', buffer: treToner() });
     await side.waitForSelector('#verksted:not([hidden])', { timeout: 30000 });
     await ventPaaLyd(side);
-    krev((await side.$eval('#bibliotek', e => e.selectedOptions[0].textContent)).includes('tre-toner'), 'fila skal ligge i biblioteket og være valgt');
+    krev((await side.textContent('#lyder .lydflis[aria-pressed="true"]')).includes('tre-toner'), 'fila skal ligge i Mine lyder og være valgt');
+    krev(await side.locator('#spiller').isVisible(), 'spillerlinja skal komme fram når en lyd er valgt');
+    krev(await side.locator('#egne').isHidden(), 'egne innstillinger er lukket til de bes om');
+    const fliser = await side.$$eval('#karakterer .flis', bs => bs.map(b => ({ svg: !!b.querySelector('svg'), tekst: b.textContent })));
+    krev(fliser.length === 14 && fliser.every(f => f.svg && f.tekst.length > 1), 'hver karakter har bilde og navn', fliser.length);
+    krev(await side.$$eval('#fart .flis', bs => bs.length) === 6, 'fem farter og baklengs');
+    await side.screenshot({ path: path.join(require('os').tmpdir(), 'lydloft-forside.png'), fullPage: true });
+    await side.click('#egneKnapp');
+    krev(await side.locator('#g-bass').isVisible(), 'knappen skal vise glidebryterne');
+    krev(await side.getAttribute('#egneKnapp', 'aria-expanded') === 'true', 'og si at panelet er åpent');
     krev((await side.$eval('#versjonsnavn', e => e.value)) === 'tre-toner – kopi', 'navnet foreslås fra kilden', await side.$eval('#versjonsnavn', e => e.value));
     const bredde = await side.evaluate(() => document.documentElement.scrollWidth);
     krev(bredde <= 390, 'ingen vannrett rulling på en telefon', bredde);
@@ -160,11 +169,12 @@ async function ventPaaLyd(side) {
     krev(ekorn.kHz1498 > 10, 'sju halvtoner opp skal flytte 1 kHz til 1,5 kHz', ekorn.kHz1498);
     await side.click('.valgbrikke[data-id="normal"]');
     await ventPaaLyd(side);
-    await side.check('#baklengs');
+    await side.click('#baklengs');
+    krev(await side.getAttribute('#baklengs', 'aria-pressed') === 'true', 'baklengs-flisen skal lyse når den er på');
     await ventPaaLyd(side);
     const bak = await maal(side);
     krev(Math.abs(bak.lydLengde - 4) < 0.1 && !bak.nan, 'baklengs skal gi samme lengde', bak.lydLengde);
-    await side.uncheck('#baklengs');
+    await side.click('#baklengs');
     await ventPaaLyd(side);
 
     bolk('Avspilling');
@@ -174,10 +184,11 @@ async function ventPaaLyd(side) {
     const pos = await side.$eval('#posisjon', e => Number(e.value));
     krev(pos > 0, 'posisjonen skal gå framover mens det spiller', pos);
     await settGlider(side, 'romklang', 0.6);
-    await side.click('#original');
+    await side.click('#for');
     await side.waitForTimeout(300);
-    krev((await side.textContent('#original')).includes('nye versjonen'), 'A/B-knappen skal bytte til originalen');
-    await side.click('#original');
+    krev(await side.getAttribute('#for', 'aria-pressed') === 'true' && await side.getAttribute('#etter', 'aria-pressed') === 'false', 'Før skal bytte til originalen');
+    krev((await side.textContent('#spill')).includes('Pause'), 'og lyden skal fortsette');
+    await side.click('#etter');
     await side.click('#spill');
     krev((await side.textContent('#spill')).includes('Spill'), 'pause skal stoppe');
 
@@ -203,14 +214,15 @@ async function ventPaaLyd(side) {
     bolk('Lagre');
     await side.click('.valgbrikke[data-id="kirke"]');
     await side.click('#lagre');
-    await side.waitForFunction(() => /er lagret/.test(document.getElementById('lagrestatus').textContent), null, { timeout: 30000 });
+    await side.waitForFunction(() => /Mine lyder/.test(document.getElementById('lagrestatus').textContent), null, { timeout: 30000 });
     const lagret = await side.evaluate(async () => (await LydLager.alle())[0]);
     krev(lagret.kilde === 'versjon' && lagret.navn === 'tre-toner – Kirke', 'versjonen skal ligge i biblioteket med navnet', [lagret.kilde, lagret.navn]);
     krev(lagret.info.oppskrift && lagret.info.oppskrift.romklang === 0.85, 'oppskriften skal lagres med', lagret.info.oppskrift);
     krev(lagret.varighet > 4 + 3, 'kirka skal ringe ut etter at lyden er ferdig', lagret.varighet);
     krev(lagret.analyse && lagret.analyse.grunn && Math.abs(lagret.analyse.grunn.lufs + 14) < 0.5, 'og være målt til −14 LUFS', lagret.analyse && lagret.analyse.grunn && lagret.analyse.grunn.lufs);
-    const valg = await side.$$eval('#bibliotek option', os => os.map(o => o.textContent));
-    krev(valg.some(t => /Kirke · .* · versjon/.test(t)), 'og vises i lista', valg);
+    const valg = await side.$$eval('#lyder .lydflis', os => os.map(o => o.textContent));
+    krev(valg.some(t => /Kirke.*ny versjon/.test(t)), 'og vises i Mine lyder', valg);
+    krev(await side.locator('#toast').isVisible(), 'en melding skal si at den er lagret');
     await side.screenshot({ path: path.join(require('os').tmpdir(), 'lydloft-verksted.png'), fullPage: true });
 
     bolk('Testbenken tåler versjonene');

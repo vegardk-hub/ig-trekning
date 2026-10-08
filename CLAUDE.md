@@ -602,6 +602,10 @@ internt bruk. Rytme og takt utover tempo (swing, vals) er ikke laget.
 - **Posisjonen er en andel, ikke sekunder**, så den står stille når tempoet
   endrer lengden.
 - **En karakter nullstiller effektene, men ikke tempo og tonehøyde.**
+- **Verkstedet er for barn**: bildefliser i neon på mørk bunn, ikoner tegnet
+  i `ikoner.js` (ikke emoji, de kan ikke farges og ser ulike ut fra iPhone til
+  Windows), og glidebryterne gjemt bak «Egne innstillinger». Legger du til en
+  karakter, trenger den et ikon med samme id.
 - **Alt i lydkonteksten må kunne bygges på nytt.** iOS kan la konteksten stå
   i `interrupted` etter at en annen app har spilt lyd, og spill-knappen bytter
   den da ut. Kjeden, bufferne og AudioWorklet-modulen hører til én kontekst;

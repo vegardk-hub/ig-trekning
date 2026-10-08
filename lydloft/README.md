@@ -30,6 +30,24 @@ Pages, og nummeret står i HTML, i arbeiderne (`importScripts`) og i
 | Effekter | romklang og romstørrelse, ekko og ekkotid, forvrengning, chorus/vibrato, lo-fi, knitring, robot | `effekter.js` |
 | Lagre | ny versjon i biblioteket med oppskriften, eller WAV, på −14 LUFS og maks −1 dBTP | `verksted.js` |
 
+**Utseendet er for barn.** Store bildefliser, få ord, neon på mørk bunn.
+Glidebryterne ligger bak «Egne innstillinger» under flisene, så et barn ser
+fliser og en stor opptaksknapp, mens en voksen kan åpne alt. Om panelet er
+åpent, huskes per nettleser (`localStorage`, med `try`, for det er bare en
+bekvemmelighet).
+
+- **Ikonene er tegnet (`ikoner.js`), ikke emoji.** Emoji ser forskjellige ut på
+  iPhone og Windows og kan ikke farges; strektegninger i `currentColor` tar
+  flisens neonfarge og gløden følger med.
+- **Neon bare på mørk bunn.** Siden er mørk uansett systemvalg. Testbenken
+  har sitt eget rolige stilark (`styles.css`); verkstedet bruker
+  `verksted.css` og deler ingenting med den.
+- **Ingen egenreferanse i CSS-variabler.** `--farge: var(--farge, …)` på en
+  glidebryter gjør variabelen ugyldig i stedet for å arve, og sporet
+  forsvant på alle bryterne unntatt én gruppe. Fargen arves fra gruppen.
+- **Spillerlinja står fast nederst** og setter `--spillerhoyde`, så siden får
+  like mye luft under seg og den siste flisen ikke havner bak linja.
+
 Tre ting som ser ut som detaljer og har en grunn:
 
 - **Det du hører, er det som lagres.** Forhåndslyttingen og lagringen bygger

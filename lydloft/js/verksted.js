@@ -86,7 +86,7 @@
 
   var strekker = null, strekkVent = {}, strekkNr = 0, sisteStrekk = 0;
   try {
-    strekker = new Worker('js/strekk-arbeider.js?v=4');
+    strekker = new Worker('js/strekk-arbeider.js?v=5');
     strekker.onmessage = function (e) {
       var v = strekkVent[e.data.id];
       delete strekkVent[e.data.id];
@@ -147,6 +147,13 @@
   /* ----------------------------------------------------------- avspilling */
 
   function varighetUt() { return lyd ? lyd.kanaler[0].length / lyd.fs / lyd.p : 0; }
+  function visSpiller(pa) {
+    $('spillikon').innerHTML = LydIkoner.svg(pa ? 'pause' : 'spill');
+    $('spilltekst').textContent = pa ? 'Pause' : 'Spill';
+    $('spill').setAttribute('aria-label', pa ? 'Pause' : 'Spill');
+    document.body.classList.toggle('spiller-pa', pa);
+  }
+
   function oppdaterLengde() { $('lengde').textContent = tid(horOriginal && kilde ? kilde.kanaler[0].length / kilde.fs : varighetUt()); }
 
   function stopp() {
@@ -157,7 +164,7 @@
     s.node.onended = null;
     try { s.node.stop(); } catch (e) { /* allerede stoppet */ }
     s.node.disconnect();
-    $('spill').textContent = '▶ Spill';
+    visSpiller(false);
   }
 
   function naaAndel() {
@@ -193,8 +200,8 @@
     }
     node.start(0, bufAndel * buffer.duration);
     spiller = { node: node, start: c.currentTime, offset: a, fart: kildeLyd.p, bufferSek: buffer.duration, original: original };
-    node.onended = function () { if (spiller && spiller.node === node) { spiller = null; andelNaa = 0; $('spill').textContent = '▶ Spill'; } };
-    $('spill').textContent = '❚❚ Pause';
+    node.onended = function () { if (spiller && spiller.node === node) { spiller = null; andelNaa = 0; visSpiller(false); } };
+    visSpiller(true);
   }
 
   var IOS_HOLDER = 'iOS slipper ikke til lyden. Stopp musikk eller video som spiller i andre apper, og trykk spill igjen.';
@@ -247,12 +254,14 @@
       $('g-' + g.gruppe).appendChild(boks);
       inputs[g.navn] = { inp: inp, vis: verdi, g: g };
     });
-    $('baklengs').addEventListener('change', function () { settVerdi('baklengs', this.checked); });
   }
 
   function visVerdi(navn) {
     var x = inputs[navn];
-    if (!x) { if (navn === 'baklengs') $('baklengs').checked = !!verdier.baklengs; return; }
+    if (!x) {
+      if (navn === 'baklengs' && $('baklengs')) $('baklengs').setAttribute('aria-pressed', verdier.baklengs ? 'true' : 'false');
+      return;
+    }
     x.vis.textContent = x.g.vis(verdier[navn]);
   }
 
@@ -293,25 +302,41 @@
     });
   }
 
+  // Hver flis får sin neonfarge. Rekkefølgen er valgt så naboer aldri har
+  // samme farge i et rutenett på tre eller fire kolonner.
+  var NEON = ['--rosa', '--cyan', '--lime', '--gul', '--oransje', '--lilla', '--blaa', '--rod'];
+  function neon(i) { return 'var(' + NEON[i % NEON.length] + ')'; }
+
+  function flis(id, navn, ikon, farge, vedTrykk) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'flis valgbrikke';
+    b.dataset.id = id;
+    b.style.setProperty('--farge', farge);
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = LydIkoner.svg(ikon) + '<span></span>';
+    b.lastChild.textContent = navn;
+    b.addEventListener('click', vedTrykk);
+    return b;
+  }
+
   function lagBrikker() {
-    E.KARAKTERER.forEach(function (k) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.className = 'valgbrikke'; b.textContent = k.navn; b.dataset.id = k.id;
-      b.addEventListener('click', function () {
+    E.KARAKTERER.forEach(function (k, i) {
+      $('karakterer').appendChild(flis(k.id, k.navn, k.id, neon(i), function () {
         // En karakter starter fra null, men rører ikke tempo og tonehøyde.
         var nye = {};
         Object.keys(E.STANDARD).forEach(function (n) { if (!LYDENDRENDE[n]) nye[n] = E.STANDARD[n]; });
         Object.keys(k.verdier).forEach(function (n) { nye[n] = k.verdier[n]; });
         settAlle(nye);
-      });
-      $('karakterer').appendChild(b);
+      }));
     });
-    E.FART.forEach(function (f) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.className = 'valgbrikke'; b.textContent = f.navn; b.dataset.id = f.id;
-      b.addEventListener('click', function () { settAlle(kopi(f.verdier)); });
-      $('fart').appendChild(b);
+    E.FART.forEach(function (f, i) {
+      $('fart').appendChild(flis(f.id, f.navn, f.id, neon(i + 3), function () { settAlle(kopi(f.verdier)); }));
     });
+    var bak = flis('baklengs', 'Baklengs', 'baklengs', neon(2), function () { settVerdi('baklengs', !verdier.baklengs); });
+    bak.id = 'baklengs';
+    bak.classList.remove('valgbrikke');
+    $('fart').appendChild(bak);
   }
 
   function markerValg() {
@@ -345,19 +370,46 @@
 
   /* ------------------------------------------------------------ biblioteket */
 
-  function lastBibliotek(velgId) {
+  var KILDEUTSEENDE = {
+    raa: { ikon: 'mikrofon', farge: 'var(--rosa)' },
+    fil: { ikon: 'lastOpp', farge: 'var(--lilla)' },
+    versjon: { ikon: 'stjerne', farge: 'var(--lime)' }
+  };
+
+  function lastBibliotek() {
     return LydLager.alle().then(function (l) {
       biblioteket = l;
-      var sel = $('bibliotek');
-      while (sel.options.length > 1) sel.remove(1);
+      var rad = $('lyder');
+      rad.innerHTML = '';
+      $('tomtBibliotek').hidden = l.length > 0;
       l.forEach(function (m) {
-        var o = document.createElement('option');
-        o.value = m.id;
-        o.textContent = m.navn + ' · ' + tid(m.varighet) + (m.kilde === 'versjon' ? ' · versjon' : '');
-        sel.appendChild(o);
+        var u = KILDEUTSEENDE[m.kilde] || { ikon: 'note', farge: 'var(--cyan)' };
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'lydflis';
+        b.setAttribute('role', 'listitem');
+        b.dataset.id = m.id;
+        b.style.setProperty('--farge', u.farge);
+        b.setAttribute('aria-pressed', kilde && kilde.id === m.id ? 'true' : 'false');
+        b.innerHTML = LydIkoner.svg(u.ikon) + '<span class="navn"></span><span class="lengde"></span>';
+        b.querySelector('.navn').textContent = m.navn;
+        b.querySelector('.lengde').textContent = tid(m.varighet) + (m.kilde === 'versjon' ? ' · ny versjon' : '');
+        b.addEventListener('click', function () { velg(m.id); });
+        rad.appendChild(b);
       });
-      if (velgId) sel.value = velgId;
     }).catch(function (e) { status('status', 'Lagringen i nettleseren virker ikke: ' + e.message, true); });
+  }
+
+  function markerLyd() {
+    $('lyder').querySelectorAll('.lydflis').forEach(function (b) {
+      b.setAttribute('aria-pressed', kilde && kilde.id === b.dataset.id ? 'true' : 'false');
+    });
+  }
+
+  // Spilleren står fast nederst; siden får like mye luft under seg.
+  function visSpillerlinje() {
+    $('spiller').hidden = false;
+    document.documentElement.style.setProperty('--spillerhoyde', $('spiller').offsetHeight + 'px');
   }
 
   function velg(id) {
@@ -372,9 +424,11 @@
       $('posisjon').value = 0;
       $('kildenavn').textContent = m.navn;
       $('verksted').hidden = false;
+      visSpillerlinje();
+      markerLyd();
       navnEndretSelv = false;
       foreslaNavn();
-      status('status', m.navn + ' er klar. Trykk spill og skru.');
+      status('status', '');
       return lagLyd(true);
     }).catch(function (e) { status('status', 'Kunne ikke hente lyden: ' + e.message, true); });
   }
@@ -384,7 +438,7 @@
   var analysator = null;
   function grunnAnalyse(kanaler, fs) {
     if (!analysator) {
-      try { analysator = new Worker('js/analyse-arbeider.js?v=4'); } catch (e) { analysator = null; }
+      try { analysator = new Worker('js/analyse-arbeider.js?v=5'); } catch (e) { analysator = null; }
     }
     if (!analysator) return Promise.resolve(null);
     return new Promise(function (ok) {
@@ -438,6 +492,8 @@
         if (s >= 240) stoppOpptak();
       }, 200) };
       $('opptak').classList.add('aktiv');
+      $('opptaksikon').innerHTML = LydIkoner.svg('stopp');
+      $('opptak').setAttribute('aria-label', 'Stopp opptaket');
       $('opptakstekst').textContent = 'Stopp';
       status('status', 'Tar opp …');
     }).catch(function (e) {
@@ -451,6 +507,8 @@
     aktivtOpptak = null;
     clearInterval(a.tikk);
     $('opptak').classList.remove('aktiv');
+    $('opptaksikon').innerHTML = LydIkoner.svg('mikrofon');
+    $('opptak').setAttribute('aria-label', 'Ta opp');
     $('opptakstekst').textContent = 'Ta opp';
     maaler(0);
     status('status', 'Lagrer opptaket …');
@@ -502,9 +560,19 @@
   }
 
   function nar(knapp, tekst, arbeid) {
-    var gammel = knapp.textContent;
-    knapp.disabled = true; knapp.textContent = tekst;
-    return arbeid().finally(function () { knapp.disabled = false; knapp.textContent = gammel; });
+    var etikett = knapp.querySelector('span:last-child') || knapp;
+    var gammel = etikett.textContent;
+    knapp.disabled = true; etikett.textContent = tekst;
+    return arbeid().finally(function () { knapp.disabled = false; etikett.textContent = gammel; });
+  }
+
+  var toastTimer = null;
+  function toast(tekst) {
+    var t = $('toast');
+    t.textContent = tekst;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
   }
 
   /* -------------------------------------------------------------- oppstart */
@@ -513,13 +581,27 @@
     lagGlidere();
     lagBrikker();
     settAlle(kopi(E.STANDARD));
+    [['opptaksikon', 'mikrofon'], ['lastOppIkon', 'lastOpp'], ['egneIkon', 'glidere'], ['nullstillIkon', 'nullstill'],
+     ['lagreIkon', 'stjerne'], ['lastNedIkon', 'lastNed']].forEach(function (p) { $(p[0]).innerHTML = LydIkoner.svg(p[1]); });
+    visSpiller(false);
+
+    // Egne innstillinger huskes per nettleser, men det er en bekvemmelighet:
+    // virker ikke lagringen, starter panelet bare lukket.
+    function visEgne(apen) {
+      $('egne').hidden = !apen;
+      $('egneKnapp').setAttribute('aria-expanded', apen ? 'true' : 'false');
+      try { localStorage.setItem('lydloft-egne', apen ? '1' : '0'); } catch (e) { /* privat modus */ }
+    }
+    var husket = false;
+    try { husket = localStorage.getItem('lydloft-egne') === '1'; } catch (e) { husket = false; }
+    visEgne(husket);
+    $('egneKnapp').addEventListener('click', function () { visEgne($('egne').hidden); });
 
     if (!LydOpptak.stottes()) {
       $('opptak').disabled = true;
       status('status', 'Mikrofonen er ikke tilgjengelig her (krever https). Opplasting og biblioteket virker.');
     }
     $('opptak').addEventListener('click', opptakKnapp);
-    $('bibliotek').addEventListener('change', function () { if (this.value) velg(this.value); });
     $('fil').addEventListener('change', function () {
       var fil = this.files && this.files[0];
       this.value = '';
@@ -529,7 +611,7 @@
       LydOpptak.lesFil(fil).then(function (res) {
         return lagreIBiblioteket(res, fil.name.replace(/\.[^.]+$/, ''), 'fil');
       }).then(function (meta) {
-        return lastBibliotek(meta.id).then(function () { return velg(meta.id); });
+        return lastBibliotek().then(function () { return velg(meta.id); });
       }).catch(function (e) { status('status', 'Kunne ikke lese fila: ' + (e && e.message || e), true); });
     });
 
@@ -543,13 +625,16 @@
       LydOpptak.friskKontekst();
       start(fra);
     });
-    $('original').addEventListener('click', function () {
-      horOriginal = !horOriginal;
-      this.setAttribute('aria-pressed', horOriginal ? 'true' : 'false');
-      this.textContent = horOriginal ? 'Hør den nye versjonen' : 'Hør originalen';
+    function forEtter(original) {
+      if (horOriginal === original) return;
+      horOriginal = original;
+      $('for').setAttribute('aria-pressed', original ? 'true' : 'false');
+      $('etter').setAttribute('aria-pressed', original ? 'false' : 'true');
       oppdaterLengde();
       if (spiller) start(naaAndel());
-    });
+    }
+    $('for').addEventListener('click', function () { forEtter(true); });
+    $('etter').addEventListener('click', function () { forEtter(false); });
     $('posisjon').addEventListener('input', function () {
       andelNaa = this.value / 1000;
       if (spiller) start(andelNaa);
@@ -568,8 +653,9 @@
           return lagreIBiblioteket({ kanaler: r.kanaler, fs: r.fs }, navn, 'versjon',
             { fra: kilde.navn, fraId: kilde.id, oppskrift: r.verdier });
         }).then(function (meta) {
-          status('lagrestatus', '«' + meta.navn + '» er lagret i biblioteket.');
-          return lastBibliotek(kilde.id);
+          status('lagrestatus', '«' + meta.navn + '» ligger nå i Mine lyder.');
+          toast('Lagret! ✦ ' + meta.navn);
+          return lastBibliotek();
         }).catch(function (e) { status('lagrestatus', 'Kunne ikke lagre: ' + e.message, true); });
       });
     });
