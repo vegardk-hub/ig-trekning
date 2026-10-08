@@ -215,3 +215,21 @@ analysen sier fra om akkurat den. `benk.js` går hele veien i Chromium med en
 stubbet mikrofon: rått opptak, MediaRecorder, filopplasting, sammenligning og
 «spill og ta opp her». Den tar rundt ett minutt.
 
+## Ikonet
+
+`ikon.svg` er kilden: stigende neonsøyler i verkstedets farger. PNG-ene
+(`ikon-180.png` til hjemskjermen på iPhone, `ikon-32.png`, `-192`, `-512`) er
+generert og skal ikke redigeres for hånd:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node lydloft/lag_ikon.js
+```
+
+De tegnes i nettleseren fordi gløden er et SVG-filter, og Pillow finnes ikke i
+skyøkta. SVG-en er et fullt kvadrat uten runde hjørner — iOS legger på sin egen
+maske.
+
+Det finnes med vilje ingen manifest. **En snarvei på hjemskjermen kan få sin
+egen lagring**, atskilt fra Safari, når den åpnes som nettapp: da står Mine
+lyder tomme der, og opptak gjort i den ene vises ikke i den andre.
+

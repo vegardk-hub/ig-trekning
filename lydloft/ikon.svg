@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Lydløft: stigende neonsøyler — lyd som løftes. Fullt kvadrat uten
+       runde hjørner; iOS og Android legger på sin egen maske. -->
+  <defs>
+    <radialGradient id="bunn" cx="30%" cy="20%" r="95%">
+      <stop offset="0" stop-color="#2a1458"/>
+      <stop offset=".55" stop-color="#130a30"/>
+      <stop offset="1" stop-color="#0a0618"/>
+    </radialGradient>
+    <filter id="glod" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="url(#bunn)"/>
+  <g filter="url(#glod)">
+    <rect x="72"  y="300" width="56" height="120" rx="28" fill="#ff2bd6"/>
+    <rect x="150" y="250" width="56" height="170" rx="28" fill="#a259ff"/>
+    <rect x="228" y="200" width="56" height="220" rx="28" fill="#3d8bff"/>
+    <rect x="306" y="150" width="56" height="270" rx="28" fill="#19f0ff"/>
+    <rect x="384" y="100" width="56" height="320" rx="28" fill="#b6ff2e"/>
+  </g>
+  <g filter="url(#glod)" fill="#ffe83d">
+    <path d="M150 92l11 30 30 11-30 11-11 30-11-30-30-11 30-11z"/>
+  </g>
+</svg>
