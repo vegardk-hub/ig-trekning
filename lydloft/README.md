@@ -1,13 +1,59 @@
-# Lydløft – testbenk
+# Lydløft
 
-Første steg mot en app som tar opp et musikkstykke (3 sekunder til 4 minutter,
-instrumentalt) og lager en versjon som låter bedre enn opptaket. Før noe kan
-gjøres bedre, må vi vite hva som gikk tapt på veien. Testbenken måler nettopp
-det: hva telefonen, nettleseren og rommet gjør med lyden.
+Et lydverksted: ta opp eller last opp et opptak (3 sekunder til 4 minutter,
+først og fremst instrumentalt – barna som spiller, eller lyd fra en høyttaler)
+og lag nye versjoner av det. Til internt bruk.
 
-Til internt bruk. Ingen service worker: siden trenger mikrofon og en fersk
-analyse, ikke frakoblet modus. `?v=` i `index.html` står der likevel, mot
-`max-age=600` fra Pages.
+Eieren vil *ikke* forbedre eksisterende sanger og ikke konkurrere med Suno.
+Målet er å se hvor langt en enkel app kommer med ren signalbehandling i
+nettleseren: ingen server, ingen KI, ingen avhengigheter.
+
+To sider, som deler opptak og bibliotek (IndexedDB):
+
+- **`index.html` – verkstedet.** Velg lyd, skru, hør, lagre.
+- **`testbenk.html` – testbenken.** Måler hva telefon, nettleser og rom gjør
+  med lyden. Den kom først, mens målet var å gjøre opptak *bedre*, og står
+  igjen som verktøy for å se hva en mikrofon leverer.
+
+Ingen service worker: siden trenger mikrofon og nett til første lasting, ikke
+frakoblet modus. `?v=` i HTML-ene står der likevel, mot `max-age=600` fra
+Pages, og nummeret står i HTML, i arbeiderne (`importScripts`) og i
+`opptak.js` (`addModule`). Øk alle samtidig.
+
+## Verkstedet
+
+| Del | Hva | Hvor |
+| --- | --- | --- |
+| Karakter | 14 utgangspunkter: mer bass, gammel radio, telefon, kassett, vinyl, kirke, konsertsal, under vann, robot, romskip, gitarforsterker, 8-bit, fra naborommet | `effekter.js` |
+| Tone | bass, mellomtone, diskant, lavkutt, toppkutt, volum | `effekter.js` |
+| Tempo og tonehøyde | 50–200 % uten at tonen endres, ±12 halvtoner uten at tempoet endres, baklengs; ekorn, troll, sakte film, kjapp | `strekk.js` |
+| Effekter | romklang og romstørrelse, ekko og ekkotid, forvrengning, chorus/vibrato, lo-fi, knitring, robot | `effekter.js` |
+| Lagre | ny versjon i biblioteket med oppskriften, eller WAV, på −14 LUFS og maks −1 dBTP | `verksted.js` |
+
+Tre ting som ser ut som detaljer og har en grunn:
+
+- **Det du hører, er det som lagres.** Forhåndslyttingen og lagringen bygger
+  samme kjede fra `effekter.js`, den ene i sanntid og den andre i en
+  `OfflineAudioContext`. Lag aldri en egen eksportvei; da glir de fra
+  hverandre, og den lagrede versjonen låter ikke som den du valgte.
+- **Tempo og tonehøyde er tidsstrekking pluss avspillingsfart.** Strekk med
+  p/t (WSOLA, `strekk.js`), spill med fart p, så blir tonehøyden p og tempoet
+  t. Strekkingen regnes ut i en egen tråd og byttes inn på samme sted i
+  stykket; posisjonen er en andel, ikke sekunder, så den står stille når
+  lengden endres. Samme innstilling regnes ikke ut to ganger (`nokkel`).
+- **En karakter starter fra null, men rører ikke tempoet.** Ellers blir
+  «Kirke» etter «Telefon» en kirke i telefonen, og ekornet mister farten
+  hver gang man bytter rom.
+
+Kutt-filtrene er dobbelt opp (24 dB/oktav). Med ett andreordens filter er
+telefon og radio for snille – det slipper gjennom for mye bass til å høres ut
+som en liten høyttaler.
+
+**Ikke laget ennå: rytme og takt.** Tempo er løst; å gjøre en firedelt takt om
+til vals eller legge swing på krever at slagene finnes først og lyden klippes
+opp etter dem. Det er neste store del.
+
+# Testbenken
 
 ## Tre veier inn
 
@@ -96,8 +142,17 @@ Analysen kjører i en egen tråd (`analyse-arbeider.js`), så siden fryser ikke.
 
 ```
 node lydloft/tester/analyse.js
+node lydloft/tester/strekk.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/benk.js
+NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/verksted.js
 ```
+
+`strekk.js` krever at lengden blir riktig, at tonehøyden og nivået står, at
+skjøtene ikke gir hakk og at slag verken forsvinner eller dobles.
+`verksted.js` laster opp tre like sterke toner (100 Hz, 1 kHz, 8 kHz) og
+måler den *lagrede* lyden for hver innstilling: bass løfter 100 Hz, telefon
+kutter begge ender, sakte film forlenger uten å flytte 1 kHz, ekorn flytter
+1 kHz sju halvtoner opp, og hver karakter gir gyldig lyd uten klipping.
 
 `analyse.js` sender testsignalet gjennom en simulert telefon med kjent
 lavkutt, diskantkutt, rom og støy, og skrur så på én feil om gangen –
@@ -106,9 +161,3 @@ analysen sier fra om akkurat den. `benk.js` går hele veien i Chromium med en
 stubbet mikrofon: rått opptak, MediaRecorder, filopplasting, sammenligning og
 «spill og ta opp her». Den tar rundt ett minutt.
 
-## Videre
-
-Nivå 1 (ren signalbehandling i nettleseren: kompensasjon for lavkuttet,
-støyport, declip, EQ, kompresjon, −14 LUFS / −1 dBTP) bygges når testbenken
-har målt ekte opptak fra iPhone og Edge. Det er tallene herfra som skal
-bestemme hva kjeden gjør.

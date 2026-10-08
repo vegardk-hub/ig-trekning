@@ -471,9 +471,13 @@ var LydAnalyse = (function () {
     return ut;
   }
 
-  function analyser(kanaler, fs) {
+  // `valg.bareGrunn` hopper over letingen etter testsignalet. Verkstedet
+  // trenger den ikke, og den koster flere sekunder på et kort opptak.
+  function analyser(kanaler, fs, valg) {
     var a = { grunn: grunn(kanaler, fs), test: null };
-    try { a.test = test(kanaler, fs); } catch (e) { a.testFeil = String(e && e.message || e); }
+    if (!(valg && valg.bareGrunn)) {
+      try { a.test = test(kanaler, fs); } catch (e) { a.testFeil = String(e && e.message || e); }
+    }
     a.funn = funn(a);
     return a;
   }

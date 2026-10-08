@@ -1,0 +1,570 @@
+/*
+ * Verkstedet — velg en lyd, skru på den, hør det mens du skrur, lagre.
+ *
+ * To ting styrer oppbygningen:
+ *
+ * - **Det du hører, er det som lagres.** Forhåndslyttingen og lagringen
+ *   bygger samme kjede fra `effekter.js`, den ene i sanntid og den andre i en
+ *   `OfflineAudioContext`. Det finnes ingen egen «eksportkode» som kan gli fra.
+ * - **Glidebryterne svarer med en gang.** Filtre og effekter endres mens lyden
+ *   spiller. Tempo, tonehøyde og baklengs endrer selve lyden og må regnes ut
+ *   på nytt; det skjer i en egen tråd, og den nye versjonen byttes inn på
+ *   samme sted i stykket når den er klar.
+ *
+ * Posisjonen i stykket er en andel (0–1), ikke sekunder. Da står den stille
+ * når tempoet endres og lengden med det.
+ */
+'use strict';
+
+(function () {
+
+  var $ = function (id) { return document.getElementById(id); };
+  var E = LydEffekter;
+
+  var GLIDERE = [
+    { gruppe: 'tone', navn: 'bass', etikett: 'Bass', min: -15, max: 15, steg: 0.5, vis: db },
+    { gruppe: 'tone', navn: 'mellom', etikett: 'Mellomtone', min: -12, max: 12, steg: 0.5, vis: db },
+    { gruppe: 'tone', navn: 'diskant', etikett: 'Diskant', min: -15, max: 15, steg: 0.5, vis: db },
+    { gruppe: 'tone', navn: 'lavkutt', etikett: 'Kutt bassen under', min: 20, max: 1000, log: true, vis: hz },
+    { gruppe: 'tone', navn: 'toppkutt', etikett: 'Kutt diskanten over', min: 500, max: 20000, log: true, vis: hz },
+    { gruppe: 'tone', navn: 'volum', etikett: 'Volum', min: -20, max: 6, steg: 0.5, vis: db },
+    { gruppe: 'tempo', navn: 'tempo', etikett: 'Tempo', min: 0.5, max: 2, log: true, vis: prosent },
+    { gruppe: 'tempo', navn: 'halvtoner', etikett: 'Tonehøyde', min: -12, max: 12, steg: 1, vis: halvtoner },
+    { gruppe: 'effekter', navn: 'romklang', etikett: 'Romklang', min: 0, max: 1, steg: 0.01, vis: andel },
+    { gruppe: 'effekter', navn: 'romstorrelse', etikett: 'Romstørrelse', min: 0.3, max: 6, steg: 0.1, vis: sek },
+    { gruppe: 'effekter', navn: 'ekko', etikett: 'Ekko', min: 0, max: 1, steg: 0.01, vis: andel },
+    { gruppe: 'effekter', navn: 'ekkotid', etikett: 'Tid mellom ekkoene', min: 0.05, max: 1, steg: 0.01, vis: sek },
+    { gruppe: 'effekter', navn: 'forvrengning', etikett: 'Forvrengning', min: 0, max: 1, steg: 0.01, vis: andel },
+    { gruppe: 'effekter', navn: 'chorus', etikett: 'Chorus / vibrato', min: 0, max: 1, steg: 0.01, vis: andel },
+    { gruppe: 'effekter', navn: 'chorusfart', etikett: 'Vibratofart', min: 0.1, max: 6, steg: 0.1, vis: hzDes },
+    { gruppe: 'effekter', navn: 'lofi', etikett: 'Lo-fi (grove trinn)', min: 0, max: 1, steg: 0.01, vis: andel },
+    { gruppe: 'effekter', navn: 'knitring', etikett: 'Knitring og sus', min: 0, max: 1, steg: 0.01, vis: andel },
+    { gruppe: 'effekter', navn: 'robot', etikett: 'Robot', min: 0, max: 1, steg: 0.01, vis: andel }
+  ];
+  var LYDENDRENDE = { tempo: 1, halvtoner: 1, baklengs: 1 };
+
+  function db(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',') + ' dB'; }
+  function hz(v) { return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace('.', ',') + ' kHz' : Math.round(v) + ' Hz'; }
+  function hzDes(v) { return v.toFixed(1).replace('.', ',') + ' Hz'; }
+  function prosent(v) { return Math.round(v * 100) + ' %'; }
+  function halvtoner(v) { return v === 0 ? '0' : (v > 0 ? '+' : '−') + Math.abs(v) + ' halvtoner'; }
+  function andel(v) { return Math.round(v * 100) + ' %'; }
+  function sek(v) { return v.toFixed(2).replace('.', ',') + ' s'; }
+  function tid(s) { var m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + (r < 10 ? '0' : '') + r; }
+
+  var verdier = kopi(E.STANDARD);
+  var kilde = null;          // { id, navn, kanaler, fs }
+  var lyd = null;            // { kanaler, fs, p, buffer } – strukket, klar til å spilles
+  var fx = null;
+  var spiller = null;        // { node, start, offset, original }
+  var andelNaa = 0;
+  var horOriginal = false;
+  var aktivtOpptak = null;
+  var biblioteket = [];
+  var inputs = {};
+
+  function kopi(o) { var r = {}; Object.keys(o).forEach(function (k) { r[k] = o[k]; }); return r; }
+  function status(id, tekst, feil) { $(id).textContent = tekst || ''; $(id).classList.toggle('feil', !!feil); }
+
+  /* -------------------------------------------------------- lydkonteksten */
+
+  function ctx() { return LydOpptak.lydkontekst(); }
+  function sorgForKjede() {
+    if (!fx) fx = E.bygg(ctx(), ctx().destination, verdier);
+    return fx;
+  }
+  function p() { return Math.pow(2, verdier.halvtoner / 12); }
+
+  /* ------------------------------------------------------------ strekking */
+
+  var strekker = null, strekkVent = {}, strekkNr = 0, sisteStrekk = 0;
+  try {
+    strekker = new Worker('js/strekk-arbeider.js?v=3');
+    strekker.onmessage = function (e) {
+      var v = strekkVent[e.data.id];
+      delete strekkVent[e.data.id];
+      if (!v) return;
+      if (e.data.feil) v.nei(new Error(e.data.feil)); else v.ok(e.data.kanaler);
+    };
+  } catch (e) { strekker = null; }
+
+  function strekk(kanaler, fs, faktor, baklengs) {
+    if (!strekker) {
+      var k = baklengs ? kanaler.map(function (x) { return Float32Array.from(x).reverse(); }) : kanaler;
+      return Promise.resolve(LydStrekkReserve(k, fs, faktor));
+    }
+    return new Promise(function (ok, nei) {
+      var id = ++strekkNr;
+      strekkVent[id] = { ok: ok, nei: nei };
+      strekker.postMessage({ id: id, kanaler: kanaler, fs: fs, faktor: faktor, baklengs: baklengs });
+    });
+  }
+  function LydStrekkReserve(k, fs, faktor) {
+    return window.LydStrekk ? window.LydStrekk.strekk(k, fs, faktor) : k;
+  }
+
+  var strekkTimer = null;
+  function lagLyd(umiddelbart) {
+    clearTimeout(strekkTimer);
+    return new Promise(function (ok) {
+      strekkTimer = setTimeout(function () {
+        if (!kilde) { ok(); return; }
+        var faktor = p() / verdier.tempo;
+        var nokkel = kilde.id + '|' + faktor.toFixed(6) + '|' + !!verdier.baklengs;
+        // Samme lyd som sist: ingenting å regne ut. Lagringen spør alltid, og
+        // fire minutter strukket på nytt er ti sekunder på en telefon.
+        if (lyd && lyd.nokkel === nokkel) { ok(); return; }
+        var nr = ++sisteStrekk;
+        var trenger = Math.abs(faktor - 1) > 1e-4 || verdier.baklengs;
+        if (trenger) status('strekkstatus', 'Regner ut nytt tempo og ny tonehøyde …');
+        var arbeid = trenger ? strekk(kilde.kanaler, kilde.fs, faktor, verdier.baklengs) : Promise.resolve(kilde.kanaler);
+        arbeid.then(function (kanaler) {
+          if (nr !== sisteStrekk) return ok();
+          var her = spiller && !spiller.original ? naaAndel() : null;
+          lyd = { kanaler: kanaler, fs: kilde.fs, p: p(), buffer: null, nokkel: nokkel };
+          status('strekkstatus', '');
+          oppdaterLengde();
+          if (her !== null) start(her);
+          ok();
+        }).catch(function (e) { status('strekkstatus', 'Kunne ikke endre tempoet: ' + e.message, true); ok(); });
+      }, umiddelbart ? 0 : 250);
+    });
+  }
+
+  function lagBuffer(c, l) {
+    var b = c.createBuffer(l.kanaler.length, l.kanaler[0].length, l.fs);
+    l.kanaler.forEach(function (k, i) { b.getChannelData(i).set(k); });
+    return b;
+  }
+
+  /* ----------------------------------------------------------- avspilling */
+
+  function varighetUt() { return lyd ? lyd.kanaler[0].length / lyd.fs / lyd.p : 0; }
+  function oppdaterLengde() { $('lengde').textContent = tid(horOriginal && kilde ? kilde.kanaler[0].length / kilde.fs : varighetUt()); }
+
+  function stopp() {
+    if (!spiller) return;
+    andelNaa = naaAndel();
+    var s = spiller;
+    spiller = null;
+    s.node.onended = null;
+    try { s.node.stop(); } catch (e) { /* allerede stoppet */ }
+    s.node.disconnect();
+    $('spill').textContent = '▶ Spill';
+  }
+
+  function naaAndel() {
+    if (!spiller) return andelNaa;
+    var c = ctx();
+    var forlop = (c.currentTime - spiller.start) * spiller.fart / spiller.bufferSek;
+    var a = spiller.offset + forlop;
+    return $('sloyfe').checked ? a - Math.floor(a) : Math.min(1, a);
+  }
+
+  function start(fra) {
+    if (!lyd) return;
+    var c = ctx();
+    if (spiller) { spiller.node.onended = null; try { spiller.node.stop(); } catch (e) { /* stoppet */ } spiller.node.disconnect(); }
+    var original = horOriginal;
+    var kildeLyd = original ? { kanaler: kilde.kanaler, fs: kilde.fs, p: 1 } : lyd;
+    if (!original && !lyd.buffer) lyd.buffer = lagBuffer(c, lyd);
+    var buffer = original ? (kilde.buffer || (kilde.buffer = lagBuffer(c, kildeLyd))) : lyd.buffer;
+    var node = c.createBufferSource();
+    node.buffer = buffer;
+    node.playbackRate.value = kildeLyd.p;
+    node.loop = $('sloyfe').checked;
+    // Baklengs: originalen spilles fra speilvendt posisjon, så A/B treffer
+    // samme sted i stykket.
+    var a = fra >= 1 ? 0 : fra;
+    var bufAndel = original && verdier.baklengs ? 1 - a : a;
+    if (original) {
+      node.connect(c.destination);
+    } else {
+      node.connect(sorgForKjede().inngang);
+    }
+    node.start(0, bufAndel * buffer.duration);
+    spiller = { node: node, start: c.currentTime, offset: a, fart: kildeLyd.p, bufferSek: buffer.duration, original: original };
+    node.onended = function () { if (spiller && spiller.node === node) { spiller = null; andelNaa = 0; $('spill').textContent = '▶ Spill'; } };
+    $('spill').textContent = '❚❚ Pause';
+  }
+
+  setInterval(function () {
+    if (!spiller) return;
+    var a = naaAndel();
+    $('posisjon').value = Math.round(a * 1000);
+    $('naa').textContent = tid(a * (horOriginal && kilde ? kilde.kanaler[0].length / kilde.fs : varighetUt()));
+  }, 150);
+
+  /* --------------------------------------------------------- glidebryterne */
+
+  function tilGlider(g, v) {
+    if (g.log) return Math.round(1000 * Math.log(v / g.min) / Math.log(g.max / g.min));
+    return v;
+  }
+  function fraGlider(g, r) {
+    if (g.log) return g.min * Math.pow(g.max / g.min, r / 1000);
+    return parseFloat(r);
+  }
+
+  function lagGlidere() {
+    GLIDERE.forEach(function (g) {
+      var inp = document.createElement('input');
+      inp.type = 'range';
+      inp.id = 'g-' + g.navn;
+      if (g.log) { inp.min = 0; inp.max = 1000; inp.step = 1; }
+      else { inp.min = g.min; inp.max = g.max; inp.step = g.steg; }
+      var verdi = document.createElement('span');
+      verdi.className = 'gliderverdi';
+      var etikett = document.createElement('label');
+      etikett.className = 'glider';
+      etikett.htmlFor = inp.id;
+      var topp = document.createElement('span');
+      topp.className = 'glidertopp';
+      var navn = document.createElement('span');
+      navn.textContent = g.etikett;
+      topp.appendChild(navn); topp.appendChild(verdi);
+      etikett.appendChild(topp);
+      var boks = document.createElement('div');
+      boks.className = 'gliderboks';
+      boks.appendChild(etikett);
+      boks.appendChild(inp);
+      // Dobbelttrykk på navnet setter glidebryteren tilbake.
+      topp.addEventListener('dblclick', function (e) { e.preventDefault(); settVerdi(g.navn, E.STANDARD[g.navn]); });
+      inp.addEventListener('input', function () { settVerdi(g.navn, fraGlider(g, inp.value), true); });
+      $('g-' + g.gruppe).appendChild(boks);
+      inputs[g.navn] = { inp: inp, vis: verdi, g: g };
+    });
+    $('baklengs').addEventListener('change', function () { settVerdi('baklengs', this.checked); });
+  }
+
+  function visVerdi(navn) {
+    var x = inputs[navn];
+    if (!x) { if (navn === 'baklengs') $('baklengs').checked = !!verdier.baklengs; return; }
+    x.vis.textContent = x.g.vis(verdier[navn]);
+  }
+
+  function settVerdi(navn, v, fraGliderSelv) {
+    verdier[navn] = v;
+    var x = inputs[navn];
+    if (x && !fraGliderSelv) x.inp.value = tilGlider(x.g, v);
+    visVerdi(navn);
+    if (LYDENDRENDE[navn]) lagLyd();
+    else if (fx) fx.sett(navn, v);
+    markerValg();
+    foreslaNavn();
+  }
+
+  function settAlle(nye) {
+    var lydEndres = false;
+    Object.keys(nye).forEach(function (k) {
+      if (LYDENDRENDE[k] && verdier[k] !== nye[k]) lydEndres = true;
+      verdier[k] = nye[k];
+      var x = inputs[k];
+      if (x) x.inp.value = tilGlider(x.g, nye[k]);
+      visVerdi(k);
+      if (!LYDENDRENDE[k] && fx) fx.sett(k, nye[k]);
+    });
+    if (lydEndres) lagLyd();
+    markerValg();
+    foreslaNavn();
+  }
+
+  /* ------------------------------------------------------------- brikkene */
+
+  function lik(a, b) { return Math.abs(a - b) < 1e-6; }
+  function passer(forhand, utenom) {
+    return Object.keys(E.STANDARD).every(function (k) {
+      if (utenom[k]) return true;
+      var mal = forhand.verdier[k] !== undefined ? forhand.verdier[k] : E.STANDARD[k];
+      return typeof mal === 'number' ? lik(verdier[k], mal) : verdier[k] === mal;
+    });
+  }
+
+  function lagBrikker() {
+    E.KARAKTERER.forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'valgbrikke'; b.textContent = k.navn; b.dataset.id = k.id;
+      b.addEventListener('click', function () {
+        // En karakter starter fra null, men rører ikke tempo og tonehøyde.
+        var nye = {};
+        Object.keys(E.STANDARD).forEach(function (n) { if (!LYDENDRENDE[n]) nye[n] = E.STANDARD[n]; });
+        Object.keys(k.verdier).forEach(function (n) { nye[n] = k.verdier[n]; });
+        settAlle(nye);
+      });
+      $('karakterer').appendChild(b);
+    });
+    E.FART.forEach(function (f) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'valgbrikke'; b.textContent = f.navn; b.dataset.id = f.id;
+      b.addEventListener('click', function () { settAlle(kopi(f.verdier)); });
+      $('fart').appendChild(b);
+    });
+  }
+
+  function markerValg() {
+    var utenomFart = kopi(LYDENDRENDE);
+    $('karakterer').querySelectorAll('.valgbrikke').forEach(function (b) {
+      var k = E.KARAKTERER.filter(function (x) { return x.id === b.dataset.id; })[0];
+      b.setAttribute('aria-pressed', passer(k, utenomFart) ? 'true' : 'false');
+    });
+    $('fart').querySelectorAll('.valgbrikke').forEach(function (b) {
+      var f = E.FART.filter(function (x) { return x.id === b.dataset.id; })[0];
+      b.setAttribute('aria-pressed', lik(verdier.tempo, f.verdier.tempo) && lik(verdier.halvtoner, f.verdier.halvtoner) ? 'true' : 'false');
+    });
+  }
+
+  var navnEndretSelv = false;
+  function foreslaNavn() {
+    if (navnEndretSelv || !kilde) return;
+    var deler = [];
+    var k = E.KARAKTERER.filter(function (x) { return x.id !== 'ingen' && passer(x, LYDENDRENDE); })[0];
+    if (k) deler.push(k.navn);
+    else if (!passer(E.KARAKTERER[0], LYDENDRENDE)) deler.push('egen miks');
+    var f = E.FART.filter(function (x) { return x.id !== 'normal' && lik(verdier.tempo, x.verdier.tempo) && lik(verdier.halvtoner, x.verdier.halvtoner); })[0];
+    if (f) deler.push(f.navn);
+    else {
+      if (!lik(verdier.tempo, 1)) deler.push(Math.round(verdier.tempo * 100) + ' %');
+      if (verdier.halvtoner) deler.push(halvtoner(verdier.halvtoner));
+    }
+    if (verdier.baklengs) deler.push('baklengs');
+    $('versjonsnavn').value = kilde.navn + (deler.length ? ' – ' + deler.join(', ') : ' – kopi');
+  }
+
+  /* ------------------------------------------------------------ biblioteket */
+
+  function lastBibliotek(velgId) {
+    return LydLager.alle().then(function (l) {
+      biblioteket = l;
+      var sel = $('bibliotek');
+      while (sel.options.length > 1) sel.remove(1);
+      l.forEach(function (m) {
+        var o = document.createElement('option');
+        o.value = m.id;
+        o.textContent = m.navn + ' · ' + tid(m.varighet) + (m.kilde === 'versjon' ? ' · versjon' : '');
+        sel.appendChild(o);
+      });
+      if (velgId) sel.value = velgId;
+    }).catch(function (e) { status('status', 'Lagringen i nettleseren virker ikke: ' + e.message, true); });
+  }
+
+  function velg(id) {
+    var m = biblioteket.filter(function (x) { return x.id === id; })[0];
+    if (!m) return Promise.resolve();
+    stopp();
+    status('status', 'Henter ' + m.navn + ' …');
+    return LydLager.hentLyd(id).then(function (l) {
+      if (!l) throw new Error('lyden mangler');
+      kilde = { id: id, navn: m.navn, kanaler: l.kanaler, fs: m.fs, buffer: null };
+      andelNaa = 0;
+      $('posisjon').value = 0;
+      $('kildenavn').textContent = m.navn;
+      $('verksted').hidden = false;
+      navnEndretSelv = false;
+      foreslaNavn();
+      status('status', m.navn + ' er klar. Trykk spill og skru.');
+      return lagLyd(true);
+    }).catch(function (e) { status('status', 'Kunne ikke hente lyden: ' + e.message, true); });
+  }
+
+  /* ----------------------------------------------------------- lagre lyd */
+
+  var analysator = null;
+  function grunnAnalyse(kanaler, fs) {
+    if (!analysator) {
+      try { analysator = new Worker('js/analyse-arbeider.js?v=3'); } catch (e) { analysator = null; }
+    }
+    if (!analysator) return Promise.resolve(null);
+    return new Promise(function (ok) {
+      var id = Date.now() + Math.random();
+      function svar(e) {
+        if (e.data.id !== id) return;
+        analysator.removeEventListener('message', svar);
+        ok(e.data.analyse || null);
+      }
+      analysator.addEventListener('message', svar);
+      analysator.postMessage({ id: id, kanaler: kanaler, fs: fs, bareGrunn: true });
+    });
+  }
+
+  function lagreIBiblioteket(res, navn, kildetype, ekstra) {
+    var meta = {
+      id: 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      dato: Date.now(), navn: navn, kilde: kildetype, behandling: false,
+      fs: res.fs, kanaler: res.kanaler.length, varighet: res.kanaler[0].length / res.fs,
+      info: Object.assign({}, res.info || {}, ekstra || {}), analyse: null
+    };
+    return grunnAnalyse(res.kanaler, res.fs).then(function (a) {
+      meta.analyse = a || { grunn: null, test: null, funn: [] };
+      return LydLager.lagre(meta, { id: meta.id, kanaler: res.kanaler, original: res.original || null });
+    }).then(function () {
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+      return meta;
+    });
+  }
+
+  /* --------------------------------------------------------------- opptak */
+
+  function maaler(topp) {
+    var d = 20 * Math.log10(Math.max(topp, 1e-6));
+    var f = $('maalerfyll');
+    f.style.width = (Math.max(0, Math.min(1, (d + 60) / 60)) * 100).toFixed(1) + '%';
+    f.classList.toggle('hoy', d > -6 && d <= -1);
+    f.classList.toggle('rod', d > -1);
+  }
+
+  function opptakKnapp() {
+    ctx();
+    if (aktivtOpptak) { stoppOpptak(); return; }
+    stopp();
+    status('status', 'Ber om mikrofonen …');
+    LydOpptak.start({ kilde: 'raa', behandling: false, paaNivaa: maaler }).then(function (h) {
+      var t0 = Date.now();
+      aktivtOpptak = { h: h, tikk: setInterval(function () {
+        var s = (Date.now() - t0) / 1000;
+        $('tid').textContent = tid(s);
+        if (s >= 240) stoppOpptak();
+      }, 200) };
+      $('opptak').classList.add('aktiv');
+      $('opptakstekst').textContent = 'Stopp';
+      status('status', 'Tar opp …');
+    }).catch(function (e) {
+      status('status', e && e.name === 'NotAllowedError' ? 'Mikrofonen ble nektet.' : 'Kunne ikke ta opp: ' + (e && e.message || e), true);
+    });
+  }
+
+  function stoppOpptak() {
+    var a = aktivtOpptak;
+    if (!a) return;
+    aktivtOpptak = null;
+    clearInterval(a.tikk);
+    $('opptak').classList.remove('aktiv');
+    $('opptakstekst').textContent = 'Ta opp';
+    maaler(0);
+    status('status', 'Lagrer opptaket …');
+    a.h.stopp().then(function (res) {
+      var d = new Date();
+      var navn = 'Opptak ' + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+      return lagreIBiblioteket(res, navn, 'raa');
+    }).then(function (meta) {
+      return lastBibliotek(meta.id).then(function () { return velg(meta.id); });
+    }).catch(function (e) { status('status', 'Kunne ikke lagre opptaket: ' + e.message, true); });
+  }
+
+  /* ------------------------------------------------------------ eksport */
+
+  function render() {
+    if (!lyd) return Promise.reject(new Error('ingen lyd valgt'));
+    var v = kopi(verdier);
+    var l = lyd;
+    var lengde = Math.ceil(l.kanaler[0].length / l.p + E.hale(v) * l.fs);
+    var K = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    var off = new K(2, lengde, l.fs);
+    var kjede = E.bygg(off, off.destination, v);
+    var node = off.createBufferSource();
+    node.buffer = lagBuffer(off, l);
+    node.playbackRate.value = l.p;
+    node.connect(kjede.inngang);
+    node.start(0);
+    return off.startRendering().then(function (buf) {
+      var kanaler = [new Float32Array(buf.getChannelData(0)), new Float32Array(buf.getChannelData(1))];
+      // Samme lydstyrke som strømmetjenestene, men aldri over −1 dBTP.
+      var lufs = LydDsp.lufs(kanaler, l.fs);
+      var topp = LydDsp.dbAmp(LydDsp.sannTopp(kanaler));
+      var g = isFinite(lufs) ? Math.min(-14 - lufs, -1 - topp) : 0;
+      var faktor = Math.pow(10, g / 20);
+      kanaler.forEach(function (k) { for (var i = 0; i < k.length; i++) k[i] *= faktor; });
+      return { kanaler: kanaler, fs: l.fs, verdier: v };
+    });
+  }
+
+  function lastNedFil(kanaler, fs, navn) {
+    var blob = new Blob([LydDsp.lagWav(kanaler, fs)], { type: 'audio/wav' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = navn.toLowerCase().replace(/æ/g, 'ae').replace(/ø/g, 'o').replace(/å/g, 'a')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) + '.wav';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function nar(knapp, tekst, arbeid) {
+    var gammel = knapp.textContent;
+    knapp.disabled = true; knapp.textContent = tekst;
+    return arbeid().finally(function () { knapp.disabled = false; knapp.textContent = gammel; });
+  }
+
+  /* -------------------------------------------------------------- oppstart */
+
+  function koble() {
+    lagGlidere();
+    lagBrikker();
+    settAlle(kopi(E.STANDARD));
+
+    if (!LydOpptak.stottes()) {
+      $('opptak').disabled = true;
+      status('status', 'Mikrofonen er ikke tilgjengelig her (krever https). Opplasting og biblioteket virker.');
+    }
+    $('opptak').addEventListener('click', opptakKnapp);
+    $('bibliotek').addEventListener('change', function () { if (this.value) velg(this.value); });
+    $('fil').addEventListener('change', function () {
+      var fil = this.files && this.files[0];
+      this.value = '';
+      if (!fil) return;
+      ctx();
+      status('status', 'Leser ' + fil.name + ' …');
+      LydOpptak.lesFil(fil).then(function (res) {
+        return lagreIBiblioteket(res, fil.name.replace(/\.[^.]+$/, ''), 'fil');
+      }).then(function (meta) {
+        return lastBibliotek(meta.id).then(function () { return velg(meta.id); });
+      }).catch(function (e) { status('status', 'Kunne ikke lese fila: ' + (e && e.message || e), true); });
+    });
+
+    $('spill').addEventListener('click', function () {
+      ctx();
+      if (spiller) stopp(); else start(andelNaa);
+    });
+    $('original').addEventListener('click', function () {
+      horOriginal = !horOriginal;
+      this.setAttribute('aria-pressed', horOriginal ? 'true' : 'false');
+      this.textContent = horOriginal ? 'Hør den nye versjonen' : 'Hør originalen';
+      oppdaterLengde();
+      if (spiller) start(naaAndel());
+    });
+    $('posisjon').addEventListener('input', function () {
+      andelNaa = this.value / 1000;
+      if (spiller) start(andelNaa);
+      $('naa').textContent = tid(andelNaa * varighetUt());
+    });
+    $('sloyfe').addEventListener('change', function () { if (spiller) spiller.node.loop = this.checked; });
+
+    $('versjonsnavn').addEventListener('input', function () { navnEndretSelv = true; });
+    $('nullstill').addEventListener('click', function () { navnEndretSelv = false; settAlle(kopi(E.STANDARD)); });
+
+    $('lagre').addEventListener('click', function () {
+      var navn = $('versjonsnavn').value.trim() || (kilde && kilde.navn + ' – ny versjon');
+      nar(this, 'Lager versjonen …', function () {
+        status('lagrestatus', '');
+        return lagLyd(true).then(render).then(function (r) {
+          return lagreIBiblioteket({ kanaler: r.kanaler, fs: r.fs }, navn, 'versjon',
+            { fra: kilde.navn, fraId: kilde.id, oppskrift: r.verdier });
+        }).then(function (meta) {
+          status('lagrestatus', '«' + meta.navn + '» er lagret i biblioteket.');
+          return lastBibliotek(kilde.id);
+        }).catch(function (e) { status('lagrestatus', 'Kunne ikke lagre: ' + e.message, true); });
+      });
+    });
+    $('lastNed').addEventListener('click', function () {
+      var navn = $('versjonsnavn').value.trim() || 'lydloft';
+      nar(this, 'Lager fila …', function () {
+        return lagLyd(true).then(render).then(function (r) { lastNedFil(r.kanaler, r.fs, navn); })
+          .catch(function (e) { status('lagrestatus', 'Kunne ikke lage fila: ' + e.message, true); });
+      });
+    });
+
+    lastBibliotek();
+  }
+
+  window.LydVerksted = { verdier: function () { return kopi(verdier); }, render: render, velg: velg };
+  koble();
+})();

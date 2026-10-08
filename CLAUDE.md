@@ -17,7 +17,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `pwa-xoxo/` | Kryss & Ring — puslespill med kryss og ringer på 5x10. **Under arbeid** |
-| `lydloft/` | Lydløft — testbenk for opptak: måler hva telefon, nettleser og rom gjør med lyden. **Under arbeid** |
+| `lydloft/` | Lydløft — lydverksted: filtre, tone, tempo, tonehøyde og effekter på egne opptak, pluss en testbenk. **Under arbeid** |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -150,13 +150,17 @@ lydinngang, og `--use-fake-device-for-media-capture` hjelper ikke — samme
 lærdom som innspillingsprøven i Monstergiret. Ikke bruk tid på å få den ekte
 veien til å virke der.
 
-Lydløft har prøver på målekjeden og på hele testbenken. Den første trenger
-verken nettleser eller server, og skal kjøres etter hver endring i
-`lydloft/js/dsp.js`, `testsignal.js` eller `analyse.js`:
+Lydløft har prøver på målekjeden, tidsstrekkingen, testbenken og
+verkstedet. De to første trenger verken nettleser eller server; kjør
+`analyse.js` etter endringer i `dsp.js`, `testsignal.js` eller `analyse.js`,
+og `strekk.js` etter endringer i `strekk.js`. `verksted.js` skal kjøres etter
+hver endring i `effekter.js` eller `verksted.js`:
 
 ```
 node lydloft/tester/analyse.js
+node lydloft/tester/strekk.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/benk.js
+NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/verksted.js
 ```
 
 `benk.js` stubber mikrofonen med en ekte MediaStream fra en egen lydkontekst
@@ -583,12 +587,23 @@ en maskin med skriver, ikke på en telefon på hjemskjermen. `?v=` i
 
 ## Lydløft
 
-`lydloft/README.md` går gjennom testsignalet, analysen og fellene. Eieren vil
-se hvor god en *enkel* app kan bli, ikke konkurrere med Suno: første versjon er
-instrumental musikk (barna som spiller, eller lyd fra en høyttaler), tatt opp
-på iPhone eller i Edge, og et svar som tar tid er greit hvis det blir bedre.
-Testbenken kommer først; nivå 1 (ren signalbehandling) bygges etter målinger
-av ekte opptak. Til internt bruk.
+`lydloft/README.md` går gjennom verkstedet, testsignalet, analysen og
+fellene. **Eieren vil ikke forbedre eksisterende sanger** og ikke konkurrere
+med Suno. Han vil ha en app som *endrer* opptak: filtre og karakterer, bass og
+diskant, tempo og tonehøyde, nye versjoner. Opptakene er instrumentale (barna
+som spiller, eller lyd fra en høyttaler), tatt opp på iPhone eller i Edge. Til
+internt bruk. Rytme og takt utover tempo (swing, vals) er ikke laget.
+
+- **Forhåndslyttingen og lagringen bygger samme kjede** (`LydEffekter.bygg`),
+  i sanntid og i en `OfflineAudioContext`. En egen eksportvei vil gli fra det
+  man hørte.
+- **Tempo og tonehøyde er strekking med p/t pluss avspillingsfart p.** Den
+  lagrede lengden er derfor `strukket / p`, ikke `strukket`.
+- **Posisjonen er en andel, ikke sekunder**, så den står stille når tempoet
+  endrer lengden.
+- **En karakter nullstiller effektene, men ikke tempo og tonehøyde.**
+
+Testbenken (`testbenk.html`) står igjen fra da målet var å gjøre opptak bedre:
 
 - **Målingene er en prøve, ikke en magefølelse.** `tester/analyse.js` sender
   testsignalet gjennom en simulert telefon med kjent fasit. Endrer du

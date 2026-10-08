@@ -190,3 +190,32 @@ textarea.rapport { min-height: 14rem; resize: vertical; }
 .bunn { color: var(--dempet); font-size: .8rem; padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 
 [hidden] { display: none !important; }
+
+/* -------------------------------------------------------------- verksted */
+
+.topp a, .forklaring a { color: var(--aksent); }
+.forklaring { color: var(--dempet); font-size: .85rem; }
+.rad .selvstendig { align-self: flex-end; }
+
+.spiller { position: sticky; top: 0; z-index: 2; box-shadow: 0 2px 10px rgba(0, 0, 0, .08); }
+.spillrad { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.knapp.stor { font-size: 1.05rem; padding: .7rem 1.3rem; min-width: 7.5rem; justify-content: center; }
+.knapp[aria-pressed="true"] { background: var(--merk); border-color: var(--merk); color: var(--kortflate); }
+.bryter.liten { margin: 0; }
+.tidsrad { display: flex; justify-content: space-between; gap: .5rem; font-size: .82rem; color: var(--dempet); font-variant-numeric: tabular-nums; }
+.tidsrad #kildenavn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+input[type=range] { width: 100%; margin: .5rem 0 .2rem; accent-color: var(--aksent); height: 1.6rem; }
+
+.brikkerad { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .4rem; }
+.valgbrikke {
+  font: inherit; font-size: .9rem; padding: .45rem .8rem; border-radius: 999px;
+  border: 1px solid var(--kant); background: var(--kortflate); color: var(--ink); cursor: pointer;
+}
+.valgbrikke[aria-pressed="true"] { background: var(--aksent); border-color: var(--aksent); color: var(--kortflate); }
+
+.glidere { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: .2rem 1.4rem; }
+.gliderboks { padding: .3rem 0; }
+.glider { display: block; }
+.glidertopp { display: flex; justify-content: space-between; gap: .5rem; font-size: .9rem; user-select: none; -webkit-user-select: none; }
+.gliderverdi { color: var(--dempet); font-variant-numeric: tabular-nums; }

@@ -56,12 +56,14 @@
   Brettnummeret er såkornet, så et ark kan lages på nytt, og fasiten står på
   skjermen. Ingen service worker.
 
-- **[Lydløft](lydloft/)** — `lydloft/index.html`: testbenken for en app som
-  skal gjøre musikkopptak bedre. Ta opp eller last opp lyd, spill av et
-  testsignal fra én enhet og ta opp med en annen, og se hva telefonen,
-  nettleseren og rommet gjorde: frekvensrespons, grenser, etterklang,
-  automatisk nivåkontroll, støydemping, klipping og lydstyrke. Sammenlign
-  opptak side om side og lytt på lik lydstyrke. Ingen service worker.
+- **[Lydløft](lydloft/)** — `lydloft/index.html`: et lydverksted. Ta opp
+  eller last opp noe, og lag nye versjoner: bass, mellomtone og diskant,
+  tempo og tonehøyde hver for seg, baklengs, romklang, ekko, forvrengning,
+  chorus, lo-fi, knitring og robot – eller en ferdig karakter som gammel
+  radio, kassett, kirke eller under vann. Du hører endringene mens du skrur,
+  og versjonen lagres i et bibliotek i nettleseren eller som WAV.
+  `lydloft/testbenk.html` måler hva telefon, nettleser og rom gjør med et
+  opptak. Ingen service worker.
 
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på

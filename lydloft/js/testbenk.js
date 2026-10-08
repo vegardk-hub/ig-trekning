@@ -19,7 +19,8 @@
     'raa': 'Rå PCM (AudioWorklet)',
     'media-beste': 'MediaRecorder, tapsfritt',
     'media-standard': 'MediaRecorder, standard',
-    'fil': 'Fil'
+    'fil': 'Fil',
+    'versjon': 'Ny versjon fra verkstedet'
   };
   var MAKS_OPPTAK = 240;        // sekunder — det lengste en sang skal være
   var MAAL_LUFS = -23;          // lik lydstyrke ved sammenligning
@@ -96,7 +97,7 @@
 
   var arbeider = null, ventende = {}, neste = 1;
   try {
-    arbeider = new Worker('js/analyse-arbeider.js?v=2');
+    arbeider = new Worker('js/analyse-arbeider.js?v=3');
     arbeider.onmessage = function (e) {
       var v = ventende[e.data.id];
       delete ventende[e.data.id];
@@ -235,7 +236,7 @@
 
   function brikker(a) {
     var ut = [];
-    if (!a) return ut;
+    if (!a || !a.grunn) return ut;
     var g = a.grunn;
     ut.push(h('span', { klasse: 'brikke', tekst: tall(g.lufs, 1, 'LUFS') }));
     if (g.klipping.hendelser) ut.push(h('span', { klasse: 'brikke feil', tekst: 'klipping' }));

@@ -117,7 +117,7 @@ async function ventPaaNytt(side, for_, ms) {
   side.on('pageerror', e => konsoll.push('pageerror: ' + e.message));
   side.on('console', m => { if (m.type() === 'error') konsoll.push(m.text()); });
   await side.addInitScript(stubb);
-  await side.goto(`http://127.0.0.1:${PORT}/lydloft/`);
+  await side.goto(`http://127.0.0.1:${PORT}/lydloft/testbenk.html`);
 
   try {
     bolk('Oppstart');

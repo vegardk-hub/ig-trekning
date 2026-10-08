@@ -10,12 +10,12 @@
  */
 'use strict';
 
-importScripts('dsp.js?v=2', 'testsignal.js?v=2', 'analyse.js?v=2');
+importScripts('dsp.js?v=3', 'testsignal.js?v=3', 'analyse.js?v=3');
 
 self.onmessage = function (e) {
   var d = e.data;
   try {
-    var a = LydAnalyse.analyser(d.kanaler, d.fs);
+    var a = LydAnalyse.analyser(d.kanaler, d.fs, { bareGrunn: !!d.bareGrunn });
     self.postMessage({ id: d.id, analyse: a });
   } catch (feil) {
     self.postMessage({ id: d.id, feil: String(feil && feil.message || feil) });
