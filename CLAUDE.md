@@ -17,6 +17,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-sprell/` | Sprellemaskinen — tilfeldige oppdrag barna gjør inne, med opplesing, PWA |
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `pwa-xoxo/` | Kryss & Ring — puslespill med kryss og ringer på 5x10. **Under arbeid** |
+| `lydloft/` | Lydløft — testbenk for opptak: måler hva telefon, nettleser og rom gjør med lyden. **Under arbeid** |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -35,6 +36,7 @@ repoet:
 - Stuntgarasjen: `https://vegardk-hub.github.io/ig-trekning/pwa-stunt/`
 - Sprellemaskinen: `https://vegardk-hub.github.io/ig-trekning/pwa-sprell/`
 - Koordinatjakt: `https://vegardk-hub.github.io/ig-trekning/koordinatjakt/`
+- Lydløft: `https://vegardk-hub.github.io/ig-trekning/lydloft/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -147,6 +149,18 @@ NODE_PATH=/opt/node22/lib/node_modules node koordinatjakt/tester/lytting.js
 lydinngang, og `--use-fake-device-for-media-capture` hjelper ikke — samme
 lærdom som innspillingsprøven i Monstergiret. Ikke bruk tid på å få den ekte
 veien til å virke der.
+
+Lydløft har prøver på målekjeden og på hele testbenken. Den første trenger
+verken nettleser eller server, og skal kjøres etter hver endring i
+`lydloft/js/dsp.js`, `testsignal.js` eller `analyse.js`:
+
+```
+node lydloft/tester/analyse.js
+NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/benk.js
+```
+
+`benk.js` stubber mikrofonen med en ekte MediaStream fra en egen lydkontekst
+— samme lærdom om skyøktas manglende lydinngang som over.
 
 Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen og Sprellemaskinen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
@@ -566,6 +580,30 @@ med blyant. Fire ting som ser ut som detaljer og har en grunn:
 Appen har **med vilje ingen service worker**, som Lesestjerna: arket lages på
 en maskin med skriver, ikke på en telefon på hjemskjermen. `?v=` i
 `index.html` står der likevel, mot `max-age=600` fra Pages.
+
+## Lydløft
+
+`lydloft/README.md` går gjennom testsignalet, analysen og fellene. Eieren vil
+se hvor god en *enkel* app kan bli, ikke konkurrere med Suno: første versjon er
+instrumental musikk (barna som spiller, eller lyd fra en høyttaler), tatt opp
+på iPhone eller i Edge, og et svar som tar tid er greit hvis det blir bedre.
+Testbenken kommer først; nivå 1 (ren signalbehandling) bygges etter målinger
+av ekte opptak. Til internt bruk.
+
+- **Målingene er en prøve, ikke en magefølelse.** `tester/analyse.js` sender
+  testsignalet gjennom en simulert telefon med kjent fasit. Endrer du
+  analysen, må den fortsatt finne lavkuttet, AGC-en og støydemperen — og ikke
+  finne dem der de ikke er.
+- **Det inverse filteret vektes med f.** Feil vei gir en kurve som faller 6 dB
+  per oktav og ser troverdig ut, for telefoner er svake i bassen.
+- **K-filteret bruker De Mans formel.** Konstantene hans i RBJ-hylla gir et
+  kvart dB for lav lydstyrke på hvert opptak.
+- **WAV leses selv.** `decodeAudioData` omsampler til kontekstens rate, og da
+  lyver målingene om samplingsraten.
+- **Sveipet letes fram grovt først.** En foldning av hele opptaket i full rate
+  er for tung for en iPhone.
+- **Lik lydstyrke ved A/B.** Høyest låter best; uten utjevning vinner det
+  høyeste opptaket hver gang, og nivå 1 vil se bedre ut enn det er.
 
 ## Fargeflasker
 

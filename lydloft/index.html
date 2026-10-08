@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lydløft – testbenk</title>
+<meta name="description" content="Ta opp testlyder og mål hva telefonen, nettleseren og rommet gjør med lyden.">
+<meta name="theme-color" content="#1f4e5f">
+<!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
+     index.html kan ellers stå med ti minutter gammel CSS og JS. -->
+<link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+
+<header class="topp">
+  <h1>Lydløft <span class="merke">testbenk</span></h1>
+  <p>Før noe kan gjøres bedre, må vi vite hva som gikk tapt. Ta opp testsignalet og vanlige
+    lyder, og se hva telefonen, nettleseren og rommet gjorde med dem.</p>
+</header>
+
+<main>
+
+<section class="kort" aria-labelledby="t-opptak">
+  <h2 id="t-opptak">Ta opp</h2>
+  <div class="rad">
+    <label class="valg">Vei inn
+      <select id="kilde">
+        <option value="raa">Rå PCM (AudioWorklet)</option>
+        <option value="media-beste">MediaRecorder – tapsfritt hvis mulig</option>
+        <option value="media-standard">MediaRecorder – nettleserens standard</option>
+      </select>
+    </label>
+    <label class="valg">Mikrofon
+      <select id="enhet"><option value="">Standard</option></select>
+    </label>
+    <label class="valg bred">Merknad
+      <input id="merknad" type="text" autocomplete="off" placeholder="f.eks. iPhone, stue, PC-høyttaler 1 m">
+    </label>
+  </div>
+  <label class="bryter"><input type="checkbox" id="behandling">
+    Slå <em>på</em> nettleserens lydbehandling (ekko, støy, automatisk nivå) – for å sammenligne</label>
+
+  <div class="opptaksrad">
+    <button type="button" id="opptak" class="opptaksknapp"><span class="prikk"></span><span id="opptakstekst">Ta opp</span></button>
+    <div class="maaler" aria-hidden="true"><div id="maalerfyll"></div></div>
+    <span id="tid" class="tid">0:00</span>
+  </div>
+
+  <div class="knapper">
+    <button type="button" id="testHer" class="knapp">Spill testsignal og ta opp her</button>
+    <label class="knapp fil">Last opp lydfil
+      <input type="file" id="fil" accept="audio/*,.wav,.m4a,.caf,.mp3,.aif,.aiff,.flac">
+    </label>
+  </div>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+  <p class="merknad-tekst" id="ikkeStotte" hidden>Denne siden får ikke tilgang til mikrofonen. Den må åpnes over
+    https (GitHub Pages) eller fra localhost. Opplasting av filer virker likevel.</p>
+</section>
+
+<section class="kort" aria-labelledby="t-test">
+  <h2 id="t-test">Testsignal</h2>
+  <p>Spill av fra én enhet, ta opp med en annen. Signalet varer i en halv
+    minutt: stillhet, et sveip fra 20 Hz til 20 kHz, en nivåtrapp og rosa støy. Start opptaket
+    <em>før</em> du trykker på spill, og la det gå til signalet er ferdig. Testbenken finner
+    signalet selv.</p>
+  <div class="knapper">
+    <button type="button" id="spillTest" class="knapp primaer">▶ Spill testsignal</button>
+    <span id="testtid" class="tid"></span>
+  </div>
+  <details>
+    <summary>Slik blir målingene til å stole på</summary>
+    <ul>
+      <li><strong>Endre én ting om gangen.</strong> Samme høyttaler, samme plass, samme volum – bytt
+        bare vei inn. Da er forskjellen mellom opptakene nettleserens skyld.</li>
+      <li><strong>Volum:</strong> tydelig, men ikke skrapete. Måleren skal ikke nå rødt.</li>
+      <li><strong>Kilde:</strong> PC-høyttalere eller et stereoanlegg. En telefonhøyttaler har nesten
+        ingen bass, og da måler du den, ikke mikrofonen.</li>
+      <li><strong>iPhone:</strong> ta også et opptak i Taleopptak med Innstillinger → Apper →
+        Taleopptak → Lydkvalitet → <em>Tapsfri</em>, og last det opp her. Det går forbi Safari.</li>
+      <li><strong>Ta opp her</strong> måler høyttaleren og mikrofonen i samme enhet – greit for
+        nettleserens behandling, dårlig for frekvensresponsen.</li>
+      <li>Frekvensresponsen er hele kjeden: høyttaler, rom og mikrofon. Det er forskjellen
+        mellom to opptak som sier noe, ikke én kurve alene.</li>
+    </ul>
+  </details>
+</section>
+
+<section class="kort" aria-labelledby="t-liste">
+  <h2 id="t-liste">Opptak</h2>
+  <p class="tomt" id="tomt">Ingen opptak ennå.</p>
+  <ul class="liste" id="liste"></ul>
+  <div class="knapper">
+    <button type="button" id="sammenlign" class="knapp" disabled>Sammenlign valgte</button>
+    <button type="button" id="kopierAlle" class="knapp">Kopier rapport for alle</button>
+  </div>
+</section>
+
+<section class="kort" id="detalj" hidden aria-label="Analyse av opptaket"></section>
+<section class="kort" id="sammenligning" hidden aria-label="Sammenligning"></section>
+
+</main>
+
+<footer class="bunn">Lydløft · testbenk · versjon 1 · alt lagres bare i denne nettleseren</footer>
+
+<script src="js/dsp.js?v=1"></script>
+<script src="js/testsignal.js?v=1"></script>
+<script src="js/analyse.js?v=1"></script>
+<script src="js/lager.js?v=1"></script>
+<script src="js/opptak.js?v=1"></script>
+<script src="js/tegning.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>

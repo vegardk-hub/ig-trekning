@@ -1,0 +1,192 @@
+/* Testbenken er et måleinstrument: tallene og kurvene skal leses, ikke pyntes.
+   Stående iPhone først, så bredere kort på PC. */
+
+:root {
+  --ink: #1d2a30;
+  --dempet: #5b6b72;
+  --flate: #eef2f3;
+  --kortflate: #ffffff;
+  --kant: #cfd8db;
+  --rutenett: #e2e8ea;
+  --aksent: #1f4e5f;
+  --opptak: #c62f2f;
+  --ok: #2f7a3e;
+  --merk: #9a6700;
+  --feil: #b3261e;
+  --serie1: #1f6fb2;
+  --serie2: #d1561f;
+  --serie3: #2f8f5b;
+  --serie4: #8a4fbf;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e4ecee;
+    --dempet: #9aaab0;
+    --flate: #12191c;
+    --kortflate: #1b2427;
+    --kant: #2e3b40;
+    --rutenett: #26323a;
+    --aksent: #7fc4da;
+    --opptak: #ff6b6b;
+    --ok: #6fcf87;
+    --merk: #e2b04a;
+    --feil: #ff7a70;
+    --serie1: #5ca8e8;
+    --serie2: #f08a4b;
+    --serie3: #5fcf8f;
+    --serie4: #b98ae6;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--flate);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+.topp, main, .bunn {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+.topp { padding-top: max(1.25rem, env(safe-area-inset-top)); }
+.topp h1 { margin: 0; font-size: 1.6rem; }
+.topp p { margin: .4rem 0 0; color: var(--dempet); max-width: 42rem; }
+.merke {
+  font-size: .8rem; font-weight: 600; vertical-align: middle;
+  color: var(--aksent); border: 1px solid currentColor; border-radius: 999px; padding: .1rem .5rem;
+}
+
+.kort {
+  background: var(--kortflate);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.kort h2 { margin: 0 0 .6rem; font-size: 1.15rem; }
+.kort h3 { margin: 1.2rem 0 .4rem; font-size: 1rem; }
+.kort p { margin: .4rem 0; }
+
+.rad { display: flex; flex-wrap: wrap; gap: .75rem; }
+.valg { display: flex; flex-direction: column; gap: .3rem; font-size: .82rem; color: var(--dempet); min-width: 12rem; flex: 1 1 12rem; }
+.valg.bred { flex: 2 1 16rem; }
+.valg select, .valg input, .navnefelt {
+  font: inherit; font-size: 1rem; color: var(--ink);
+  padding: .5rem; border: 1px solid var(--kant); border-radius: 8px; background: var(--kortflate);
+  width: 100%;
+}
+.bryter { display: flex; gap: .5rem; align-items: flex-start; margin: .8rem 0 0; font-size: .92rem; color: var(--dempet); }
+.bryter input { margin-top: .2rem; }
+
+.opptaksrad { display: flex; align-items: center; gap: .9rem; margin: 1rem 0 .6rem; }
+.opptaksknapp {
+  font: inherit; font-size: 1.05rem; font-weight: 600;
+  display: inline-flex; align-items: center; gap: .55rem;
+  padding: .75rem 1.2rem; border-radius: 999px; border: 2px solid var(--opptak);
+  background: var(--kortflate); color: var(--opptak); cursor: pointer; flex: none;
+}
+.opptaksknapp .prikk { width: .9rem; height: .9rem; border-radius: 50%; background: var(--opptak); }
+.opptaksknapp.aktiv { background: var(--opptak); color: #fff; }
+.opptaksknapp.aktiv .prikk { border-radius: 2px; background: #fff; }
+.opptaksknapp:disabled { opacity: .5; cursor: default; }
+
+.maaler { flex: 1; height: .8rem; border-radius: 999px; background: var(--rutenett); overflow: hidden; }
+#maalerfyll { height: 100%; width: 0; background: var(--ok); transition: width .06s linear; }
+#maalerfyll.hoy { background: var(--merk); }
+#maalerfyll.rod { background: var(--feil); }
+.tid { font-variant-numeric: tabular-nums; color: var(--dempet); min-width: 2.8rem; text-align: right; }
+
+.knapper { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .6rem; }
+.knapp {
+  font: inherit; font-size: .95rem;
+  padding: .55rem .9rem; border-radius: 8px;
+  border: 1px solid var(--kant); background: var(--kortflate); color: var(--ink);
+  cursor: pointer; display: inline-flex; align-items: center; gap: .4rem;
+}
+.knapp.primaer { background: var(--aksent); border-color: var(--aksent); color: var(--kortflate); }
+.knapp.fare { color: var(--feil); }
+.knapp:disabled { opacity: .45; cursor: default; }
+.knapp.fil { position: relative; overflow: hidden; }
+.knapp.fil input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.status { min-height: 1.4em; color: var(--dempet); font-size: .92rem; }
+.status.feil { color: var(--feil); }
+.merknad-tekst { color: var(--merk); font-size: .92rem; }
+
+details { margin-top: .8rem; }
+summary { cursor: pointer; color: var(--aksent); }
+details ul { padding-left: 1.2rem; color: var(--dempet); font-size: .92rem; }
+details li { margin: .35rem 0; }
+
+/* ----------------------------------------------------------------- liste */
+
+.tomt { color: var(--dempet); }
+.liste { list-style: none; margin: 0; padding: 0; }
+.liste li {
+  display: grid; grid-template-columns: auto 1fr auto; gap: .2rem .7rem; align-items: center;
+  padding: .65rem .2rem; border-top: 1px solid var(--rutenett);
+}
+.liste li:first-child { border-top: 0; }
+.liste li.valgt { background: color-mix(in srgb, var(--aksent) 8%, transparent); border-radius: 8px; }
+.liste .navn { font-weight: 600; overflow-wrap: anywhere; }
+.liste .under { grid-column: 2; color: var(--dempet); font-size: .82rem; }
+.liste .apne { grid-row: 1 / span 2; grid-column: 3; }
+.liste input[type=checkbox] { grid-row: 1 / span 2; width: 1.2rem; height: 1.2rem; }
+.liste .ventende { color: var(--merk); }
+
+.brikker { display: flex; flex-wrap: wrap; gap: .3rem; grid-column: 2; }
+.brikke { font-size: .75rem; padding: .1rem .45rem; border-radius: 999px; border: 1px solid var(--kant); color: var(--dempet); }
+.brikke.ok { color: var(--ok); border-color: currentColor; }
+.brikke.merk { color: var(--merk); border-color: currentColor; }
+.brikke.feil { color: var(--feil); border-color: currentColor; }
+
+/* ---------------------------------------------------------------- detalj */
+
+.detaljhode { display: flex; flex-direction: column; gap: .3rem; }
+.detaljhode .under { color: var(--dempet); font-size: .85rem; }
+canvas { display: block; width: 100%; }
+.forklaring { color: var(--dempet); font-size: .85rem; margin: .2rem 0 .6rem; }
+
+.funn { list-style: none; padding: 0; margin: .8rem 0; }
+.funn li { padding: .35rem 0 .35rem 1.4rem; position: relative; }
+.funn li::before { content: ""; position: absolute; left: .2rem; top: .75rem; width: .6rem; height: .6rem; border-radius: 50%; }
+.funn li.ok::before { background: var(--ok); }
+.funn li.merk::before { background: var(--merk); }
+.funn li.feil::before { background: var(--feil); }
+
+.tall { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: .5rem; margin: .6rem 0; }
+.tall div { border: 1px solid var(--rutenett); border-radius: 8px; padding: .45rem .6rem; }
+.tall dt { font-size: .75rem; color: var(--dempet); }
+.tall dd { margin: .1rem 0 0; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+
+pre, textarea.rapport {
+  width: 100%; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: .78rem;
+  background: var(--flate); color: var(--ink); border: 1px solid var(--kant); border-radius: 8px;
+  padding: .6rem; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+textarea.rapport { min-height: 14rem; resize: vertical; }
+
+.tegnforklaring { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .85rem; margin: .3rem 0; }
+.tegnforklaring span::before {
+  content: ""; display: inline-block; width: .8rem; height: .25rem; margin-right: .35rem;
+  vertical-align: middle; background: var(--prikk);
+}
+
+.tabell { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+.tabellramme { overflow-x: auto; }
+.tabell th, .tabell td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--rutenett); vertical-align: top; }
+.tabell th { font-weight: 600; }
+.tabell td:first-child { color: var(--dempet); white-space: nowrap; }
+
+.bunn { color: var(--dempet); font-size: .8rem; padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+
+[hidden] { display: none !important; }
