@@ -78,6 +78,17 @@ Analysen kjører i en egen tråd (`analyse-arbeider.js`), så siden fryser ikke.
 - **Frekvensresponsen er hele kjeden.** Høyttaler, rom og mikrofon sammen. Én
   kurve alene sier lite; forskjellen mellom to opptak der bare én ting er
   byttet, sier mye. Derfor finnes sammenligningen.
+- **En mikrofon kan lyve om samplingsraten.** Safari på iOS har en kjent feil
+  der den leverer lavere rate enn den oppgir. Passer ikke sveipet på den
+  oppgitte raten, prøves 44,1, 48, 24, 16 og 8 kHz, og treffet sier hva den
+  egentlige raten er. Sveipet stoppes ved 0,45·fs når det regnes ut på en lav
+  rate, ellers folder det seg ned igjen som speilbilde.
+- **Et opptak som stopper før testsignalet, sier fra om det.** Første runde fra
+  Safari stoppet ved 26,8 s, før den rosa støyen, og rapporten viste bare «–»
+  der svaret skulle stått.
+- **Digital stillhet er et funn.** −126 dBFS i pausene er ikke et stille rom,
+  det er en støyport. Det var det første tegnet på at Safaris lydbehandling
+  var på.
 - **Lik lydstyrke ved lytting.** Det som er høyest, låter best. A/B spilles på
   −23 LUFS, aldri så høyt at toppene klipper.
 

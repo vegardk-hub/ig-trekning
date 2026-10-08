@@ -217,6 +217,7 @@ async function ventPaaNytt(side, for_, ms) {
     await side.click('#testHer');
     await ventPaaNytt(side, n, 60000);
     const her = await side.evaluate(async () => (await LydLager.alle())[0]);
+    if (!(her.analyse.test && (her.analyse.test.nedreGrense === null || her.analyse.test.nedreGrense < 30))) console.log('  (her: ' + her.navn + ', ' + her.kilde + ', ' + her.varighet + ' s, ' + JSON.stringify(her.analyse.funn.map(f => f.tekst)) + ')');
     krev(her.varighet > 29 && her.varighet < 34, 'opptaket skal stoppe av seg selv like etter signalet', her.varighet);
     krev(her.analyse.test, 'testsignalet skal finnes i et opptak fra nettleseren');
     if (her.analyse.test) {

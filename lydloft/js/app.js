@@ -96,7 +96,7 @@
 
   var arbeider = null, ventende = {}, neste = 1;
   try {
-    arbeider = new Worker('js/analyse-arbeider.js?v=1');
+    arbeider = new Worker('js/analyse-arbeider.js?v=2');
     arbeider.onmessage = function (e) {
       var v = ventende[e.data.id];
       delete ventende[e.data.id];
@@ -341,7 +341,15 @@
     linjer.push('Innhold opp til ' + A.hz(g.ovreInnhold) + (g.kodekkant ? ' · bratt kant ved ' + A.hz(g.kodekkant) : '') +
       (g.kanalforhold ? ' · kanaler: korrelasjon ' + tall(g.kanalforhold.korrelasjon, 4) + (g.kanalforhold.identiske ? ' (identiske)' : '') +
         ', ubalanse ' + tall(g.kanalforhold.ubalanseDb, 1, 'dB') : ''));
+    if (g.ltas) linjer.push('Spektrum (dBFS): ' + [63, 125, 250, 500, 1000, 2000, 4000, 8000, 12000, 16000].map(function (f) {
+      var beste = 0;
+      g.ltas.f.forEach(function (ff, k) { if (Math.abs(Math.log(ff / f)) < Math.abs(Math.log(g.ltas.f[beste] / f))) beste = k; });
+      return A.hz(f).replace(' ', '') + ':' + tall(g.ltas.db[beste], 0);
+    }).join(' '));
     if (t) {
+      if (t.ekteRate) linjer.push('SAMPLINGSRATE: oppgitt ' + t.oppgittRate + ' Hz, testsignalet passer på ' + t.ekteRate + ' Hz');
+      linjer.push('Dekket ' + tall(t.dekketS, 1, 's') + ' av ' + tall(LydTestsignal.LENGDE, 1, 's') + ' · trinn målt (dBFS): ' +
+        t.trinn.map(function (x) { return tall(x.maalt, 0) + (x.gyldig ? '' : '?'); }).join(' '));
       linjer.push('Testsignal: nedre ' + (t.nedreGrense ? A.hz(t.nedreGrense) : '<20 Hz') +
         ' · øvre ' + (t.ovreGrense ? A.hz(t.ovreGrense) : '>' + A.hz(Math.min(20000, m.fs * 0.49))) +
         ' · RT60 ' + (t.etterklang ? tall(t.etterklang.rt60, 2, 's') + ' (' + t.etterklang.metode + ')' : '–') +

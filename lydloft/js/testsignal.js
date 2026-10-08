@@ -49,12 +49,20 @@ var LydTestsignal = (function () {
     return 1;
   }
 
+  // Over 0,45·fs folder sveipet seg ned igjen som speilbilde. Det skjer
+  // aldri ved avspilling (44,1 og 48 kHz), men analysen prøver også lave
+  // rater for å avsløre en mikrofon som lyver om sin, og der må sveipet
+  // stoppe før det går over Nyquist.
   function lagSveip(fs) {
     var n = Math.round(SVEIP.varighet * fs);
     var x = new Float64Array(n);
+    var stopp = Math.min(SVEIP.varighet, SVEIP.varighet * Math.log(0.45 * fs / SVEIP.f1) / R);
+    var ut = 0.006;
     for (var i = 0; i < n; i++) {
       var t = i / fs;
-      x[i] = sveipVerdi(t) * sveipKant(t);
+      if (t >= stopp) break;
+      var kant = stopp < SVEIP.varighet && t > stopp - ut ? 0.5 - 0.5 * Math.cos(Math.PI * (stopp - t) / ut) : 1;
+      x[i] = sveipVerdi(t) * sveipKant(t) * kant;
     }
     return x;
   }

@@ -251,10 +251,37 @@ bolk('Kjeder med feil i');
   krev(hoy.grunn.klipping.hendelser > 0, 'klipping skal finnes i et overstyrt opptak');
   krev(hoy.test && hoy.test.forvrengning && hoy.test.forvrengning.prosent > 1, 'og gi forvrengning', hoy.test && hoy.test.forvrengning);
 
-  // Fila sier 48 kHz, men lyden er tatt opp i 44,1. Da blir alt 9 % lysere.
-  var feilRate = telefon(44100, {});
-  var lest = LydAnalyse.analyser([feilRate], 48000);
-  krev(lest.test === null || Math.abs(lest.test.frekvens1k - 1000) > 2, 'feil samplingsrate skal ikke se riktig ut');
+  // Fila sier 48 kHz, men lyden er tatt opp i 44,1. Sveipet passer ikke i
+  // tid, så analysen må prøve andre rater og si hvilken som er den ekte.
+  var lest = LydAnalyse.analyser([telefon(44100, {})], 48000);
+  krev(lest.test && lest.test.ekteRate === 44100, 'feil samplingsrate skal avsløres og den ekte finnes', lest.test && lest.test.ekteRate);
+  krev(lest.test && lest.test.nedreGrense > 150 && lest.test.nedreGrense < 175, 'og grensene regnes på den ekte raten', lest.test && lest.test.nedreGrense);
+  krev(lest.funn.some(function (f) { return f.niva === 'feil' && /44100 Hz/.test(f.tekst); }), 'og det står som feil i funnene');
+
+  // WebKit-feilen: mikrofonen leverer 16 kHz og kaller det 48.
+  var ios = LydAnalyse.analyser([telefon(16000, { lp: 0 })], 48000);
+  krev(ios.test && ios.test.ekteRate === 16000, '16 kHz kalt 48 kHz skal avsløres', ios.test && ios.test.ekteRate);
+  krev(normal && !normal.test.ekteRate, 'og en riktig rate skal ikke flagges');
+
+  // Stoppet før den rosa støyen — slik opptaket fra Safari i første runde.
+  var hel = telefon(rate, {});
+  var kort = LydAnalyse.analyser([hel.subarray(0, Math.round(26.8 * rate))], rate);
+  krev(kort.test && kort.test.rosa === null, 'et avkortet opptak har ingen rosa støy');
+  krev(kort.funn.some(function (f) { return /stoppet .* før testsignalet/.test(f.tekst); }), 'og det skal si fra om at det stoppet for tidlig');
+  krev(!normal.funn.some(function (f) { return /stoppet .* før/.test(f.tekst); }), 'men ikke når hele signalet er med');
+
+  // En støyport gir digital stillhet mellom lydene.
+  var port = LydAnalyse.analyser([telefon(rate, { stoyDb: -130 })], rate);
+  krev(port.funn.some(function (f) { return /digitalt null/.test(f.tekst); }), 'digital stillhet skal kalles en støyport', port.grunn.stoygulvDb);
+  krev(!normal.funn.some(function (f) { return /digitalt null/.test(f.tekst); }), 'men ikke vanlig romstøy');
+
+  // En støydemper som spiser vedvarende toner.
+  var utenToner = telefon(rate, {});
+  var t0 = Math.round((0.7 + LydTestsignal.TRINN.start) * rate), t1 = Math.round((0.7 + LydTestsignal.ROSA.start - 0.4) * rate);
+  for (var q = t0; q < t1; q++) utenToner[q] = (q % 7 - 3) * 1e-4;   // bare romstøy igjen
+  var borte = LydAnalyse.analyser([utenToner], rate);
+  krev(borte.test && borte.test.tonerBorte, 'toner som forsvinner skal oppdages');
+  krev(borte.funn.some(function (f) { return /tonene i nivåtrappen/.test(f.tekst); }), 'og stå i funnene');
 })();
 
 bolk('Stereoopptak');

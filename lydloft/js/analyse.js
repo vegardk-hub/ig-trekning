@@ -261,8 +261,25 @@ var LydAnalyse = (function () {
     return { overDb: over, finnes: over > 12 };
   }
 
+  // Ratene vi prøver når sveipet ikke passer på den oppgitte. Safari på iOS
+  // har en kjent feil der mikrofonen leverer lavere rate enn den sier; da
+  // går sveipet for fort eller sakte i tid og finnes aldri. Passer det på en
+  // annen rate, vet vi både *at* det er feil og *hva* den egentlige raten er.
+  var ANDRE_RATER = [44100, 48000, 24000, 16000, 8000];
+
   function test(kanaler, fs) {
     var m = D.mono(kanaler);
+    var r = testVed(m, fs);
+    if (r) return r;
+    for (var i = 0; i < ANDRE_RATER.length; i++) {
+      if (ANDRE_RATER[i] === fs) continue;
+      r = testVed(m, ANDRE_RATER[i]);
+      if (r) { r.ekteRate = ANDRE_RATER[i]; r.oppgittRate = fs; return r; }
+    }
+    return null;
+  }
+
+  function testVed(m, fs) {
     if (m.length / fs > MAKS_TESTLENGDE || m.length / fs < TS.SVEIP.varighet) return null;
     var grov = finnSveip(m, fs);
     if (grov === null) return null;
@@ -355,7 +372,12 @@ var LydAnalyse = (function () {
       kompresjon: kompresjon,
       frekvens1k: frekvens,
       rosa: rosa,
-      signalStoyDb: rosa && stoygulv !== null ? rosa.maaltDb - stoygulv : null
+      signalStoyDb: rosa && stoygulv !== null ? rosa.maaltDb - stoygulv : null,
+      // Hvor mye av sekvensen opptaket rakk, og om tonene kom gjennom i det
+      // hele tatt — en støydemper kan spise en vedvarende tone som om den var
+      // vifte-sus.
+      dekketS: (m.length - sekStart) / fs,
+      tonerBorte: trinn.some(function (t) { return t.maalt !== null; }) && !gyldige.length
     };
   }
 
@@ -404,10 +426,24 @@ var LydAnalyse = (function () {
     if (g.kodekkant && !(t && g.kodekkant > 15000)) {
       ut.push({ niva: 'merk', tekst: 'Bratt kant ved ' + hz(g.kodekkant) + ' — ser ut som en kodek har kuttet toppen.' });
     }
+    if (g.stoygulvDb !== null && g.stoygulvDb < -100 && g.toppDb > -70) {
+      ut.push({ niva: 'feil', tekst: 'Stillheten er digitalt null (' + Math.round(g.stoygulvDb) + ' dBFS). En støyport skrur av lyden når det er stille.' });
+    }
     if (Math.abs(g.dc) > 0.005) {
       ut.push({ niva: 'merk', tekst: 'Likespenningsforskyvning på ' + g.dc.toFixed(3) + '.' });
     }
     if (!t) return ut;
+
+    if (t.ekteRate) {
+      ut.push({ niva: 'feil', tekst: 'Fila sier ' + t.oppgittRate + ' Hz, men lyden går i ' + t.ekteRate + ' Hz. Testsignalet passet først da — alle tall under er regnet på ' + t.ekteRate + ' Hz.' });
+    }
+    if (t.dekketS < TS.LENGDE - 0.6) {
+      ut.push({ niva: 'merk', tekst: 'Opptaket stoppet ' + (TS.LENGDE - t.dekketS).toFixed(1).replace('.', ',') + ' s før testsignalet var ferdig' +
+        (t.rosa ? '.' : ' — den rosa støyen mangler, så støydemping og signal/støy kunne ikke måles.') });
+    }
+    if (t.tonerBorte) {
+      ut.push({ niva: 'feil', tekst: 'Ingen av tonene i nivåtrappen kom over støyen. Noe (støydemping?) fjerner vedvarende toner.' });
+    }
 
     ut.push(t.nedreGrense ?
       { niva: t.nedreGrense > 150 ? 'merk' : 'ok', tekst: 'Bassen faller under −10 dB ved ' + hz(t.nedreGrense) + '.' } :
