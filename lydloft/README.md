@@ -76,6 +76,28 @@ Kutt-filtrene er dobbelt opp (24 dB/oktav). Med ett andreordens filter er
 telefon og radio for snille – det slipper gjennom for mye bass til å høres ut
 som en liten høyttaler.
 
+## Lysshow
+
+Ti visualiseringer (`visualisering.js`) som følger lyden mens den spilles:
+Neonsøyler, Bølgen, Solen, Galaksen, Tunnelen, Fyrverkeri, Fjellkjeden,
+Lavalampen, Fossen og Monsteret. Ti er for mange til å bli stående — de er
+laget for at eieren skal velge. Hver er en egen grunnform, ikke en
+fargevariant av en annen.
+
+- **Analysatoren sitter etter hele effektkjeden**, i et felles utgangspunkt
+  (`utgang()`) som både den nye versjonen og «Før» går gjennom. Lysshowet viser
+  det man hører.
+- **dB-området er −85 til −12.** Standarden (−100 til −30) la et opptak på
+  −16 LUFS nær taket, og første runde ble hvite flater i Bølgen, Galaksen og
+  Fossen.
+- **Bølgen låser seg på en nullgjennomgang**, som et oscilloskop. Uten det
+  hopper den sideveis hvert bilde og blir en lysende klump.
+- **Fossen har sin egen fargeskala** (lilla → rosa → oransje → gul): neon-
+  paletten rundt ga grelle striper der.
+- **Tegningen går bare mens lyden spilles.** Canvas i 60 bilder i sekundet er
+  den raskeste måten å tømme et batteri på uten at noen ser det.
+- Et trykk på bildet gir neste; valget huskes per nettleser (`localStorage`).
+
 ## Rens
 
 Opptakene er ikke komprimerte — de er rå samplinger. Det som gjorde dem

@@ -10,7 +10,7 @@
  */
 'use strict';
 
-importScripts('dsp.js?v=8', 'testsignal.js?v=8', 'analyse.js?v=8');
+importScripts('dsp.js?v=9', 'testsignal.js?v=9', 'analyse.js?v=9');
 
 self.onmessage = function (e) {
   var d = e.data;

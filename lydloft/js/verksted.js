@@ -82,10 +82,31 @@
     var c = ctx();
     if (!fx || fx.ctx !== c) {
       if (fx) fx.riv();
-      fx = E.bygg(c, c.destination, verdier);
+      fx = E.bygg(c, utgang().node, verdier);
       fx.ctx = c;
     }
     return fx;
+  }
+
+  // Alt som spilles — den nye versjonen og «Før» — går gjennom ett felles
+  // punkt foran høyttaleren. Der sitter analysatoren lysshowet leser fra, så
+  // det viser det man faktisk hører, effektene medregnet.
+  var ut = null;
+  function utgang() {
+    var c = ctx();
+    if (!ut || ut.ctx !== c) {
+      var node = c.createGain(), analysator = c.createAnalyser();
+      analysator.fftSize = 2048;
+      analysator.smoothingTimeConstant = 0.72;
+      // Opptakene ligger på −16 LUFS etter rensen. Med standardområdet
+      // (−100 til −30 dB) står alt nær taket og hvert lysshow blir hvitt.
+      analysator.minDecibels = -85;
+      analysator.maxDecibels = -12;
+      node.connect(analysator);
+      analysator.connect(c.destination);
+      ut = { ctx: c, node: node, analysator: analysator };
+    }
+    return ut;
   }
   function p() { return Math.pow(2, verdier.halvtoner / 12); }
 
@@ -93,7 +114,7 @@
 
   var strekker = null, strekkVent = {}, strekkNr = 0, sisteStrekk = 0;
   try {
-    strekker = new Worker('js/strekk-arbeider.js?v=8');
+    strekker = new Worker('js/strekk-arbeider.js?v=9');
     strekker.onmessage = function (e) {
       var v = strekkVent[e.data.id];
       delete strekkVent[e.data.id];
@@ -263,6 +284,56 @@
     $('spilltekst').textContent = pa ? 'Pause' : 'Spill';
     $('spill').setAttribute('aria-label', pa ? 'Pause' : 'Spill');
     document.body.classList.toggle('spiller-pa', pa);
+    if (lys) { if (pa) lys.start(); else lys.stopp(); }
+    if ($('lyshint')) $('lyshint').hidden = pa;
+  }
+
+  /* ------------------------------------------------------------ lysshow */
+
+  var lys = null;
+  function visLys(nr) {
+    lys.settStil(nr);
+    var st = LydVis.STILER[lys.stil()];
+    $('lysnavn').textContent = st.navn;
+    $('lysnr').textContent = (lys.stil() + 1) + ' / ' + LydVis.STILER.length;
+    $('lysvalg').querySelectorAll('button').forEach(function (b, i) {
+      b.setAttribute('aria-pressed', i === lys.stil() ? 'true' : 'false');
+    });
+    try { localStorage.setItem('lydloft-lys', String(lys.stil())); } catch (e) { /* privat modus */ }
+  }
+
+  function lagLysshow() {
+    lys = LydVis.lag($('lysshow'), function () { return ut && ut.ctx === ctx() ? ut.analysator : null; });
+    LydVis.STILER.forEach(function (st, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lysbrikke';
+      b.style.setProperty('--farge', neon(i));
+      b.textContent = (i + 1) + ' · ' + st.navn;
+      b.addEventListener('click', function () { visLys(i); });
+      $('lysvalg').appendChild(b);
+    });
+    $('lysForrige').addEventListener('click', function (e) { e.stopPropagation(); visLys(lys.stil() - 1); });
+    $('lysNeste').addEventListener('click', function (e) { e.stopPropagation(); visLys(lys.stil() + 1); });
+    // Et trykk på selve bildet gir neste — det enkleste et barn kan finne på.
+    $('lysshow').addEventListener('click', function () { visLys(lys.stil() + 1); });
+    var ramme = $('sceneRamme');
+    var full = ramme.requestFullscreen || ramme.webkitRequestFullscreen;
+    if (full) {
+      $('fullskjerm').hidden = false;
+      $('fullskjerm').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else {
+          full.call(ramme);
+        }
+      });
+    }
+    var husket = 0;
+    try { husket = parseInt(localStorage.getItem('lydloft-lys') || '0', 10) || 0; } catch (e) { husket = 0; }
+    visLys(husket);
+    window.addEventListener('resize', function () { if (!lys.gaar()) lys.tegnEn(); });
   }
 
   function oppdaterLengde() { $('lengde').textContent = tid(horOriginal && kilde ? kilde.kanaler[0].length / kilde.fs : varighetUt()); }
@@ -316,7 +387,7 @@
     var a = fra >= 1 ? 0 : fra;
     var bufAndel = original && verdier.baklengs ? 1 - a : a;
     if (original) {
-      node.connect(c.destination);
+      node.connect(utgang().node);
     } else {
       node.connect(sorgForKjede().inngang);
     }
@@ -660,7 +731,7 @@
   var analysator = null;
   function grunnAnalyse(kanaler, fs) {
     if (!analysator) {
-      try { analysator = new Worker('js/analyse-arbeider.js?v=8'); } catch (e) { analysator = null; }
+      try { analysator = new Worker('js/analyse-arbeider.js?v=9'); } catch (e) { analysator = null; }
     }
     if (!analysator) return Promise.resolve(null);
     return new Promise(function (ok) {
@@ -817,6 +888,7 @@
   function koble() {
     lagGlidere();
     lagBrikker();
+    lagLysshow();
     settAlle(kopi(E.STANDARD));
     [['opptaksikon', 'mikrofon'], ['lastOppIkon', 'lastOpp'], ['egneIkon', 'glidere'], ['nullstillIkon', 'nullstill'],
      ['lagreIkon', 'stjerne'], ['lastNedIkon', 'lastNed']].forEach(function (p) { $(p[0]).innerHTML = LydIkoner.svg(p[1]); });
@@ -911,6 +983,7 @@
   }
 
   window.LydVerksted = { verdier: function () { return kopi(verdier); }, render: render, velg: velg,
-    takt: function () { return kilde && kilde.takt; } };
+    takt: function () { return kilde && kilde.takt; },
+    lys: function () { return lys; } };
   koble();
 })();
