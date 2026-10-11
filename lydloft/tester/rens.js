@@ -138,6 +138,40 @@ bolk('Uten pauser');
   krev(res.rapport.trimmet < 0.1, 'og ingenting skal klippes', res.rapport.trimmet);
 })();
 
+bolk('Musikk hele veien');
+(function () {
+  // Feilen fra en ekte telefon: 12 sekunder musikk uten stillhet, med svake
+  // partier langt under de sterke og den sterkeste delen helt til slutt.
+  // Første utgave satte grensen fra de stilleste partiene og beholdt bare
+  // det siste sekundet.
+  var fsr = 48000, n = fsr * 12, x = new Float32Array(n), r = tilfeldig(13);
+  for (var i = 0; i < n; i++) {
+    var t = i / fsr, styrke = t < 11 ? 0.02 + 0.03 * Math.abs(Math.sin(t * 0.9)) : 0.4;
+    x[i] = styrke * Math.sin(2 * Math.PI * 330 * t) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 2 * t)) + 0.0005 * gauss(r);
+  }
+  var res = LydRens.rens([x], fsr);
+  krev(res.rapport.varighet > 11.5, 'musikk hele veien skal beholdes', res.rapport.varighet.toFixed(2) + ' s');
+
+  // En stille innledning som tones opp (et barn som starter forsiktig) er
+  // musikk, ikke stillhet, selv om den ligger 40 dB under det sterkeste.
+  var y = new Float32Array(fsr * 10);
+  for (var j = 0; j < y.length; j++) {
+    var tt = j / fsr, a = tt < 3 ? 0.004 * (0.5 + tt / 6) : 0.3;
+    y[j] = a * Math.sin(2 * Math.PI * 440 * tt) + 0.0003 * gauss(r);
+  }
+  var res2 = LydRens.rens([y], fsr);
+  krev(res2.rapport.trimFra < 0.05, 'en svak innledning skal ikke klippes bort', res2.rapport.trimFra.toFixed(2) + ' s');
+
+  // Og ekte stillhet foran en lav innspilling skal fortsatt bort.
+  var z = new Float32Array(fsr * 10);
+  for (var k = 0; k < z.length; k++) {
+    var t3 = k / fsr;
+    z[k] = (t3 > 2 && t3 < 8 ? 0.02 * Math.sin(2 * Math.PI * 440 * t3) : 0) + 0.0001 * gauss(r);
+  }
+  var res3 = LydRens.rens([z], fsr);
+  krev(res3.rapport.trimFra > 1.5 && res3.rapport.varighet < 7, 'stillhet rundt et lavt opptak skal fortsatt klippes', res3.rapport.trimFra.toFixed(2) + ' / ' + res3.rapport.varighet.toFixed(2));
+})();
+
 bolk('Klangretting');
 (function () {
   // Et opptak med bassen kuttet, slik telefonmikrofonen gjør: rettingen skal

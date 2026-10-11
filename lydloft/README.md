@@ -95,6 +95,15 @@ kompresjon, og til slutt −16 LUFS med en limiter under −1 dBTP.
   selv.
 - **Knappeklikket er kortere enn musikk.** Endene finnes som første og siste
   sammenhengende parti på minst 80 ms, og et isolert smell i marginen kuttes.
+- **Grensen for «lyd» settes fra toppene, ikke fra de stilleste partiene.**
+  Første utgave la den 15 dB over de stilleste 10 %. Et ekte opptak på 12
+  sekunder var musikk hele veien; de stilleste 10 % var svake partier,
+  grensen havnet over nesten alt, og den rensede versjonen ble det siste
+  sekundet. Nå er grensen 35 dB under toppene (eller 8 dB over det aller
+  stilleste), og to sikringer står etter: det som klippes bort, får ha
+  høyst 0,3 s mer enn 10 dB over gulvet, og det må være flatt i spekteret —
+  sus, ikke toner. Ellers klippes ingenting. Et for langt opptak er en
+  bagatell; et opptak uten musikk er en feil.
 - **−16, ikke −14.** Effektene etterpå trenger plass før limiteren i kjeden.
   Lagringen normaliserer til −14 som før.
 - **Rensen kommer før tidsstrekkingen og huskes** per opptak og innstilling.

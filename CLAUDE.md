@@ -619,6 +619,10 @@ og legger på trommer; taktart og swing på selve opptaket er ikke laget.
   forsiktig og står over når det ikke kan måle (ingen pauser = ingen
   støyfjerning). Takten finnes i det rå opptaket, så trommefasen trekker fra
   `trimFra`. Prøvene som måler tre like sterke toner, slår rensen av først.
+  Klippingen av endene må aldri ta musikk: grensen settes fra toppene, og det
+  som klippes, må være nede ved gulvet og flatt i spekteret — ellers klippes
+  ingenting. Første utgave kuttet et opptak med musikk hele veien ned til det
+  siste sekundet.
 - **Alt i lydkonteksten må kunne bygges på nytt.** iOS kan la konteksten stå
   i `interrupted` etter at en annen app har spilt lyd, og spill-knappen bytter
   den da ut. Kjeden, bufferne og AudioWorklet-modulen hører til én kontekst;

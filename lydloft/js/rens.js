@@ -114,13 +114,38 @@ var LydRens = (function () {
 
   /* -------------------------------------------------------- 2. klipp endene */
 
+  // Spektral flathet (geometrisk delt på aritmetisk snitt) mellom 200 Hz og
+  // 8 kHz, over rammene som skal klippes bort. Hvit støy gir nær 1, en tone
+  // nær 0. Høyst to sekunder tas med; det er nok til å avgjøre.
+  function flathet(m, fs, rammer, r) {
+    var maks = Math.min(rammer.length, Math.ceil(2 * fs / r));
+    var x = new Float64Array(maks * r);
+    for (var i = 0; i < maks; i++) x.set(m.subarray(rammer[i] * r, rammer[i] * r + r), i * r);
+    var spek = D.spektrum(x, fs, 2048);
+    if (!spek) return 1;
+    var a = Math.round(200 / spek.df), b = Math.min(spek.effekt.length - 1, Math.round(8000 / spek.df));
+    var logsum = 0, sum = 0, antall = 0;
+    for (var k = a; k <= b; k++) {
+      var v = spek.effekt[k] + 1e-30;
+      logsum += Math.log(v); sum += v; antall++;
+    }
+    return Math.exp(logsum / antall) / (sum / antall);
+  }
+
   // Musikken starter der det første sammenhengende partiet på minst 80 ms
   // begynner. Et klikk fra knappen er kortere, og blir derfor liggende utenfor.
   function finnEnder(m, fs) {
     var rn = rammenivaa(m, fs, 10), db = rn.db, r = rn.r, n = db.length;
     if (n < 30) return null;
-    var gulv = persentil(db, 0.1), topp = persentil(db, 0.99);
-    var terskel = Math.max(gulv + 15, topp - 45);
+    // Grensen settes fra de sterke partiene, eller like over det aller
+    // stilleste — det som er høyest. Første utgave brukte de stilleste 10 %
+    // som gulv og la grensen 15 dB over. Det holder bare når opptaket har
+    // stillhet: i musikk hele veien er de 10 % svake partier, grensen havnet
+    // over nesten alt, og et opptak på 12 sekunder ble klippet ned til det
+    // siste, sterkeste sekundet. Sikringene nederst fanger det som slipper
+    // gjennom her.
+    var topp = persentil(db, 0.95), gulv = persentil(db, 0.02);
+    var terskel = Math.max(topp - 35, gulv + 8);
     var aktiv = Array.prototype.map.call(db, function (v) { return v > terskel; });
     var RUN = 8, forst = -1, sist = -1;
     for (var i = 0; i + RUN <= n && forst < 0; i++) {
@@ -142,6 +167,21 @@ var LydRens = (function () {
       if (db[b] > terskel + 6) { til = Math.max((sist + 1) * r, (b - 1) * r); break; }
     }
     if (til - fra < 0.5 * fs) return null;
+    // Sikring 1: det som klippes bort, skal ligge nede ved gulvet. Mer enn
+    // 0,3 s over det (mer enn et par knappeklikk) betyr musikk, og da klippes
+    // ingenting — et for langt opptak er en bagatell, et opptak uten musikk
+    // er en feil.
+    var over = 0, bort = [];
+    for (var e = 0; e < n; e++) {
+      var midt = (e + 0.5) * r;
+      if (midt >= fra && midt < til) continue;
+      bort.push(e);
+      if (db[e] > gulv + 10) over++;
+    }
+    if (over * r > 0.3 * fs) return null;
+    // Sikring 2: nivå alene skiller ikke stillhet fra en forsiktig innledning
+    // når hele opptaket er svakt. Sus er flatt i spekteret, en tone har topper.
+    if (bort.length * r > 0.3 * fs && flathet(m, fs, bort, r) < 0.15) return null;
     return { fra: fra, til: til };
   }
 
