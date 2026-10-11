@@ -207,27 +207,38 @@ var LydDsp = (function () {
   }
 
   // Integrert lydstyrke i LUFS. Gir -Infinity for stillhet.
+  //
+  // Én gjennomgang per kanal: K-filteret kjøres inline og kvadratene summeres
+  // i biter på 100 ms. En blokk på 400 ms med 75 % overlapp er da bare fire
+  // biter lagt sammen. Den første utgaven filtrerte til nye tabeller og
+  // bygde kumulative summer — fire kopier av et opptak på fire minutter,
+  // 92 MB hver, og over tre sekunder.
   function lufs(kanaler, fs) {
-    var blokk = Math.round(0.4 * fs);
     var steg = Math.round(0.1 * fs);
     var n = kanaler[0].length;
-    if (n < blokk) return -Infinity;
-    var vektet = kanaler.map(function (k) {
-      var f = kFilter(fs);
-      return filtrer(f[1], filtrer(f[0], k));
-    });
-    // Kumulative kvadratsummer gjør hver blokk til to oppslag.
-    var kum = vektet.map(function (v) {
-      var c = new Float64Array(v.length + 1);
-      for (var i = 0; i < v.length; i++) c[i + 1] = c[i] + v[i] * v[i];
-      return c;
+    var biter = Math.floor(n / steg);
+    if (biter < 4) return -Infinity;
+    var sum = new Float64Array(biter);
+    kanaler.forEach(function (x) {
+      var f = kFilter(fs), h = f[0], p = f[1];
+      var hb0 = h.b[0], hb1 = h.b[1], hb2 = h.b[2], ha1 = h.a[1], ha2 = h.a[2];
+      var pb0 = p.b[0], pb1 = p.b[1], pb2 = p.b[2], pa1 = p.a[1], pa2 = p.a[2];
+      var x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0;
+      for (var b = 0; b < biter; b++) {
+        var s2 = 0, slutt = (b + 1) * steg;
+        for (var i = b * steg; i < slutt; i++) {
+          var v = x[i];
+          var y = hb0 * v + hb1 * x1 + hb2 * x2 - ha1 * y1 - ha2 * y2;
+          x2 = x1; x1 = v;
+          var z = pb0 * y + pb1 * y1 + pb2 * y2 - pa1 * z1 - pa2 * z2;
+          y2 = y1; y1 = y; z2 = z1; z1 = z;
+          s2 += z * z;
+        }
+        sum[b] += s2 / steg;
+      }
     });
     var z = [];
-    for (var start = 0; start + blokk <= n; start += steg) {
-      var sum = 0;
-      for (var c = 0; c < kum.length; c++) sum += (kum[c][start + blokk] - kum[c][start]) / blokk;
-      z.push(sum);
-    }
+    for (var k = 0; k + 4 <= biter; k++) z.push((sum[k] + sum[k + 1] + sum[k + 2] + sum[k + 3]) / 4);
     function lk(v) { return -0.691 + db(v); }
     var over = z.filter(function (v) { return lk(v) > -70; });
     if (!over.length) return -Infinity;

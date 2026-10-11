@@ -69,6 +69,7 @@ var LydIkoner = (function () {
     trommer: '<ellipse cx="32" cy="31" rx="20" ry="7"/><path d="M12 31v15c0 4 9 8 20 8s20-4 20-8V31"/><path d="M20 37l4 14M32 38v16M44 37l-4 14"/><path d="M13 9l14 17M51 9L37 26"/>',
     ingenstil: '<ellipse cx="32" cy="31" rx="20" ry="7"/><path d="M12 31v15c0 4 9 8 20 8s20-4 20-8V31"/><path d="M20 37l4 14M32 38v16M44 37l-4 14"/><path d="M8 8l48 48"/>',
 
+    rens: '<path d="M11 53L39 25"/><path d="M35 21l8 8"/><path d="M47 6l2.2 5.8L55 14l-5.8 2.2L47 22l-2.2-5.8L39 14l5.8-2.2z"/><path d="M54 30l1.3 3.2 3.2 1.3-3.2 1.3L54 39l-1.3-3.2-3.2-1.3 3.2-1.3z"/><path d="M22 8l1.3 3.2 3.2 1.3-3.2 1.3L22 17l-1.3-3.2-3.2-1.3 3.2-1.3z"/>',
     mikrofon: '<rect x="23" y="7" width="18" height="31" rx="9"/><path d="M15 30a17 17 0 0 0 34 0M32 47v9M23 56h18"/>',
     stopp: '<rect x="18" y="18" width="28" height="28" rx="5" fill="currentColor"/>',
     spill: '<path d="M22 13l29 19-29 19z" fill="currentColor"/>',

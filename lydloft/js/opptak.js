@@ -74,7 +74,9 @@ var LydOpptak = (function () {
   function begrensninger(behandling, enhet) {
     var stottet = navigator.mediaDevices.getSupportedConstraints ?
       navigator.mediaDevices.getSupportedConstraints() : {};
-    var lyd = { channelCount: { ideal: 2 } };
+    // 48 kHz der det går an: noen nettlesere gir ellers kontekstens 44,1 eller
+    // lavere, og hver hertz som mangler her, kan ingen rens hente tilbake.
+    var lyd = { channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 }, sampleSize: { ideal: 24 } };
     BEHANDLING.forEach(function (navn) {
       // voiceIsolation er nyere enn de tre andre; ukjente navn er ufarlige,
       // men vi tar den bare med der den finnes, så rapporten er ærlig.
@@ -129,7 +131,7 @@ var LydOpptak = (function () {
   function startRaa(valg) {
     var ctx = lydkontekst();
     if (!workletLastet) {
-      workletLastet = ctx.audioWorklet.addModule('js/opptaker-worklet.js?v=6')
+      workletLastet = ctx.audioWorklet.addModule('js/opptaker-worklet.js?v=7')
         .catch(function (e) { workletLastet = null; throw e; });
     }
     return Promise.all([workletLastet, hentStrom(valg.behandling, valg.enhet)]).then(function (svar) {

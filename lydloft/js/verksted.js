@@ -31,6 +31,9 @@
     { gruppe: 'tempo', navn: 'tempo', etikett: 'Tempo', min: 0.5, max: 2, log: true, vis: prosent },
     { gruppe: 'tempo', navn: 'halvtoner', etikett: 'Tonehøyde', min: -12, max: 12, steg: 1, vis: halvtoner },
     { gruppe: 'tempo', navn: 'trommer', etikett: 'Trommer', min: 0, max: 1, steg: 0.01, vis: andel },
+    { gruppe: 'rens', navn: 'stoyfjerning', etikett: 'Fjern sus', min: 0, max: 1, steg: 0.05, vis: andel },
+    { gruppe: 'rens', navn: 'jevning', etikett: 'Jevn ut lydstyrken', min: 0, max: 1, steg: 0.05, vis: andel },
+    { gruppe: 'rens', navn: 'klangretting', etikett: 'Rett opp klangen', min: 0, max: 1, steg: 0.05, vis: andel },
     { gruppe: 'effekter', navn: 'romklang', etikett: 'Romklang', min: 0, max: 1, steg: 0.01, vis: andel },
     { gruppe: 'effekter', navn: 'romstorrelse', etikett: 'Romstørrelse', min: 0.3, max: 6, steg: 0.1, vis: sek },
     { gruppe: 'effekter', navn: 'ekko', etikett: 'Ekko', min: 0, max: 1, steg: 0.01, vis: andel },
@@ -42,9 +45,10 @@
     { gruppe: 'effekter', navn: 'knitring', etikett: 'Knitring og sus', min: 0, max: 1, steg: 0.01, vis: andel },
     { gruppe: 'effekter', navn: 'robot', etikett: 'Robot', min: 0, max: 1, steg: 0.01, vis: andel }
   ];
-  var LYDENDRENDE = { tempo: 1, halvtoner: 1, baklengs: 1 };
+  var LYDENDRENDE = { tempo: 1, halvtoner: 1, baklengs: 1, rens: 1, stoyfjerning: 1, jevning: 1, klangretting: 1 };
   // Det en karakter (Robot, Kirke …) ikke rører: farten og stilen.
-  var IKKE_KARAKTER = { tempo: 1, halvtoner: 1, baklengs: 1, stil: 1, slagBpm: 1, trommer: 1 };
+  var IKKE_KARAKTER = { tempo: 1, halvtoner: 1, baklengs: 1, stil: 1, slagBpm: 1, trommer: 1,
+    rens: 1, stoyfjerning: 1, jevning: 1, klangretting: 1 };
 
   function db(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',') + ' dB'; }
   function hz(v) { return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace('.', ',') + ' kHz' : Math.round(v) + ' Hz'; }
@@ -89,7 +93,7 @@
 
   var strekker = null, strekkVent = {}, strekkNr = 0, sisteStrekk = 0;
   try {
-    strekker = new Worker('js/strekk-arbeider.js?v=6');
+    strekker = new Worker('js/strekk-arbeider.js?v=7');
     strekker.onmessage = function (e) {
       var v = strekkVent[e.data.id];
       delete strekkVent[e.data.id];
@@ -108,6 +112,29 @@
       strekkVent[id] = { ok: ok, nei: nei };
       strekker.postMessage({ id: id, kanaler: kanaler, fs: fs, faktor: faktor, baklengs: baklengs });
     }).then(function (svar) { return svar.kanaler; });
+  }
+
+  function rensIArbeider(kanaler, fs, valg) {
+    if (!strekker) return Promise.resolve(window.LydRens ? LydRens.rens(kanaler, fs, valg) : { kanaler: kanaler, rapport: null });
+    return new Promise(function (ok, nei) {
+      var id = ++strekkNr;
+      strekkVent[id] = { ok: ok, nei: nei };
+      strekker.postMessage({ id: id, type: 'rens', kanaler: kanaler, fs: fs, valg: valg });
+    });
+  }
+
+  // Rensen huskes per opptak og innstilling. Den er det tyngste steget, og
+  // tempo, stil og effekter skal kunne skrus uten at den gjøres på nytt.
+  function rensNokkel() {
+    return [verdier.stoyfjerning, verdier.jevning, verdier.klangretting].join('|');
+  }
+  function renset() {
+    var nk = rensNokkel();
+    if (!kilde.renset || kilde.renset.nokkel !== nk) {
+      kilde.renset = { nokkel: nk, lofte: rensIArbeider(kilde.kanaler, kilde.fs,
+        { stoyfjerning: verdier.stoyfjerning, jevning: verdier.jevning, klangretting: verdier.klangretting }) };
+    }
+    return kilde.renset.lofte;
   }
 
   function finnTakt(kanaler, fs) {
@@ -135,8 +162,11 @@
   function trommeFase() {
     var t = kilde && kilde.takt;
     if (!t || !t.tydelig) return 0;
-    var lengde = kilde.kanaler[0].length / kilde.fs;
-    var inn = verdier.baklengs ? lengde - t.forsteSlag : t.forsteSlag;
+    // Takten er funnet i det rå opptaket; rensen klipper starten, så slagene
+    // ligger trimFra tidligere i lyden som faktisk spilles.
+    var lengde = lyd ? lyd.kildeLengde : kilde.kanaler[0].length / kilde.fs;
+    var slag = t.forsteSlag - (lyd ? lyd.trimFra : 0);
+    var inn = verdier.baklengs ? lengde - slag : slag;
     return inn / verdier.tempo;
   }
 
@@ -150,7 +180,8 @@
       for (var i = 0; i < 4; i++) fire.set(takt, i * takt.length);
       trommeNivaa[id] = LydDsp.lufs([fire], 48000);
     }
-    var musikk = kilde && isFinite(kilde.lufs) ? kilde.lufs : -20;
+    var musikk = lyd && lyd.rapport && isFinite(lyd.rapport.lufsEtter) ? lyd.rapport.lufsEtter :
+      kilde && isFinite(kilde.lufs) ? kilde.lufs : -20;
     var db = musikk - trommeNivaa[id] - 3 + 20 * Math.log10(verdier.trommer / 0.6);
     return Math.pow(10, Math.min(24, db) / 20);
   }
@@ -184,18 +215,31 @@
       strekkTimer = setTimeout(function () {
         if (!kilde) { ok(); return; }
         var faktor = p() / verdier.tempo;
-        var nokkel = kilde.id + '|' + faktor.toFixed(6) + '|' + !!verdier.baklengs;
+        var nokkel = kilde.id + '|' + faktor.toFixed(6) + '|' + !!verdier.baklengs + '|' + (verdier.rens ? rensNokkel() : 'rå');
         // Samme lyd som sist: ingenting å regne ut. Lagringen spør alltid, og
         // fire minutter strukket på nytt er ti sekunder på en telefon.
         if (lyd && lyd.nokkel === nokkel) { ok(); return; }
         var nr = ++sisteStrekk;
         var trenger = Math.abs(faktor - 1) > 1e-4 || verdier.baklengs;
-        if (trenger) status('strekkstatus', 'Regner ut nytt tempo og ny tonehøyde …');
-        var arbeid = trenger ? strekk(kilde.kanaler, kilde.fs, faktor, verdier.baklengs) : Promise.resolve(kilde.kanaler);
+        var grunnlag = { kanaler: kilde.kanaler, rapport: null };
+        var forste = Promise.resolve(grunnlag);
+        if (verdier.rens) {
+          if (!kilde.renset || kilde.renset.nokkel !== rensNokkel()) status('strekkstatus', 'Renser opptaket …');
+          forste = renset();
+        }
+        var arbeid = forste.then(function (g) {
+          grunnlag = g;
+          if (nr !== sisteStrekk) return null;
+          if (trenger) status('strekkstatus', 'Regner ut nytt tempo og ny tonehøyde …');
+          return trenger ? strekk(g.kanaler, kilde.fs, faktor, verdier.baklengs) : g.kanaler;
+        });
         arbeid.then(function (kanaler) {
-          if (nr !== sisteStrekk) return ok();
+          if (nr !== sisteStrekk || !kanaler) return ok();
           var her = spiller && !spiller.original ? naaAndel() : null;
-          lyd = { kanaler: kanaler, fs: kilde.fs, p: p(), buffer: null, nokkel: nokkel };
+          var rap = grunnlag.rapport;
+          lyd = { kanaler: kanaler, fs: kilde.fs, p: p(), buffer: null, nokkel: nokkel, rapport: rap,
+                  trimFra: rap ? rap.trimFra : 0, kildeLengde: grunnlag.kanaler[0].length / kilde.fs };
+          visRens();
           status('strekkstatus', '');
           oppdaterLengde();
           if (her !== null) start(her);
@@ -468,6 +512,25 @@
     }
   }
 
+  // Hva rensen gjorde, i ord et barn (og en forelder) forstår.
+  function visRens() {
+    var knapp = $('rens');
+    if (!knapp) return;
+    knapp.setAttribute('aria-pressed', verdier.rens ? 'true' : 'false');
+    var el = $('rensinfo');
+    if (!verdier.rens) { el.textContent = 'Av — du hører opptaket slik det ble tatt opp.'; return; }
+    var rap = lyd && lyd.rapport;
+    if (!rap) { el.textContent = 'Fjerner sus og klikk, og gjør lyden jevn og tydelig.'; return; }
+    var deler = [];
+    if (rap.trimmet > 0.1) deler.push('klippet ' + rap.trimmet.toFixed(1).replace('.', ',') + ' s stillhet og klikk');
+    if (rap.stoy) deler.push('dempet suset');
+    if (rap.klang && Object.keys(rap.klang).some(function (f) { return Math.abs(rap.klang[f]) >= 1; })) deler.push('rettet klangen');
+    if (rap.kompresjonDb > 0.5) deler.push('jevnet ut lydstyrken');
+    var hevet = LydRens.MAAL_LUFS - rap.lufsFor;
+    if (hevet > 1) deler.push('skrudd opp ' + Math.round(hevet) + ' dB');
+    el.textContent = deler.length ? deler.join(' · ').replace(/^./, function (c) { return c.toUpperCase(); }) + '.' : 'Opptaket var allerede rent.';
+  }
+
   function visTakt() {
     var t = kilde && kilde.takt, el = $('taktinfo');
     if (!kilde) { el.textContent = ''; return; }
@@ -597,7 +660,7 @@
   var analysator = null;
   function grunnAnalyse(kanaler, fs) {
     if (!analysator) {
-      try { analysator = new Worker('js/analyse-arbeider.js?v=6'); } catch (e) { analysator = null; }
+      try { analysator = new Worker('js/analyse-arbeider.js?v=7'); } catch (e) { analysator = null; }
     }
     if (!analysator) return Promise.resolve(null);
     return new Promise(function (ok) {
@@ -676,6 +739,15 @@
       var navn = 'Opptak ' + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
       return lagreIBiblioteket(res, navn, 'raa');
     }).then(function (meta) {
+      // Safari på iPhone kan levere mikrofonen med diskanten kuttet; da hjelper
+      // ingen rens, men et opptak i Taleopptak gjør.
+      var g = meta.analyse && meta.analyse.grunn;
+      if (g && g.ovreInnhold && g.ovreInnhold < 9000) {
+        setTimeout(function () {
+          status('status', 'Tips: Dette opptaket mangler diskant (stopper ved ' + Math.round(g.ovreInnhold / 100) / 10 +
+            ' kHz). Taleopptak på iPhone med «Tapsfri» gir bedre lyd — last det opp her.');
+        }, 50);
+      }
       return lastBibliotek(meta.id).then(function () { return velg(meta.id); });
     }).catch(function (e) { status('status', 'Kunne ikke lagre opptaket: ' + e.message, true); });
   }
@@ -749,6 +821,9 @@
     [['opptaksikon', 'mikrofon'], ['lastOppIkon', 'lastOpp'], ['egneIkon', 'glidere'], ['nullstillIkon', 'nullstill'],
      ['lagreIkon', 'stjerne'], ['lastNedIkon', 'lastNed']].forEach(function (p) { $(p[0]).innerHTML = LydIkoner.svg(p[1]); });
     visSpiller(false);
+    $('rensIkon').innerHTML = LydIkoner.svg('rens');
+    $('rens').addEventListener('click', function () { settVerdi('rens', !verdier.rens); visRens(); });
+    visRens();
 
     // Egne innstillinger huskes per nettleser, men det er en bekvemmelighet:
     // virker ikke lagringen, starter panelet bare lukket.

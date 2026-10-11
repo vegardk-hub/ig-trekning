@@ -58,6 +58,20 @@ function klikk100() {
 }
 function oktavlik(malt, sann, tol) { return [0.5, 1, 2].some(f => Math.abs(malt / (sann * f) - 1) < tol); }
 
+// Et dårlig opptak: stillhet og knappeklikk i endene, sus og lavt nivå.
+function daarligOpptak() {
+  const fs_ = 48000, n = fs_ * 8, x = new Float32Array(n);
+  let s = 3;
+  const tilf = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  for (let i = 0; i < n; i++) x[i] = 0.003 * (tilf() + tilf() + tilf() - 1.5);
+  [[1.2, 440, 0.12], [2.4, 523, 0.03], [3.6, 659, 0.12], [4.8, 587, 0.03], [6.0, 494, 0.12]].forEach(([t, f, a]) => {
+    const p = Math.round(t * fs_);
+    for (let i = 0; i < Math.round(0.9 * fs_); i++) x[p + i] += a * Math.min(1, i / 480) * Math.exp(-i / (0.6 * fs_)) * Math.sin(2 * Math.PI * f * i / fs_);
+  });
+  [0.08, 7.6].forEach(t => { const p = Math.round(t * fs_); for (let i = 0; i < 700; i++) x[p + i] += 0.4 * Math.exp(-i / 100) * (tilf() * 2 - 1); });
+  return Buffer.from(LydDsp.lagWav([x], fs_));
+}
+
 function treToner() {
   const fs_ = 48000, n = fs_ * 4, x = new Float32Array(n);
   for (let i = 0; i < n; i++) {
@@ -133,6 +147,16 @@ async function ventPaaLyd(side) {
     krev((await side.$eval('#versjonsnavn', e => e.value)) === 'tre-toner – kopi', 'navnet foreslås fra kilden', await side.$eval('#versjonsnavn', e => e.value));
     const bredde = await side.evaluate(() => document.documentElement.scrollWidth);
     krev(bredde <= 390, 'ingen vannrett rulling på en telefon', bredde);
+
+    bolk('Rens er på fra start');
+    krev(await side.getAttribute('#rens', 'aria-pressed') === 'true', 'rensen skal være på som standard');
+    // Målingene under krever at tre like sterke toner forblir like sterke.
+    // Klangrettingen endrer med vilje forholdet mellom dem, så her slås rensen
+    // av; den prøves for seg nederst.
+    await side.click('#rens');
+    await ventPaaLyd(side);
+    krev(await side.getAttribute('#rens', 'aria-pressed') === 'false', 'et trykk slår rensen av');
+    krev(/Av/.test(await side.textContent('#rensinfo')), 'og det står at den er av');
 
     bolk('Uten endringer');
     const null_ = await maal(side);
@@ -286,6 +310,37 @@ async function ventPaaLyd(side) {
     await side.click('#spill');
     await side.click('.stilflis[data-id="ingenstil"]');
     krev((await side.textContent('#g-tempo .gliderboks')).includes('100 %'), '«Ingen stil» setter tempoet tilbake');
+
+    bolk('Rens på et dårlig opptak');
+    await side.setInputFiles('#fil', { name: 'daarlig.wav', mimeType: 'audio/wav', buffer: daarligOpptak() });
+    await side.waitForFunction(() => document.getElementById('kildenavn').textContent === 'daarlig');
+    await side.click('.stilflis[data-id="ingenstil"]');
+    await ventPaaLyd(side);
+    const avLengde = await side.evaluate(async () => { const r = await LydVerksted.render(); return r.kanaler[0].length / r.fs; });
+    await side.click('#rens');
+    await side.waitForFunction(() => /klippet/i.test(document.getElementById('rensinfo').textContent), null, { timeout: 30000 });
+    const info = await side.textContent('#rensinfo');
+    krev(/klippet/i.test(info) && /suset/.test(info) && /skrudd opp/.test(info), 'rensen skal si hva den gjorde', info);
+    const pa = await side.evaluate(async () => {
+      const r = await LydVerksted.render();
+      const k = r.kanaler[0];
+      return { lengde: k.length / r.fs, start: 20 * Math.log10(Math.sqrt(k.slice(0, 2400).reduce((a, v) => a + v * v, 0) / 2400) + 1e-9) };
+    });
+    krev(avLengde - pa.lengde > 1, 'stillhet og klikk i endene skal være borte i versjonen', avLengde.toFixed(2) + ' → ' + pa.lengde.toFixed(2));
+    krev(pa.start < -35, 'ingen knappeklikk i starten', pa.start.toFixed(1));
+    if (await side.getAttribute('#egneKnapp', 'aria-expanded') !== 'true') await side.click('#egneKnapp');
+    krev(await side.locator('#g-stoyfjerning').isVisible(), 'rensen kan finjusteres under egne innstillinger');
+    await settGlider(side, 'stoyfjerning', 0);
+    // Rensen gjøres på nytt i arbeidstråden; vent til teksten er skrevet om.
+    const utenSus = await side.waitForFunction(() => !/suset/.test(document.getElementById('rensinfo').textContent), null, { timeout: 30000 })
+      .then(() => true, () => false);
+    krev(utenSus, 'uten støyfjerning skal den ikke si at suset er dempet', await side.textContent('#rensinfo'));
+    await side.click('#spill');
+    await side.click('#for');
+    await side.waitForTimeout(400);
+    krev((await side.textContent('#spill')).includes('Pause'), '«Før» spiller det rå opptaket ved siden av det rensede');
+    await side.click('#etter');
+    await side.click('#spill');
 
     bolk('Testbenken tåler versjonene');
     await side.goto(`http://127.0.0.1:${PORT}/lydloft/testbenk.html`);

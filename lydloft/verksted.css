@@ -167,6 +167,26 @@ a { color: var(--cyan); }
 .flis .bpm { font-size: .72rem; font-weight: 700; color: var(--farge); opacity: .9; margin-top: -.2rem; }
 .taktinfo { color: var(--dempet); font-size: .9rem; margin: -.3rem 0 .7rem; min-height: 1.2em; }
 
+/* Rens: én bred bryter øverst, fordi den gjelder alt under den. */
+.rensknapp {
+  width: 100%; display: flex; align-items: center; gap: .9rem; text-align: left; cursor: pointer;
+  padding: .9rem 1.1rem; border-radius: 1.2rem; font: inherit; color: var(--tekst);
+  border: 2px solid color-mix(in srgb, var(--lime) 40%, transparent); background: rgba(182, 255, 46, .04);
+  transition: box-shadow .2s ease, background .2s ease;
+}
+.rensknapp .ikon { flex: none; width: 3rem; height: 3rem; color: var(--lime); filter: drop-shadow(0 0 6px var(--lime)); }
+.renstekst { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.renstekst strong { font-size: 1.1rem; font-weight: 900; }
+#rensinfo { color: var(--dempet); font-size: .85rem; line-height: 1.3; }
+.rensknapp[aria-pressed="true"] {
+  border-color: var(--lime); background: rgba(182, 255, 46, .12);
+  box-shadow: 0 0 0 2px var(--lime), 0 0 24px rgba(182, 255, 46, .45);
+}
+.rensknapp[aria-pressed="false"] .ikon { color: var(--dempet); filter: none; }
+.rensknapp:active { transform: scale(.98); }
+.egne h3.g-rens { color: var(--cyan); }
+#g-rens { --farge: var(--cyan); }
+
 /* ------------------------------------------------------ egne innstillinger */
 
 .egneknapp {

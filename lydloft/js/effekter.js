@@ -30,7 +30,10 @@ var LydEffekter = (function () {
     // Stil og trommer: hvilket mønster, takten trommene følger (BPM i
     // opptaket før tempoendringen) og hvor høyt. Brukes av verkstedet, ikke
     // av kjeden her.
-    stil: 'ingen', slagBpm: 0, trommer: 0.6
+    stil: 'ingen', slagBpm: 0, trommer: 0.6,
+    // Rensen (rens.js) gjøres på selve opptaket før alt annet, og er på som
+    // standard: et telefonopptak uten den er lavt, suser og klikker i endene.
+    rens: true, stoyfjerning: 0.7, jevning: 0.5, klangretting: 0.5
   };
 
   // Karakterene er utgangspunkter, ikke låste valg: de setter glidebryterne,

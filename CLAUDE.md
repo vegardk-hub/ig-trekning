@@ -153,14 +153,15 @@ veien til å virke der.
 Lydløft har prøver på målekjeden, tidsstrekkingen, testbenken og
 verkstedet. De to første trenger verken nettleser eller server; kjør
 `analyse.js` etter endringer i `dsp.js`, `testsignal.js` eller `analyse.js`,
-`strekk.js` etter endringer i `strekk.js`, og `takt.js` etter endringer i
-`takt.js` eller `trommer.js`. `verksted.js` skal kjøres etter hver endring i
+`strekk.js` etter endringer i `strekk.js`, `takt.js` etter endringer i
+`takt.js` eller `trommer.js`, og `rens.js` etter endringer i `rens.js`. `verksted.js` skal kjøres etter hver endring i
 `effekter.js` eller `verksted.js`:
 
 ```
 node lydloft/tester/analyse.js
 node lydloft/tester/strekk.js
 node lydloft/tester/takt.js
+node lydloft/tester/rens.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/benk.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/verksted.js
 ```
@@ -613,6 +614,11 @@ og legger på trommer; taktart og swing på selve opptaket er ikke laget.
   `takt.js` (energi per frekvensbånd — per FFT-bin så en jevn akkord ut som en
   takt), tolkes i oktaven nærmest stilen, og trommene går i
   `slagBpm · tempo` slik at Ekorn og tempobryteren tar dem med.
+- **«Rens opptaket» er på som standard** (`rens.js`): lavkutt, klipp endene,
+  støyfjerning, klangretting, kompresjon, −16 LUFS og limiter. Hvert trinn er
+  forsiktig og står over når det ikke kan måle (ingen pauser = ingen
+  støyfjerning). Takten finnes i det rå opptaket, så trommefasen trekker fra
+  `trimFra`. Prøvene som måler tre like sterke toner, slår rensen av først.
 - **Alt i lydkonteksten må kunne bygges på nytt.** iOS kan la konteksten stå
   i `interrupted` etter at en annen app har spilt lyd, og spill-knappen bytter
   den da ut. Kjeden, bufferne og AudioWorklet-modulen hører til én kontekst;

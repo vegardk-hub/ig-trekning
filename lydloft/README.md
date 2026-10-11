@@ -76,6 +76,39 @@ Kutt-filtrene er dobbelt opp (24 dB/oktav). Med ett andreordens filter er
 telefon og radio for snille – det slipper gjennom for mye bass til å høres ut
 som en liten høyttaler.
 
+## Rens
+
+Opptakene er ikke komprimerte — de er rå samplinger. Det som gjorde dem
+dårlige, var det testbenken målte: lavt nivå, sus i pausene, et klikk fra
+knappen i hver ende, tynn bass, og barn som spiller sterkt og svakt om
+hverandre. «Rens opptaket» (`rens.js`) er på som standard og tar dem i
+rekkefølge: lavkutt på 35 Hz, klipp endene, støyfjerning, klangretting,
+kompresjon, og til slutt −16 LUFS med en limiter under −1 dBTP.
+
+- **Hvert trinn er forsiktig med vilje.** Støyfjerning som tar alt, gir
+  kvitrende «musikalsk støy»; den har et gulv (6–18 dB etter glidebryteren),
+  åpner straks og lukker sakte. Klangrettingen retter 40 % av avviket mot en
+  grov musikkbalanse, innenfor −4/+5 dB, og løfter aldri et bånd der det bare
+  er sus.
+- **Trinn som ikke kan måle, står over.** Uten pauser i opptaket vet ingen hva
+  som er sus og hva som er en svak tone, så støyfjerningen hopper over seg
+  selv.
+- **Knappeklikket er kortere enn musikk.** Endene finnes som første og siste
+  sammenhengende parti på minst 80 ms, og et isolert smell i marginen kuttes.
+- **−16, ikke −14.** Effektene etterpå trenger plass før limiteren i kjeden.
+  Lagringen normaliserer til −14 som før.
+- **Rensen kommer før tidsstrekkingen og huskes** per opptak og innstilling.
+  Takten finnes i det rå opptaket, så trommefasen trekker fra `trimFra`.
+- **Før/Etter** spiller det rå opptaket mot den rensede versjonen.
+- **Ytelse.** Fire minutter stereo tok 38 s i første utgave. Lydstyrken målte
+  med fire fulle kopier (nå én gjennomgang i 100 ms-biter), støyfjerningen tok
+  fem FFT-er per ramme (nå to kanaler i én kompleks FFT med ferdige tabeller og
+  50 % overlapp), og kompressoren regnet logaritmer per sampling (nå hver
+  16.). Nå ~23 s i Node for fire minutter, under ett sekund for åtte.
+
+Mangler diskanten etter et opptak (under 9 kHz), sier verkstedet fra og
+foreslår Taleopptak med «Tapsfri» — det kan ingen rens hente tilbake.
+
 ## Stil og takt
 
 Åtte stiler – ballade 70, reggae 76, hip hop 90, samba 100, rock 120, disco
@@ -197,6 +230,7 @@ Analysen kjører i en egen tråd (`analyse-arbeider.js`), så siden fryser ikke.
 node lydloft/tester/analyse.js
 node lydloft/tester/strekk.js
 node lydloft/tester/takt.js
+node lydloft/tester/rens.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/benk.js
 NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/verksted.js
 ```

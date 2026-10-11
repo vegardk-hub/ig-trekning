@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Lydløft">
 <!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
      index.html kan ellers stå med ti minutter gammel CSS og JS. -->
-<link rel="stylesheet" href="verksted.css?v=6">
+<link rel="stylesheet" href="verksted.css?v=7">
 </head>
 <body>
 
@@ -53,6 +53,13 @@
 
 <div id="verksted" hidden>
 
+  <section class="blokk" aria-label="Rens opptaket">
+    <button type="button" id="rens" class="rensknapp" aria-pressed="true">
+      <span id="rensIkon"></span>
+      <span class="renstekst"><strong>Rens opptaket</strong><span id="rensinfo"></span></span>
+    </button>
+  </section>
+
   <section class="blokk" aria-labelledby="t-magi">
     <h2 id="t-magi">Gjør den om til …</h2>
     <div class="fliser" id="karakterer"></div>
@@ -78,6 +85,8 @@
       <div class="glidere" id="g-tone"></div>
       <h3 class="g-tempo">Tempo og tonehøyde</h3>
       <div class="glidere" id="g-tempo"></div>
+      <h3 class="g-rens">Rens</h3>
+      <div class="glidere" id="g-rens"></div>
       <h3 class="g-effekter">Effekter</h3>
       <div class="glidere" id="g-effekter"></div>
       <button type="button" id="nullstill" class="knapp"><span id="nullstillIkon"></span>Nullstill alt</button>
@@ -123,17 +132,18 @@
 
 <footer class="bunn">
   <label class="bryter"><input type="checkbox" id="sloyfe" checked> Spill på repeat</label>
-  <span>Lydløft · versjon 6 · <a href="testbenk.html">Testbenk</a></span>
+  <span>Lydløft · versjon 7 · <a href="testbenk.html">Testbenk</a></span>
 </footer>
 
-<script src="js/dsp.js?v=6"></script>
-<script src="js/lager.js?v=6"></script>
-<script src="js/testsignal.js?v=6"></script>
-<script src="js/opptak.js?v=6"></script>
-<script src="js/effekter.js?v=6"></script>
-<script src="js/takt.js?v=6"></script>
-<script src="js/trommer.js?v=6"></script>
-<script src="js/ikoner.js?v=6"></script>
-<script src="js/verksted.js?v=6"></script>
+<script src="js/dsp.js?v=7"></script>
+<script src="js/lager.js?v=7"></script>
+<script src="js/testsignal.js?v=7"></script>
+<script src="js/opptak.js?v=7"></script>
+<script src="js/effekter.js?v=7"></script>
+<script src="js/takt.js?v=7"></script>
+<script src="js/trommer.js?v=7"></script>
+<script src="js/rens.js?v=7"></script>
+<script src="js/ikoner.js?v=7"></script>
+<script src="js/verksted.js?v=7"></script>
 </body>
 </html>
