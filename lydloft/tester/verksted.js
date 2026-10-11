@@ -343,21 +343,21 @@ async function ventPaaLyd(side) {
     await side.click('#spill');
 
     bolk('Lysshow');
-    krev(await side.$$eval('#lysvalg button', bs => bs.length) === 10, 'ti lysshow å velge mellom');
-    await side.click('#lysvalg button:nth-child(5)');
-    krev((await side.textContent('#lysnavn')) === 'Tunnelen' && (await side.textContent('#lysnr')) === '5 / 10', 'valget skal vises med navn og nummer');
+    krev(await side.$$eval('#lysvalg button', bs => bs.length) === 3, 'tre fjellkjeder å velge mellom');
+    await side.click('#lysvalg button:nth-child(2)');
+    krev((await side.textContent('#lysnavn')) === 'Neonvidda' && (await side.textContent('#lysnr')) === '2 / 3', 'valget skal vises med navn og nummer');
     await side.click('#lysshow');
-    krev((await side.textContent('#lysnavn')) === 'Fyrverkeri', 'et trykk på bildet gir neste');
+    krev((await side.textContent('#lysnavn')) === 'Fjellsjøen', 'et trykk på bildet gir neste');
     await side.click('#lysNeste');
     await side.click('#lysForrige');
-    krev((await side.textContent('#lysnavn')) === 'Fyrverkeri', 'pilene går fram og tilbake');
+    krev((await side.textContent('#lysnavn')) === 'Fjellsjøen', 'pilene går fram og tilbake');
     krev(await side.locator('#lyshint').isVisible(), 'før avspilling står det at lysshowet starter med ▶');
     await side.click('#spill');
     await side.waitForTimeout(500);
     krev(await side.evaluate(() => LydVerksted.lys().gaar()), 'lysshowet går mens lyden spiller');
     krev(await side.locator('#lyshint').isHidden(), 'og hintet forsvinner');
     // Hvert lysshow skal tegne noe synlig mens det spilles — ikke et svart bilde.
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 3; i++) {
       await side.click('#lysvalg button:nth-child(' + (i + 1) + ')');
       await side.waitForTimeout(900);
       const lyst = await side.evaluate(() => {
@@ -367,18 +367,17 @@ async function ventPaaLyd(side) {
         return n / (d.length / 16);
       });
       const navn = await side.textContent('#lysnavn');
-      // Fyrverkeri er mørk himmel med glimt; der holder det med litt.
-      krev(lyst > (navn === 'Fyrverkeri' ? 0.003 : 0.01), navn + ' skal tegne noe synlig mens lyden spiller', (lyst * 100).toFixed(1) + ' %');
+      krev(lyst > 0.01, navn + ' skal tegne noe synlig mens lyden spiller', (lyst * 100).toFixed(1) + ' %');
     }
     await side.click('#spill');
     await side.waitForTimeout(200);
     krev(!(await side.evaluate(() => LydVerksted.lys().gaar())), 'lysshowet stopper når lyden stopper — ellers tømmes batteriet');
-    await side.click('#lysvalg button:nth-child(3)');
+    await side.click('#lysvalg button:nth-child(2)');
     await side.reload();
     await side.waitForSelector('#lyder .lydflis');
     await side.click('#lyder .lydflis');
     await side.waitForSelector('#verksted:not([hidden])');
-    krev((await side.textContent('#lysnavn')) === 'Solen', 'valget av lysshow huskes', await side.textContent('#lysnavn'));
+    krev((await side.textContent('#lysnavn')) === 'Neonvidda', 'valget av lysshow huskes', await side.textContent('#lysnavn'));
 
     bolk('Testbenken tåler versjonene');
     await side.goto(`http://127.0.0.1:${PORT}/lydloft/testbenk.html`);

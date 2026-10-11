@@ -78,22 +78,25 @@ som en liten høyttaler.
 
 ## Lysshow
 
-Ti visualiseringer (`visualisering.js`) som følger lyden mens den spilles:
-Neonsøyler, Bølgen, Solen, Galaksen, Tunnelen, Fyrverkeri, Fjellkjeden,
-Lavalampen, Fossen og Monsteret. Ti er for mange til å bli stående — de er
-laget for at eieren skal velge. Hver er en egen grunnform, ikke en
-fargevariant av en annen.
+Tre fjellkjeder (`visualisering.js`) som følger lyden mens den spilles. Eieren
+valgte Fjellkjeden av ti forslag; de to andre er varianter av den, og
+skiller seg i hva lagene *er*:
+
+- **Fjellkjeden**: lagene er tid. Nyeste spekter fremst, de eldre rygger
+  bakover som strektegning.
+- **Neonvidda**: lagene er tid i perspektiv. Ryggene kommer fra en sol i
+  horisonten mot betrakteren, speilet om en dal i midten. Bassen står ytterst,
+  for i midten skal veien gå.
+- **Fjellsjøen**: lagene er frekvens. Diskanten er spisse tinder bakerst,
+  bassen runde åser fremst, og alt speiles i vannet. Båndene glir raskt opp og
+  sakte ned, ellers flimrer fjellet i stedet for å stå. Bakerste lag er høyest;
+  med bassen høyest fremst ble resten skjult bak én grønn vegg.
 
 - **Analysatoren sitter etter hele effektkjeden**, i et felles utgangspunkt
   (`utgang()`) som både den nye versjonen og «Før» går gjennom. Lysshowet viser
   det man hører.
 - **dB-området er −85 til −12.** Standarden (−100 til −30) la et opptak på
-  −16 LUFS nær taket, og første runde ble hvite flater i Bølgen, Galaksen og
-  Fossen.
-- **Bølgen låser seg på en nullgjennomgang**, som et oscilloskop. Uten det
-  hopper den sideveis hvert bilde og blir en lysende klump.
-- **Fossen har sin egen fargeskala** (lilla → rosa → oransje → gul): neon-
-  paletten rundt ga grelle striper der.
+  −16 LUFS nær taket, og første runde ble hvite flater.
 - **Tegningen går bare mens lyden spilles.** Canvas i 60 bilder i sekundet er
   den raskeste måten å tømme et batteri på uten at noen ser det.
 - Et trykk på bildet gir neste; valget huskes per nettleser (`localStorage`).
