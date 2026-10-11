@@ -7,7 +7,7 @@
  */
 'use strict';
 
-importScripts('dsp.js?v=10', 'strekk.js?v=10', 'takt.js?v=10', 'rens.js?v=10');
+importScripts('dsp.js?v=11', 'strekk.js?v=11', 'takt.js?v=11', 'rens.js?v=11');
 
 self.onmessage = function (e) {
   var d = e.data;

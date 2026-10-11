@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Lydløft">
 <!-- ?v= er billig forsikring: Pages sender max-age=600, så en fersk
      index.html kan ellers stå med ti minutter gammel CSS og JS. -->
-<link rel="stylesheet" href="verksted.css?v=10">
+<link rel="stylesheet" href="verksted.css?v=11">
 </head>
 <body>
 
@@ -55,14 +55,10 @@
 
   <section class="blokk" aria-label="Lysshow">
     <div class="sceneramme" id="sceneRamme">
-      <canvas id="lysshow" aria-label="Lysshow som følger lyden. Trykk for neste."></canvas>
-      <div class="lysnavn"><span id="lysnavn"></span><span class="lysnr" id="lysnr"></span></div>
-      <button type="button" class="lyspil venstre" id="lysForrige" aria-label="Forrige lysshow">‹</button>
-      <button type="button" class="lyspil hoyre" id="lysNeste" aria-label="Neste lysshow">›</button>
+      <canvas id="lysshow" aria-label="Lysshow: en fjellsjø som følger lyden"></canvas>
       <button type="button" class="fullskjerm" id="fullskjerm" aria-label="Fullskjerm" hidden>⤢</button>
       <p class="lyshint" id="lyshint">Trykk ▶ for lysshow</p>
     </div>
-    <div class="lysvalg" id="lysvalg" aria-label="Velg lysshow"></div>
   </section>
 
   <section class="blokk" aria-label="Rens opptaket">
@@ -144,19 +140,19 @@
 
 <footer class="bunn">
   <label class="bryter"><input type="checkbox" id="sloyfe" checked> Spill på repeat</label>
-  <span>Lydløft · versjon 10 · <a href="testbenk.html">Testbenk</a></span>
+  <span>Lydløft · versjon 11 · <a href="testbenk.html">Testbenk</a></span>
 </footer>
 
-<script src="js/dsp.js?v=10"></script>
-<script src="js/lager.js?v=10"></script>
-<script src="js/testsignal.js?v=10"></script>
-<script src="js/opptak.js?v=10"></script>
-<script src="js/effekter.js?v=10"></script>
-<script src="js/takt.js?v=10"></script>
-<script src="js/trommer.js?v=10"></script>
-<script src="js/rens.js?v=10"></script>
-<script src="js/ikoner.js?v=10"></script>
-<script src="js/visualisering.js?v=10"></script>
-<script src="js/verksted.js?v=10"></script>
+<script src="js/dsp.js?v=11"></script>
+<script src="js/lager.js?v=11"></script>
+<script src="js/testsignal.js?v=11"></script>
+<script src="js/opptak.js?v=11"></script>
+<script src="js/effekter.js?v=11"></script>
+<script src="js/takt.js?v=11"></script>
+<script src="js/trommer.js?v=11"></script>
+<script src="js/rens.js?v=11"></script>
+<script src="js/ikoner.js?v=11"></script>
+<script src="js/visualisering.js?v=11"></script>
+<script src="js/verksted.js?v=11"></script>
 </body>
 </html>

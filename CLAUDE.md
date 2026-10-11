@@ -623,8 +623,9 @@ og legger på trommer; taktart og swing på selve opptaket er ikke laget.
   som klippes, må være nede ved gulvet og flatt i spekteret — ellers klippes
   ingenting. Første utgave kuttet et opptak med musikk hele veien ned til det
   siste sekundet.
-- **Lysshowet (`visualisering.js`) er tre varianter av Fjellkjeden**, som
-  eieren valgte av ti forslag — ikke legg tilbake de andre. Analysatoren sitter i `utgang()` etter hele kjeden,
+- **Lysshowet (`visualisering.js`) er bare Fjellsjøen**, som eieren valgte av
+  ti forslag og tre fjellvarianter — ingen velger, og ikke legg tilbake de
+  andre. Den skal bevege seg, ikke bare pulse. Analysatoren sitter i `utgang()` etter hele kjeden,
   med dB-område −85 til −12 (standarden ga hvite flater på −16 LUFS), og
   tegningen går bare mens lyden spilles.
 - **Alt i lydkonteksten må kunne bygges på nytt.** iOS kan la konteksten stå

@@ -343,41 +343,31 @@ async function ventPaaLyd(side) {
     await side.click('#spill');
 
     bolk('Lysshow');
-    krev(await side.$$eval('#lysvalg button', bs => bs.length) === 3, 'tre fjellkjeder å velge mellom');
-    await side.click('#lysvalg button:nth-child(2)');
-    krev((await side.textContent('#lysnavn')) === 'Neonvidda' && (await side.textContent('#lysnr')) === '2 / 3', 'valget skal vises med navn og nummer');
-    await side.click('#lysshow');
-    krev((await side.textContent('#lysnavn')) === 'Fjellsjøen', 'et trykk på bildet gir neste');
-    await side.click('#lysNeste');
-    await side.click('#lysForrige');
-    krev((await side.textContent('#lysnavn')) === 'Fjellsjøen', 'pilene går fram og tilbake');
+    krev(await side.$$eval('#lysvalg, #lysForrige, #lysNeste', bs => bs.length) === 0, 'bare Fjellsjøen står igjen, uten velger');
     krev(await side.locator('#lyshint').isVisible(), 'før avspilling står det at lysshowet starter med ▶');
     await side.click('#spill');
     await side.waitForTimeout(500);
     krev(await side.evaluate(() => LydVerksted.lys().gaar()), 'lysshowet går mens lyden spiller');
     krev(await side.locator('#lyshint').isHidden(), 'og hintet forsvinner');
-    // Hvert lysshow skal tegne noe synlig mens det spilles — ikke et svart bilde.
-    for (let i = 0; i < 3; i++) {
-      await side.click('#lysvalg button:nth-child(' + (i + 1) + ')');
-      await side.waitForTimeout(900);
-      const lyst = await side.evaluate(() => {
-        const c = document.getElementById('lysshow'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-        let n = 0;
-        for (let k = 0; k < d.length; k += 16) if (d[k] + d[k + 1] + d[k + 2] > 120) n++;
-        return n / (d.length / 16);
-      });
-      const navn = await side.textContent('#lysnavn');
-      krev(lyst > 0.01, navn + ' skal tegne noe synlig mens lyden spiller', (lyst * 100).toFixed(1) + ' %');
-    }
+    // Lysshowet skal tegne noe synlig mens det spilles — ikke et svart bilde —
+    // og det skal bevege seg: to bilder med et halvt sekunds mellomrom må
+    // være ulike, også der fjellene står.
+    const bilde = () => side.evaluate(() => {
+      const c = document.getElementById('lysshow'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      const ut = [];
+      for (let k = 0; k < d.length; k += 16) ut.push(d[k] + d[k + 1] + d[k + 2]);
+      return ut;
+    });
+    const a1 = await bilde();
+    await side.waitForTimeout(500);
+    const a2 = await bilde();
+    const lyst = a2.filter(v => v > 120).length / a2.length;
+    krev(lyst > 0.01, 'Fjellsjøen skal tegne noe synlig mens lyden spiller', (lyst * 100).toFixed(1) + ' %');
+    const endret = a2.filter((v, i) => Math.abs(v - a1[i]) > 30).length / a2.length;
+    krev(endret > 0.05, 'Fjellsjøen skal bevege seg, ikke stå stille', (endret * 100).toFixed(1) + ' % endret');
     await side.click('#spill');
     await side.waitForTimeout(200);
     krev(!(await side.evaluate(() => LydVerksted.lys().gaar())), 'lysshowet stopper når lyden stopper — ellers tømmes batteriet');
-    await side.click('#lysvalg button:nth-child(2)');
-    await side.reload();
-    await side.waitForSelector('#lyder .lydflis');
-    await side.click('#lyder .lydflis');
-    await side.waitForSelector('#verksted:not([hidden])');
-    krev((await side.textContent('#lysnavn')) === 'Neonvidda', 'valget av lysshow huskes', await side.textContent('#lysnavn'));
 
     bolk('Testbenken tåler versjonene');
     await side.goto(`http://127.0.0.1:${PORT}/lydloft/testbenk.html`);

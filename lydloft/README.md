@@ -78,19 +78,24 @@ som en liten høyttaler.
 
 ## Lysshow
 
-Tre fjellkjeder (`visualisering.js`) som følger lyden mens den spilles. Eieren
-valgte Fjellkjeden av ti forslag; de to andre er varianter av den, og
-skiller seg i hva lagene *er*:
+Fjellsjøen (`visualisering.js`) følger lyden mens den spilles. Eieren valgte
+den av ti forslag og tre fjellvarianter, så det finnes ingen velger lenger.
+Lagene er frekvens: diskanten er spisse tinder bakerst, bassen runde åser
+fremst, og alt speiles i vannet.
 
-- **Fjellkjeden**: lagene er tid. Nyeste spekter fremst, de eldre rygger
-  bakover som strektegning.
-- **Neonvidda**: lagene er tid i perspektiv. Ryggene kommer fra en sol i
-  horisonten mot betrakteren, speilet om en dal i midten. Bassen står ytterst,
-  for i midten skal veien gå.
-- **Fjellsjøen**: lagene er frekvens. Diskanten er spisse tinder bakerst,
-  bassen runde åser fremst, og alt speiles i vannet. Båndene glir raskt opp og
-  sakte ned, ellers flimrer fjellet i stedet for å stå. Bakerste lag er høyest;
-  med bassen høyest fremst ble resten skjult bak én grønn vegg.
+- **Den skal leve, ikke bare pulse.** Første utgave hadde faste x-posisjoner,
+  og bare høyden pustet — eieren syntes fjellene sto stille. Nå glir lagene
+  sidelengs med parallakse og en fart som følger lydnivået. Hvert lag puster
+  med energien i sitt eget frekvensområde, et slag sender en bølge over de
+  fremste åsene, nordlyset følger mellomtonene, og stjernene glitrer med
+  diskanten. Prøven krever at to bilder med et halvt sekunds mellomrom er
+  ulike.
+- **Terrenget er sinuser med skjeve frekvenser**, ryggete og krummet bakerst.
+  Uten krumningen ble tindene en jevn kam.
+- **Speilbildet er en kopi av bildet over**, stripe for stripe, forskjøvet av
+  krusninger som vokser med bassen. En tegnet speilvending så ut som glass.
+- **Bakerste lag er høyest.** Med bassen høyest fremst ble resten skjult bak
+  én grønn vegg.
 
 - **Analysatoren sitter etter hele effektkjeden**, i et felles utgangspunkt
   (`utgang()`) som både den nye versjonen og «Før» går gjennom. Lysshowet viser
@@ -99,7 +104,6 @@ skiller seg i hva lagene *er*:
   −16 LUFS nær taket, og første runde ble hvite flater.
 - **Tegningen går bare mens lyden spilles.** Canvas i 60 bilder i sekundet er
   den raskeste måten å tømme et batteri på uten at noen ser det.
-- Et trykk på bildet gir neste; valget huskes per nettleser (`localStorage`).
 
 ## Rens
 

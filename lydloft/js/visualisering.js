@@ -1,19 +1,25 @@
 /*
- * Lysshowet — tre fjellkjeder som følger lyden mens den spilles.
+ * Lysshowet — Fjellsjøen, en fjellkjede som følger lyden mens den spilles.
  *
- * Alle tre bygger på samme idé: spekteret er en fjellrygg, og ryggene
- * stables bakover i bildet. De skiller seg i hva lagene *er*:
+ * Eieren valgte den av ti forslag og tre fjellvarianter. Lagene er frekvens:
+ * diskanten er spisse tinder bakerst, bassen runde åser fremst, og alt
+ * speiles i vannet under.
  *
- *   Fjellkjeden  — lagene er tid. Nyeste spekter står fremst, de eldre
- *                  rygger bakover som strektegning (Joy Division-stil).
- *   Neonvidda    — lagene er tid i perspektiv: ryggene ruller mot en sol i
- *                  horisonten, med en dal i midten der veien går (synthwave).
- *   Fjellsjøen   — lagene er frekvens: diskanten er spisse tinder bakerst,
- *                  bassen runde åser fremst, og alt speiles i vannet under.
+ * Første utgave sto stille: fjellene hadde faste x-posisjoner, og bare
+ * høyden pustet. Det som gjør den levende nå, er at hver del følger sin del
+ * av lyden:
  *
- * Alle får de samme tallene hver bilderute (`data`): spekteret i 48 bånd på
- * logaritmisk akse, bølgeformen, lydnivået, bass/mellom/diskant, og `slag` —
- * et sant/usant som blinker når bassen hopper.
+ *   - Lagene glir sidelengs med parallakse, som utsikt fra en båt. Farten
+ *     følger lydnivået, så stille musikk er en rolig fjord.
+ *   - Hvert lag puster med energien i sitt eget frekvensområde.
+ *   - Et slag sender en bølge ut over de fremste åsene.
+ *   - Nordlyset bølger med mellomtonene, stjernene glitrer med diskanten.
+ *   - Speilbildet er en ekte kopi av bildet over, brutt opp av krusninger
+ *     som blir sterkere med bassen.
+ *
+ * Alle tallene kommer fra måleren hver bilderute (`data`): spekteret i 48
+ * bånd på logaritmisk akse, bølgeformen, lydnivået, bass/mellom/diskant, og
+ * `slag` — et sant/usant som blinker når bassen hopper.
  *
  * Analysatoren sitter etter hele effektkjeden, så det man ser er det man
  * hører: robotlyd blir en annen fjellkjede enn kirkeklang.
@@ -47,183 +53,165 @@ var LydVis = (function () {
 
   /* --------------------------------------------------------------- stilene */
 
+  // Seks lag, bakerst først. Lag 0 er diskanten, lag 5 bassen.
+  var LAG = 6, PER = BAND / LAG;
+
+  // Terrenget er en sum av sinuser med skjeve frekvenser, så det aldri
+  // gjentar seg innenfor det man ser. Bakerst er det «ryggete» (1 − |sin|),
+  // som gir spisse tinder; fremst er det myke åser.
+  function terreng(l, x) {
+    var f = 2.1 + (LAG - 1 - l) * 1.3, a = l * 1.91;
+    var spiss = 1 - l / (LAG - 1);
+    var rygg = 1 - Math.abs(Math.sin(x * f + a));
+    var myk = 0.5 + 0.5 * Math.sin(x * f * 0.8 + a);
+    var grov = 0.5 + 0.5 * Math.sin(x * f * 0.37 + a * 2.3);
+    var fin = 0.5 + 0.5 * Math.sin(x * f * 2.9 + a * 0.7);
+    var t = (rygg * spiss + myk * (1 - spiss)) * 0.5 + grov * 0.35 + fin * 0.15 * spiss;
+    // Krummet bakerst, så tindene står opp av en lav fot i stedet for å bli en jevn kam.
+    return Math.pow(t, 1 + spiss) * (1 + spiss * 0.8);
+  }
+
   var STILER = [
     {
-      id: 'fjell', navn: 'Fjellkjeden',
-      start: function () { return { historikk: [] }; },
-      tegn: function (g, w, h, d, s) {
-        tom(g, w, h);
-        s.historikk.unshift(Float32Array.from(d.band));
-        if (s.historikk.length > 26) s.historikk.pop();
-        var linjer = s.historikk.length, avstand = h * 0.026;
-        // Bakerst først, så de nærmeste dekker over de bakre.
-        for (var k = linjer - 1; k >= 0; k--) {
-          var b = s.historikk[k], y0 = h * 0.88 - k * avstand, skala = 1 - k * 0.018, venstre = w * (1 - skala) / 2;
-          g.beginPath();
-          g.moveTo(venstre, y0);
-          for (var i = 0; i < BAND; i++) {
-            // Toppene samles på midten, som et fjell, ikke en kurve.
-            var x = venstre + (i + 0.5) / BAND * w * skala;
-            var vekt = Math.sin(Math.PI * (i + 0.5) / BAND);
-            var v = b[(i * 7) % BAND] * 0.4 + b[i] * 0.6;
-            g.lineTo(x, y0 - v * h * 0.45 * vekt * skala);
-          }
-          g.lineTo(venstre + w * skala, y0);
-          g.closePath();
-          g.fillStyle = BUNN;
-          g.fill();
-          g.strokeStyle = farge(0.5 + k / linjer * 0.6 + d.t * 0.02, 1 - k / linjer * 0.75);
-          g.lineWidth = k === 0 ? 2.5 : 1.4;
-          g.stroke();
-        }
-      }
-    },
-    {
-      id: 'vidda', navn: 'Neonvidda',
-      start: function () { return { historikk: [], rull: 0, puls: 0 }; },
-      tegn: function (g, w, h, d, s) {
-        var horisont = h * 0.5;
-        s.puls = d.slag ? 1 : s.puls * 0.9;
-        // Himmelen: mørk lilla oppe, rosa dis ned mot horisonten.
-        var himmel = g.createLinearGradient(0, 0, 0, horisont);
-        himmel.addColorStop(0, BUNN);
-        himmel.addColorStop(1, '#3b0a5e');
-        g.fillStyle = himmel; g.fillRect(0, 0, w, horisont);
-        g.fillStyle = BUNN; g.fillRect(0, horisont, w, h - horisont);
-        // Sola står i horisonten og vokser litt med bassen. Stripene nederst
-        // er det som gjør den til en synthwave-sol og ikke en ball.
-        var r = Math.min(w, h) * (0.24 + d.bass * 0.03 + s.puls * 0.02), cy = horisont - r * 0.5;
-        var sol = g.createLinearGradient(0, cy - r, 0, cy + r);
-        sol.addColorStop(0, '#ffe83d'); sol.addColorStop(0.55, '#ff8a1e'); sol.addColorStop(1, '#ff2bd6');
-        g.save();
-        g.beginPath(); g.rect(0, 0, w, horisont); g.clip();
-        g.shadowColor = '#ff2bd6'; g.shadowBlur = 30 + s.puls * 30;
-        g.fillStyle = sol;
-        g.beginPath(); g.arc(w / 2, cy, r, 0, 2 * Math.PI); g.fill();
-        g.shadowBlur = 0;
-        g.fillStyle = '#3b0a5e';
-        for (var k = 0; k < 6; k++) {
-          var sy = cy + r * (0.05 + k * 0.1), tykk = r * (0.015 + k * 0.014);
-          g.fillRect(0, sy, w, tykk);
-        }
-        g.restore();
-        // Gulvet: linjer ut fra forsvinningspunktet. De vannrette er selve
-        // ryggene, så de trenger ingen egne streker.
-        g.strokeStyle = 'rgba(162,89,255,0.35)'; g.lineWidth = 1;
-        for (var v = -10; v <= 10; v++) {
-          g.beginPath(); g.moveTo(w / 2, horisont); g.lineTo(w / 2 + v * w * 0.16, h); g.stroke();
-        }
-        // Ryggene rulles inn ved horisonten og kommer mot betrakteren —
-        // motsatt vei av Fjellkjeden, så det ser ut som man kjører innover.
-        s.historikk.push(Float32Array.from(d.band));
-        if (s.historikk.length > 22) s.historikk.shift();
-        var linjer = s.historikk.length;
-        for (var k2 = 0; k2 < linjer; k2++) {
-          var b = s.historikk[k2];
-          // z går fra 1 (fremst) til nær 0 (i horisonten), i perspektiv.
-          var z = 1 / (1 + (linjer - 1 - k2) * 0.28);
-          var y0 = horisont + (h * 1.02 - horisont) * z, bredde = w * (0.6 + z * 1.2), venstre = (w - bredde) / 2;
-          g.beginPath(); g.moveTo(venstre, y0);
-          for (var i = 0; i <= BAND; i++) {
-            // Speilet om midten: bassen på begge sider ytterst, diskanten inne
-            // ved veien. Dalen i midten er der veien går.
-            var avMidt = Math.abs(i - BAND / 2) / (BAND / 2);
-            var bi = Math.min(BAND - 1, Math.floor((1 - avMidt) * BAND * 0.75));
-            var dal = 0.3 + 0.7 * avMidt;
-            g.lineTo(venstre + i / BAND * bredde, y0 - b[bi] * h * 0.75 * z * dal);
-          }
-          g.lineTo(venstre + bredde, y0); g.closePath();
-          g.fillStyle = BUNN; g.fill();
-          g.strokeStyle = farge(0.38 + z * 0.25 + d.t * 0.01, 0.25 + z * 0.75);
-          g.lineWidth = 0.8 + z * 2;
-          if (k2 === linjer - 1) { g.shadowColor = '#19f0ff'; g.shadowBlur = 10 + s.puls * 14; }
-          g.stroke();
-          g.shadowBlur = 0;
-        }
-      }
-    },
-    {
       id: 'sjo', navn: 'Fjellsjøen',
-      start: function () { return { glatt: new Float32Array(BAND), puls: 0 }; },
+      start: function () {
+        // Faste stjerner (sådd, så himmelen er den samme hver gang).
+        var fro = 7, stjerner = [];
+        function tilfeldig() { fro = (fro * 16807) % 2147483647; return fro / 2147483647; }
+        for (var i = 0; i < 70; i++) stjerner.push({ x: tilfeldig(), y: tilfeldig(), r: 0.5 + tilfeldig() * 1.2, fase: tilfeldig() * 6.3, fart: 1 + tilfeldig() * 3 });
+        return { glatt: new Float32Array(BAND), energi: new Float32Array(LAG), puls: 0, x: 0, fart: 0.05, sist: null, bolger: [], stjerner: stjerner };
+      },
       tegn: function (g, w, h, d, s) {
         var horisont = h * 0.6;
+        var dt = s.sist === null ? 1 / 60 : Math.max(0, Math.min(0.05, d.t - s.sist));
+        s.sist = d.t;
         s.puls = d.slag ? 1 : s.puls * 0.88;
-        // Fjell beveger seg ikke brått: hvert bånd glir mot målet, raskt opp
-        // og sakte ned, så toppene står lenge nok til å bli sett.
+
+        // Båndene glir raskt opp og litt saktere ned: fjellet skal reagere
+        // med en gang, men ikke flimre.
         for (var q = 0; q < BAND; q++) {
-          var mal = d.band[q], fart = mal > s.glatt[q] ? 0.45 : 0.06;
-          s.glatt[q] += (mal - s.glatt[q]) * fart;
+          var mal = d.band[q];
+          s.glatt[q] += (mal - s.glatt[q]) * (mal > s.glatt[q] ? 0.5 : 0.14);
         }
+        for (var l0 = 0; l0 < LAG; l0++) {
+          var sum = 0, bi0 = (LAG - 1 - l0) * PER;
+          for (var k0 = 0; k0 < PER; k0++) sum += d.band[bi0 + k0];
+          s.energi[l0] += (sum / PER - s.energi[l0]) * 0.2;
+        }
+        // Farten følger lydnivået, med et lite dytt på slaget.
+        s.fart += (0.04 + d.nivaa * 0.45 + s.puls * 0.15 - s.fart) * 0.05;
+        s.x += s.fart * dt;
+        if (d.slag) s.bolger.push({ c: 0.2 + Math.random() * 0.6, alder: 0, styrke: 0.6 + d.bass });
+        s.bolger = s.bolger.filter(function (b) { b.alder += dt; return b.alder < 1.4; }).slice(-6);
+
+        // Himmel.
         var himmel = g.createLinearGradient(0, 0, 0, horisont);
         himmel.addColorStop(0, BUNN); himmel.addColorStop(1, '#1d0a3a');
         g.fillStyle = himmel; g.fillRect(0, 0, w, horisont);
+
+        // Stjernene glitrer med diskanten.
+        s.stjerner.forEach(function (st) {
+          var a = (0.25 + 0.75 * Math.abs(Math.sin(d.t * st.fart + st.fase))) * (0.35 + d.diskant * 1.3);
+          g.fillStyle = 'rgba(255,255,255,' + Math.min(1, a) + ')';
+          g.fillRect(st.x * w, st.y * horisont * 0.7, st.r, st.r);
+        });
+
+        // Nordlyset: to bånd som bølger sakte og blir høyere med mellomtonene.
+        g.globalCompositeOperation = 'lighter';
+        g.lineCap = 'round';
+        for (var n = 0; n < 2; n++) {
+          var basis = h * (0.16 + n * 0.1), hoydeN = h * (0.06 + d.mid * 0.3);
+          for (var x = 0; x <= w; x += 2) {
+            var y = basis + Math.sin(x * 0.009 + d.t * (0.5 + n * 0.3) + n * 2) * h * 0.05 + Math.sin(x * 0.023 - d.t * 1.1) * h * 0.015;
+            var lengde = hoydeN * (0.55 + 0.45 * Math.sin(x * 0.031 + d.t * 1.7 + n));
+            var tone = 0.42 + n * 0.12 + Math.sin(x * 0.004 + d.t * 0.2) * 0.08;
+            g.strokeStyle = farge(tone, 0.05 + d.mid * 0.12);
+            g.lineWidth = 2;
+            g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - lengde); g.stroke();
+            g.strokeStyle = farge(tone, 0.08 + d.mid * 0.2);
+            g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - lengde * 0.35); g.stroke();
+          }
+        }
+        g.globalCompositeOperation = 'source-over';
+
         // Månen blinker opp på slaget.
-        var mr = Math.min(w, h) * 0.07;
+        var mx = w * 0.8, my = h * 0.13, mr = Math.min(w, h) * 0.06;
         g.shadowColor = '#fff'; g.shadowBlur = 12 + s.puls * 28;
         g.fillStyle = 'rgba(255,240,250,' + (0.75 + s.puls * 0.25) + ')';
-        g.beginPath(); g.arc(w * 0.78, h * 0.17, mr, 0, 2 * Math.PI); g.fill();
+        g.beginPath(); g.arc(mx, my, mr, 0, 2 * Math.PI); g.fill();
         g.shadowBlur = 0;
 
-        // Seks lag, bakerst først. Lag 0 er diskanten (spisse tinder), lag 5
-        // er bassen (runde åser). Hvert lag tar sin del av spekteret og
-        // strekker den over hele bredden.
-        var LAG = 6, per = BAND / LAG;
-        function rygg(l) {
-          var punkter = [], antall = 10 + (LAG - 1 - l) * 6;
-          var fot = horisont - (LAG - 1 - l) * h * 0.03, hoyde = h * (0.34 - l * 0.045);
+        // Fjellagene. Hvert lag glir med sin egen parallakse, puster med sin
+        // egen energi, og har spekteret sitt strukket over bredden.
+        for (var l = 0; l < LAG; l++) {
+          var andel = l / (LAG - 1);
+          var parallakse = 0.12 + andel * 0.9;
+          var fot = horisont - (LAG - 1 - l) * h * 0.03, hoyde = h * (0.4 - l * 0.045);
+          var pust = 0.45 + s.energi[l] * 1.4;
+          var antall = 40 + (LAG - 1 - l) * 8, bi = (LAG - 1 - l) * PER;
+          var punkter = [];
           for (var i = 0; i <= antall; i++) {
-            var a = i / antall * (per - 1), i0 = Math.floor(a), f = a - i0;
-            var bi = (LAG - 1 - l) * per;
+            var u = i / antall;
+            var a = u * (PER - 1), i0 = Math.floor(a), f = a - i0;
             var v = s.glatt[bi + i0] * (1 - f) + s.glatt[Math.min(BAND - 1, bi + i0 + 1)] * f;
-            // En fast grunnform per lag, så fjellet står der også i stillhet.
-            var grunn = 0.25 + 0.2 * Math.sin(i * 1.7 + l * 2.3) * Math.sin(i * 0.6 + l);
-            punkter.push([i / antall * w, fot - (grunn + v * 0.9) * hoyde]);
-          }
-          return { p: punkter, fot: fot, rund: l >= 3 };
-        }
-        function sti(r, speil) {
-          // Speilbildet er klemt sammen, slik vann gjør det.
-          function y(v) { return speil ? horisont + (horisont - v) * 0.55 : v; }
-          g.beginPath(); g.moveTo(0, horisont);
-          g.lineTo(r.p[0][0], y(r.p[0][1]));
-          for (var i = 1; i < r.p.length; i++) {
-            if (r.rund) {
-              var mx = (r.p[i - 1][0] + r.p[i][0]) / 2, my = (r.p[i - 1][1] + r.p[i][1]) / 2;
-              g.quadraticCurveTo(r.p[i - 1][0], y(r.p[i - 1][1]), mx, y(my));
-            } else g.lineTo(r.p[i][0], y(r.p[i][1]));
-          }
-          g.lineTo(w, y(r.p[r.p.length - 1][1])); g.lineTo(w, horisont); g.closePath();
-        }
-        var rygger = [];
-        for (var l = 0; l < LAG; l++) rygger.push(rygg(l));
-        // Vannet først, så fjellet over det.
-        g.fillStyle = BUNN; g.fillRect(0, horisont, w, h - horisont);
-        [true, false].forEach(function (speil) {
-          rygger.forEach(function (r, l) {
-            var andel = l / (LAG - 1), tone = 0.95 - andel * 0.55 + d.t * 0.01;
-            sti(r, speil);
-            var gr = speil ? g.createLinearGradient(0, horisont + h * 0.25, 0, horisont) : g.createLinearGradient(0, horisont - h * 0.45, 0, horisont);
-            gr.addColorStop(0, farge(tone, 0.95));
-            gr.addColorStop(1, 'rgba(10,6,24,' + (0.55 + andel * 0.4) + ')');
-            g.fillStyle = gr; g.fill();
-            if (!speil) {
-              g.strokeStyle = farge(tone, 1);
-              g.lineWidth = 1.2 + andel * 1.3 + s.puls * 1.5;
-              g.shadowColor = farge(tone); g.shadowBlur = 6 + s.puls * 16;
-              g.stroke();
-              g.shadowBlur = 0;
+            var bolge = 0;
+            if (l >= 3) {
+              // Slagbølgen går utover fra der den startet, i begge retninger.
+              s.bolger.forEach(function (b) {
+                var r = b.alder * 0.7, avstand = Math.min(Math.abs(u - (b.c - r)), Math.abs(u - (b.c + r)));
+                bolge += b.styrke * (1 - b.alder / 1.4) * Math.exp(-avstand * avstand / 0.004);
+              });
+              bolge *= 0.25 + (l - 3) * 0.12;
             }
-          });
-        });
-        // Vannflaten: mørkere enn fjellet og brutt av krusninger.
-        var vann = g.createLinearGradient(0, horisont, 0, h);
-        vann.addColorStop(0, 'rgba(10,6,24,0.15)'); vann.addColorStop(1, 'rgba(10,6,24,0.85)');
-        g.fillStyle = vann; g.fillRect(0, horisont, w, h - horisont);
-        g.strokeStyle = 'rgba(25,240,255,' + (0.18 + d.diskant * 0.4) + ')'; g.lineWidth = 1;
-        for (var k = 0; k < 9; k++) {
-          var ky = horisont + 4 + k * k * (h - horisont) / 85, kx = (Math.sin(d.t * 0.7 + k * 1.9) * 0.5 + 0.5) * w * 0.6;
-          g.beginPath(); g.moveTo(kx, ky); g.lineTo(kx + w * (0.12 + k * 0.03), ky); g.stroke();
+            var hv = terreng(l, u * 1.6 + s.x * parallakse) * pust * 0.75 + v * 0.7 + bolge;
+            punkter.push([u * w, fot - hv * hoyde]);
+          }
+          var tone = 0.95 - andel * 0.55 + d.t * 0.015;
+          g.beginPath(); g.moveTo(0, horisont); g.lineTo(punkter[0][0], punkter[0][1]);
+          for (var p = 1; p < punkter.length; p++) {
+            if (l >= 3) {
+              var px = (punkter[p - 1][0] + punkter[p][0]) / 2, py = (punkter[p - 1][1] + punkter[p][1]) / 2;
+              g.quadraticCurveTo(punkter[p - 1][0], punkter[p - 1][1], px, py);
+            } else g.lineTo(punkter[p][0], punkter[p][1]);
+          }
+          g.lineTo(w, punkter[punkter.length - 1][1]); g.lineTo(w, horisont); g.closePath();
+          var gr = g.createLinearGradient(0, horisont - h * 0.45, 0, horisont);
+          gr.addColorStop(0, farge(tone, 0.95));
+          gr.addColorStop(1, 'rgba(10,6,24,' + (0.55 + andel * 0.4) + ')');
+          g.fillStyle = gr; g.fill();
+          g.strokeStyle = farge(tone, 1);
+          g.lineWidth = 1.2 + andel * 1.3 + s.puls * 1.5;
+          g.shadowColor = farge(tone); g.shadowBlur = 6 + s.puls * 16;
+          g.stroke();
+          g.shadowBlur = 0;
         }
+
+        // Speilbildet er en kopi av bildet over horisonten, stripe for stripe,
+        // forskjøvet sidelengs av krusninger. En tegnet speilvending i stedet
+        // ville sett ut som glass.
+        var dpr = g.canvas.width / w, klem = 0.6, steg = 2;
+        g.fillStyle = BUNN; g.fillRect(0, horisont, w, h - horisont);
+        for (var yv = horisont; yv < h; yv += steg) {
+          var dybde = (yv - horisont) / (h - horisont);
+          var kilde = horisont - (yv - horisont) / klem;
+          if (kilde < 0) break;
+          var dx = Math.sin(yv * 0.18 - d.t * 3.2) * (0.6 + dybde * 6) * (0.4 + d.bass * 1.6)
+                 + Math.sin(yv * 0.05 + d.t * 1.3) * dybde * 3;
+          g.drawImage(g.canvas, 0, Math.max(0, (kilde - steg / klem) * dpr), g.canvas.width, steg / klem * dpr, dx, yv, w, steg + 0.5);
+        }
+        var vann = g.createLinearGradient(0, horisont, 0, h);
+        vann.addColorStop(0, 'rgba(10,6,24,0.3)'); vann.addColorStop(1, 'rgba(10,6,24,0.85)');
+        g.fillStyle = vann; g.fillRect(0, horisont, w, h - horisont);
+        // Månegata: korte glimt rett under månen, som flimrer.
+        g.globalCompositeOperation = 'lighter';
+        for (var m = 0; m < 14; m++) {
+          var gy = horisont + 3 + m * m * (h - horisont) / 210;
+          var glimt = 0.5 + 0.5 * Math.sin(d.t * 5 + m * 2.3);
+          var bredde = mr * (0.4 + m * 0.12) * (0.5 + glimt);
+          g.fillStyle = 'rgba(255,240,250,' + (0.1 + glimt * 0.25 + s.puls * 0.2) + ')';
+          g.fillRect(mx - bredde / 2 + Math.sin(d.t * 2 + m) * 3, gy, bredde, 1.5);
+        }
+        g.globalCompositeOperation = 'source-over';
         g.strokeStyle = 'rgba(255,43,214,0.6)'; g.lineWidth = 1.5;
         g.beginPath(); g.moveTo(0, horisont); g.lineTo(w, horisont); g.stroke();
       }

@@ -114,7 +114,7 @@
 
   var strekker = null, strekkVent = {}, strekkNr = 0, sisteStrekk = 0;
   try {
-    strekker = new Worker('js/strekk-arbeider.js?v=10');
+    strekker = new Worker('js/strekk-arbeider.js?v=11');
     strekker.onmessage = function (e) {
       var v = strekkVent[e.data.id];
       delete strekkVent[e.data.id];
@@ -291,32 +291,8 @@
   /* ------------------------------------------------------------ lysshow */
 
   var lys = null;
-  function visLys(nr) {
-    lys.settStil(nr);
-    var st = LydVis.STILER[lys.stil()];
-    $('lysnavn').textContent = st.navn;
-    $('lysnr').textContent = (lys.stil() + 1) + ' / ' + LydVis.STILER.length;
-    $('lysvalg').querySelectorAll('button').forEach(function (b, i) {
-      b.setAttribute('aria-pressed', i === lys.stil() ? 'true' : 'false');
-    });
-    try { localStorage.setItem('lydloft-lys', String(lys.stil())); } catch (e) { /* privat modus */ }
-  }
-
   function lagLysshow() {
     lys = LydVis.lag($('lysshow'), function () { return ut && ut.ctx === ctx() ? ut.analysator : null; });
-    LydVis.STILER.forEach(function (st, i) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'lysbrikke';
-      b.style.setProperty('--farge', neon(i));
-      b.textContent = (i + 1) + ' · ' + st.navn;
-      b.addEventListener('click', function () { visLys(i); });
-      $('lysvalg').appendChild(b);
-    });
-    $('lysForrige').addEventListener('click', function (e) { e.stopPropagation(); visLys(lys.stil() - 1); });
-    $('lysNeste').addEventListener('click', function (e) { e.stopPropagation(); visLys(lys.stil() + 1); });
-    // Et trykk på selve bildet gir neste — det enkleste et barn kan finne på.
-    $('lysshow').addEventListener('click', function () { visLys(lys.stil() + 1); });
     var ramme = $('sceneRamme');
     var full = ramme.requestFullscreen || ramme.webkitRequestFullscreen;
     if (full) {
@@ -330,9 +306,7 @@
         }
       });
     }
-    var husket = 0;
-    try { husket = parseInt(localStorage.getItem('lydloft-lys') || '0', 10) || 0; } catch (e) { husket = 0; }
-    visLys(husket);
+    lys.tegnEn();
     window.addEventListener('resize', function () { if (!lys.gaar()) lys.tegnEn(); });
   }
 
@@ -731,7 +705,7 @@
   var analysator = null;
   function grunnAnalyse(kanaler, fs) {
     if (!analysator) {
-      try { analysator = new Worker('js/analyse-arbeider.js?v=10'); } catch (e) { analysator = null; }
+      try { analysator = new Worker('js/analyse-arbeider.js?v=11'); } catch (e) { analysator = null; }
     }
     if (!analysator) return Promise.resolve(null);
     return new Promise(function (ok) {
