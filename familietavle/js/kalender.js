@@ -126,7 +126,10 @@ var Kalender = (function () {
       intervall: Math.max(1, +(r.INTERVAL || 1)),
       antall: r.COUNT ? +r.COUNT : null,
       til: r.UNTIL ? tid(r.UNTIL) : null,
-      ukedager: null, mnddager: null, mnder: null
+      ukedager: null, mnddager: null, mnder: null, posisjoner: null,
+      // Uka begynner på mandag i Norge, men en iPhone på engelsk skriver
+      // WKST=SU. Med INTERVAL=2 gir de to forskjellige datoer.
+      ukestart: r.WKST && UKEDAGER[r.WKST.toUpperCase()] !== undefined ? UKEDAGER[r.WKST.toUpperCase()] : 1
     };
     if (r.BYDAY) {
       ut.ukedager = r.BYDAY.split(',').map(function (s) {
@@ -136,12 +139,14 @@ var Kalender = (function () {
     }
     if (r.BYMONTHDAY) ut.mnddager = r.BYMONTHDAY.split(',').map(Number);
     if (r.BYMONTH) ut.mnder = r.BYMONTH.split(',').map(function (n) { return +n - 1; });
+    // «Siste hverdag i måneden» er BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1.
+    if (r.BYSETPOS) ut.posisjoner = r.BYSETPOS.split(',').map(Number);
     return ut;
   }
 
-  // Leser en hel ICS-tekst. Gir { navn, hendelser }.
+  // Leser en hel ICS-tekst. Gir { navn, farge, hendelser }.
   function les(tekst) {
-    var hendelser = [], navn = '', h = null, dybde = 0;
+    var hendelser = [], navn = '', farge = '', h = null, dybde = 0;
     linjer(tekst).forEach(function (l) {
       var f = felt(l);
       if (!f) return;
@@ -157,6 +162,10 @@ var Kalender = (function () {
       }
       if (!h) {
         if (f.navn === 'X-WR-CALNAME') navn = tekstverdi(f.verdi);
+        // Fargen kalenderen har på iPhone. Tavla bruker den, så Ellas
+        // avtaler er grønne både på veggen og i lomma.
+        var m = f.navn === 'X-APPLE-CALENDAR-COLOR' && /^#([0-9a-f]{6})/i.exec(f.verdi);
+        if (m) farge = '#' + m[1].toLowerCase();
         return;
       }
       if (dybde > 0) return;
@@ -178,7 +187,7 @@ var Kalender = (function () {
           break;
       }
     });
-    return { navn: navn, hendelser: hendelser.filter(function (e) { return e.start; }) };
+    return { navn: navn, farge: farge, hendelser: hendelser.filter(function (e) { return e.start; }) };
   }
 
   // ---- Gjentakelser -----------------------------------------------------
@@ -220,11 +229,11 @@ var Kalender = (function () {
         ut.push(plussDager(start, k * r.intervall));
         break;
       case 'WEEKLY':
-        // Uka begynner på mandag (WKST=MO, som iCloud og Norge bruker).
-        var mandag = plussDager(start, -((start.getDay() + 6) % 7) + k * 7 * r.intervall);
+        var w = r.ukestart;
+        var forste = plussDager(start, -((start.getDay() - w + 7) % 7) + k * 7 * r.intervall);
         var dager = r.ukedager ? r.ukedager.map(function (u) { return u.dag; }) : [start.getDay()];
-        dager.map(function (d) { return (d + 6) % 7; }).sort().forEach(function (i) {
-          ut.push(plussDager(mandag, i));
+        dager.map(function (d) { return (d - w + 7) % 7; }).sort().forEach(function (i) {
+          ut.push(plussDager(forste, i));
         });
         break;
       case 'MONTHLY':
@@ -237,6 +246,14 @@ var Kalender = (function () {
         break;
     }
     ut.sort(function (a, b) { return a - b; });
+    if (r.posisjoner) {
+      var valgt = [];
+      r.posisjoner.forEach(function (p) {
+        var d = p > 0 ? ut[p - 1] : ut[ut.length + p];
+        if (d && valgt.indexOf(d) < 0) valgt.push(d);
+      });
+      ut = valgt.sort(function (a, b) { return a - b; });
+    }
     return ut;
   }
 

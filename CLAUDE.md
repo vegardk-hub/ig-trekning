@@ -180,7 +180,12 @@ og skal kjøres etter hver endring i `familietavle/js/` eller `familietavle/synk
 ```
 node familietavle/tester/data.js
 NODE_PATH=/opt/node22/lib/node_modules node familietavle/tester/tavle.js
+NODE_PATH=/opt/node22/lib/node_modules node familietavle/tester/icloud.js
 ```
+
+`icloud.js` kjører hele kjeden mot `tester/simulert-icloud.js`, en oppdiktet
+familie skrevet i iCloud-format med fasit. En særhet fra en ekte kalender
+legges inn der før den rettes i koden.
 
 Skyøkta når hverken iCloud, api.met.no eller raw.githubusercontent.com —
 proxyen svarer 403. Prøvene besvarer alle tre lokalt, og det skal de.
@@ -687,6 +692,10 @@ ha noe gratis, uten konto hos en ny tjeneste. Det som bærer resten:
   Cloudflare Worker — eieren har valgt det bort foreløpig.
 - **Gjentakelser foldes ut i veggtid**, og årlige hendelser 29. februar havner
   på 28. i vanlige år. Prøvene håndhever begge.
+- **ICS limes sammen på bytenivå før dekoding** (`limSammen()` i `synk.js`).
+  Bretting skjer etter 75 byte, også midt i en «ø».
+- **En avtale i flere kalendre (samme UID og start) vises én gang**, med én
+  stripe per person. Fargene kommer fra iPhone, men aldri to like.
 
 ## Fargeflasker
 

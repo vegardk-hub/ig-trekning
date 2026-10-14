@@ -142,6 +142,19 @@ Om natta (23–06) dempes skjermen. Et trykk lyser den opp i to minutter.
   blir ikke trodd.
 - **En flyttet forekomst (`RECURRENCE-ID`) erstatter den opprinnelige.** Ellers
   står en flyttet korpsøvelse både på gammel og ny tid.
+- **Linjene limes sammen før teksten dekodes.** RFC 5545 bretter etter 75
+  *byte*. Bretter en server midt i en «ø», blir den til «��» hvis man dekoder
+  først – `limSammen()` i `synk.js`.
+- **`WKST` endrer datoene.** Annenhver uke med søndag som ukestart (en iPhone
+  på engelsk) gir andre datoer enn med mandag. RFC-ens eget eksempel er en
+  prøve.
+- **En felles avtale vises én gang.** En invitasjon flere har takket ja til,
+  ligger i hver sin kalender med samme UID. Tavla slår dem sammen og gir
+  avtalen én stripe per person – den samme avtalen tre–fire ganger er en av
+  de vanligste klagene på Echo Show som familiekalender.
+- **Fargene kommer fra iPhone** (`X-APPLE-CALENDAR-COLOR`), men to personer
+  får aldri samme farge. Standardkalenderen har samme farge hos alle som ikke
+  har endret den.
 - **Beskjæringen er ikke pynt.** En iCloud-kalender med ti års historikk er
   fort et par megabyte, og nettbrettet henter fila hvert femte minutt.
 - **Kortene kapper nedenfra, og sier hvor mye som ble borte.** En halvt synlig
@@ -157,10 +170,19 @@ Om natta (23–06) dempes skjermen. Et trykk lyser den opp i to minutter.
 ```
 node familietavle/tester/data.js
 NODE_PATH=/opt/node22/lib/node_modules node familietavle/tester/tavle.js
+NODE_PATH=/opt/node22/lib/node_modules node familietavle/tester/icloud.js
 ```
 
-`data.js` trenger verken nettleser eller nett: kalenderreglene, krypteringen og
-hele synk-jobben mot en lokal server. `tavle.js` trenger playwright: at
+`tester/simulert-icloud.js` er en oppdiktet familie med fem kalendre skrevet
+slik iCloud skriver dem – tidssoneblokker, Apple-felt, invitasjoner, bretting
+midt i et tegn, flyttede og avlyste forekomster – med en liste over hva tavla
+skal vise. Den er det nærmeste prøvene kommer ekte data; skyøkta når ikke
+iCloud. Dukker det opp en særhet i en ekte kalender, legg den inn der først.
+
+`data.js` trenger verken nettleser eller nett: kalenderreglene, simuleringen,
+krypteringen og hele synk-jobben mot en lokal server. `icloud.js` kjører hele
+kjeden – simulert iCloud, den ekte synk-jobben, tavla i nettleser – og
+sammenligner skjermen med fasiten. `tavle.js` trenger playwright: at
 ingenting stikker ut av skjermen på fire skjermstørrelser, at dagen står der
 den skal, passfrasen, den gamle fila og natta. Med `BILDER=<mappe>` lagrer den
 skjermbilder.

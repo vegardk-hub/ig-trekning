@@ -41,13 +41,27 @@ function lesListe(tekst) {
   });
 }
 
+// RFC 5545 bretter linjer etter 75 *byte*, ikke tegn. Bretter en server midt
+// i en «ø» (to byte i UTF-8), blir den til to «�» hvis vi dekoder først og
+// limer sammen etterpå. Derfor limes linjene sammen før teksten dekodes.
+function limSammen(bytes) {
+  const b = new Uint8Array(bytes), ut = new Uint8Array(b.length);
+  let n = 0;
+  for (let i = 0; i < b.length; i++) {
+    if (b[i] === 13 && b[i + 1] === 10 && (b[i + 2] === 32 || b[i + 2] === 9)) { i += 2; continue; }
+    if (b[i] === 10 && (b[i + 1] === 32 || b[i + 1] === 9)) { i += 1; continue; }
+    ut[n++] = b[i];
+  }
+  return new TextDecoder('utf-8').decode(ut.subarray(0, n));
+}
+
 async function hent(url, valg, forsok) {
   let siste;
   for (let i = 0; i < (forsok || 3); i++) {
     try {
       const svar = await fetch(url, Object.assign({ signal: AbortSignal.timeout(20000) }, valg));
       if (!svar.ok) throw new Error('HTTP ' + svar.status);
-      return await svar.text();
+      return await svar.arrayBuffer();
     } catch (e) {
       siste = e;
       await new Promise(r => setTimeout(r, 2000 * (i + 1)));
@@ -69,7 +83,9 @@ async function main() {
   }
   if (passfrase.length < 16) throw new Error('Passfrasen er for kort – bruk minst fire tilfeldige ord.');
 
-  const naa = new Date();
+  // FAMILIETAVLE_NAA er for prøvene: den simulerte uka må ikke beskjæres
+  // bort bare fordi prøven kjøres et år senere.
+  const naa = process.env.FAMILIETAVLE_NAA ? new Date(process.env.FAMILIETAVLE_NAA) : new Date();
   // Én dag bakover holder: tavla viser i dag og framover, og en hendelse som
   // startet i går kveld og varer over midnatt, skal fortsatt med.
   const fra = new Date(naa.getTime() - 86400000);
@@ -78,7 +94,7 @@ async function main() {
   for (const k of lesListe(liste)) {
     let ics;
     try {
-      ics = await hent(k.url);
+      ics = limSammen(await hent(k.url));
     } catch (e) {
       // Lenka er en hemmelighet og maskeres i loggen, men navnet sier nok.
       throw new Error('Fikk ikke hentet «' + k.navn + '»: ' + e.message);
@@ -92,7 +108,8 @@ async function main() {
 
   let vaer = null;
   try {
-    vaer = Vaer.beskjaer(JSON.parse(await hent(Vaer.URL, { headers: { 'User-Agent': AGENT } })), naa);
+    const raa = await hent(Vaer.URL, { headers: { 'User-Agent': AGENT } });
+    vaer = Vaer.beskjaer(JSON.parse(new TextDecoder().decode(raa)), naa);
   } catch (e) {
     console.log('::warning::Været feilet (' + e.message + ') – tavla henter det selv.');
   }
@@ -107,4 +124,4 @@ if (require.main === module) {
   main().catch(e => { console.log('::error::' + e.message); process.exit(1); });
 }
 
-module.exports = { lesListe };
+module.exports = { lesListe, limSammen };

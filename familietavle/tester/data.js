@@ -24,7 +24,8 @@ const Kalender = require('../js/kalender.js');
 const Krypto = require('../js/krypto.js');
 const Vaer = require('../js/vaer.js');
 const Demo = require('../js/demo.js');
-const { lesListe } = require('../synk/synk.js');
+const { lesListe, limSammen } = require('../synk/synk.js');
+const Sim = require('./simulert-icloud.js');
 
 let feil = 0, gjort = 0;
 function krev(pastand, tekst, verdi) {
@@ -123,6 +124,16 @@ function dato(d) { return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFu
     krev(g.map(f => dato(f.start)).join() === forventet.join(), 'lang serie, riktig fase', [g.map(f => dato(f.start)), forventet]);
   }
 
+  console.log('ukestart: RFC 5545 sitt eget eksempel');
+  {
+    // Samme regel, to ukestarter, forskjellige datoer – rett fra RFC-en.
+    const r = wkst => forek(ics(['UID:w', 'DTSTART:19970805T090000',
+      'RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=' + wkst, 'SUMMARY:W']),
+      new Date(1997, 7, 1), new Date(1997, 8, 30)).map(f => f.start.getDate()).join(',');
+    krev(r('MO') === '5,10,19,24', 'WKST=MO', r('MO'));
+    krev(r('SU') === '5,17,19,31', 'WKST=SU', r('SU'));
+  }
+
   console.log('bursdager');
   {
     const s = forek(ics(['UID:s', 'DTSTART;VALUE=DATE:19840229', 'RRULE:FREQ=YEARLY', 'SUMMARY:Skuddårsbarn']),
@@ -157,6 +168,61 @@ function dato(d) { return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFu
     krev(dag(16).length === 0, 'ferien har ikke begynt 16.', dag(16));
     krev(dag(17).join() === 'Høstferie' && dag(21).join() === 'Høstferie', 'ferien 17.–21.', [dag(17), dag(21)]);
     krev(dag(22).length === 0, 'DTEND er ikke med', dag(22));
+  }
+
+  console.log('simulert iCloud: filene slik Apple skriver dem');
+  {
+    const k = {};
+    Sim.kalendere().forEach(c => { k[c.navn] = Kalender.les(limSammen(c.fil)); });
+    const uke = (navn, fra, til) => Kalender.forekomster(k[navn].hendelser, fra, til);
+
+    const raa = Sim.kalendere()[0].fil;
+    krev(raa.toString('utf8').includes('\ufffd'), 'simuleringen bretter faktisk midt i et tegn');
+    const mote = k.Mamma.hendelser.find(h => h.tittel === 'Foreldremøte 3B');
+    krev(mote && !/\ufffd/.test(JSON.stringify(k.Mamma)), 'æøå er hele etter bretting på bytenivå');
+    // Og det gamle vs. det nye: dekodet først, limt etterpå, gir «��».
+    const feilVei = raa.toString('utf8').replace(/\r\n[ \t]/g, '');
+    krev(/\ufffd/.test(feilVei) && limSammen(raa).includes('østre port'),
+      'dekodet før liming blir «ø» til «��» – limt først er den hel');
+    krev(k.Mamma.farge === '#ff2968' && k.Ella.farge === '#63da38', 'fargene fra iPhone', [k.Mamma.farge, k.Ella.farge]);
+    krev(k.Mamma.navn === 'Mamma', 'kalendernavnet', k.Mamma.navn);
+    krev(k.Mamma.hendelser.length === 4, 'VTIMEZONE og VALARM blir ikke hendelser', k.Mamma.hendelser.length);
+    krev(mote.sted === 'Bekkestua barneskole\nGamle Ringeriksvei 30', 'sted med linjeskift', mote.sted);
+
+    const svom = uke('Ella', new Date(2026, 9, 14), new Date(2026, 9, 15)).find(f => f.tittel === 'Svømming');
+    krev(svom && kl(svom.start) === '14:30', 'UTC-invitasjon i norsk tid', svom && kl(svom.start));
+
+    const inne = uke('Pappa', new Date(2026, 8, 1), new Date(2026, 9, 15)).filter(f => f.tittel === 'Innebandy');
+    krev(inne.map(f => dato(f.start)).join() === Sim.forventet.innebandy.join(), 'WKST=SU annenhver uke',
+      inne.map(f => dato(f.start)));
+    krev(inne.every(f => kl(f.start) === '20:15'), 'samme klokkeslett hele høsten', inne.map(f => kl(f.start)));
+
+    const lonn = uke('Mamma', new Date(2026, 9, 1), new Date(2027, 0, 1)).filter(f => f.tittel === 'Lønning');
+    krev(lonn.map(f => dato(f.start)).join() === Sim.forventet.lonning.join(), 'siste hverdag i måneden',
+      lonn.map(f => dato(f.start)));
+
+    const yoga = uke('Mamma', new Date(2026, 9, 8), new Date(2026, 9, 23)).filter(f => f.tittel === 'Yoga');
+    krev(yoga.map(f => f.start.getDate()).join() === '8,22', 'EXDATE med TZID stryker 15.', yoga.map(f => f.start.getDate()));
+
+    const korps = uke('Ella', new Date(2026, 9, 5), new Date(2026, 9, 27)).filter(f => /^Korps/.test(f.tittel));
+    krev(korps.map(f => f.start.getDate() + ' ' + kl(f.start)).join() === '5 18:00,20 17:30,26 18:00',
+      'avlyst 12., flyttet 19. → 20.', korps.map(f => f.start.getDate() + ' ' + kl(f.start) + ' ' + f.tittel));
+
+    const fotball = uke('Theo', new Date(2026, 9, 26), new Date(2026, 10, 30)).filter(f => f.tittel === 'Fotball');
+    krev(fotball.map(f => f.start.getDate()).join() === '26,28', 'UNTIL i UTC stopper serien 31.10.', fotball.map(f => dato(f.start)));
+    krev(uke('Theo', new Date(2026, 9, 15), new Date(2026, 9, 16)).length === 0, 'avlyst tannlege vises ikke');
+
+    const b = uke('Bursdager', new Date(2027, 1, 1), new Date(2027, 2, 31));
+    krev(b.length === 1 && dato(b[0].start) === '28.2.2027', 'skuddårsbarnet på 28.2.', b.map(f => dato(f.start)));
+
+    // Beskjæringen tar ikke med seg noe tavla trenger.
+    Sim.kalendere().forEach(c => {
+      const hel = limSammen(c.fil);
+      const kort = Kalender.beskjaer(hel, new Date(2026, 9, 13));
+      const a = Kalender.forekomster(Kalender.les(hel).hendelser, new Date(2026, 9, 14), new Date(2026, 11, 31));
+      const b2 = Kalender.forekomster(Kalender.les(kort).hendelser, new Date(2026, 9, 14), new Date(2026, 11, 31));
+      krev(a.length === b2.length && a.length > 0, c.navn + ': beskjæring endrer ingenting framover', [a.length, b2.length]);
+    });
   }
 
   console.log('beskjæring');

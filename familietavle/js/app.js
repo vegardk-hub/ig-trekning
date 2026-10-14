@@ -88,12 +88,21 @@
 
   // ---- Data --------------------------------------------------------------
 
+  // Personene får fargen kalenderen har på iPhone, så Ellas avtaler er grønne
+  // både på veggen og i lomma. Men standardkalenderen har samme farge hos alle
+  // som aldri har endret den, og to personer i samme blåfarge er verre enn
+  // ingen farger. Den som kommer sist, får da en ledig farge fra paletten.
   function taIBruk(data) {
     st.data = data;
-    var personer = 0;
+    var brukt = [];
     st.kalendere = data.kalendere.map(function (k) {
       var lest = Kalender.les(k.ics);
-      var farge = k.rolle === 'person' ? FARGER[personer++ % FARGER.length] : '';
+      var farge = '';
+      if (k.rolle === 'person') {
+        farge = lest.farge && brukt.indexOf(lest.farge) < 0 ? lest.farge
+          : FARGER.filter(function (f) { return brukt.indexOf(f) < 0; })[0] || FARGER[brukt.length % FARGER.length];
+        brukt.push(farge);
+      }
       return { navn: k.navn, rolle: k.rolle, farge: farge, hendelser: lest.hendelser };
     });
   }
@@ -145,12 +154,23 @@
   }
 
   // Alle forekomster i et tidsrom, merket med kalenderen de kom fra.
+  //
+  // En avtale flere er invitert til, ligger i hver sin kalender med samme UID.
+  // Den vises én gang, med alle navnene – det ferdige veggskjermer får mest
+  // kritikk for etter synkfeil, er den samme avtalen tre–fire ganger.
   function hendelser(rolle, fra, til) {
-    var ut = [];
+    var ut = [], sett = {};
     st.kalendere.forEach(function (k) {
       if (k.rolle !== rolle) return;
       Kalender.forekomster(k.hendelser, fra, til).forEach(function (f) {
+        var nokkel = f.uid ? f.uid + '|' + f.start.getTime() : '';
+        if (nokkel && sett[nokkel]) {
+          if (sett[nokkel].kalendere.indexOf(k) < 0) sett[nokkel].kalendere.push(k);
+          return;
+        }
         f.kalender = k;
+        f.kalendere = [k];
+        if (nokkel) sett[nokkel] = f;
         ut.push(f);
       });
     });
@@ -242,9 +262,23 @@
     el.vaer.appendChild(rekke);
   }
 
+  // Én farge per person i kanten; en felles avtale får en stripe per person.
   function farget(e, f) {
-    if (f.kalender.farge) e.style.setProperty('--farge', f.kalender.farge);
+    var farger = f.kalendere.map(function (k) { return k.farge; }).filter(Boolean);
+    if (!farger.length) return e;
+    e.style.setProperty('--farge', farger[0]);
+    if (farger.length > 1) {
+      var del = 100 / farger.length;
+      e.style.borderImage = 'linear-gradient(' + farger.map(function (c, i) {
+        return c + ' ' + (i * del) + '% ' + ((i + 1) * del) + '%';
+      }).join(', ') + ') 1';
+    }
     return e;
+  }
+
+  function hvem(f) {
+    var navn = f.kalendere.map(function (k) { return k.navn; });
+    return navn.length > 1 ? navn.slice(0, -1).join(', ') + ' og ' + navn[navn.length - 1] : navn[0];
   }
 
   function tegnIdag(naa, idag) {
@@ -265,7 +299,7 @@
       // En avtale som begynte i går (over midnatt), står som «–» til den slutter.
       li.appendChild(lag('span', 'kl', f.start < idag ? '–' + kl(f.slutt) : kl(f.start)));
       var hva = lag('span', 'hva', f.tittel);
-      hva.appendChild(lag('span', 'hvem', f.kalender.navn + (f.sted ? ' · ' + f.sted.split('\n')[0] : '')));
+      hva.appendChild(lag('span', 'hvem', hvem(f) + (f.sted ? ' · ' + f.sted.split('\n')[0] : '')));
       li.appendChild(hva);
       el.idag.appendChild(li);
     });
@@ -291,7 +325,8 @@
       if (!alle.length) boks.appendChild(lag('div', 'tomt', '–'));
       alle.forEach(function (f) {
         var l = farget(lag('div', 'linje'), f);
-        l.appendChild(lag('span', 'kl', f.heldag ? 'hele' : kl(f.start)));
+        // Begynte den før denne dagen (nattevakt), er det slutten som teller.
+        l.appendChild(lag('span', 'kl', f.heldag ? 'hele' : f.start < dag ? '–' + kl(f.slutt) : kl(f.start)));
         l.appendChild(lag('span', '', f.tittel));
         boks.appendChild(l);
       });
