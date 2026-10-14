@@ -18,13 +18,15 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `pwa-xoxo/` | Kryss & Ring — puslespill med kryss og ringer på 5x10. **Under arbeid** |
 | `lydloft/` | Lydløft — lydverksted: filtre, tone, tempo, tonehøyde og effekter på egne opptak, pluss en testbenk. **Under arbeid** |
+| `familietavle/` | Familietavla — veggtavle på nettbrett: iCloud-kalendre, Yr-vær, middag og bursdager |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
 
-GitHub Pages bygger fra `main`, med rota som kilde. Det finnes ingen
-workflow-fil i repoet — Pages kjører sin egen innebygde
-`pages-build-deployment`. Alt som havner på `main`, ligger live et minutt
+GitHub Pages bygger fra `main`, med rota som kilde. Pages kjører sin egen
+innebygde `pages-build-deployment`; den eneste workflow-fila i repoet,
+`.github/workflows/familietavle.yml`, har ingenting med publiseringen å gjøre —
+den skriver Familietavlas data til grenen `familietavle-data`, se under. Alt som havner på `main`, ligger live et minutt
 senere på `https://vegardk-hub.github.io/ig-trekning/` under samme sti som i
 repoet:
 
@@ -37,6 +39,7 @@ repoet:
 - Sprellemaskinen: `https://vegardk-hub.github.io/ig-trekning/pwa-sprell/`
 - Koordinatjakt: `https://vegardk-hub.github.io/ig-trekning/koordinatjakt/`
 - Lydløft: `https://vegardk-hub.github.io/ig-trekning/lydloft/`
+- Familietavla: `https://vegardk-hub.github.io/ig-trekning/familietavle/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -168,6 +171,19 @@ NODE_PATH=/opt/node22/lib/node_modules node lydloft/tester/verksted.js
 
 `benk.js` stubber mikrofonen med en ekte MediaStream fra en egen lydkontekst
 — samme lærdom om skyøktas manglende lydinngang som over.
+
+Familietavla har to sett prøver. `data.js` trenger verken nettleser eller nett,
+og skal kjøres etter hver endring i `familietavle/js/` eller `familietavle/synk/`;
+`tavle.js` trenger playwright og skal kjøres etter endringer i `app.js`,
+`styles.css` eller `index.html`:
+
+```
+node familietavle/tester/data.js
+NODE_PATH=/opt/node22/lib/node_modules node familietavle/tester/tavle.js
+```
+
+Skyøkta når hverken iCloud, api.met.no eller raw.githubusercontent.com —
+proxyen svarer 403. Prøvene besvarer alle tre lokalt, og det skal de.
 
 Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen og Sprellemaskinen er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
@@ -649,6 +665,28 @@ Testbenken (`testbenk.html`) står igjen fra da målet var å gjøre opptak bedr
   er for tung for en iPhone.
 - **Lik lydstyrke ved A/B.** Høyest låter best; uten utjevning vinner det
   høyeste opptaket hver gang, og nivå 1 vil se bedre ut enn det er.
+
+## Familietavla
+
+`familietavle/README.md` har oppsettet steg for steg og fellene. Eieren ville
+ha noe gratis, uten konto hos en ny tjeneste. Det som bærer resten:
+
+- **Tavla er en visning, ikke et redigeringsverktøy.** Alt legges inn fra
+  telefonen i Kalender-appen, også middagen (kalenderen «Middag») og
+  bursdagene («Bursdager»). Påminnelser har ikke noe API, og iCloud sender
+  ikke CORS-headere — derfor finnes synk-jobben.
+- **Lenkene til kalendrene er hemmeligheter.** En publisert iCloud-lenke gir
+  lesetilgang til den som har den. De ligger som GitHub-hemmeligheter, og
+  datafila på `familietavle-data` er kryptert (AES-GCM, PBKDF2). Repoet er
+  offentlig. Legg aldri en lenke, et navn fra kalenderen eller en ukryptert
+  datafil i en commit.
+- **Datagrenen skrives over** med ett commit hver gang. Skriver du data til
+  `main`, får Pages 96 bygg i døgnet.
+- **Forsinkelsen er GitHubs timer**, 15–60 minutter og iblant mer. Tavla sier
+  fra når fila er over to timer gammel. Neste steg om det ikke holder, er en
+  Cloudflare Worker — eieren har valgt det bort foreløpig.
+- **Gjentakelser foldes ut i veggtid**, og årlige hendelser 29. februar havner
+  på 28. i vanlige år. Prøvene håndhever begge.
 
 ## Fargeflasker
 

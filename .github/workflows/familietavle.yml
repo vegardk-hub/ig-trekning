@@ -1,0 +1,62 @@
+# Familietavla: henter iCloud-kalendrene hvert kvarter, krypterer dem og
+# legger dem på grenen familietavle-data, som nettbrettet leser fra.
+#
+# Hvorfor en egen gren: alt som havner på main, bygges av GitHub Pages. Én
+# datafil hvert kvarter ville gitt 96 Pages-bygg i døgnet og like mange commits
+# i historikken. Datagrenen har alltid bare ett commit – den skrives over.
+#
+# GitHubs timer er «best effort»: en kjøring kan komme et kvarter eller mer for
+# sent, og iblant ikke i det hele tatt. Tavla sier fra når fila er over to
+# timer gammel. Minuttene er lagt utenom hel og halv time, der køen er lengst.
+#
+# I et offentlig repo slår GitHub av planlagte jobber etter 60 dager uten
+# aktivitet i repoet. Står tavla fast på «sist hentet for 3 døgn siden», sjekk
+# Actions-fanen først.
+
+name: Familietavle – synk
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: familietavle-synk
+  cancel-in-progress: false
+
+jobs:
+  synk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: familietavle
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Hent og krypter
+        env:
+          FAMILIETAVLE_KALENDERE: ${{ secrets.FAMILIETAVLE_KALENDERE }}
+          FAMILIETAVLE_PASSFRASE: ${{ secrets.FAMILIETAVLE_PASSFRASE }}
+          TZ: Europe/Oslo
+        run: node familietavle/synk/synk.js "$RUNNER_TEMP/tavle.json"
+
+      - name: Skriv til familietavle-data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f "$RUNNER_TEMP/tavle.json" ]; then exit 0; fi
+          mkdir "$RUNNER_TEMP/data" && cd "$RUNNER_TEMP/data"
+          git init -q -b familietavle-data
+          cp "$RUNNER_TEMP/tavle.json" tavle.json
+          git add tavle.json
+          git -c user.name="familietavle-synk" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "Familietavla: data $(date -u +%FT%TZ)"
+          git push -fq "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" familietavle-data

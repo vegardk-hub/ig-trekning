@@ -1,0 +1,414 @@
+/*
+ * Familietavla – laget for et 10,6" nettbrett liggende på veggen, lest på
+ * tre meters avstand.
+ *
+ * Alt er i rem, og rot-størrelsen følger skjermbredden. Da er det én skala å
+ * justere når noe skal bli større, og tavla ser lik ut på en annen skjerm.
+ * Mørk bunn fordi den står på hele døgnet: en hvit flate lyser opp kjøkkenet
+ * om kvelden, og LCD-en tåler mørke flater bedre over tid.
+ */
+
+:root {
+  --bunn: #0e141b;
+  --kort: #17212b;
+  --kort-lys: #1f2c39;
+  --linje: #2a3846;
+  --tekst: #eef3f7;
+  --dempet: #9fb0bf;
+  --svak: #6f8293;
+  --aksent: #f2c14e;
+  --varsel: #f2994a;
+  --trygg-topp: env(safe-area-inset-top, 0px);
+  --trygg-bunn: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  font-size: clamp(13px, 1.5vw, 30px);
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bunn);
+  color: var(--tekst);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.25;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+h1, h2 { margin: 0; font-weight: 650; }
+
+h2 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dempet);
+  margin-bottom: 0.6rem;
+}
+
+ul, ol { list-style: none; margin: 0; padding: 0; }
+
+/* ---- Rammen ------------------------------------------------------------ */
+
+.tavle:not([hidden]) {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.9rem;
+  height: 100vh;
+  height: 100dvh;
+  padding: calc(0.9rem + var(--trygg-topp)) 1.1rem calc(0.5rem + var(--trygg-bunn));
+}
+
+.kolonner {
+  display: grid;
+  grid-template-columns: 1.05fr 1.6fr 1fr;
+  gap: 0.9rem;
+  min-height: 0;
+}
+
+.kort {
+  background: var(--kort);
+  border-radius: 1rem;
+  padding: 0.9rem 1rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.side {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.9rem;
+  min-height: 0;
+}
+
+/* ---- Toppen: klokke og vær -------------------------------------------- */
+
+.topp {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.tid {
+  font-size: 4.6rem;
+  font-weight: 300;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.dato {
+  font-size: 1.45rem;
+  color: var(--dempet);
+  margin-top: 0.25rem;
+}
+
+.dato::first-letter { text-transform: uppercase; }
+
+.vaer {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.vaer-naa {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.vaer-naa img { width: 5.2rem; height: 5.2rem; }
+
+.vaer-temp {
+  font-size: 3.6rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.vaer-temp.minus, .vaer-liten .minus { color: #8ec5ff; }
+
+.vaer-tekst {
+  font-size: 0.95rem;
+  color: var(--dempet);
+  margin-top: 0.2rem;
+}
+
+.vaer-rekke {
+  display: flex;
+  gap: 0.9rem;
+  padding-left: 1.2rem;
+  border-left: 1px solid var(--linje);
+}
+
+.vaer-liten {
+  text-align: center;
+  font-size: 0.95rem;
+  min-width: 3.3rem;
+}
+
+.vaer-liten img { width: 2.6rem; height: 2.6rem; display: block; margin: 0.1rem auto; }
+
+.vaer-liten .naar { color: var(--dempet); }
+
+.vaer-liten .temp { font-weight: 600; }
+
+.vaer-liten .lav { color: var(--dempet); font-weight: 400; }
+
+/* ---- Avtaler ----------------------------------------------------------- */
+
+.avtaler { display: grid; gap: 0.55rem; }
+
+.avtale {
+  display: grid;
+  grid-template-columns: 3.6rem 1fr;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding-left: 0.7rem;
+  border-left: 0.32rem solid var(--farge, var(--svak));
+}
+
+.avtale .kl {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  font-size: 1.15rem;
+}
+
+.avtale .hva { font-size: 1.15rem; overflow-wrap: anywhere; }
+
+.avtale .hvor, .avtale .hvem {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--dempet);
+}
+
+.avtale.forbi { opacity: 0.4; }
+
+.avtale.pagar .kl { color: var(--aksent); }
+
+.heldager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.7rem;
+}
+
+.heldager:empty { display: none; }
+
+.merke {
+  background: var(--kort-lys);
+  border-left: 0.32rem solid var(--farge, var(--svak));
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.95rem;
+}
+
+.tomt {
+  color: var(--svak);
+  font-size: 1.05rem;
+}
+
+/* ---- De neste dagene --------------------------------------------------- */
+
+.neste {
+  display: flex;
+  flex-direction: column;
+}
+
+.dagrutenett {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem 0.9rem;
+}
+
+.dag {
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--linje);
+  padding-top: 0.4rem;
+}
+
+.dag h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.dag h3 .lite { color: var(--dempet); font-weight: 400; }
+
+.dag .linje {
+  display: flex;
+  gap: 0.45rem;
+  font-size: 0.98rem;
+  line-height: 1.3;
+  padding-left: 0.45rem;
+  border-left: 0.25rem solid var(--farge, var(--svak));
+  margin-bottom: 0.18rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dag .linje .kl {
+  font-variant-numeric: tabular-nums;
+  color: var(--dempet);
+  flex: none;
+}
+
+.dag .linje span:last-child { overflow: hidden; text-overflow: ellipsis; }
+
+.flere { color: var(--svak); font-size: 0.9rem; padding-left: 0.7rem; }
+
+/* ---- Middag og bursdager ---------------------------------------------- */
+
+.middag li, .bursdager li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.22rem 0;
+  font-size: 1.02rem;
+}
+
+.middag .naar, .bursdager .naar {
+  flex: none;
+  width: 2.6rem;
+  color: var(--dempet);
+}
+
+.middag .hva, .bursdager .hva { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.middag .idag {
+  background: var(--kort-lys);
+  border-radius: 0.5rem;
+  margin: 0.1rem -0.5rem 0.25rem;
+  padding: 0.45rem 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 650;
+}
+
+.middag .idag .naar { color: var(--aksent); font-size: 1rem; }
+
+.middag .ingen { color: var(--svak); }
+
+.bursdager .bursdag-idag {
+  background: #3a2f12;
+  border-radius: 0.5rem;
+  margin: 0 -0.5rem 0.25rem;
+  padding: 0.45rem 0.5rem;
+  font-weight: 650;
+}
+
+.bursdager .bursdag-idag .naar { color: var(--aksent); }
+
+.bursdager .om { color: var(--svak); font-size: 0.85rem; margin-left: auto; flex: none; }
+
+/* ---- Bunnlinja --------------------------------------------------------- */
+
+.bunn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--svak);
+}
+
+.personer { display: flex; gap: 0.9rem; flex-wrap: wrap; }
+
+.person::before {
+  content: '';
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--farge);
+  margin-right: 0.35rem;
+  vertical-align: -0.05rem;
+}
+
+.status { margin-left: auto; }
+
+.status.gammel { color: var(--varsel); }
+
+.meny {
+  background: none;
+  border: 0;
+  color: var(--svak);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+}
+
+/* ---- Oppsett ----------------------------------------------------------- */
+
+.oppsett:not([hidden]) {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.oppsett-kort {
+  background: var(--kort);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  width: min(32rem, 100%);
+  display: grid;
+  gap: 0.8rem;
+  user-select: text;
+}
+
+.oppsett-kort p { margin: 0; color: var(--dempet); }
+
+.oppsett-kort input, .oppsett-kort button[type=submit] {
+  font: inherit;
+  font-size: max(16px, 1rem);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--linje);
+  background: var(--bunn);
+  color: var(--tekst);
+}
+
+.oppsett-kort button[type=submit] {
+  background: var(--aksent);
+  color: #1b1405;
+  border: 0;
+  font-weight: 650;
+}
+
+.oppsett-kort .melding { color: var(--varsel); min-height: 1.2em; }
+
+.oppsett-kort .lite { font-size: 0.85rem; }
+
+.oppsett-kort a, .lenkeknapp { color: var(--dempet); }
+
+.lenkeknapp { background: none; border: 0; font: inherit; padding: 0; text-decoration: underline; }
+
+/* ---- Natt -------------------------------------------------------------- */
+
+/* Skjermen kan ikke slås av fra en nettside, så om natta dempes den i stedet.
+   Et trykk lyser den opp et par minutter. */
+.natt:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+/* ---- Stående skjerm ----------------------------------------------------- */
+
+@media (orientation: portrait) {
+  html { font-size: clamp(13px, 2.3vw, 30px); }
+  .kolonner { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .neste { grid-column: 1 / -1; grid-row: 2; }
+  .topp { flex-wrap: wrap; }
+  .vaer-rekke { display: none; }
+}

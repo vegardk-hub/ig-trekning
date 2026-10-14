@@ -56,6 +56,13 @@
   Brettnummeret er såkornet, så et ark kan lages på nytt, og fasiten står på
   skjermen. Ingen service worker.
 
+- **[Familietavla](familietavle/)** — `familietavle/index.html`: tavle for et
+  nettbrett på veggen. Klokke, vær fra Yr, dagens avtaler for hele familien,
+  de neste seks dagene, ukas middager og bursdagene som kommer. Alt legges inn
+  i iCloud-kalendre fra telefonen; en jobb i GitHub Actions henter dem hvert
+  kvarter og legger dem kryptert på grenen `familietavle-data`. `?demo` viser
+  en oppdiktet familie.
+
 - **[Lydløft](lydloft/)** — `lydloft/index.html`: et lydverksted. Ta opp
   eller last opp noe, og lag nye versjoner: bass, mellomtone og diskant,
   tempo og tonehøyde hver for seg, baklengs, romklang, ekko, forvrengning,

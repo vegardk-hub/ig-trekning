@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e141b">
+<meta name="robots" content="noindex">
+<title>Familietavla</title>
+<link rel="manifest" href="manifest.webmanifest?v=1">
+<link rel="icon" href="ikon.svg?v=1" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+
+<main id="tavle" class="tavle" hidden>
+  <header class="topp">
+    <div class="klokke">
+      <div id="tid" class="tid">--:--</div>
+      <div id="dato" class="dato"></div>
+    </div>
+    <div id="vaer" class="vaer"></div>
+  </header>
+
+  <div class="kolonner">
+    <section class="kort idag">
+      <h2>I dag</h2>
+      <div id="idagHeldag" class="heldager"></div>
+      <ul id="idag" class="avtaler"></ul>
+    </section>
+
+    <section class="kort neste">
+      <h2>De neste dagene</h2>
+      <div id="neste" class="dagrutenett"></div>
+    </section>
+
+    <aside class="side">
+      <section class="kort">
+        <h2>Middag</h2>
+        <ol id="middag" class="middag"></ol>
+      </section>
+      <section class="kort">
+        <h2>Bursdager</h2>
+        <ul id="bursdager" class="bursdager"></ul>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="bunn">
+    <div id="personer" class="personer"></div>
+    <div id="status" class="status"></div>
+    <button id="meny" class="meny" type="button" aria-label="Innstillinger">⋯</button>
+  </footer>
+</main>
+
+<section id="oppsett" class="oppsett" hidden>
+  <form id="oppsettSkjema" class="oppsett-kort">
+    <h1>Familietavla</h1>
+    <p>Skriv inn passfrasen fra GitHub-hemmeligheten <code>FAMILIETAVLE_PASSFRASE</code>.
+      Den lagres bare på dette nettbrettet.</p>
+    <input id="passfrase" type="password" autocomplete="off" autocapitalize="none"
+      spellcheck="false" placeholder="Passfrase">
+    <button type="submit">Åpne tavla</button>
+    <p id="oppsettMelding" class="melding" role="status"></p>
+    <p class="lite"><a href="?demo">Se et eksempel med oppdiktet familie</a></p>
+    <p class="lite"><button id="glem" type="button" class="lenkeknapp" hidden>Glem passfrasen på dette nettbrettet</button></p>
+  </form>
+</section>
+
+<div id="natt" class="natt" hidden></div>
+
+<script src="js/kalender.js?v=1"></script>
+<script src="js/krypto.js?v=1"></script>
+<script src="js/vaer.js?v=1"></script>
+<script src="js/demo.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>
