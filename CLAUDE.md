@@ -18,7 +18,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `pwa-xoxo/` | Kryss & Ring — puslespill med kryss og ringer på 5x10. **Under arbeid** |
 | `lydloft/` | Lydløft — lydverksted: filtre, tone, tempo, tonehøyde og effekter på egne opptak, pluss en testbenk. **Under arbeid** |
-| `familietavle/` | Familietavla — veggtavle på nettbrett: iCloud-kalendre, Yr-vær, middag og bursdager |
+| `familietavle/` | Familietavla — veggtavle på nettbrett: iCloud-kalendre per person, Yr-vær, søppeltømming |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -676,6 +676,12 @@ Testbenken (`testbenk.html`) står igjen fra da målet var å gjøre opptak bedr
 `familietavle/README.md` har oppsettet steg for steg og fellene. Eieren ville
 ha noe gratis, uten konto hos en ny tjeneste. Det som bærer resten:
 
+- **Eiernes valg for første versjon:** tavla skal svare på «hvem har hvilke
+  aktiviteter i dag, og hvem henter». Dagen står derfor i én kolonne per
+  person. Middag og bursdager er valgt bort (koden står, og kortene kommer
+  når kalendrene legges til), skjermen skal ikke lyse om natta, og søppel-
+  tømming var neste ønske. Søppel er en iCloud-kalender med tre gjentakelser
+  – Bærum har faste intervaller og ikke noe åpent API.
 - **Tavla er en visning, ikke et redigeringsverktøy.** Alt legges inn fra
   telefonen i Kalender-appen, også middagen (kalenderen «Middag») og
   bursdagene («Bursdager»). Påminnelser har ikke noe API, og iCloud sender

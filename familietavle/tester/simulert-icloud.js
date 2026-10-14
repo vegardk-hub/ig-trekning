@@ -131,6 +131,12 @@ function kalendere() {
       ['SUMMARY:Lapskaus', HS('20261019'), HE('20261020')],
       ['SUMMARY:Pannekaker', HS('20261020'), HE('20261021')]
     ])) },
+    { navn: 'Søppel', fil: brett(kalender('Søppel', '#8E8E93FF', [
+      // Bærums faste intervaller. Restavfall og papir faller på samme fredag.
+      ['SUMMARY:Restavfall og matavfall', HS('20260109'), HE('20260110'), 'RRULE:FREQ=WEEKLY;INTERVAL=2'],
+      ['SUMMARY:Papir og plast', HS('20260918'), HE('20260919'), 'RRULE:FREQ=WEEKLY;INTERVAL=4'],
+      ['SUMMARY:Glass og metall', HS('20260828'), HE('20260829'), 'RRULE:FREQ=WEEKLY;INTERVAL=8']
+    ])) },
     { navn: 'Bursdager', fil: brett(kalender('Bursdager', '#A2845EFF', [
       ['SUMMARY:Bestefar', HS('19481014'), HE('19481015'), 'RRULE:FREQ=YEARLY'],
       ['SUMMARY:Mormor', HS('19511017'), HE('19511018'), 'RRULE:FREQ=YEARLY'],
@@ -142,8 +148,15 @@ function kalendere() {
 
 // Det tavla skal vise kl. 13:05 onsdag 14. oktober.
 const forventet = {
-  idag: ['Svømming 14:30 Ella', 'Fotball 17:00 Theo', 'Foreldremøte 3B 18:00 Mamma',
-    'Innebandy 20:15 Pappa', 'Nattevakt 22:00 Pappa'],
+  // Én kolonne per person, i den rekkefølgen kalendrene står i oppsettet.
+  idag: {
+    Mamma: ['18:00 Foreldremøte 3B'],
+    Pappa: ['20:15 Innebandy', '22:00 Nattevakt'],
+    Ella: ['14:30 Svømming'],
+    Theo: ['17:00 Fotball']
+  },
+  // 9.1.2026 + 20 × 2 uker gir 16.10; 18.9 + 4 uker gir 16.10; glass er 23.10.
+  tomming: 'Søppel fredag: Papir og plast, Restavfall og matavfall',
   imorgen: ['Nattevakt –06:00'],                 // Yoga er strøket, tannlegen avlyst
   fredag16: ['Middag hos Kari og Ørjan 19:00'],    // én gang, med to farger
   mandag19: ['Høstferie', 'Jobbreise Bergen', 'Fotball 17:00'],   // korpset er flyttet

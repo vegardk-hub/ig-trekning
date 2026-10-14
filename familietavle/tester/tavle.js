@@ -118,8 +118,10 @@ function utenfor(p) {
       tid: document.getElementById('tid').textContent,
       dato: document.getElementById('dato').textContent,
       idag: document.getElementById('idag').innerText,
-      heldag: document.getElementById('idagHeldag').innerText,
-      forbi: [...document.querySelectorAll('#idag .forbi .hva')].map(e => e.firstChild.textContent),
+      heldag: [...document.querySelectorAll('#idag .merke')].map(e => e.textContent).join(),
+      kolonner: [...document.querySelectorAll('#idag .personkol h3')].map(e => e.textContent),
+      tomming: (() => { const e = document.getElementById('tomming'); return { tekst: e.textContent, snart: e.classList.contains('snart'), synlig: !e.hidden }; })(),
+      forbi: [...document.querySelectorAll('#idag .forbi .hva')].map(e => e.textContent),
       middagIdag: document.querySelector('#middag .idag').innerText,
       bursdag: document.querySelector('#bursdager li').innerText,
       vaer: document.querySelector('.vaer-temp') && document.querySelector('.vaer-temp').textContent,
@@ -130,6 +132,9 @@ function utenfor(p) {
     krev(t.dato === 'onsdag 14. oktober · uke 42', 'dato og ukenummer', t.dato);
     krev(/Foreldremøte/.test(t.idag) && /Fotballtrening/.test(t.idag), 'dagens avtaler', t.idag);
     krev(/Hjemmekontor/.test(t.heldag), 'heldagshendelse som merke', t.heldag);
+    krev(t.kolonner.join() === 'Mamma,Pappa,Ella,Theo', 'én kolonne per person', t.kolonner);
+    krev(t.tomming.synlig && t.tomming.tekst === 'Søppel i morgen: Restavfall og matavfall' && t.tomming.snart,
+      'søppel i morgen, uthevet', t.tomming);
     krev(t.forbi.length === 0, 'ingenting forbi kl. 13:05 – svømming er 14:30', t.forbi);
     krev(/Taco/.test(t.middagIdag), 'dagens middag', t.middagIdag);
     krev(/Bestefar fyller 78/.test(t.bursdag), 'bursdag i dag med alder', t.bursdag);
@@ -153,7 +158,8 @@ function utenfor(p) {
   console.log('kryptert datafil: riktig og feil passfrase');
   {
     const pakke = Demo.pakke(NAA);
-    pakke.kalendere = pakke.kalendere.filter(k => k.navn !== 'Theo');
+    // Uten Theo, og uten middag, bursdager og søppel – slik eierne starter.
+    pakke.kalendere = pakke.kalendere.filter(k => k.navn !== 'Theo' && k.rolle === 'person');
     const fil = JSON.stringify(await Krypto.krypter(JSON.stringify(pakke), 'riktig hest batteri stift'));
 
     let { p, ctx } = await side(nett, { width: 1280, height: 768 }, NAA, '', fil);
@@ -169,6 +175,13 @@ function utenfor(p) {
     await p.waitForSelector('#tavle:not([hidden])', { timeout: 5000 }).catch(() => {});
     const personer = await p.evaluate(() => document.getElementById('personer').innerText);
     krev(/Mamma/.test(personer) && !/Theo/.test(personer), 'viser kalendrene fra fila', personer);
+    const uten = await p.evaluate(() => ({
+      side: document.getElementById('side').hidden,
+      tomming: document.getElementById('tomming').hidden,
+      kolonner: document.querySelectorAll('#idag .personkol').length
+    }));
+    krev(uten.side && uten.tomming, 'uten middag, bursdager og søppel: ingen sidekolonne, ingen søppellinje', uten);
+    krev(uten.kolonner === 3, 'tre personer, tre kolonner', uten.kolonner);
     const status = await p.textContent('#status');
     krev(/Kalender hentet 13:05/.test(status), 'bunnlinja sier når fila ble hentet', status);
 

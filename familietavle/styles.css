@@ -65,9 +65,20 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
   padding: calc(0.9rem + var(--trygg-topp)) 1.1rem calc(0.5rem + var(--trygg-bunn));
 }
 
-.kolonner {
+.innhold {
   display: grid;
-  grid-template-columns: 1.05fr 1.6fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  min-height: 0;
+}
+
+.innhold.med-side { grid-template-columns: minmax(0, 1fr) 19rem; }
+
+/* Dagen og uka deler høyden omtrent likt. Dagen har få avtaler per person,
+   men står i store typer; uka har mange, i små. */
+.hoved {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: 0.9rem;
   min-height: 0;
 }
@@ -78,13 +89,18 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
   padding: 0.9rem 1rem;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.side {
+/* Middagen får plassen den trenger – sju linjer, alltid. Bursdagene tar resten
+   og kappes nedenfra. */
+.side:not([hidden]) {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0.9rem;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ---- Toppen: klokke og vær -------------------------------------------- */
@@ -111,6 +127,8 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 }
 
 .dato::first-letter { text-transform: uppercase; }
+
+
 
 .vaer {
   display: flex;
@@ -161,52 +179,68 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 
 .vaer-liten .lav { color: var(--dempet); font-weight: 400; }
 
-/* ---- Avtaler ----------------------------------------------------------- */
+/* ---- I dag: én kolonne per person ------------------------------------ */
 
-.avtaler { display: grid; gap: 0.55rem; }
+.personrad {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--antall, 4), minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.personkol {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+}
+
+/* I en smal kolonne står klokkeslettet over titlen. Ved siden av hverandre
+   får et langt ord som «Foreldremøte» ikke plass, og brekkes midt i. */
+@container (max-width: 14rem) {
+  .personkol .avtale { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .personkol .avtale .kl { font-size: 0.95rem; color: var(--dempet); }
+}
+
+.personkol h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.25rem;
+  font-weight: 650;
+  padding-bottom: 0.3rem;
+  border-bottom: 0.3rem solid var(--farge, var(--svak));
+}
+
+.avtaler { display: grid; gap: 0.5rem; align-content: start; }
 
 .avtale {
   display: grid;
-  grid-template-columns: 3.6rem 1fr;
-  gap: 0.6rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.5rem;
   align-items: baseline;
-  padding-left: 0.7rem;
-  border-left: 0.32rem solid var(--farge, var(--svak));
 }
 
 .avtale .kl {
   font-variant-numeric: tabular-nums;
   font-weight: 650;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
 }
 
-.avtale .hva { font-size: 1.15rem; overflow-wrap: anywhere; }
-
-.avtale .hvor, .avtale .hvem {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--dempet);
-}
+.avtale .hva { font-size: 1.1rem; overflow-wrap: break-word; hyphens: auto; }
 
 .avtale.forbi { opacity: 0.4; }
 
-.avtale.pagar .kl { color: var(--aksent); }
-
-.heldager {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 0.7rem;
-}
-
-.heldager:empty { display: none; }
+.avtale.pagar .kl, .avtale.pagar .hva { color: var(--aksent); }
 
 .merke {
   background: var(--kort-lys);
-  border-left: 0.32rem solid var(--farge, var(--svak));
+  border-left: 0.3rem solid var(--farge, var(--svak));
   border-radius: 0.4rem;
   padding: 0.2rem 0.55rem;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .tomt {
@@ -216,18 +250,12 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 
 /* ---- De neste dagene --------------------------------------------------- */
 
-.neste {
-  display: flex;
-  flex-direction: column;
-}
-
-.dagrutenett {
+.dagrad {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem 0.9rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.8rem;
 }
 
 .dag {
@@ -238,8 +266,8 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 }
 
 .dag h3 {
-  margin: 0 0 0.3rem;
-  font-size: 1.05rem;
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
   font-weight: 650;
 }
 
@@ -247,13 +275,13 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 
 .dag .linje {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.45rem;
-  font-size: 0.98rem;
-  line-height: 1.3;
-  padding-left: 0.45rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  padding-left: 0.4rem;
   border-left: 0.25rem solid var(--farge, var(--svak));
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem;
 }
 
 .dag .linje .kl {
@@ -261,18 +289,41 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
   color: var(--dempet);
 }
 
-/* Titlen får to linjer før den kuttes. I to kolonner er en lang tittel som
-   «Middag hos Kari og Ørjan» ellers borte etter «Middag hos Kari…», og det er
+/* Titlen får to linjer før den kuttes. Kolonnene er smale, og en lang tittel
+   som «Middag hos Kari og Ørjan» er ellers borte etter «Middag hos Kari…» –
    akkurat den delen som sier noe. */
-.dag .linje span:last-child {
+.dag .linje span:last-child, .dag .hel {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
-.flere { color: var(--svak); font-size: 0.9rem; padding-left: 0.7rem; }
+/* Heldagshendelser er en merkelapp, ikke en linje med «hele» foran: i en smal
+   kolonne tok ordet halve bredden fra titlen. */
+.dag .hel {
+  background: var(--kort-lys);
+  border-left: 0.25rem solid var(--farge, var(--svak));
+  border-radius: 0.3rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.88rem;
+  line-height: 1.25;
+  margin-bottom: 0.3rem;
+}
+
+/* Med middag og bursdager ved siden av blir seks kolonner for smale til at
+   titlene får plass. Da legges uka i to rader, og den tar mer av høyden –
+   dagen har sjelden mer enn to–tre avtaler per person. */
+.innhold.med-side .hoved { grid-template-rows: minmax(0, 1fr) minmax(0, 1.1fr); }
+
+.innhold.med-side .dagrad {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.flere { color: var(--svak); font-size: 0.85rem; }
 
 /* ---- Middag og bursdager ---------------------------------------------- */
 
@@ -340,7 +391,27 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
   vertical-align: -0.05rem;
 }
 
-.status { margin-left: auto; }
+/* Søppel står i bunnlinja: den gjelder én gang i uka og skal ikke ta høyde fra
+   dagen. Kvelden før og samme morgen lyser den, for da må noen trille dunken ut. */
+.tomming {
+  margin-left: auto;
+  font-size: 0.95rem;
+  color: var(--dempet);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.tomming.snart {
+  color: #1b1405;
+  background: var(--aksent);
+  border-radius: 1rem;
+  padding: 0.1rem 0.7rem;
+  font-weight: 650;
+}
+
+.status { margin-left: auto; flex: none; }
 
 .status.gammel { color: var(--varsel); }
 
@@ -401,20 +472,23 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 
 /* ---- Natt -------------------------------------------------------------- */
 
-/* Skjermen kan ikke slås av fra en nettside, så om natta dempes den i stedet.
-   Et trykk lyser den opp et par minutter. */
+/* Skjermen kan ikke slås av fra en nettside, så om natta blir den svart.
+   Bakgrunnslyset i en LCD lyser likevel litt gjennom; «Planlagt av og på»
+   i nettbrettets innstillinger slår den helt av, se README. Et trykk viser
+   tavla i to minutter. */
 .natt:not([hidden]) {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.72);
+  background: #000;
 }
 
 /* ---- Stående skjerm ----------------------------------------------------- */
 
 @media (orientation: portrait) {
   html { font-size: clamp(13px, 2.3vw, 30px); }
-  .kolonner { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-  .neste { grid-column: 1 / -1; grid-row: 2; }
+  .innhold.med-side { grid-template-columns: minmax(0, 1fr); }
+  .side:not([hidden]) { display: none; }
+  .dagrad { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); }
   .topp { flex-wrap: wrap; }
   .vaer-rekke { display: none; }
 }

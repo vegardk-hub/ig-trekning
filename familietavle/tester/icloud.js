@@ -54,9 +54,10 @@ function server(port, svar) {
   const filer = {};
   Sim.kalendere().forEach(k => { filer['/published/2/' + k.navn.toLowerCase()] = k.fil; });
   const icloud = await server(8134, (q, r) => {
-    if (!filer[q.url]) { r.writeHead(404); r.end(); return; }
+    const fil = filer[decodeURIComponent(q.url)];
+    if (!fil) { r.writeHead(404); r.end(); return; }
     r.writeHead(200, { 'Content-Type': 'text/calendar; charset=utf-8' });
-    r.end(filer[q.url]);
+    r.end(fil);
   });
 
   // Synk-jobben, slik Actions kjører den.
@@ -76,6 +77,16 @@ function server(port, svar) {
   fs.unlinkSync(ut);
   icloud.close();
 
+  // Eierne har valgt bort middag og bursdager i første versjon. Dagen og uka
+  // prøves derfor slik de faktisk skal se ut – uten sidekolonnen – og middag
+  // og bursdager etterpå, med hele fila. Samme jobb, samme kryptering; bare
+  // utvalget av kalendre er forskjellig.
+  const Krypto = require('../js/krypto.js');
+  const hel = JSON.parse(await Krypto.dekrypter(JSON.parse(datafil), PASSFRASE));
+  const forste = Object.assign({}, hel, { kalendere: hel.kalendere.filter(k => k.rolle === 'person' || k.rolle === 'tomming') });
+  const versjon1 = JSON.stringify(await Krypto.krypter(JSON.stringify(forste), PASSFRASE));
+  let gjeldende = versjon1;
+
   // Tavla
   console.log('tavla med den simulerte familien');
   const app = await server(8135, (q, r) => {
@@ -90,7 +101,7 @@ function server(port, svar) {
   const p = await ctx.newPage();
   await p.clock.install({ time: Sim.NAA });
   await p.route('https://api.met.no/**', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(Demo.vaer(Sim.NAA)) }));
-  await p.route('https://raw.githubusercontent.com/**', r => r.fulfill({ contentType: 'text/plain', body: datafil }));
+  await p.route('https://raw.githubusercontent.com/**', r => r.fulfill({ contentType: 'text/plain', body: gjeldende }));
   const skriptfeil = [];
   p.on('pageerror', e => skriptfeil.push(e.message));
   await p.goto('http://localhost:8135/');
@@ -105,34 +116,64 @@ function server(port, svar) {
       const k = l.querySelector('.kl').textContent, tittel = l.querySelector('span:last-child').textContent;
       return k === 'hele' ? tittel : tittel + ' ' + k;
     };
-    const dager = [...document.querySelectorAll('#neste .dag')].map(d => [...d.querySelectorAll('.linje')].map(linje));
+    const dager = [...document.querySelectorAll('#neste .dag')].map(d =>
+      [...d.querySelectorAll('.linje, .hel')].map(l => l.classList.contains('hel') ? l.textContent : linje(l)));
     const felles = [...document.querySelectorAll('#neste .linje')].find(l => /Kari og Ørjan/.test(l.textContent));
     return {
-      idag: [...document.querySelectorAll('#idag .avtale')].map(li =>
-        li.querySelector('.hva').firstChild.textContent + ' ' + li.querySelector('.kl').textContent + ' ' +
-        li.querySelector('.hvem').textContent.split(' · ')[0]),
+      idag: Object.fromEntries([...document.querySelectorAll('#idag .personkol')].map(k => [
+        k.querySelector('h3').textContent,
+        [...k.querySelectorAll('.avtale')].map(li => li.querySelector('.kl').textContent + ' ' + li.querySelector('.hva').textContent)
+      ])),
+      tomming: document.getElementById('tomming').textContent,
       flere: document.querySelector('#idag .flere') && document.querySelector('#idag .flere').textContent,
       dager,
       felles: felles ? getComputedStyle(felles).borderImageSource : '',
-      middag: [...document.querySelectorAll('#middag .hva')].map(e => e.textContent),
-      bursdager: [...document.querySelectorAll('#bursdager .hva')].map(e => e.textContent),
+      side: document.getElementById('side').hidden,
       personer: [...document.querySelectorAll('#personer .person')].map(e => e.textContent + ' ' + e.style.getPropertyValue('--farge'))
     };
   });
 
   const F = Sim.forventet;
-  krev(t.idag.join(' | ') === F.idag.join(' | '), 'i dag', t.idag);
+  krev(JSON.stringify(t.idag) === JSON.stringify(F.idag), 'i dag, per person', t.idag);
+  krev(t.tomming === F.tomming, 'søppel: to dunker samme fredag', t.tomming);
   krev(!t.flere, 'ingenting kappet bort i dag-kortet', t.flere);
   krev(t.dager[0].join(' | ') === F.imorgen.join(' | '), 'i morgen: nattevakta slutter, yoga og tannlege er borte', t.dager[0]);
   krev(t.dager[1].join(' | ') === F.fredag16.join(' | '), 'fredag: felles middag én gang', t.dager[1]);
   krev(/255, 41, 104.*27, 173, 248|#ff2968.*#1badf8/i.test(t.felles), 'felles avtale har Mammas og Pappas farge', t.felles);
   krev(t.dager[4].join(' | ') === F.mandag19.join(' | '), 'mandag: korpset er flyttet bort', t.dager[4]);
   krev(t.dager[5].join(' | ') === F.tirsdag20.join(' | '), 'tirsdag: det flyttede korpset', t.dager[5]);
-  krev(t.middag.join() === F.middag.join(), 'middagene, med hull på fredag', t.middag);
-  krev(t.bursdager.slice(0, 3).join() === F.bursdager.join(), 'bursdagene med alder', t.bursdager);
+  krev(t.side === true, 'versjon 1: ingen sidekolonne', t.side);
   krev(t.personer.join() === 'Mamma #ff2968,Pappa #1badf8,Ella #63da38,Theo #cc73e1', 'fargene fra iPhone', t.personer);
 
   if (BILDER) await p.screenshot({ path: path.join(BILDER, 'tavle-icloud.png') });
+
+  console.log('med middag og bursdager');
+  {
+    gjeldende = datafil;
+    await p.reload();
+    await p.waitForTimeout(1500);
+    const m = await p.evaluate(() => ({
+      side: document.getElementById('side').hidden,
+      middag: [...document.querySelectorAll('#middag .hva')].map(e => e.textContent),
+      bursdager: [...document.querySelectorAll('#bursdager .hva')].map(e => e.textContent),
+      idag: [...document.querySelectorAll('#idag .avtale')].length,
+      flere: !!document.querySelector('#idag .flere'),
+      // Et ord som brekkes midt i, gir en linje som begynner med en bokstavrest.
+      // Mål det: «Foreldremøte» skal stå på én linje.
+      ordbrudd: (() => {
+        const h = [...document.querySelectorAll('#idag .hva')].find(e => /Foreldremøte/.test(e.textContent));
+        if (!h) return 'mangler';
+        const r = document.createRange(); r.setStart(h.firstChild, 0); r.setEnd(h.firstChild, 'Foreldremøte'.length);
+        return r.getClientRects().length;
+      })()
+    }));
+    krev(m.side === false, 'sidekolonnen kommer når kalendrene finnes');
+    krev(m.middag.join() === F.middag.join(), 'middagene, med hull på fredag', m.middag);
+    krev(m.bursdager.slice(0, 3).join() === F.bursdager.join(), 'bursdagene med alder', m.bursdager);
+    krev(m.idag === 5 && !m.flere, 'dagen får fortsatt plass med sidekolonnen', m);
+    krev(m.ordbrudd === 1, '«Foreldremøte» brekkes ikke midt i ordet i en smal kolonne', m.ordbrudd);
+    if (BILDER) await p.screenshot({ path: path.join(BILDER, 'tavle-icloud-full.png') });
+  }
 
   // To personer med samme standardfarge får hver sin.
   console.log('lik farge på to kalendre');
@@ -144,7 +185,7 @@ function server(port, svar) {
     const Krypto = require('../js/krypto.js');
     const pakke = {
       v: 1, hentet: Sim.NAA.toISOString(), vaer: null,
-      kalendere: lik.map(c => ({ navn: c.navn, rolle: c.navn === 'Middag' ? 'middag' : c.navn === 'Bursdager' ? 'bursdager' : 'person',
+      kalendere: lik.map(c => ({ navn: c.navn, rolle: c.navn === 'Middag' ? 'middag' : c.navn === 'Bursdager' ? 'bursdager' : c.navn === 'Søppel' ? 'tomming' : 'person',
         ics: Kalender.beskjaer(limSammen(c.fil), new Date(2026, 9, 13)) }))
     };
     const fil2 = JSON.stringify(await Krypto.krypter(JSON.stringify(pakke), PASSFRASE));

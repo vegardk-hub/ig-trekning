@@ -1,7 +1,12 @@
 # Familietavla
 
-En tavle for et nettbrett på veggen: klokke, vær fra Yr, dagens avtaler for
-hele familien, de neste seks dagene, ukas middager og bursdagene som kommer.
+En tavle for et nettbrett på veggen: klokke, vær fra Yr, dagen i én kolonne per
+person, de neste seks dagene og neste søppeltømming. Middag og bursdager kan slås
+på ved å legge til kalendrene.
+
+Tavla svarer på det eierne ba om: **hvem har hvilke aktiviteter i dag, og hvem
+henter.** Derfor har hver person sin egen kolonne i stedet for én felles
+tidslinje – hvem det gjelder, er det første man leter etter.
 
 Adresse: `https://vegardk-hub.github.io/ig-trekning/familietavle/`.
 Med `?demo` viser den en oppdiktet familie.
@@ -32,6 +37,18 @@ og et tregt grensesnitt, og en tavle uten redigering har ingen av delene.
 
 På iPhone: **Kalender → Kalendere → Legg til kalender**.
 
+- **Hver persons egen kalender** brukes som den er, og får én kolonne.
+- **Søppel** – tre heldagshendelser som gjentas: rest- og matavfall hver
+  andre uke, papir og plast hver fjerde, glass og metall hver åttende. Første
+  dato for hver står i [Bærums tømmekalender](https://www.baerum.kommune.no/tjenester/avfall-og-gjenvinning/tommekalender/).
+  Kommunen har ikke noe åpent API, men intervallene er faste, så tre
+  gjentakelser er nok. Flytter kommunen en tømming i jula, endres den ene
+  forekomsten i kalenderen. Tavla viser neste tømming i bunnlinja, og lyser
+  gult dagen før og samme dag.
+
+Middag og bursdager er **valgt bort i første versjon**, men virker om
+kalendrene legges til:
+
 - **Middag** – én heldagshendelse per dag, med middagen som tittel. Erstatter
   lista i Påminnelser; Påminnelser har ikke noe API tavla kan lese.
 - **Bursdager** – én heldagshendelse per person, **gjentas hvert år**, lagt på
@@ -39,10 +56,13 @@ På iPhone: **Kalender → Kalendere → Legg til kalender**.
   73»). Legges den på årets dato i stedet, viser tavla bare navnet fra neste år
   av – altså feil alder. iPhones innebygde «Fødselsdager» kan ikke deles eller
   publiseres, så den må kopieres over én gang.
-- **Hver persons egen kalender** brukes som den er.
 
-Kalendernavnet «Middag» og «Bursdager» er det som avgjør hvor de havner på
-tavla – se steg 3.
+Med middag og bursdager kommer en sidekolonne, og da blir uka lagt i to rader
+og trang på et 10,6" nettbrett. Skal de inn for godt, bør utformingen tenkes
+på nytt.
+
+Kalendernavnene «Søppel», «Middag» og «Bursdager» er det som avgjør hvor de
+havner på tavla – se steg 3.
 
 ### 2. Publiser hver kalender
 
@@ -71,8 +91,8 @@ Middag: webcal://...
 Bursdager: webcal://...
 ```
 
-Navnet er det som står på tavla. «Middag» og «Bursdager» er spesielle; alle
-andre er en person og får en farge i den rekkefølgen de står. Linjer som
+Navnet er det som står på tavla. «Søppel», «Middag» og «Bursdager» er
+spesielle; alle andre er en person og får en farge i den rekkefølgen de står. Linjer som
 begynner med `#`, hoppes over.
 
 `FAMILIETAVLE_PASSFRASE` – fire–fem tilfeldige ord, minst 16 tegn. Den
@@ -101,7 +121,13 @@ hendelser hver kalender hadde, men aldri lenkene.
 5. **Utvikleralternativer → Hold skjermen på (under lading)**. Tavla ber selv
    om å holde skjermen våken, men dette er sikkerhetsnettet.
 
-Om natta (23–06) dempes skjermen. Et trykk lyser den opp i to minutter.
+6. **Batteri → Tilleggsfunksjoner → Planlagt på/av**: slå nettbrettet av om
+   kvelden og på om morgenen. Eierne vil ikke ha lys om natta, og en nettside
+   kan ikke slå av skjermen. Tavla blir svart fra 23 til 06 som en reserve,
+   men bakgrunnslyset i en LCD lyser litt gjennom svart. (Stien er hentet fra
+   Xiaomis side for Redmi Pad SE; menynavnene kan avvike litt.)
+
+Et trykk på den svarte skjermen viser tavla i to minutter.
 
 ## Det som er verdt å vite
 

@@ -116,6 +116,12 @@ var Demo = (function () {
         { navn: 'Middag', rolle: 'middag', ics: kalender('Middag', [
           'Taco', 'Fiskegrateng', 'Pasta bolognese', 'Pizzakveld', 'Kyllingsuppe', 'Lapskaus', 'Pannekaker'
         ].map(function (m, i) { return heldag(d(i), 1, m); })) },
+        { navn: 'Søppel', rolle: 'tomming', ics: kalender('Søppel', [
+          // Bærums faste intervaller: 2, 4 og 8 uker.
+          { 'DTSTART;VALUE=DATE': dato(d(-13)), 'DTEND;VALUE=DATE': dato(d(-12)), RRULE: 'FREQ=WEEKLY;INTERVAL=2', SUMMARY: 'Restavfall og matavfall' },
+          { 'DTSTART;VALUE=DATE': dato(d(-20)), 'DTEND;VALUE=DATE': dato(d(-19)), RRULE: 'FREQ=WEEKLY;INTERVAL=4', SUMMARY: 'Papir og plast' },
+          { 'DTSTART;VALUE=DATE': dato(d(-50)), 'DTEND;VALUE=DATE': dato(d(-49)), RRULE: 'FREQ=WEEKLY;INTERVAL=8', SUMMARY: 'Glass og metall' }
+        ]) },
         { navn: 'Bursdager', rolle: 'bursdager', ics: kalender('Bursdager', [
           bursdag(0, 1948, 'Bestefar'),
           bursdag(3, 1953, 'Mormor'),

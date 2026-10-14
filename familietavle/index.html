@@ -6,9 +6,9 @@
 <meta name="theme-color" content="#0e141b">
 <meta name="robots" content="noindex">
 <title>Familietavla</title>
-<link rel="manifest" href="manifest.webmanifest?v=2">
-<link rel="icon" href="ikon.svg?v=2" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="manifest" href="manifest.webmanifest?v=3">
+<link rel="icon" href="ikon.svg?v=3" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -21,24 +21,25 @@
     <div id="vaer" class="vaer"></div>
   </header>
 
-  <div class="kolonner">
-    <section class="kort idag">
-      <h2>I dag</h2>
-      <div id="idagHeldag" class="heldager"></div>
-      <ul id="idag" class="avtaler"></ul>
-    </section>
+  <div id="innhold" class="innhold">
+    <div class="hoved">
+      <section class="kort idag">
+        <h2>I dag</h2>
+        <div id="idag" class="personrad"></div>
+      </section>
 
-    <section class="kort neste">
-      <h2>De neste dagene</h2>
-      <div id="neste" class="dagrutenett"></div>
-    </section>
+      <section class="kort neste">
+        <h2>De neste dagene</h2>
+        <div id="neste" class="dagrad"></div>
+      </section>
+    </div>
 
-    <aside class="side">
-      <section class="kort">
+    <aside id="side" class="side" hidden>
+      <section id="middagKort" class="kort" hidden>
         <h2>Middag</h2>
         <ol id="middag" class="middag"></ol>
       </section>
-      <section class="kort">
+      <section id="bursdagKort" class="kort" hidden>
         <h2>Bursdager</h2>
         <ul id="bursdager" class="bursdager"></ul>
       </section>
@@ -47,6 +48,7 @@
 
   <footer class="bunn">
     <div id="personer" class="personer"></div>
+    <div id="tomming" class="tomming" hidden></div>
     <div id="status" class="status"></div>
     <button id="meny" class="meny" type="button" aria-label="Innstillinger">⋯</button>
   </footer>
@@ -68,10 +70,10 @@
 
 <div id="natt" class="natt" hidden></div>
 
-<script src="js/kalender.js?v=2"></script>
-<script src="js/krypto.js?v=2"></script>
-<script src="js/vaer.js?v=2"></script>
-<script src="js/demo.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/kalender.js?v=3"></script>
+<script src="js/krypto.js?v=3"></script>
+<script src="js/vaer.js?v=3"></script>
+<script src="js/demo.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>

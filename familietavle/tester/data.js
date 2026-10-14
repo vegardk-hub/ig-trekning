@@ -280,6 +280,8 @@ function dato(d) { return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFu
     const l = lesListe('# kommentar\nMamma: webcal://p1-caldav.icloud.com/published/2/abc\n\nMiddag : https://x/y.ics\nBursdager: webcal://z\n');
     krev(l.map(k => k.navn + '/' + k.rolle).join() === 'Mamma/person,Middag/middag,Bursdager/bursdager', 'navn og roller', l);
     krev(l[0].url === 'https://p1-caldav.icloud.com/published/2/abc', 'webcal blir https', l[0].url);
+    krev(lesListe('Søppel: webcal://a\nTømming: webcal://b')[0].rolle === 'tomming' &&
+      lesListe('Tømming: webcal://b')[0].rolle === 'tomming', '«Søppel» og «Tømming» er søppelkalendre');
     let avvist = '';
     try { lesListe('webcal://uten-navn'); } catch (e) { avvist = e.message; }
     krev(/Navn: webcal/.test(avvist) && !/uten-navn/.test(avvist), 'linje uten navn avvises, uten å vise lenka', avvist);

@@ -13,7 +13,7 @@
  * Miljøvariabler:
  *
  *   FAMILIETAVLE_KALENDERE  én kalender per linje, «Navn: lenke». Navnene
- *                           «Middag» og «Bursdager» er spesielle; alle andre
+ *                           «Middag», «Bursdager» og «Søppel» er spesielle; alle andre
  *                           er en person, og får sin egen farge på tavla i
  *                           den rekkefølgen de står.
  *   FAMILIETAVLE_PASSFRASE  passfrasen tavla bruker for å lese fila.
@@ -36,7 +36,10 @@ function lesListe(tekst) {
     const m = /^([^:]+?)\s*:\s*((?:webcal|https?):\/\/\S+)$/i.exec(l);
     if (!m) throw new Error('Skjønner ikke linja «' + l.split(':')[0] + ': …» – skal være «Navn: webcal://…»');
     const navn = m[1].trim();
-    const rolle = /^middag(er)?$/i.test(navn) ? 'middag' : /^bursdag(er)?$/i.test(navn) ? 'bursdager' : 'person';
+    const rolle = /^middag(er)?$/i.test(navn) ? 'middag'
+      : /^bursdag(er)?$/i.test(navn) ? 'bursdager'
+      : /^(søppel|tømming|avfall|renovasjon)$/i.test(navn) ? 'tomming'
+      : 'person';
     return { navn, rolle, url: m[2].replace(/^webcal:/i, 'https:') };
   });
 }

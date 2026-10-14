@@ -22,14 +22,15 @@
   var FARGER = ['#5aa9e6', '#f28f6b', '#7bd389', '#c79bf2', '#f2c14e', '#4ec3ae', '#f07fa8', '#b8c46a'];
   var DAG = 86400000;
   var GAMMEL = 2 * 3600000;        // så lenge før bunnlinja sier fra
-  var NATT = [23, 6];              // dempet fra 23 til 6
+  var NATT = [23, 6];              // svart fra 23 til 6
 
   var param = new URLSearchParams(location.search);
   var demo = param.has('demo');
   var dataUrl = param.get('data') || DATA;
 
   var el = {};
-  ['tavle', 'tid', 'dato', 'vaer', 'idag', 'idagHeldag', 'neste', 'middag', 'bursdager',
+  ['tavle', 'tid', 'dato', 'tomming', 'vaer', 'innhold', 'side', 'middagKort', 'bursdagKort',
+    'idag', 'neste', 'middag', 'bursdager',
     'personer', 'status', 'meny', 'oppsett', 'oppsettSkjema', 'passfrase', 'oppsettMelding',
     'glem', 'natt'].forEach(function (id) { el[id] = document.getElementById(id); });
 
@@ -208,11 +209,21 @@
     el.dato.textContent = UKEDAG[naa.getDay()] + ' ' + naa.getDate() + '. ' + MND[naa.getMonth()] +
       ' · uke ' + ukenr(naa);
 
+    // Middag og bursdager vises bare når kalenderen finnes. Uten dem får
+    // dagen og uka hele bredden.
+    var harMiddag = st.kalendere.some(function (k) { return k.rolle === 'middag'; });
+    var harBursdager = st.kalendere.some(function (k) { return k.rolle === 'bursdager'; });
+    el.middagKort.hidden = !harMiddag;
+    el.bursdagKort.hidden = !harBursdager;
+    el.side.hidden = !harMiddag && !harBursdager;
+    el.innhold.classList.toggle('med-side', !el.side.hidden);
+
     tegnVaer(naa);
+    tegnTomming(idag);
     tegnIdag(naa, idag);
     tegnNeste(idag);
-    tegnMiddag(idag);
-    tegnBursdager(idag);
+    if (harMiddag) tegnMiddag(idag);
+    if (harBursdager) tegnBursdager(idag);
     tegnBunn(naa);
     tegnNatt(naa);
   }
@@ -276,41 +287,57 @@
     return e;
   }
 
-  function hvem(f) {
-    var navn = f.kalendere.map(function (k) { return k.navn; });
-    return navn.length > 1 ? navn.slice(0, -1).join(', ') + ' og ' + navn[navn.length - 1] : navn[0];
+  // Dagen i én kolonne per person. Det tavla skal svare på, er «hvem har hva
+  // i dag, og hvem henter» – og det leses raskest når hver person har sin
+  // egen stripe, ikke når alt står i én tidslinje som må leses navn for navn.
+  // En felles avtale står i kolonnen til hver av dem den gjelder.
+  function tegnIdag(naa, idag) {
+    el.idag.textContent = '';
+    var personer = st.kalendere.filter(function (k) { return k.rolle === 'person'; });
+    personer.forEach(function (k) {
+      var kol = lag('div', 'personkol');
+      kol.style.setProperty('--farge', k.farge);
+      kol.appendChild(lag('h3', '', k.navn));
+      var liste = lag('ul', 'avtaler');
+      var alle = Kalender.forekomster(k.hendelser, idag, pluss(idag, 1));
+      alle.sort(function (a, b) { return (b.heldag - a.heldag) || (a.start - b.start); });
+      if (!alle.length) liste.appendChild(lag('li', 'tomt', '–'));
+      alle.forEach(function (f) {
+        if (f.heldag) { liste.appendChild(lag('li', 'merke', f.tittel)); return; }
+        var li = lag('li', 'avtale');
+        if (f.slutt <= naa && f.slutt > f.start) li.classList.add('forbi');
+        else if (f.start <= naa && naa < f.slutt) li.classList.add('pagar');
+        // En avtale som begynte i går (over midnatt), står som «–» til den slutter.
+        li.appendChild(lag('span', 'kl', f.start < idag ? '–' + kl(f.slutt) : kl(f.start)));
+        li.appendChild(lag('span', 'hva', f.tittel));
+        liste.appendChild(li);
+      });
+      kol.appendChild(liste);
+      el.idag.appendChild(kol);
+      // Er dagen for full, går det som er over først – det er det ingen trenger.
+      while (kol.scrollHeight > kol.clientHeight + 1) {
+        var forbi = liste.querySelector('.forbi');
+        if (!forbi) break;
+        forbi.remove();
+      }
+      kapp(kol, liste, '.avtale, .merke', 'li');
+    });
+    el.idag.style.setProperty('--antall', Math.max(1, personer.length));
   }
 
-  function tegnIdag(naa, idag) {
-    var alle = hendelser('person', idag, pluss(idag, 1));
-    el.idag.textContent = '';
-    el.idagHeldag.textContent = '';
-    alle.filter(function (f) { return f.heldag; }).forEach(function (f) {
-      el.idagHeldag.appendChild(farget(lag('span', 'merke', f.tittel), f));
-    });
-    var timet = alle.filter(function (f) { return !f.heldag; });
-    if (!timet.length) {
-      el.idag.appendChild(lag('li', 'tomt', alle.length ? 'Ingen avtaler med klokkeslett.' : 'Ingen avtaler i dag.'));
-    }
-    timet.forEach(function (f) {
-      var li = farget(lag('li', 'avtale'), f);
-      if (f.slutt <= naa && f.slutt > f.start) li.classList.add('forbi');
-      else if (f.start <= naa && naa < f.slutt) li.classList.add('pagar');
-      // En avtale som begynte i går (over midnatt), står som «–» til den slutter.
-      li.appendChild(lag('span', 'kl', f.start < idag ? '–' + kl(f.slutt) : kl(f.start)));
-      var hva = lag('span', 'hva', f.tittel);
-      hva.appendChild(lag('span', 'hvem', hvem(f) + (f.sted ? ' · ' + f.sted.split('\n')[0] : '')));
-      li.appendChild(hva);
-      el.idag.appendChild(li);
-    });
-    // Er dagen for full, går det som er over først – det er det ingen trenger.
-    var kort = el.idag.parentNode;
-    while (kort.scrollHeight > kort.clientHeight + 1) {
-      var forbi = el.idag.querySelector('.forbi');
-      if (!forbi) break;
-      forbi.remove();
-    }
-    kapp(kort, el.idag, '.avtale', 'li');
+  // Neste tømming, fra kalenderen «Søppel». Bærum tømmer etter faste
+  // intervaller, så tre gjentakende hendelser holder – ingen API å hente fra.
+  function tegnTomming(idag) {
+    var alle = hendelser('tomming', idag, pluss(idag, 8));
+    if (!alle.length) { el.tomming.hidden = true; return; }
+    var dag = midnatt(alle[0].start);
+    var samme = alle.filter(function (f) { return midnatt(f.start).getTime() === dag.getTime(); })
+      .map(function (f) { return f.tittel; });
+    var om = Math.round((dag - idag) / DAG);
+    var naar = om === 0 ? 'i dag' : om === 1 ? 'i morgen' : UKEDAG[dag.getDay()];
+    el.tomming.textContent = 'Søppel ' + naar + ': ' + samme.join(', ');
+    el.tomming.classList.toggle('snart', om <= 1);
+    el.tomming.hidden = false;
   }
 
   function tegnNeste(idag) {
@@ -324,14 +351,15 @@
       boks.appendChild(h);
       if (!alle.length) boks.appendChild(lag('div', 'tomt', '–'));
       alle.forEach(function (f) {
+        if (f.heldag) { boks.appendChild(farget(lag('div', 'hel', f.tittel), f)); return; }
         var l = farget(lag('div', 'linje'), f);
         // Begynte den før denne dagen (nattevakt), er det slutten som teller.
-        l.appendChild(lag('span', 'kl', f.heldag ? 'hele' : f.start < dag ? '–' + kl(f.slutt) : kl(f.start)));
+        l.appendChild(lag('span', 'kl', f.start < dag ? '–' + kl(f.slutt) : kl(f.start)));
         l.appendChild(lag('span', '', f.tittel));
         boks.appendChild(l);
       });
       el.neste.appendChild(boks);
-      kapp(boks, boks, '.linje', 'div');
+      kapp(boks, boks, '.linje, .hel', 'div');
     }
   }
 
