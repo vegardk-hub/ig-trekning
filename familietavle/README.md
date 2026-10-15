@@ -214,8 +214,8 @@ tavla etter neste synk, som alt annet.
 
 ## Det som er verdt å vite
 
-- **Forsinkelsen er 15–60 minutter, iblant mer.** GitHubs timer er «best
-  effort». Bunnlinja sier «Kalender hentet 14:07», og blir oransje når fila er
+- **Forsinkelsen kan være flere timer.** GitHubs timer er «best effort»: de
+  første døgnene startet den jobben hver fjerde–femte time, ikke hvert kvarter. Bunnlinja sier «Kalender hentet 14:07», og blir oransje når fila er
   over to timer gammel. En tannlegetime som flyttes en time før, kan altså stå
   feil på veggen. Blir det et problem, er en Cloudflare Worker neste steg –
   det er én adresse i `app.js` som må byttes.

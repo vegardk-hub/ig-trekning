@@ -704,8 +704,12 @@ ha noe gratis, uten konto hos en ny tjeneste. Det som bærer resten:
   datafil i en commit.
 - **Datagrenen skrives over** med ett commit hver gang. Skriver du data til
   `main`, får Pages 96 bygg i døgnet.
-- **Forsinkelsen er GitHubs timer**, 15–60 minutter og iblant mer. Tavla sier
-  fra når fila er over to timer gammel. Neste steg om det ikke holder, er en
+- **Forsinkelsen er GitHubs timer.** Jobben står på hvert kvarter, men de
+  første døgnene (15. oktober 2026) startet GitHub den bare hver fjerde–femte
+  time. Tavla sier fra når fila er over to timer gammel.
+- **Kjeden er prøvd mot ekte iCloud** 15. oktober 2026: én personkalender på
+  305 kB ble beskåret til 9 kB, og eierne bekreftet at tavla stemte med
+  telefonen. Ukeplan i Merknader er fortsatt ikke prøvd med ekte data. Neste steg om det ikke holder, er en
   Cloudflare Worker — eieren har valgt det bort foreløpig.
 - **Gjentakelser foldes ut i veggtid**, og årlige hendelser 29. februar havner
   på 28. i vanlige år. Prøvene håndhever begge.
