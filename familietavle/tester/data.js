@@ -313,6 +313,11 @@ function dato(d) { return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFu
     krev(u.lekser[4].tekst === 'Les inn ca. 2 min', 'merknader fjernet fra leksa', u.lekser[4].tekst);
     krev(u.ukelekser.length === 2 && u.ukelekser[1] === 'Ta med innesko', 'ukeleksene', u.ukelekser);
 
+    // Flere lekser samme dag, slik instruksen ber om: én linje hver.
+    const flere = Ukeplan.les('## Lekser\n- Tor: Regnelekse: mattearket\n- Tor: Leselekse: les inn 2 min\n- Tor: Lad læringsbrettet', new Date(2026, 9, 5));
+    krev(flere.lekser.length === 3 && flere.lekser.every(l => l.dag.getDate() === 8) && flere.lekser[0].tekst === 'Regnelekse: mattearket',
+      'tre lekser på torsdag, og kolon inni teksten tåles', flere.lekser);
+
     const tom = Ukeplan.les('Bare tekst uten seksjoner', new Date(2026, 9, 7));
     krev(!tom.hendelser.length && !tom.lekser.length && !tom.ukelekser.length, 'tekst uten format gir ingenting, og ingen feil');
 

@@ -152,8 +152,9 @@ kolonne, og leksene i leksefanen. «Skole» alene – vanlig skoledag – vises 
 **Instruksen:**
 
 ```
-Gjør om ukeplanen i PDF-en til akkurat dette formatet, og ikke skriv noe før
-eller etter:
+Les ukeplanen i PDF-en som et bilde: tabellen med Mandag–Fredag øverst må
+leses kolonne for kolonne, så hver lekse havner på dagen den står under.
+Gjør den om til akkurat dette formatet, og ikke skriv noe før eller etter:
 
 ## Hendelser
 | Dato | Hendelse | Detaljer |
@@ -162,17 +163,31 @@ eller etter:
 | Ons 7.10 | Foreldremøte | 17.00–19.00. Sted og annet viktig |
 
 ## Lekser
-- Man: leksa for mandag, kort
-- Tir: …
+- Man: én lekse
+- Tor: én lekse
+- Tor: neste lekse samme dag
 
 ## Ukelekse
 - det som gjelder hele uka
 
-Én rad per hendelse, med klokkeslett først i Detaljer når det finnes. Skriv
-«Skole» alene for vanlige skoledager. Er du usikker på hvilken dag noe hører
-til, skriv [sannsynlig] bak teksten. Ta ikke med SFO-mat, læringsmål eller
-annet.
+Regler:
+- Én rad per hendelse, med klokkeslett først i Detaljer når det finnes.
+  Skriv «Skole» alene for vanlige skoledager, men ta med sted eller annet
+  som skiller seg ut («Skole, idrettshallen»).
+- Ta med hendelser fra «Ukens info» med dato (foreldremøte, skolejogg, tur),
+  med det barnet må ha med eller ha på seg.
+- Én linje per lekse. Står det flere lekser eller «Ekstra» under samme dag,
+  får hver sin linje med samme dag foran.
+- Dager uten lekse («God helg!») utelates.
+- Er du usikker på hvilken dag noe hører til, skriv [sannsynlig] bak teksten.
+- Ta ikke med SFO-mat, læringsmål, begreper, sang eller generell info.
 ```
+
+**Kontroller dagene før du limer inn.** Den første tolkningen av uke 41 la
+«Les inn leseleksen» og «Lad læringsbrettet» på fredag. I PDF-en står de under
+torsdag, og fredag er «God helg!». Feilen kom av at modellen leste teksten i
+PDF-en i stedet for tabellen slik den ser ut – kolonnene glir over i hverandre
+når teksten trekkes ut. Derfor ber instruksen om å lese den som et bilde.
 
 Tavla tåler at svaret har flere seksjoner enn dette – den leser bare
 Hendelser, Lekser og Ukelekse.
