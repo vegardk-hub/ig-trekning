@@ -1,7 +1,9 @@
 /*
  * Eksempeldata – en oppdiktet familie, regnet ut fra dagens dato.
  *
- * Brukes av `?demo` og av prøvene. Datafila har samme form som den synk-jobben
+ * Brukes av `?demo` og av prøvene. Den viser eiernes første versjon: én
+ * kalender per person, søppel og en ukeplan – ikke middag og bursdager, som
+ * er valgt bort (de prøves med full fil i `tester/icloud.js`). Datafila har samme form som den synk-jobben
  * lager, og kalendrene er ekte ICS-tekst, så eksempelet går gjennom nøyaktig
  * samme kode som de virkelige kalendrene: gjentakelser, heldagshendelser over
  * flere dager, en flyttet forekomst og bursdager med alder.
@@ -28,6 +30,41 @@ var Demo = (function () {
     });
     l.push('END:VCALENDAR');
     return l.join('\r\n');
+  }
+
+  function esc(t) { return t.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1'); }
+
+  // Ukeplanen slik foreldrene limer den inn: formatet README-instruksen ber
+  // Claude om. Skolen og innholdet er oppdiktet.
+  function ukeplan(mandag) {
+    return [
+      '# Ukeplan 3. trinn, uke ' + 'X',
+      '',
+      '## Hendelser',
+      '| Dato | Hendelse | Detaljer |',
+      '|---|---|---|',
+      '| Man | Skole | 08.30–13.15 |',
+      '| Tir | Tur til Kolsåstoppen | Ta med sitteunderlag og ekstra matpakke |',
+      '| Ons | Foreldremøte | 18.00–19.30. I gymsalen |',
+      '| Fre | Skolejogg | Sporty antrekk og hodeplagg [sannsynlig] |',
+      '',
+      '## SFO-mat',
+      '- Man–ons: egen matpakke',
+      '',
+      '## Lekser [sannsynlig dagsfordeling]',
+      '- Man: Skriv fem setninger om høsten. Husk stor bokstav og punktum',
+      '- Tir: Leselekse Salto s. 50–51',
+      '- Ons: Samme leselekse som tirsdag',
+      '- Tor: Regneark i leksepermen',
+      '- Fre: Les i egen bok i 15 minutter',
+      '',
+      '## Ukelekse',
+      '- Øv på gangetabellen for 2',
+      '- Ta med innesko',
+      '',
+      '## Læringsmål',
+      '- Norsk: punktum og spørsmålstegn'
+    ].join('\n');
   }
 
   function heldag(d, dager, tittel) {
@@ -66,15 +103,6 @@ var Demo = (function () {
   function pakke(naa) {
     var d0 = new Date(naa.getFullYear(), naa.getMonth(), naa.getDate());
     var d = function (n) { return pluss(d0, n); };
-    var aar = d0.getFullYear();
-    function bursdag(n, fodt, navn) {
-      var b = d(n);
-      return {
-        'DTSTART;VALUE=DATE': fodt + to(b.getMonth() + 1) + to(b.getDate()),
-        'DTEND;VALUE=DATE': dato(new Date(fodt, b.getMonth(), b.getDate() + 1)),
-        RRULE: 'FREQ=YEARLY', SUMMARY: navn
-      };
-    }
 
     var fotball = avtale(d(-14), 17, 0, 18, 30, 'Fotballtrening', 'Nadderud');
     fotball.RRULE = 'FREQ=WEEKLY;BYDAY=' + ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][d0.getDay()] + ',' +
@@ -113,21 +141,19 @@ var Demo = (function () {
           heldag(d(3), 5, 'Høstferie'),
           avtale(d(1), 8, 0, 8, 30, 'Leseprøve')
         ]) },
-        { navn: 'Middag', rolle: 'middag', ics: kalender('Middag', [
-          'Taco', 'Fiskegrateng', 'Pasta bolognese', 'Pizzakveld', 'Kyllingsuppe', 'Lapskaus', 'Pannekaker'
-        ].map(function (m, i) { return heldag(d(i), 1, m); })) },
+        { navn: 'Ukeplan Ella', rolle: 'ukeplan', ics: kalender('Ukeplan Ella', [
+          (function () {
+            var mandag = pluss(d0, -((d0.getDay() + 6) % 7));
+            var h = heldag(mandag, 5, 'Ukeplan');
+            h.DESCRIPTION = esc(ukeplan(mandag));
+            return h;
+          })()
+        ]) },
         { navn: 'Søppel', rolle: 'tomming', ics: kalender('Søppel', [
           // Bærums faste intervaller: 2, 4 og 8 uker.
           { 'DTSTART;VALUE=DATE': dato(d(-13)), 'DTEND;VALUE=DATE': dato(d(-12)), RRULE: 'FREQ=WEEKLY;INTERVAL=2', SUMMARY: 'Restavfall og matavfall' },
           { 'DTSTART;VALUE=DATE': dato(d(-20)), 'DTEND;VALUE=DATE': dato(d(-19)), RRULE: 'FREQ=WEEKLY;INTERVAL=4', SUMMARY: 'Papir og plast' },
           { 'DTSTART;VALUE=DATE': dato(d(-50)), 'DTEND;VALUE=DATE': dato(d(-49)), RRULE: 'FREQ=WEEKLY;INTERVAL=8', SUMMARY: 'Glass og metall' }
-        ]) },
-        { navn: 'Bursdager', rolle: 'bursdager', ics: kalender('Bursdager', [
-          bursdag(0, 1948, 'Bestefar'),
-          bursdag(3, 1953, 'Mormor'),
-          bursdag(12, aar - 9, 'Ella'),
-          bursdag(26, 1981, 'Onkel Lars'),
-          bursdag(45, aar - 6, 'Theo')
         ]) }
       ],
       vaer: vaer(naa)

@@ -85,6 +85,28 @@ const LANG = FORAN + '.'.repeat(62 - Buffer.byteLength(FORAN)) + 'østre port. M
   'skoleturen til Sørmarka, og foreldrerådet ønsker frivillige til å kjøre. ' +
   'Kaffe og vafler på pauserommet før møtet.';
 
+function esc(t) { return t.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1'); }
+
+const UKEPLAN = [
+  '# Ukeplan 3. trinn, uke 42',
+  '',
+  '## Hendelser',
+  '| Dato | Hendelse | Detaljer |',
+  '|---|---|---|',
+  '| Man 12.10 | Skole | 08.30–13.15 |',
+  '| Tor 15.10 | Skolefotografering | Ta på deg noe du liker; bildet går til årboka |',
+  '',
+  '## Lekser [sannsynlig dagsfordeling]',
+  '- Man: Skriv fem setninger om høsten. Stor bokstav først, riktig tegn til slutt',
+  '- Tir: Leselekse s. 50–52',
+  '- Ons: Gangetabellen for 2, muntlig for en voksen',
+  '- Tor: Regneark i leksepermen',
+  '- Fre: Les i egen bok i ti minutter',
+  '',
+  '## Ukelekse',
+  '- Ta med innesko'
+].join('\n');
+
 function kalendere() {
   teller = 0;
   return [
@@ -131,6 +153,11 @@ function kalendere() {
       ['SUMMARY:Lapskaus', HS('20261019'), HE('20261020')],
       ['SUMMARY:Pannekaker', HS('20261020'), HE('20261021')]
     ])) },
+    // Ukeplanen i Merknader: lang tekst med æøå, som iCloud bretter over mange
+    // linjer – og som må escapes (komma, semikolon, linjeskift) slik Apple gjør.
+    { navn: 'Ukeplan Ella', fil: brett(kalender('Ukeplan Ella', '#63DA38FF', [
+      ['SUMMARY:Ukeplan', HS('20261012'), HE('20261017'), 'DESCRIPTION:' + esc(UKEPLAN)]
+    ])) },
     { navn: 'Søppel', fil: brett(kalender('Søppel', '#8E8E93FF', [
       // Bærums faste intervaller. Restavfall og papir faller på samme fredag.
       ['SUMMARY:Restavfall og matavfall', HS('20260109'), HE('20260110'), 'RRULE:FREQ=WEEKLY;INTERVAL=2'],
@@ -155,9 +182,10 @@ const forventet = {
     Ella: ['14:30 Svømming'],
     Theo: ['17:00 Fotball']
   },
+  lekserIdag: 'Lekser 0 av 1',
   // 9.1.2026 + 20 × 2 uker gir 16.10; 18.9 + 4 uker gir 16.10; glass er 23.10.
   tomming: 'Søppel fredag: Papir og plast, Restavfall og matavfall',
-  imorgen: ['Nattevakt –06:00'],                 // Yoga er strøket, tannlegen avlyst
+  imorgen: ['Skolefotografering', 'Nattevakt –06:00'],   // Yoga er strøket, tannlegen avlyst
   fredag16: ['Middag hos Kari og Ørjan 19:00'],    // én gang, med to farger
   mandag19: ['Høstferie', 'Jobbreise Bergen', 'Fotball 17:00'],   // korpset er flyttet
   tirsdag20: ['Høstferie', 'Jobbreise Bergen', 'Korps – ekstraøvelse før konsert 17:30'],

@@ -18,7 +18,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `koordinatjakt/` | Koordinatjakt — øvingsark for koordinater, på papir eller iPad |
 | `pwa-xoxo/` | Kryss & Ring — puslespill med kryss og ringer på 5x10. **Under arbeid** |
 | `lydloft/` | Lydløft — lydverksted: filtre, tone, tempo, tonehøyde og effekter på egne opptak, pluss en testbenk. **Under arbeid** |
-| `familietavle/` | Familietavla — veggtavle på nettbrett: iCloud-kalendre per person, Yr-vær, søppeltømming |
+| `familietavle/` | Familietavla — veggtavle på nettbrett: iCloud-kalendre per person, Yr-vær, søppel, ukeplan og leksefane |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -682,6 +682,17 @@ ha noe gratis, uten konto hos en ny tjeneste. Det som bærer resten:
   når kalendrene legges til), skjermen skal ikke lyse om natta, og søppel-
   tømming var neste ønske. Søppel er en iCloud-kalender med tre gjentakelser
   – Bærum har faste intervaller og ikke noe åpent API.
+- **Ukeplanen leses av en språkmodell, ikke av tavla.** Skolens PDF lar seg
+  ikke lese pålitelig med regler – dagsfordelingen er tvetydig selv for en
+  modell. Foreldrene gjør PDF-en om til et fast format i Claude-appen (instruksen
+  står i README) og limer det inn i Merknader på en hendelse i «Ukeplan <barn>».
+  `ukeplan.js` leser bare Hendelser, Lekser og Ukelekse. Leksefanen er det
+  eneste på tavla som trykkes på; avkrysningen ligger i nettbrettets
+  `localStorage`, og feiringen peker bare oppover. Den ekte ukeplanen hører
+  ikke hjemme i repoet – den sier hvilken skole og hvilket trinn barnet går på.
+- **Eierne fulgte rådet om Spond**: Spond synkroniseres til iCloud, ingen
+  uoffisiell API. **Redigering fra nettbrettet** går gjennom DAVx⁵ og Androids
+  egen kalender, ikke gjennom tavla.
 - **Tavla er en visning, ikke et redigeringsverktøy.** Alt legges inn fra
   telefonen i Kalender-appen, også middagen (kalenderen «Middag») og
   bursdagene («Bursdager»). Påminnelser har ikke noe API, og iCloud sender

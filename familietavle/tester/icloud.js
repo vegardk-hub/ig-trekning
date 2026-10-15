@@ -63,7 +63,7 @@ function server(port, svar) {
   // Synk-jobben, slik Actions kjører den.
   console.log('synk-jobben mot simulert iCloud');
   const ut = path.join(os.tmpdir(), 'familietavle-icloud-' + process.pid + '.json');
-  const liste = Sim.kalendere().map(k => k.navn + ': webcal://localhost:8134/published/2/' + k.navn.toLowerCase())
+  const liste = Sim.kalendere().map(k => k.navn + ': webcal://localhost:8134/published/2/' + encodeURIComponent(k.navn.toLowerCase()))
     .join('\n').replace(/webcal:/g, 'http:');
   const jobb = await new Promise(r => execFile(process.execPath, [path.join(APP, 'synk', 'synk.js'), ut], {
     env: Object.assign({}, process.env, {
@@ -83,7 +83,8 @@ function server(port, svar) {
   // utvalget av kalendre er forskjellig.
   const Krypto = require('../js/krypto.js');
   const hel = JSON.parse(await Krypto.dekrypter(JSON.parse(datafil), PASSFRASE));
-  const forste = Object.assign({}, hel, { kalendere: hel.kalendere.filter(k => k.rolle === 'person' || k.rolle === 'tomming') });
+  const forste = Object.assign({}, hel, { kalendere: hel.kalendere.filter(k => ['person', 'tomming', 'ukeplan'].indexOf(k.rolle) >= 0) });
+  krev(/Ukeplan Ella: 1 hendelser med notat/.test(jobb.ut), 'synk-loggen ser notatet i ukeplanen', jobb.ut);
   const versjon1 = JSON.stringify(await Krypto.krypter(JSON.stringify(forste), PASSFRASE));
   let gjeldende = versjon1;
 
@@ -125,6 +126,7 @@ function server(port, svar) {
         [...k.querySelectorAll('.avtale')].map(li => li.querySelector('.kl').textContent + ' ' + li.querySelector('.hva').textContent)
       ])),
       tomming: document.getElementById('tomming').textContent,
+      lekser: (() => { const b = document.querySelector('#idag .leksemerke'); return b ? b.textContent : ''; })(),
       flere: document.querySelector('#idag .flere') && document.querySelector('#idag .flere').textContent,
       dager,
       felles: felles ? getComputedStyle(felles).borderImageSource : '',
@@ -136,6 +138,7 @@ function server(port, svar) {
   const F = Sim.forventet;
   krev(JSON.stringify(t.idag) === JSON.stringify(F.idag), 'i dag, per person', t.idag);
   krev(t.tomming === F.tomming, 'søppel: to dunker samme fredag', t.tomming);
+  krev(t.lekser === F.lekserIdag, 'ukeplanen fra Merknader gir lekser i Ellas kolonne', t.lekser);
   krev(!t.flere, 'ingenting kappet bort i dag-kortet', t.flere);
   krev(t.dager[0].join(' | ') === F.imorgen.join(' | '), 'i morgen: nattevakta slutter, yoga og tannlege er borte', t.dager[0]);
   krev(t.dager[1].join(' | ') === F.fredag16.join(' | '), 'fredag: felles middag én gang', t.dager[1]);
@@ -185,7 +188,7 @@ function server(port, svar) {
     const Krypto = require('../js/krypto.js');
     const pakke = {
       v: 1, hentet: Sim.NAA.toISOString(), vaer: null,
-      kalendere: lik.map(c => ({ navn: c.navn, rolle: c.navn === 'Middag' ? 'middag' : c.navn === 'Bursdager' ? 'bursdager' : c.navn === 'Søppel' ? 'tomming' : 'person',
+      kalendere: lik.map(c => ({ navn: c.navn, rolle: c.navn === 'Middag' ? 'middag' : c.navn === 'Bursdager' ? 'bursdager' : c.navn === 'Søppel' ? 'tomming' : /^Ukeplan /.test(c.navn) ? 'ukeplan' : 'person',
         ics: Kalender.beskjaer(limSammen(c.fil), new Date(2026, 9, 13)) }))
     };
     const fil2 = JSON.stringify(await Krypto.krypter(JSON.stringify(pakke), PASSFRASE));

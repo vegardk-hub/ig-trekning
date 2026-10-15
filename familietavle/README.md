@@ -46,6 +46,10 @@ På iPhone: **Kalender → Kalendere → Legg til kalender**.
   forekomsten i kalenderen. Tavla viser neste tømming i bunnlinja, og lyser
   gult dagen før og samme dag.
 
+- **Ukeplan Ella** (én per barn, «Ukeplan» + barnets navn slik det står i
+  personkalenderen) – én hendelse per uke, med ukeplanen limt inn i
+  **Merknader**. Se «Ukeplanen fra skolen» under.
+
 Middag og bursdager er **valgt bort i første versjon**, men virker om
 kalendrene legges til:
 
@@ -129,6 +133,70 @@ hendelser hver kalender hadde, men aldri lenkene.
 
 Et trykk på den svarte skjermen viser tavla i to minutter.
 
+## Ukeplanen fra skolen
+
+Skolens ukeplan er en PDF med en tabell der det ikke går an å se sikkert
+hvilken dag en lekse hører til. Den må leses av en språkmodell, og det er
+gratis når dere gjør det selv i Claude-appen. Tavla leser bare resultatet.
+
+**Hver uke, cirka to minutter:**
+
+1. Last opp PDF-en i Claude-appen og lim inn instruksen under.
+2. Kopier svaret.
+3. I Kalender på iPhone: ny hendelse i «Ukeplan Ella» på mandagen, gjerne
+   heldag, tittel «Ukeplan». Lim svaret inn i **Merknader**.
+
+Innen en time står skolehendelsene (tur, foreldremøte, skolejogg) i Ellas
+kolonne, og leksene i leksefanen. «Skole» alene – vanlig skoledag – vises ikke.
+
+**Instruksen:**
+
+```
+Gjør om ukeplanen i PDF-en til akkurat dette formatet, og ikke skriv noe før
+eller etter:
+
+## Hendelser
+| Dato | Hendelse | Detaljer |
+|---|---|---|
+| Man 5.10 | Skole | 08.30–13.15 |
+| Ons 7.10 | Foreldremøte | 17.00–19.00. Sted og annet viktig |
+
+## Lekser
+- Man: leksa for mandag, kort
+- Tir: …
+
+## Ukelekse
+- det som gjelder hele uka
+
+Én rad per hendelse, med klokkeslett først i Detaljer når det finnes. Skriv
+«Skole» alene for vanlige skoledager. Er du usikker på hvilken dag noe hører
+til, skriv [sannsynlig] bak teksten. Ta ikke med SFO-mat, læringsmål eller
+annet.
+```
+
+Tavla tåler at svaret har flere seksjoner enn dette – den leser bare
+Hendelser, Lekser og Ukelekse.
+
+**Leksefanen** åpnes fra knappen «Lekser» i bunnlinja eller i barnets kolonne.
+Barnet trykker på en lekse når den er gjort og får en liten feiring: konfetti
+og to toner. Et nytt trykk angrer. Avkrysningen lagres på nettbrettet, ikke i
+kalenderen – et barn som krysser av, skal ikke kunne endre noe foreldrene har
+lagt inn. Fanen lukker seg selv etter tre minutter.
+
+> Det er ikke dokumentert at iCloud tar med Merknader i en publisert kalender.
+> Synk-loggen i Actions skriver «Ukeplan Ella: 1 hendelser med notat». Står
+> det 0, kommer ikke notatene fram, og ukeplanen må en annen vei.
+
+## Redigere fra nettbrettet
+
+Tavla selv redigerer ikke. Vil dere legge inn avtaler på nettbrettet, er
+[DAVx⁵](https://davx5.com/tested-with/icloud) veien: den henter iCloud-kalendrene
+inn i Androids egen kalender, og endringer der går tilbake til iCloud. Den
+trenger et **app-spesifikt passord** fra appleid.apple.com, ikke Apple-ID-
+passordet. Velg bare familiekalendrene i DAVx⁵ – alt som synkroniseres, kan
+leses av alle som står foran nettbrettet. En endring på nettbrettet kommer på
+tavla etter neste synk, som alt annet.
+
 ## Det som er verdt å vite
 
 - **Forsinkelsen er 15–60 minutter, iblant mer.** GitHubs timer er «best
@@ -153,6 +221,7 @@ Et trykk på den svarte skjermen viser tavla i to minutter.
 | --- | --- |
 | `js/kalender.js` | Leser ICS, folder ut gjentakelser, beskjærer. Brukes både av tavla og av synk-jobben. |
 | `js/krypto.js` | AES-GCM med PBKDF2. Samme kode i Node og i nettleseren. |
+| `js/ukeplan.js` | Leser ukeplanen i notatfeltet: hendelser, lekser, ukelekser. |
 | `js/vaer.js` | Trekker ut nå, tre klokkeslett og tre dager fra Locationforecast. Stedet (Bekkestua) står her. |
 | `js/app.js` | Henter, dekrypterer, tegner, demper om natta. |
 | `js/demo.js` | Den oppdiktede familien – brukes av `?demo` og av prøvene. |

@@ -30,7 +30,8 @@
 
   var el = {};
   ['tavle', 'tid', 'dato', 'tomming', 'vaer', 'innhold', 'side', 'middagKort', 'bursdagKort',
-    'idag', 'neste', 'middag', 'bursdager',
+    'idag', 'neste', 'middag', 'bursdager', 'lekserKnapp', 'lekser', 'lekserTittel', 'lekserBarn',
+    'lekserStatus', 'lekserLukk', 'lekserUke', 'lekserDager', 'konfetti',
     'personer', 'status', 'meny', 'oppsett', 'oppsettSkjema', 'passfrase', 'oppsettMelding',
     'glem', 'natt'].forEach(function (id) { el[id] = document.getElementById(id); });
 
@@ -42,7 +43,10 @@
     vaerTid: 0,
     feil: '',
     vekketTil: 0,
-    iOppsett: false       // ⋯ er trykket: ikke tegn tavla over skjemaet
+    iOppsett: false,      // ⋯ er trykket: ikke tegn tavla over skjemaet
+    planer: [],           // [{ navn, person, plan }] fra «Ukeplan <barn>»
+    lekserBarn: '',       // barnet leksefanen viser
+    lekserSist: 0         // siste trykk i leksefanen
   };
 
   // ---- Småhjelp ----------------------------------------------------------
@@ -106,6 +110,34 @@
       }
       return { navn: k.navn, rolle: k.rolle, farge: farge, hendelser: lest.hendelser };
     });
+
+    // Ukeplanene: én hendelse per uke i «Ukeplan <barn>», med planen i
+    // notatfeltet. Barnet finnes ved navn blant personkalendrene.
+    st.planer = [];
+    var idag = midnatt(new Date());
+    st.kalendere.filter(function (k) { return k.rolle === 'ukeplan'; }).forEach(function (k) {
+      var navn = k.navn.replace(/^ukeplan\s+/i, '').trim();
+      var person = st.kalendere.filter(function (p) {
+        return p.rolle === 'person' && p.navn.toLowerCase() === navn.toLowerCase();
+      })[0] || null;
+      Kalender.forekomster(k.hendelser, pluss(idag, -35), pluss(idag, 35)).forEach(function (f) {
+        if (f.beskrivelse) st.planer.push({ navn: person ? person.navn : navn, person: person, plan: Ukeplan.les(f.beskrivelse, f.start) });
+      });
+    });
+  }
+
+  // Skolehendelsene fra ukeplanene, i samme form som kalenderforekomstene.
+  function planHendelser(person, fra, til) {
+    var ut = [];
+    st.planer.forEach(function (p) {
+      if (!p.person || (person && p.person !== person)) return;
+      p.plan.hendelser.forEach(function (h) {
+        if (h.start >= til || h.slutt <= fra) return;
+        ut.push({ start: h.start, slutt: h.slutt, heldag: h.heldag, tittel: h.tittel, sted: '', uid: '',
+          kalender: p.person, kalendere: [p.person] });
+      });
+    });
+    return ut;
   }
 
   function hentData() {
@@ -175,6 +207,7 @@
         ut.push(f);
       });
     });
+    if (rolle === 'person') ut = ut.concat(planHendelser(null, fra, til));
     ut.sort(function (a, b) {
       return (b.heldag - a.heldag) || (a.start - b.start) || a.tittel.localeCompare(b.tittel, 'nb');
     });
@@ -225,6 +258,12 @@
     if (harMiddag) tegnMiddag(idag);
     if (harBursdager) tegnBursdager(idag);
     tegnBunn(naa);
+    var barn = barnMedLekser(idag);
+    el.lekserKnapp.hidden = !barn.length;
+    if (!el.lekser.hidden) {
+      // Står fanen åpen uten at noen rører den, går tavla tilbake av seg selv.
+      if (Date.now() - st.lekserSist > 3 * 60000) lukkLekser(); else tegnLekser();
+    }
     tegnNatt(naa);
   }
 
@@ -298,8 +337,17 @@
       var kol = lag('div', 'personkol');
       kol.style.setProperty('--farge', k.farge);
       kol.appendChild(lag('h3', '', k.navn));
+      var dagens = lekserFor(k.navn, idag);
+      if (dagens.length) {
+        var gjort = dagens.filter(erGjort).length;
+        var knapp = lag('button', 'leksemerke' + (gjort === dagens.length ? ' ferdig' : ''),
+          gjort === dagens.length ? 'Lekser gjort' : 'Lekser ' + gjort + ' av ' + dagens.length);
+        knapp.type = 'button';
+        knapp.addEventListener('click', function () { aapneLekser(k.navn); });
+        kol.appendChild(knapp);
+      }
       var liste = lag('ul', 'avtaler');
-      var alle = Kalender.forekomster(k.hendelser, idag, pluss(idag, 1));
+      var alle = Kalender.forekomster(k.hendelser, idag, pluss(idag, 1)).concat(planHendelser(k, idag, pluss(idag, 1)));
       alle.sort(function (a, b) { return (b.heldag - a.heldag) || (a.start - b.start); });
       if (!alle.length) liste.appendChild(lag('li', 'tomt', '–'));
       alle.forEach(function (f) {
@@ -419,6 +467,210 @@
     var natt = (t >= NATT[0] || t < NATT[1]) && Date.now() > st.vekketTil;
     el.natt.hidden = !natt;
   }
+
+  // ---- Lekser -------------------------------------------------------------
+  //
+  // Leksefanen er det eneste på tavla man trykker på, og den er for barna.
+  // Avkrysningen lagres på nettbrettet, ikke i kalenderen: den gjelder bare her,
+  // og et barn som krysser av, skal ikke kunne endre noe foreldrene har lagt inn.
+  // Feiringen er liten og peker bare oppover – ingenting markerer en lekse som
+  // ikke er gjort, samme premiss som i Poengtavla og Fargeflasker.
+
+  var LEKSER = 'familietavle.lekser';
+
+  function lekseliste() {
+    try { return JSON.parse(hent(LEKSER) || '{}') || {}; } catch (e) { return {}; }
+  }
+
+  function iso(d) { return d.getFullYear() + '-' + to(d.getMonth() + 1) + '-' + to(d.getDate()); }
+
+  function nokkelFor(l) { return l.navn + '|' + l.uke + '|' + l.dag + '|' + l.tekst; }
+
+  function erGjort(l) { return !!lekseliste()[nokkelFor(l)]; }
+
+  function settGjort(l, gjort) {
+    var alle = lekseliste();
+    if (gjort) alle[nokkelFor(l)] = Date.now(); else delete alle[nokkelFor(l)];
+    // Rydd bort det som er eldre enn åtte uker, så lista ikke vokser for alltid.
+    var grense = Date.now() - 56 * DAG;
+    Object.keys(alle).forEach(function (k) { if (alle[k] < grense) delete alle[k]; });
+    lagre(LEKSER, JSON.stringify(alle));
+  }
+
+  // Planene for uka `dag` ligger i, for ett barn.
+  function planerFor(navn, dag) {
+    var mandag = Ukeplan.mandagI(dag).getTime();
+    return st.planer.filter(function (p) {
+      return p.navn === navn && p.plan.mandag.getTime() === mandag;
+    });
+  }
+
+  function lekserFor(navn, dag) {
+    var ut = [];
+    planerFor(navn, dag).forEach(function (p) {
+      p.plan.lekser.forEach(function (l) {
+        if (l.dag.getTime() === midnatt(dag).getTime()) {
+          ut.push({ navn: navn, uke: iso(p.plan.mandag), dag: iso(l.dag), tekst: l.tekst });
+        }
+      });
+    });
+    return ut;
+  }
+
+  function barnMedLekser(idag) {
+    var navn = [];
+    st.planer.forEach(function (p) {
+      if (p.plan.mandag.getTime() === Ukeplan.mandagI(idag).getTime() &&
+          (p.plan.lekser.length || p.plan.ukelekser.length) && navn.indexOf(p.navn) < 0) navn.push(p.navn);
+    });
+    return navn;
+  }
+
+  function aapneLekser(navn) {
+    var barn = barnMedLekser(midnatt(new Date()));
+    st.lekserBarn = navn && barn.indexOf(navn) >= 0 ? navn : (barn.indexOf(st.lekserBarn) >= 0 ? st.lekserBarn : barn[0]);
+    st.lekserSist = Date.now();
+    el.lekser.hidden = false;
+    tegnLekser();
+  }
+
+  function lukkLekser() {
+    el.lekser.hidden = true;
+  }
+
+  function lekseKort(l, tekst, idag) {
+    var b = lag('button', 'lekse');
+    b.type = 'button';
+    var gjort = erGjort(l);
+    b.classList.toggle('gjort', gjort);
+    b.setAttribute('aria-pressed', gjort ? 'true' : 'false');
+    b.appendChild(lag('span', 'hake', '✓'));
+    b.appendChild(lag('span', 'lekse-tekst', tekst));
+    b.addEventListener('click', function (e) {
+      st.lekserSist = Date.now();
+      var na = !erGjort(l);
+      settGjort(l, na);
+      if (na) feir(e.clientX, e.clientY);
+      tegnLekser();
+      tegn();
+    });
+    return b;
+  }
+
+  function tegnLekser() {
+    var idag = midnatt(new Date());
+    var barn = barnMedLekser(idag);
+    if (!barn.length) { lukkLekser(); return; }
+    if (barn.indexOf(st.lekserBarn) < 0) st.lekserBarn = barn[0];
+    var navn = st.lekserBarn;
+    var person = st.kalendere.filter(function (k) { return k.rolle === 'person' && k.navn === navn; })[0];
+    el.lekser.style.setProperty('--farge', person ? person.farge : 'var(--aksent)');
+    el.lekserTittel.textContent = 'Lekser uke ' + ukenr(idag);
+
+    el.lekserBarn.textContent = '';
+    if (barn.length > 1) {
+      barn.forEach(function (n) {
+        var f = lag('button', 'fane' + (n === navn ? ' valgt' : ''), n);
+        f.type = 'button';
+        f.setAttribute('role', 'tab');
+        f.setAttribute('aria-selected', n === navn ? 'true' : 'false');
+        var p = st.kalendere.filter(function (k) { return k.rolle === 'person' && k.navn === n; })[0];
+        if (p) f.style.setProperty('--farge', p.farge);
+        f.addEventListener('click', function () { st.lekserBarn = n; st.lekserSist = Date.now(); tegnLekser(); });
+        el.lekserBarn.appendChild(f);
+      });
+    } else {
+      el.lekserBarn.appendChild(lag('span', 'fane valgt', navn));
+    }
+
+    var planer = planerFor(navn, idag);
+    var uke = iso(Ukeplan.mandagI(idag));
+
+    el.lekserUke.textContent = '';
+    var ukelekser = [];
+    planer.forEach(function (p) { ukelekser = ukelekser.concat(p.plan.ukelekser); });
+    if (ukelekser.length) {
+      el.lekserUke.appendChild(lag('h2', '', 'Hele uka'));
+      var rad = lag('div', 'ukerad');
+      ukelekser.forEach(function (t) {
+        rad.appendChild(lekseKort({ navn: navn, uke: uke, dag: 'uke', tekst: t }, t, idag));
+      });
+      el.lekserUke.appendChild(rad);
+    }
+
+    el.lekserDager.textContent = '';
+    var alle = [];
+    planer.forEach(function (p) { alle = alle.concat(p.plan.lekser); });
+    var sisteDag = alle.reduce(function (m, l) { return Math.max(m, (l.dag.getDay() + 6) % 7); }, 4);
+    el.lekserDager.style.setProperty('--dager', sisteDag + 1);
+    for (var i = 0; i <= sisteDag; i++) {
+      var dag = pluss(Ukeplan.mandagI(idag), i);
+      var kol = lag('div', 'leksedag' + (dag.getTime() === idag.getTime() ? ' idag' : ''));
+      kol.appendChild(lag('h3', '', UKEDAG[dag.getDay()].replace(/^./, function (c) { return c.toUpperCase(); }) + ' ' + dag.getDate() + '.'));
+      alle.filter(function (l) { return l.dag.getTime() === dag.getTime(); }).forEach(function (l) {
+        kol.appendChild(lekseKort({ navn: navn, uke: uke, dag: iso(l.dag), tekst: l.tekst }, l.tekst, idag));
+      });
+      el.lekserDager.appendChild(kol);
+    }
+
+    var dagens = lekserFor(navn, idag);
+    var gjort = dagens.filter(erGjort).length;
+    el.lekserStatus.textContent = !dagens.length ? '' :
+      gjort === dagens.length ? 'Alt gjort i dag!' : gjort + ' av ' + dagens.length + ' i dag';
+    el.lekserStatus.classList.toggle('ferdig', !!dagens.length && gjort === dagens.length);
+  }
+
+  // Feiringen: en liten sky av konfetti fra der fingeren trykket, og to korte
+  // toner. Lyden lages av oscillatorer, så det finnes ingen lydfil – og
+  // AudioContext lages i trykket, ellers er den stum.
+  var lyd = null;
+  function feir(x, y) {
+    try {
+      lyd = lyd || new (window.AudioContext || window.webkitAudioContext)();
+      [[880, 0], [1318.5, 0.11]].forEach(function (t) {
+        var o = lyd.createOscillator(), g = lyd.createGain();
+        o.type = 'sine';
+        o.frequency.value = t[0];
+        g.gain.setValueAtTime(0.0001, lyd.currentTime + t[1]);
+        g.gain.exponentialRampToValueAtTime(0.18, lyd.currentTime + t[1] + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, lyd.currentTime + t[1] + 0.35);
+        o.connect(g).connect(lyd.destination);
+        o.start(lyd.currentTime + t[1]);
+        o.stop(lyd.currentTime + t[1] + 0.4);
+      });
+    } catch (e) { /* uten lyd er feiringen fortsatt der */ }
+
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var c = el.konfetti, ctx = c.getContext && c.getContext('2d');
+    if (!ctx) return;
+    c.width = innerWidth; c.height = innerHeight;
+    var farger = ['#f2c14e', '#7bd389', '#5aa9e6', '#f28f6b', '#c79bf2'];
+    var biter = [];
+    for (var i = 0; i < 46; i++) {
+      var v = Math.random() * Math.PI * 2, fart = 4 + Math.random() * 7;
+      biter.push({ x: x, y: y, vx: Math.cos(v) * fart, vy: Math.sin(v) * fart - 5,
+        r: 4 + Math.random() * 5, f: farger[i % farger.length], rot: Math.random() * 6 });
+    }
+    var start = performance.now();
+    (function steg(t) {
+      var gaatt = (t - start) / 1000;
+      ctx.clearRect(0, 0, c.width, c.height);
+      if (gaatt > 1.3) return;
+      biter.forEach(function (b) {
+        b.vy += 0.35; b.x += b.vx; b.y += b.vy; b.rot += 0.2;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - gaatt / 1.3);
+        ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+        ctx.fillStyle = b.f;
+        ctx.fillRect(-b.r / 2, -b.r / 4, b.r, b.r / 2);
+        ctx.restore();
+      });
+      requestAnimationFrame(steg);
+    })(start);
+  }
+
+  el.lekserKnapp.addEventListener('click', function () { aapneLekser(); });
+  el.lekserLukk.addEventListener('click', lukkLekser);
 
   // ---- Oppsett -----------------------------------------------------------
 

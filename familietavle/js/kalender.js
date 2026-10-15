@@ -173,6 +173,8 @@ var Kalender = (function () {
         case 'UID': h.uid = f.verdi; break;
         case 'SUMMARY': h.tittel = tekstverdi(f.verdi); break;
         case 'LOCATION': h.sted = tekstverdi(f.verdi); break;
+        // Notatfeltet. Ukeplanen ligger her, se ukeplan.js.
+        case 'DESCRIPTION': h.beskrivelse = tekstverdi(f.verdi); break;
         case 'STATUS': h.status = f.verdi.toUpperCase(); break;
         case 'DTSTART': h.start = tid(f.verdi, f.param); break;
         case 'DTEND': h.slutt = tid(f.verdi, f.param); break;
@@ -324,6 +326,7 @@ var Kalender = (function () {
         ut.push({
           start: s, slutt: slutt, heldag: h.start.heldag,
           tittel: h.tittel || '', sted: h.sted || '', uid: h.uid || '',
+          beskrivelse: h.beskrivelse || '',
           forste: h.start.tid
         });
       });

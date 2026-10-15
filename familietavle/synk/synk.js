@@ -13,7 +13,8 @@
  * Miljøvariabler:
  *
  *   FAMILIETAVLE_KALENDERE  én kalender per linje, «Navn: lenke». Navnene
- *                           «Middag», «Bursdager» og «Søppel» er spesielle; alle andre
+ *                           «Middag», «Bursdager», «Søppel» og «Ukeplan <navn>»
+ *                           er spesielle; alle andre
  *                           er en person, og får sin egen farge på tavla i
  *                           den rekkefølgen de står.
  *   FAMILIETAVLE_PASSFRASE  passfrasen tavla bruker for å lese fila.
@@ -39,6 +40,7 @@ function lesListe(tekst) {
     const rolle = /^middag(er)?$/i.test(navn) ? 'middag'
       : /^bursdag(er)?$/i.test(navn) ? 'bursdager'
       : /^(søppel|tømming|avfall|renovasjon)$/i.test(navn) ? 'tomming'
+      : /^ukeplan\s+\S/i.test(navn) ? 'ukeplan'
       : 'person';
     return { navn, rolle, url: m[2].replace(/^webcal:/i, 'https:') };
   });
@@ -104,6 +106,12 @@ async function main() {
     }
     if (!/BEGIN:VCALENDAR/.test(ics)) throw new Error('«' + k.navn + '» er ikke en kalenderfil');
     const kort = Kalender.beskjaer(ics, fra);
+    // Ukeplanen ligger i notatfeltet. Det er ikke dokumentert at iCloud tar
+    // med notater i en publisert kalender, så loggen sier fra om de mangler.
+    if (k.rolle === 'ukeplan') {
+      const med = Kalender.les(kort).hendelser.filter(h => h.beskrivelse).length;
+      console.log(k.navn + ': ' + med + ' hendelser med notat' + (med ? '' : ' – kommer notatfeltet med i den publiserte kalenderen?'));
+    }
     console.log(k.navn + ': ' + Kalender.les(kort).hendelser.length + ' hendelser, ' +
       Math.round(kort.length / 1024) + ' kB (av ' + Math.round(ics.length / 1024) + ' kB)');
     kalendere.push({ navn: k.navn, rolle: k.rolle, ics: kort });

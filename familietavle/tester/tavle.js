@@ -11,7 +11,9 @@
  * - Ingenting stikker ut av skjermen på nettbrettet (10,6", liggende), og
  *   heller ikke på en mindre og en større skjerm. Tavla skal leses på avstand
  *   uten at noen ruller.
- * - Dagens avtaler, middagen og bursdagen står der de skal.
+ * - Dagens avtaler står i riktig kolonne, og søppel i bunnlinja.
+ * - Ukeplanen gir skolehendelser i barnets kolonne og en leksefane der
+ *   avkrysningen huskes og fanen lukker seg selv.
  * - En kryptert datafil åpnes med riktig passfrase, og feil passfrase gir en
  *   melding i stedet for en tom tavle.
  * - Om natta dempes skjermen, og et trykk lyser den opp.
@@ -122,8 +124,7 @@ function utenfor(p) {
       kolonner: [...document.querySelectorAll('#idag .personkol h3')].map(e => e.textContent),
       tomming: (() => { const e = document.getElementById('tomming'); return { tekst: e.textContent, snart: e.classList.contains('snart'), synlig: !e.hidden }; })(),
       forbi: [...document.querySelectorAll('#idag .forbi .hva')].map(e => e.textContent),
-      middagIdag: document.querySelector('#middag .idag').innerText,
-      bursdag: document.querySelector('#bursdager li').innerText,
+      side: document.getElementById('side').hidden,
       vaer: document.querySelector('.vaer-temp') && document.querySelector('.vaer-temp').textContent,
       neste: [...document.querySelectorAll('#neste .dag h3')].map(e => e.textContent),
       natt: document.getElementById('natt').hidden
@@ -136,11 +137,79 @@ function utenfor(p) {
     krev(t.tomming.synlig && t.tomming.tekst === 'Søppel i morgen: Restavfall og matavfall' && t.tomming.snart,
       'søppel i morgen, uthevet', t.tomming);
     krev(t.forbi.length === 0, 'ingenting forbi kl. 13:05 – svømming er 14:30', t.forbi);
-    krev(/Taco/.test(t.middagIdag), 'dagens middag', t.middagIdag);
-    krev(/Bestefar fyller 78/.test(t.bursdag), 'bursdag i dag med alder', t.bursdag);
+    krev(t.side === true, 'eksempelet er versjon 1: ingen middag eller bursdager', t.side);
     krev(!!t.vaer, 'været vises', t.vaer);
     krev(t.neste.length === 6 && /^I morgen/.test(t.neste[0]), 'seks dager framover', t.neste);
     krev(t.natt === true, 'ikke dempet midt på dagen');
+    await ctx.close();
+  }
+
+  console.log('ukeplan og lekser');
+  {
+    const { p, ctx, feilmeldinger } = await side(nett, { width: 1333, height: 800 }, NAA, '?demo');
+    const ella = await p.evaluate(() => {
+      const kol = [...document.querySelectorAll('#idag .personkol')].find(k => k.querySelector('h3').textContent === 'Ella');
+      return {
+        knapp: kol.querySelector('.leksemerke') && kol.querySelector('.leksemerke').textContent,
+        avtaler: [...kol.querySelectorAll('.avtale')].map(a => a.textContent)
+      };
+    });
+    krev(ella.knapp === 'Lekser 0 av 1', 'Ellas kolonne viser dagens lekser', ella.knapp);
+    krev(ella.avtaler.some(a => /18:00\s*Foreldremøte/.test(a)), 'foreldremøtet fra ukeplanen står i Ellas kolonne', ella.avtaler);
+    const neste = await p.evaluate(() => document.getElementById('neste').innerText);
+    krev(/Skolejogg/.test(neste), 'skolejoggen fredag står i uka', neste);
+    krev(await p.isVisible('#lekserKnapp'), 'Lekser-knappen i bunnlinja');
+
+    await p.click('#lekserKnapp');
+    const fane = await p.evaluate(() => ({
+      synlig: !document.getElementById('lekser').hidden,
+      tittel: document.getElementById('lekserTittel').textContent,
+      dager: [...document.querySelectorAll('.leksedag h3')].map(e => e.textContent),
+      idag: document.querySelector('.leksedag.idag h3') && document.querySelector('.leksedag.idag h3').textContent,
+      uke: [...document.querySelectorAll('.ukerad .lekse')].map(e => e.textContent),
+      status: document.getElementById('lekserStatus').textContent
+    }));
+    krev(fane.synlig && fane.tittel === 'Lekser uke 42', 'leksefanen åpner', fane);
+    krev(fane.dager.join() === 'Mandag 12.,Tirsdag 13.,Onsdag 14.,Torsdag 15.,Fredag 16.', 'fem dager', fane.dager);
+    krev(fane.idag === 'Onsdag 14.', 'dagen i dag er markert', fane.idag);
+    krev(fane.uke.length === 2, 'ukeleksene øverst', fane.uke);
+    krev(fane.status === '0 av 1 i dag', 'status for i dag', fane.status);
+    const ut = await p.evaluate(() => {
+      const ut = [];
+      document.querySelectorAll('#lekser *').forEach(e => {
+        const r = e.getBoundingClientRect();
+        if (r.width && (r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5)) ut.push(e.className);
+      });
+      return ut;
+    });
+    krev(ut.length === 0, 'leksefanen får plass på nettbrettet', ut.slice(0, 5));
+    if (BILDER) await p.screenshot({ path: path.join(BILDER, 'lekser.png') });
+
+    await p.click('.leksedag.idag .lekse');
+    const etter = await p.evaluate(() => ({
+      gjort: document.querySelector('.leksedag.idag .lekse').classList.contains('gjort'),
+      status: document.getElementById('lekserStatus').textContent
+    }));
+    krev(etter.gjort && etter.status === 'Alt gjort i dag!', 'avkrysning og «Alt gjort i dag!»', etter);
+    if (BILDER) await p.screenshot({ path: path.join(BILDER, 'lekser-gjort.png') });
+
+    // Et trykk til angrer – et barn som traff feil, skal kunne rette det.
+    await p.click('.ukerad .lekse');
+    await p.click('.ukerad .lekse');
+    krev(!(await p.evaluate(() => document.querySelector('.ukerad .lekse').classList.contains('gjort'))), 'et nytt trykk angrer');
+
+    await p.reload();
+    await p.waitForTimeout(600);
+    const husket = await p.evaluate(() => {
+      const kol = [...document.querySelectorAll('#idag .personkol')].find(k => k.querySelector('h3').textContent === 'Ella');
+      return kol.querySelector('.leksemerke').textContent;
+    });
+    krev(husket === 'Lekser gjort', 'avkrysningen huskes etter omlasting', husket);
+
+    await p.click('#lekserKnapp');
+    await p.clock.runFor(4 * 60000);
+    krev(await p.evaluate(() => document.getElementById('lekser').hidden), 'fanen lukker seg selv etter noen minutter');
+    krev(feilmeldinger.length === 0, 'ingen skriptfeil', feilmeldinger);
     await ctx.close();
   }
 

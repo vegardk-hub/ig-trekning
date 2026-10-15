@@ -470,6 +470,179 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 
 .lenkeknapp { background: none; border: 0; font: inherit; padding: 0; text-decoration: underline; }
 
+/* ---- Lekser ------------------------------------------------------------ */
+
+/* Knappen i barnets kolonne og i bunnlinja er det eneste på tavla som er
+   ment å trykkes på, og den ser ut som en knapp. */
+.leksemerke, .lekserknapp {
+  font: inherit;
+  cursor: pointer;
+  border: 0;
+  border-radius: 2rem;
+  background: var(--farge, var(--aksent));
+  color: #10161d;
+  font-weight: 650;
+}
+
+.leksemerke {
+  align-self: start;
+  font-size: 0.95rem;
+  padding: 0.25rem 0.8rem;
+  margin-bottom: 0.55rem;
+}
+
+.leksemerke.ferdig { background: var(--kort-lys); color: #7bd389; }
+
+.lekserknapp {
+  flex: none;
+  font-size: 0.95rem;
+  padding: 0.25rem 1rem;
+  background: var(--aksent);
+}
+
+.lekser:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: var(--bunn);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 1rem;
+  padding: calc(1rem + var(--trygg-topp)) 1.2rem calc(1rem + var(--trygg-bunn));
+}
+
+.lekser-topp {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.lekser-topp h1 { font-size: 2rem; }
+
+.faner { display: flex; gap: 0.5rem; }
+
+.fane {
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 650;
+  color: var(--tekst);
+  background: var(--kort);
+  border: 0;
+  border-bottom: 0.3rem solid var(--farge, var(--svak));
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.35rem 1rem;
+}
+
+.fane.valgt { background: var(--kort-lys); }
+
+.lekser-status { margin: 0; color: var(--dempet); font-size: 1.1rem; }
+
+.lekser-status.ferdig { color: #7bd389; font-weight: 650; }
+
+.lukk {
+  margin-left: auto;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--tekst);
+  background: var(--kort-lys);
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.ukelekser h2, .leksedag h3 {
+  margin: 0 0 0.5rem;
+}
+
+.ukerad { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+
+.ukerad .lekse { flex: 1 1 18rem; }
+
+.lekserdager {
+  display: grid;
+  grid-template-columns: repeat(var(--dager, 5), minmax(0, 1fr));
+  gap: 0.8rem;
+  min-height: 0;
+}
+
+.leksedag {
+  background: var(--kort);
+  border-radius: 1rem;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+  overflow: auto;
+}
+
+.leksedag h3 { font-size: 1.15rem; color: var(--dempet); }
+
+.leksedag.idag { outline: 0.2rem solid var(--farge, var(--aksent)); }
+
+.leksedag.idag h3 { color: var(--tekst); }
+
+/* Hele kortet er knappen: en tommel på et nettbrett treffer ikke en avkrysningsboks. */
+.lekse {
+  font: inherit;
+  text-align: left;
+  color: var(--tekst);
+  background: var(--kort-lys);
+  border: 0.15rem solid transparent;
+  border-radius: 0.8rem;
+  padding: 0.7rem 0.8rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  font-size: 1rem;
+  line-height: 1.3;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.lekse .hake {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  border: 0.15rem solid var(--dempet);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  font-weight: 700;
+  flex: none;
+}
+
+.lekse.gjort { background: #183324; border-color: #7bd389; }
+
+.lekse.gjort .hake {
+  background: #7bd389;
+  border-color: #7bd389;
+  color: #10261a;
+  animation: hopp 0.35s ease-out;
+}
+
+@keyframes hopp {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lekse.gjort .hake { animation: none; }
+}
+
+.lekse:focus-visible, .fane:focus-visible, .lukk:focus-visible { outline: 0.2rem solid var(--aksent); outline-offset: 2px; }
+
+.konfetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
 /* ---- Natt -------------------------------------------------------------- */
 
 /* Skjermen kan ikke slås av fra en nettside, så om natta blir den svart.
@@ -479,6 +652,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .natt:not([hidden]) {
   position: fixed;
   inset: 0;
+  z-index: 10;
   background: #000;
 }
 

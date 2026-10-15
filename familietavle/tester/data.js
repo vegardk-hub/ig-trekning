@@ -24,6 +24,7 @@ const Kalender = require('../js/kalender.js');
 const Krypto = require('../js/krypto.js');
 const Vaer = require('../js/vaer.js');
 const Demo = require('../js/demo.js');
+const Ukeplan = require('../js/ukeplan.js');
 const { lesListe, limSammen } = require('../synk/synk.js');
 const Sim = require('./simulert-icloud.js');
 
@@ -245,8 +246,10 @@ function dato(d) { return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFu
   {
     const p = Demo.pakke(new Date(2026, 9, 14, 13, 5));
     const idag = new Date(2026, 9, 14);
-    const middag = Kalender.forekomster(Kalender.les(p.kalendere.find(k => k.rolle === 'middag').ics).hendelser, idag, new Date(2026, 9, 21));
-    krev(middag.length === 7 && middag[0].tittel === 'Taco', 'sju middager', middag.map(f => f.tittel));
+    krev(p.kalendere.map(k => k.rolle).join() === 'person,person,person,person,ukeplan,tomming',
+      'eksempelet er eiernes versjon 1', p.kalendere.map(k => k.navn));
+    const sop = Kalender.forekomster(Kalender.les(p.kalendere.find(k => k.rolle === 'tomming').ics).hendelser, idag, new Date(2026, 9, 16));
+    krev(sop.length === 1 && sop[0].tittel === 'Restavfall og matavfall', 'søppel i morgen', sop.map(f => f.tittel));
   }
 
   console.log('vær');
@@ -261,6 +264,70 @@ function dato(d) { return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFu
     krev(Vaer.tekst('lightssleetshowersandthunder_day') === 'Lette sluddbyger og torden', 'METs stavefeil gir navn');
     const ikoner = fs.readdirSync(path.join(__dirname, '..', 'vaer'));
     krev(ikoner.includes('lightssleetshowersandthunder_day.svg') && ikoner.length > 80, 'ikonene finnes', ikoner.length);
+  }
+
+  console.log('ukeplan');
+  {
+    // Formatet slik Claude gir det tilbake – med tabell, «[sannsynlig]» og
+    // seksjoner tavla skal hoppe over.
+    const tekst = [
+      '# Ukeplan 3. trinn, uke 41 (5.–9. oktober 2026)',
+      'Kilde: ukeplan som PDF. Tolkning er markert [sannsynlig].',
+      '',
+      '## Hendelser (kalenderkandidater)',
+      '| Dato | Hendelse | Detaljer |',
+      '|---|---|---|',
+      '| Man 5.10 | Skole | 08.45–13.15 |',
+      '| Tir 6.10 | Skole, idrettshallen | 08.30–13.15 [sannsynlig dag for hallen] |',
+      '| Ons 7.10 | Foreldremøte | 17.00–19.00. Felles oppstart i aulaen, deretter klassevis |',
+      '| Fre 9.10 | **Skolejogg** | Sporty antrekk og et hodeplagg |',
+      '',
+      '## SFO-mat',
+      '- Man, tir, ons: egen matpakke + frukt fra SFO',
+      '',
+      '## Lekser [sannsynlig dagsfordeling]',
+      '- Man: Skrivelekse, s. 55. Stor bokstav først, riktig tegn til slutt',
+      '- Tir: Leselekse s. 50–52',
+      '- Ons: Samme leselekse som tirsdag',
+      '- Torsdag: Regnelekse, mattearket',
+      '- Fre: Les inn ca. 2 min [sannsynlig]',
+      '',
+      '## Ukelekse',
+      '- Fortell en voksen hver dag hvordan du har bidratt til arbeidsro',
+      '- Ta med innesko',
+      '',
+      '## Læringsmål',
+      '- Matte: gruppetelling'
+    ].join('\n');
+    // Planen ligger i en hendelse midt i uka – mandagen regnes ut.
+    const u = Ukeplan.les(tekst, new Date(2026, 9, 7, 12));
+    krev(dato(u.mandag) === '5.10.2026', 'mandagen i uka', dato(u.mandag));
+    krev(u.hendelser.map(h => dato(h.start) + ' ' + h.tittel).join(' | ') ===
+      '6.10.2026 Skole, idrettshallen | 7.10.2026 Foreldremøte | 9.10.2026 Skolejogg',
+      'hendelsene, uten «Skole» alene og uten **', u.hendelser.map(h => dato(h.start) + ' ' + h.tittel));
+    const mote = u.hendelser[1];
+    krev(kl(mote.start) === '17:00' && kl(mote.slutt) === '19:00' && !mote.heldag, 'klokkeslett fra detaljene', [kl(mote.start), kl(mote.slutt)]);
+    krev(mote.detaljer === 'Felles oppstart i aulaen, deretter klassevis', 'detaljene uten klokkeslettet', mote.detaljer);
+    krev(u.hendelser[0].detaljer === '' && u.hendelser[2].heldag, '[sannsynlig] fjernet, heldag uten klokkeslett', u.hendelser[0]);
+    krev(u.lekser.map(l => l.dag.getDate()).join() === '5,6,7,8,9', 'lekser på riktige dager, også «Torsdag»', u.lekser.map(l => l.dag.getDate()));
+    krev(u.lekser[4].tekst === 'Les inn ca. 2 min', 'merknader fjernet fra leksa', u.lekser[4].tekst);
+    krev(u.ukelekser.length === 2 && u.ukelekser[1] === 'Ta med innesko', 'ukeleksene', u.ukelekser);
+
+    const tom = Ukeplan.les('Bare tekst uten seksjoner', new Date(2026, 9, 7));
+    krev(!tom.hendelser.length && !tom.lekser.length && !tom.ukelekser.length, 'tekst uten format gir ingenting, og ingen feil');
+
+    const nyttaar = Ukeplan.les('## Hendelser\n| Dato | Hendelse | Detaljer |\n| Tor 31.12 | Nyttårsfeiring | |\n| Fre 1.1 | Fri | |', new Date(2026, 11, 28));
+    krev(nyttaar.hendelser.map(h => dato(h.start)).join() === '31.12.2026,1.1.2027', 'uke over årsskiftet', nyttaar.hendelser.map(h => dato(h.start)));
+
+    // Hele veien: notatfeltet i en iCloud-hendelse, med ICS-escaping.
+    const p = Demo.pakke(new Date(2026, 9, 14, 13, 5));
+    const k = p.kalendere.find(c => c.rolle === 'ukeplan');
+    const f = Kalender.forekomster(Kalender.les(k.ics).hendelser, new Date(2026, 9, 12), new Date(2026, 9, 19))[0];
+    const d = Ukeplan.les(f.beskrivelse, f.start);
+    krev(d.lekser.length === 5 && d.hendelser.length === 3 && /Kolsåstoppen/.test(d.hendelser[0].tittel),
+      'ukeplan i notatfeltet overlever ICS', d);
+    krev(lesListe('Ukeplan Ella: webcal://x')[0].rolle === 'ukeplan' && lesListe('Ukeplan: webcal://x')[0].rolle === 'person',
+      '«Ukeplan <navn>» er en ukeplan, «Ukeplan» alene er ikke');
   }
 
   console.log('kryptering');
