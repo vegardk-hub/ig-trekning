@@ -213,6 +213,28 @@ function utenfor(p) {
     await ctx.close();
   }
 
+  console.log('ukeplan uten egen personkalender');
+  {
+    // Barnet har bare «Ukeplan <navn>», ingen egen kalender. Det skal likevel
+    // få en kolonne, med skolehendelsene og leksene sine.
+    const pakke = Demo.pakke(NAA);
+    pakke.kalendere = pakke.kalendere.filter(k => k.navn !== 'Ella');
+    const fil = JSON.stringify(await Krypto.krypter(JSON.stringify(pakke), 'riktig hest batteri stift'));
+    const { p, ctx, feilmeldinger } = await side(nett, { width: 1333, height: 800 }, NAA, '', fil);
+    await p.evaluate(() => localStorage.setItem('familietavle.passfrase', 'riktig hest batteri stift'));
+    await p.reload();
+    await p.waitForTimeout(1500);
+    const k = await p.evaluate(() => {
+      const kol = [...document.querySelectorAll('#idag .personkol')].find(x => x.querySelector('h3').textContent === 'Ella');
+      return kol ? { lekser: kol.querySelector('.leksemerke') && kol.querySelector('.leksemerke').textContent,
+        avtaler: [...kol.querySelectorAll('.avtale')].map(a => a.textContent) } : null;
+    });
+    krev(k && k.lekser === 'Lekser 0 av 1' && k.avtaler.some(a => /Foreldremøte/.test(a)),
+      'Ella får kolonne fra ukeplanen alene', k);
+    krev(feilmeldinger.length === 0, 'ingen skriptfeil', feilmeldinger);
+    await ctx.close();
+  }
+
   console.log('natt: dempes, og et trykk lyser opp');
   {
     const { p, ctx } = await side(nett, { width: 1280, height: 768 }, new Date(2026, 9, 14, 23, 30), '?demo');

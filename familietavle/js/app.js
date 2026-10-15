@@ -120,8 +120,16 @@
       var person = st.kalendere.filter(function (p) {
         return p.rolle === 'person' && p.navn.toLowerCase() === navn.toLowerCase();
       })[0] || null;
+      // Et barn uten egen kalender får likevel en kolonne – ellers har
+      // skolehendelsene ingen plass å stå. Den får en ledig farge.
+      if (!person) {
+        var brukte = st.kalendere.map(function (p) { return p.farge; });
+        person = { navn: navn, rolle: 'person', hendelser: [],
+          farge: FARGER.filter(function (f) { return brukte.indexOf(f) < 0; })[0] || FARGER[0] };
+        st.kalendere.push(person);
+      }
       Kalender.forekomster(k.hendelser, pluss(idag, -35), pluss(idag, 35)).forEach(function (f) {
-        if (f.beskrivelse) st.planer.push({ navn: person ? person.navn : navn, person: person, plan: Ukeplan.les(f.beskrivelse, f.start) });
+        if (f.beskrivelse) st.planer.push({ navn: person.navn, person: person, plan: Ukeplan.les(f.beskrivelse, f.start) });
       });
     });
   }
