@@ -1,0 +1,362 @@
+/* Regnbuespillet — utseende.
+ *
+ * Appen har ingen fargeoppsett å velge mellom, og det er et valg: symbolene
+ * har sine egne farger fra tegningen, og et mørkt tema ville gjort det svarte
+ * rektangelet usynlig og snudd den grå månen opp ned. Rutene er alltid lyse.
+ *
+ * Alt er dessuten større enn i den voksne appen. Fingrene er mindre, men
+ * treffsikkerheten er mye dårligere.
+ */
+
+:root {
+  --bg: #fdf8ef;
+  --flate: #ffffff;
+  --ramme: #cfc6b5;
+  --ramme-tykk: #6b5e4a;
+  --blekk: #2b2f36;
+  --blekk-svak: #7a7161;
+  --valgt: #ffe9b0;
+  --valgt-kant: #e8a21c;
+  --gitt: #f3efe6;          /* rutene som sto der fra før */
+  --knapp: #ffffff;
+  --knapp-kant: #ded5c4;
+  --glede: #36a054;
+  --skygge: 0 2px 4px rgba(43, 47, 54, .08), 0 8px 20px rgba(43, 47, 54, .08);
+
+  --trygg-topp: env(safe-area-inset-top);
+  --trygg-hoyre: env(safe-area-inset-right);
+  --trygg-bunn: env(safe-area-inset-bottom);
+  --trygg-venstre: env(safe-area-inset-left);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overscroll-behavior: none;
+  background: var(--bg);
+  color: var(--blekk);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: var(--trygg-topp) var(--trygg-hoyre) var(--trygg-bunn) var(--trygg-venstre);
+}
+
+/* Samme lærdom som i den voksne appen: .app må trekke fra det trygge området,
+   ellers stikker den nøyaktig innsettingene utenfor og sida lar seg dra. */
+.app {
+  width: 100%;
+  max-width: 560px;
+  min-height: calc(100dvh - var(--trygg-topp) - var(--trygg-bunn));
+  padding: 8px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* ---------- Topp ---------- */
+
+.topp {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.topp h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: var(--ramme-tykk);
+}
+
+/* Motvekt til ✦-knappen, så tittelen havner i midten av seg selv. */
+.usynlig { visibility: hidden; box-shadow: none; }
+
+.rund {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--ramme-tykk);
+  background: var(--knapp);
+  border: 1px solid var(--knapp-kant);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: var(--skygge);
+}
+
+/* Brett og tastatur. Stående under hverandre, liggende ved siden av — og
+   brettstørrelsen er det eneste som skiller de to oppsettene. */
+.flate {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: var(--brett);
+}
+
+:root { --brett: min(92vw, 460px, 52vh); }
+
+/* ---------- Brett ---------- */
+
+/*
+ * Sidelengden settes av JS (--n), så samme regler bærer 4×4, 6×6 og 9×9.
+ * Brettet tar den plassen som er igjen når tastaturet har fått sitt — et
+ * 4×4-brett skal fylle skjermen, ikke stå som en frimerkestor variant av 9×9.
+ */
+.brett {
+  --rute: calc(var(--brett) / var(--n));
+  width: var(--brett);
+  height: var(--brett);
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  grid-template-rows: repeat(var(--n), 1fr);
+  background: var(--flate);
+  border: 3px solid var(--ramme-tykk);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--skygge);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.rute {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7%;
+  border-right: 1px solid var(--ramme);
+  border-bottom: 1px solid var(--ramme);
+  cursor: pointer;
+  transition: background-color .12s ease;
+}
+
+.rute.kant-h { border-right: 3px solid var(--ramme-tykk); }
+.rute.kant-n { border-bottom: 3px solid var(--ramme-tykk); }
+.rute.siste-h { border-right: none; }
+.rute.siste-n { border-bottom: none; }
+
+.rute.gitt { background: var(--gitt); }
+.rute.valgt { background: var(--valgt); box-shadow: inset 0 0 0 3px var(--valgt-kant); }
+
+.symbol { width: 100%; height: 100%; display: block; }
+
+/* Et symbol som nettopp landet. Kort og tydelig — belønningen for hvert
+   enkelt trekk, siden det ikke finnes poeng her. */
+.rute.pop .symbol { animation: pop .34s ease; }
+@keyframes pop {
+  0%   { transform: scale(.3); opacity: 0; }
+  60%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* Feil symbol: ruta rister, og ingenting settes inn. Ikke rødt, ingen teller —
+   brettet skal aldri kunne kjøre seg fast for den som ikke kan lese seg ut
+   av det igjen. */
+.rute.nei { animation: nei .34s ease; }
+@keyframes nei {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  45% { transform: translateX(5px); }
+  70% { transform: translateX(-3px); }
+}
+
+.rute.hjelp { animation: hjelp .9s ease; }
+@keyframes hjelp {
+  0%, 100% { background: var(--flate); }
+  40% { background: #cdebd4; }
+}
+
+/* ---------- Tastatur ---------- */
+
+.tastatur {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--tastkol), 1fr);
+  gap: 7px;
+}
+
+.tast {
+  aspect-ratio: 1;
+  padding: 9%;
+  background: var(--knapp);
+  border: 2px solid var(--knapp-kant);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: var(--skygge);
+  transition: transform .08s ease, border-color .12s ease;
+}
+
+.tast:active { transform: scale(.92); }
+.tast.ferdig { opacity: .28; }       /* alle ni er satt ut */
+
+/* ---------- Verktøy ---------- */
+
+.verktoy {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.verktoyknapp {
+  flex: 1;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--blekk);
+  background: var(--knapp);
+  border: 2px solid var(--knapp-kant);
+  border-radius: 12px;
+  padding: 12px 10px;
+  cursor: pointer;
+  box-shadow: var(--skygge);
+}
+
+.verktoyknapp:active { transform: scale(.97); }
+.verktoyknapp.hjelp { background: var(--glede); border-color: var(--glede); color: #fff; }
+.verktoyknapp.bred { width: 100%; flex: none; margin-top: 8px; }
+
+/* ---------- Ark ---------- */
+
+.ark {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(43, 47, 54, .45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 18px;
+  backdrop-filter: blur(2px);
+}
+
+/* Egen display her slår nettleserens [hidden] — derfor :not(). Samme felle som
+   hintboksen i den voksne appen gikk i. */
+.ark[hidden] { display: none; }
+
+.kort {
+  width: 100%;
+  max-width: 380px;
+  margin: auto;
+  background: var(--flate);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .28);
+}
+
+.kort.midt { text-align: center; max-width: 320px; }
+.kort h2 { margin: 0 0 14px; font-size: 1.3rem; }
+
+.nivaaliste { display: flex; flex-direction: column; gap: 10px; }
+
+.nivaaknapp {
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: var(--knapp);
+  border: 2px solid var(--knapp-kant);
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.nivaaknapp strong { font-size: 1.05rem; display: block; }
+.nivaaknapp span { font-size: .84rem; color: var(--blekk-svak); }
+
+/* Liten rute-rute som viser hvor stort brettet er. Den er hele forskjellen for
+   den som ikke leser: «fire ruter» sier mindre enn fire ruter gjør. */
+.rutevis {
+  flex: none;
+  display: grid;
+  gap: 2px;
+  width: 44px;
+  height: 44px;
+}
+.rutevis i { background: var(--valgt); border-radius: 2px; }
+
+.stjerner { font-size: 2.2rem; color: #f2c01e; line-height: 1; margin-bottom: 6px; }
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  margin: 4px auto 12px;
+  border: 4px solid var(--knapp-kant);
+  border-top-color: var(--glede);
+  border-radius: 50%;
+  animation: snurr .8s linear infinite;
+}
+@keyframes snurr { to { transform: rotate(360deg); } }
+
+/* ---------- Liggende ---------- */
+/*
+ * Samme grep som den voksne appen: brettet tar høyden, tastaturet flytter til
+ * siden. Uten det blir brettet en tredjedel så stort som skjermen tillater.
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  html { overflow: hidden; }
+  body { position: fixed; inset: 0; overflow: hidden; }
+
+  .app {
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+    padding: 6px 10px;
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto 1fr;
+    align-items: center;
+    justify-items: center;
+    gap: 8px 14px;
+  }
+
+  .topp { grid-column: 1 / -1; }
+  .topp h1 { font-size: 1.05rem; }
+
+  .flate {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  /* Høyden bestemmer nå, og det trygge området må trekkes fra begge veier —
+     ellers havner nederste rad under hjemindikatoren. */
+  :root {
+    --trygg-loddrett: calc(max(var(--trygg-topp), var(--trygg-bunn)) * 2);
+    --brett: min(calc(100dvh - 74px - var(--trygg-loddrett)), calc(100vw - 230px));
+  }
+
+  /* Fast bredde, ikke auto: tastaturet har kvadratiske taster uten egen
+     grense, så uten den blir spalta like bred som ni taster vil ha det. */
+  .side { width: clamp(118px, 21vw, 184px); }
+  .verktoyknapp { font-size: .82rem; padding: 9px 8px; }
+  .verktoy { flex-direction: column; }
+  .tastatur { gap: 5px; grid-template-columns: repeat(var(--tastkol-l), 1fr); }
+}

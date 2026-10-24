@@ -72,6 +72,12 @@
   `lydloft/testbenk.html` måler hva telefon, nettleser og rom gjør med et
   opptak. Ingen service worker.
 
+- **[Regnbuespillet](pwa-regnbue/)** — `pwa-regnbue/index.html`: sudoku med
+  symboler i stedet for tall, for en femåring som ikke leser ennå. Hjerte,
+  stjerne, måne, fotball og fem til, på brett med fire, seks eller ni ruter i
+  sida. Et galt symbol går ikke inn — ruta rister, og barnet prøver et annet —
+  og alle brett kan løses med enere alene. Ingen klokke, ingen poengsum. PWA.
+
 Alt ligger live på <https://vegardk-hub.github.io/ig-trekning/> under samme
 sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-sudoku/>, Fargeflasker på
@@ -81,5 +87,6 @@ sti som i repoet — Sudoku på
 <https://vegardk-hub.github.io/ig-trekning/pwa-stunt/>, Lesestjerna på
 <https://vegardk-hub.github.io/ig-trekning/pwa-lesestjerna/>, Sprellemaskinen på
 <https://vegardk-hub.github.io/ig-trekning/pwa-sprell/>, Koordinatjakt på
-<https://vegardk-hub.github.io/ig-trekning/koordinatjakt/> og Lydløft på
-<https://vegardk-hub.github.io/ig-trekning/lydloft/>.
+<https://vegardk-hub.github.io/ig-trekning/koordinatjakt/>, Lydløft på
+<https://vegardk-hub.github.io/ig-trekning/lydloft/> og Regnbuespillet på
+<https://vegardk-hub.github.io/ig-trekning/pwa-regnbue/>.

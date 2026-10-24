@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#fdf8ef">
+<meta name="description" content="Regnbuespillet — sudoku med symboler, for de minste.">
+<title>Regnbuespillet</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topp">
+    <!-- Tom rute til venstre, så tittelen står i midten uten å regne på det.
+         Barnet skal se ett navn og én knapp, ikke en verktøylinje. -->
+    <span class="rund usynlig" aria-hidden="true"></span>
+    <h1>Regnbuespillet</h1>
+    <button id="btn-nytt" class="rund" aria-label="Nytt brett">✦</button>
+  </header>
+
+  <!-- Brett og tastatur i samme boks: stående står de under hverandre,
+       liggende ved siden av. Da trengs ingen egen markup per retning. -->
+  <div class="flate">
+    <div id="brett" class="brett" role="grid" aria-label="Regnbuebrett"></div>
+
+    <div class="side">
+      <div id="tastatur" class="tastatur"></div>
+      <div class="verktoy">
+        <button id="btn-slett" class="verktoyknapp">Viske ut</button>
+        <button id="btn-hjelp" class="verktoyknapp hjelp">Hjelp meg</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Nivåvalget er det eneste med ord i, og det er forelderen som leser dem. -->
+<div id="velg" class="ark" hidden>
+  <div class="kort">
+    <h2>Hvor stort brett?</h2>
+    <div id="nivaaliste" class="nivaaliste"></div>
+  </div>
+</div>
+
+<div id="ferdig" class="ark" hidden>
+  <div class="kort midt">
+    <div class="stjerner">★ ★ ★</div>
+    <h2>Ferdig!</h2>
+    <button id="ferdig-igjen" class="verktoyknapp hjelp bred">En gang til</button>
+    <button id="ferdig-annet" class="verktoyknapp bred">Annet brett</button>
+  </div>
+</div>
+
+<div id="jobber" class="ark" hidden>
+  <div class="kort midt">
+    <div class="spinner"></div>
+    <p>Lager brett …</p>
+  </div>
+</div>
+
+<script src="js/kjerne.js"></script>
+<script src="js/symboler.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

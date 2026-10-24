@@ -19,6 +19,7 @@ kodebase, ingen pakkebehandler, ingen byggesteg.
 | `pwa-xoxo/` | Kryss & Ring — puslespill med kryss og ringer på 5x10. **Under arbeid** |
 | `lydloft/` | Lydløft — lydverksted: filtre, tone, tempo, tonehøyde og effekter på egne opptak, pluss en testbenk. **Under arbeid** |
 | `familietavle/` | Familietavla — veggtavle på nettbrett: iCloud-kalendre per person, Yr-vær, søppel, ukeplan og leksefane |
+| `pwa-regnbue/` | Regnbuespillet — sudoku med symboler for en femåring som ikke leser, PWA |
 | `flaskespill.html` (rot) | Fargeflasker som én fil, bygget fra `pwa-flasker/` |
 
 ## Publisering
@@ -40,6 +41,7 @@ repoet:
 - Koordinatjakt: `https://vegardk-hub.github.io/ig-trekning/koordinatjakt/`
 - Lydløft: `https://vegardk-hub.github.io/ig-trekning/lydloft/`
 - Familietavla: `https://vegardk-hub.github.io/ig-trekning/familietavle/`
+- Regnbuespillet: `https://vegardk-hub.github.io/ig-trekning/pwa-regnbue/`
 
 Det betyr at en endring ikke er ute før den er på `main`. Ligger arbeidet på
 en gren, må grenen slås sammen først.
@@ -190,7 +192,16 @@ legges inn der før den rettes i koden.
 Skyøkta når hverken iCloud, api.met.no eller raw.githubusercontent.com —
 proxyen svarer 403. Prøvene besvarer alle tre lokalt, og det skal de.
 
-Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen og Sprellemaskinen er PWA-er. Endrer du filene de
+Regnbuespillet har én prøve, som trenger playwright og starter serveren selv.
+Kjør den etter hver endring i `pwa-regnbue/` — og alltid etter en endring i
+`js/kjerne.js`, for et brett som ikke lenger lar seg løse med enere, ser helt
+normalt ut helt til barnet står fast:
+
+```
+NODE_PATH=/opt/node22/lib/node_modules node pwa-regnbue/tester/kjor.js
+```
+
+Sudoku, Fargeflasker, Poengtavla, Monstergiret, Stuntgarasjen, Sprellemaskinen og Regnbuespillet er PWA-er. Endrer du filene de
 forhåndslagrer, bump `CACHE`-navnet i `sw.js`, ellers ligger den gamle cachen
 igjen hos alle som allerede har installert appen. **Lesestjerna har med vilje
 ingen service worker** — den trenger nett uansett, både til stemmen og til
@@ -301,6 +312,28 @@ nyanseavstanden mellom rollene, bredden på hver etikett i den smaleste kolonnen
 Tallene står i `pwa-sudoku/README.md`, og kravene som prøver i `tester/tema.js`
 og `tester/liggende.js`. Endrer du en farge eller en skriftstørrelse, kjør dem
 og les hva de sier før du velger.
+
+## Regnbuespillet
+
+`pwa-regnbue/README.md` går gjennom symbolene, nivåene og prøven. Det er en
+sudoku med symboler i stedet for tall, for en femåring som ikke leser, og
+egen kode — ikke en modus i Sudoku. De to første punktene er reglene appen
+står og faller på; ikke rull dem tilbake:
+
+- **Et galt symbol går ikke inn.** Ruta rister, og ingenting settes. Lar man
+  feil bli stående, ender brettet i en knute som bare kan løses ved å se at
+  noe langt tilbake var galt — nøyaktig det målgruppen ikke kan. Appen avviser
+  trekket, aldri barnet: ingen rødt, ingen teller, ingen poengsum, ingen klokke.
+- **Alle brett kan løses med enere alene.** Generatoren graver bare så lenge
+  brettet både er entydig og lar seg løse med nakne og skjulte enere.
+- **Sammen er de grunnen til at «Hjelp meg» aldri står tom.** Brettet
+  inneholder aldri noe galt, og flere riktige symboler tar aldri bort en ener —
+  så enerne rekker fram fra hver eneste stilling barnet kan havne i.
+- **Rekkefølgen og fargene på symbolene er eierens tegning.** 4×4 bruker de
+  fire første og 6×6 de seks første, så de letteste formene ligger først.
+- **Ikonene tegnes av `symboler.js` i Chromium** (`lag_ikon.js`), så de viser
+  de samme tegningene som brettet. Endrer du et symbol, lag dem på nytt og bump
+  `CACHE`.
 
 ## Stuntgarasjen
 
